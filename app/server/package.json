@@ -17,7 +17,7 @@
     "@pleno-audit/api": "workspace:*",
     "@pleno-audit/csp": "workspace:*",
     "@pleno-audit/parquet-storage": "workspace:*",
-    "hono": "^4.12.2"
+    "hono": "^4.12.3"
   },
   "devDependencies": {
     "tsx": "^4.21.0",

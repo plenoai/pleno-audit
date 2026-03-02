@@ -13,7 +13,7 @@
   "dependencies": {
     "@pleno-audit/battacker": "workspace:*",
     "@pleno-audit/extension-runtime": "workspace:*",
-    "motion": "^12.34.3",
+    "motion": "^12.34.4",
     "preact": "^10.28.4"
   },
   "devDependencies": {

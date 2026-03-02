@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@pleno-audit/csp": "workspace:*",
-    "lucide-preact": "^0.575.0",
+    "lucide-preact": "^0.576.0",
     "preact": "^10.28.4"
   },
   "devDependencies": {
