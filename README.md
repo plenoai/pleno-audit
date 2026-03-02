@@ -1,6 +1,6 @@
 # Pleno Audit
 
-[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/HikaruEgashira/pleno-audit/badge)](https://securityscorecards.dev/viewer/?uri=github.com/HikaruEgashira/pleno-audit)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/plenoai/pleno-audit/badge)](https://securityscorecards.dev/viewer/?uri=github.com/plenoai/pleno-audit)
 
 Personal `#Browser Security` `#BDR` `#CASB`
 
@@ -24,7 +24,7 @@ Personal `#Browser Security` `#BDR` `#CASB`
 
 ## インストール
 
-1. [Releases](https://github.com/HikaruEgashira/pleno-audit/releases)から最新版をダウンロード
+1. [Releases](https://github.com/plenoai/pleno-audit/releases)から最新版をダウンロード
    - pleno-audit.zip: メイン拡張機能
    - pleno-battacker.zip: 防御耐性テストツール
 2. ダウンロードしたzipファイルを展開

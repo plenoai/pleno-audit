@@ -4,7 +4,7 @@ import Footer from '../components/Footer';
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 
-const GITHUB_URL = 'https://github.com/HikaruEgashira/pleno-audit';
+const GITHUB_URL = 'https://github.com/plenoai/pleno-audit';
 
 // Button Component
 const Button = ({
@@ -77,7 +77,7 @@ const Header = () => {
   const [starCount, setStarCount] = useState<number | null>(null);
 
   useEffect(() => {
-    fetch('https://api.github.com/repos/HikaruEgashira/pleno-audit')
+    fetch('https://api.github.com/repos/plenoai/pleno-audit')
       .then((res) => res.json())
       .then((data) => {
         if (data.stargazers_count !== undefined) {
@@ -150,7 +150,7 @@ const HeroSection = () => (
         </p>
 
         <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <Button variant="primary" size="large" suffix={<Chrome className="h-4 w-4" />} to="https://github.com/HikaruEgashira/pleno-audit/releases">
+          <Button variant="primary" size="large" suffix={<Chrome className="h-4 w-4" />} to="https://github.com/plenoai/pleno-audit/releases">
             Chrome拡張をインストール
           </Button>
           <Button variant="secondary" size="large" suffix={<ArrowRight className="h-4 w-4" />} to="/docs">

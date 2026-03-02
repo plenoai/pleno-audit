@@ -156,7 +156,7 @@ export default function FaqPage() {
             <p className="text-[#666] dark:text-[#8f8f8f] text-center">
               その他のご質問は、GitHubの
               <a
-                href="https://github.com/HikaruEgashira/pleno-audit/discussions"
+                href="https://github.com/plenoai/pleno-audit/discussions"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-[#0050b3] dark:text-[#60a5fa] hover:underline mx-1"
