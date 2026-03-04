@@ -21,7 +21,7 @@
     "@pleno-audit/extension-runtime": "workspace:*",
     "@pleno-audit/parquet-storage": "workspace:*",
     "@pleno-audit/storage": "workspace:*",
-    "hono": "^4.12.2",
+    "hono": "^4.12.4",
     "lucide-preact": "^0.575.0",
     "preact": "^10.28.4"
   },
