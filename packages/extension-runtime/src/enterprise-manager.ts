@@ -51,7 +51,7 @@ class EnterpriseManager {
       }
 
       const api = getBrowserAPI();
-      const result = await api.storage.managed.get(null);
+      const result = await api.storage.managed.get(null) as Partial<EnterpriseManagedConfig>;
 
       if (Object.keys(result).length === 0) {
         logger.debug("No managed storage configuration found");

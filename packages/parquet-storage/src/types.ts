@@ -4,7 +4,9 @@ export type ParquetLogType =
   | "csp-violations"
   | "network-requests"
   | "events"
-  | "ai-prompts";
+  | "ai-prompts"
+  | "nrd-detections"
+  | "typosquat-detections";
 
 export interface ParquetFileRecord {
   key: string; // "csp-violations-2026-01-14"

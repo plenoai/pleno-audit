@@ -1,6 +1,5 @@
 import type {
   DetectedService,
-  DetectionConfig,
   NRDCache,
   NRDConfig,
   NRDDetectedDetails,
@@ -16,7 +15,7 @@ import {
   createNRDDetector,
   createTyposquatDetector,
 } from "@pleno-audit/detectors";
-import { DEFAULT_DETECTION_CONFIG } from "@pleno-audit/extension-runtime";
+import { DEFAULT_DETECTION_CONFIG, type DetectionConfig } from "@pleno-audit/extension-runtime";
 import type { AlertManager } from "@pleno-audit/alerts";
 import {
   nrdResultToParquetRecord,

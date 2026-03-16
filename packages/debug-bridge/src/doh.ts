@@ -49,8 +49,8 @@ export async function getDoHRequests(params?: {
   offset?: number;
 }): Promise<DebugHandlerResult> {
   try {
-    const storage = await chrome.storage.local.get("doHRequests");
-    const allRequests = storage.doHRequests || [];
+    const storage = await chrome.storage.local.get("doHRequests") as Record<string, unknown>;
+    const allRequests = (storage.doHRequests as Array<{ timestamp: number }>) || [];
     const total = allRequests.length;
 
     const limit = params?.limit ?? 100;

@@ -1,5 +1,5 @@
 interface TimestampLogger {
-  warn?: (...args: unknown[]) => void;
+  warn?: (message: string, ...args: unknown[]) => void;
 }
 
 interface ResolveTimestampOptions {

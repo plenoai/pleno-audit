@@ -322,10 +322,10 @@ let apiClientInstance: ApiClient | null = null;
 export async function getApiClient(): Promise<ApiClient> {
   if (apiClientInstance) return apiClientInstance;
 
-  const config = await chrome.storage.local.get(["connectionMode", "remoteEndpoint"]);
+  const config = await chrome.storage.local.get(["connectionMode", "remoteEndpoint"]) as Record<string, unknown>;
   apiClientInstance = new ApiClient({
     mode: (config.connectionMode as ConnectionMode) || "local",
-    remoteEndpoint: config.remoteEndpoint,
+    remoteEndpoint: config.remoteEndpoint as string | undefined,
   });
 
   return apiClientInstance;

@@ -9,7 +9,7 @@ type NetworkConfigUpdates = {
 };
 
 async function getNetworkConfigFromStorage(): Promise<NetworkMonitorConfig> {
-  const storage = await chrome.storage.local.get("networkMonitorConfig");
+  const storage = await chrome.storage.local.get("networkMonitorConfig") as { networkMonitorConfig?: NetworkMonitorConfig };
   return storage.networkMonitorConfig || DEFAULT_NETWORK_CONFIG;
 }
 

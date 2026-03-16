@@ -1,4 +1,5 @@
-import type { AIMonitorConfig, CapturedAIPrompt, DetectionConfig } from "@pleno-audit/detectors";
+import type { AIMonitorConfig, CapturedAIPrompt } from "@pleno-audit/detectors";
+import type { DetectionConfig } from "@pleno-audit/extension-runtime";
 import {
   DEFAULT_AI_MONITOR_CONFIG,
   analyzePrompt,
@@ -53,18 +54,18 @@ interface CreateAIPromptMonitorServiceParams {
     alertAISensitive: (params: {
       domain: string;
       provider: string;
-      model: string;
+      model?: string;
       dataTypes: string[];
-    }) => Promise<void>;
+    }) => Promise<unknown>;
     alertShadowAI: (params: {
       domain: string;
       provider: string;
       providerDisplayName: string;
       category: string;
       riskLevel: string;
-      confidence: number;
-      model: string;
-    }) => Promise<void>;
+      confidence: string;
+      model?: string;
+    }) => Promise<unknown>;
   };
 }
 
@@ -136,7 +137,7 @@ export function createAIPromptMonitorService(params: CreateAIPromptMonitorServic
 
     const enhancedData: CapturedAIPrompt = {
       ...data,
-      provider,
+      provider: provider as CapturedAIPrompt["provider"],
     };
     await storeAIPrompt(enhancedData);
 

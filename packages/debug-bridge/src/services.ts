@@ -11,7 +11,7 @@ export async function getServices(): Promise<DebugHandlerResult> {
 
 export async function getService(params: { domain: string }): Promise<DebugHandlerResult> {
   try {
-    const storage = await chrome.storage.local.get("services");
+    const storage = await chrome.storage.local.get("services") as Record<string, Record<string, unknown>>;
     const services = storage.services || {};
     return { success: true, data: services[params.domain] || null };
   } catch (error) {

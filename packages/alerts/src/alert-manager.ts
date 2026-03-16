@@ -241,7 +241,7 @@ export function createAlertManager(
   }
 
   async function alertNRD(params: NRDAlertParams): Promise<SecurityAlert | null> {
-    return createAlert(buildNRDAlert(params));
+    return createOptionalAlert(buildNRDAlert(params));
   }
 
   async function alertTyposquat(
@@ -253,37 +253,37 @@ export function createAlertManager(
   async function alertAISensitive(
     params: AISensitiveAlertParams
   ): Promise<SecurityAlert | null> {
-    return createAlert(buildAISensitiveAlert(params));
+    return createOptionalAlert(buildAISensitiveAlert(params));
   }
 
   async function alertShadowAI(
     params: ShadowAIAlertParams
   ): Promise<SecurityAlert | null> {
-    return createAlert(buildShadowAIAlert(params));
+    return createOptionalAlert(buildShadowAIAlert(params));
   }
 
   async function alertExtension(
     params: ExtensionAlertParams
   ): Promise<SecurityAlert | null> {
-    return createAlert(buildExtensionAlert(params));
+    return createOptionalAlert(buildExtensionAlert(params));
   }
 
   async function alertDataExfiltration(
     params: DataExfiltrationAlertParams
   ): Promise<SecurityAlert | null> {
-    return createAlert(buildDataExfiltrationAlert(params));
+    return createOptionalAlert(buildDataExfiltrationAlert(params));
   }
 
   async function alertCredentialTheft(
     params: CredentialTheftAlertParams
   ): Promise<SecurityAlert | null> {
-    return createAlert(buildCredentialTheftAlert(params));
+    return createOptionalAlert(buildCredentialTheftAlert(params));
   }
 
   async function alertSupplyChainRisk(
     params: SupplyChainRiskAlertParams
   ): Promise<SecurityAlert | null> {
-    return createAlert(buildSupplyChainRiskAlert(params));
+    return createOptionalAlert(buildSupplyChainRiskAlert(params));
   }
 
   async function alertCompliance(
@@ -301,37 +301,37 @@ export function createAlertManager(
   async function alertTrackingBeacon(
     params: TrackingBeaconAlertParams
   ): Promise<SecurityAlert | null> {
-    return createAlert(buildTrackingBeaconAlert(params));
+    return createOptionalAlert(buildTrackingBeaconAlert(params));
   }
 
   async function alertClipboardHijack(
     params: ClipboardHijackAlertParams
   ): Promise<SecurityAlert | null> {
-    return createAlert(buildClipboardHijackAlert(params));
+    return createOptionalAlert(buildClipboardHijackAlert(params));
   }
 
   async function alertCookieAccess(
     params: CookieAccessAlertParams
   ): Promise<SecurityAlert | null> {
-    return createAlert(buildCookieAccessAlert(params));
+    return createOptionalAlert(buildCookieAccessAlert(params));
   }
 
   async function alertXSSInjection(
     params: XSSInjectionAlertParams
   ): Promise<SecurityAlert | null> {
-    return createAlert(buildXSSInjectionAlert(params));
+    return createOptionalAlert(buildXSSInjectionAlert(params));
   }
 
   async function alertDOMScraping(
     params: DOMScrapingAlertParams
   ): Promise<SecurityAlert | null> {
-    return createAlert(buildDOMScrapingAlert(params));
+    return createOptionalAlert(buildDOMScrapingAlert(params));
   }
 
   async function alertSuspiciousDownload(
     params: SuspiciousDownloadAlertParams
   ): Promise<SecurityAlert | null> {
-    return createAlert(buildSuspiciousDownloadAlert(params));
+    return createOptionalAlert(buildSuspiciousDownloadAlert(params));
   }
 
   async function updateAlertStatus(

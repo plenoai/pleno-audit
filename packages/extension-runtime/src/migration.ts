@@ -11,12 +11,12 @@ export async function checkMigrationNeeded(): Promise<boolean> {
 }
 
 export async function migrateToDatabase(): Promise<{ success: boolean; migratedCount: number }> {
-  const result = await chrome.storage.local.get([MIGRATION_KEY, LEGACY_REPORTS_KEY]);
+  const result = await chrome.storage.local.get([MIGRATION_KEY, LEGACY_REPORTS_KEY]) as Record<string, unknown>;
   if (result[MIGRATION_KEY]) {
     return { success: true, migratedCount: 0 };
   }
 
-  const legacyReports: CSPReport[] = result[LEGACY_REPORTS_KEY] || [];
+  const legacyReports: CSPReport[] = (result[LEGACY_REPORTS_KEY] as CSPReport[]) || [];
   if (legacyReports.length === 0) {
     await chrome.storage.local.set({ [MIGRATION_KEY]: true });
     return { success: true, migratedCount: 0 };
