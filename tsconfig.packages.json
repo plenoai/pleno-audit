@@ -2,8 +2,9 @@
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "noEmit": true,
-    "lib": ["ES2022", "DOM"]
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["chrome"]
   },
-  "include": ["packages/*/src/**/*.ts"],
+  "include": ["packages/env.d.ts", "packages/*/src/**/*.ts"],
   "exclude": ["**/*.test.ts", "**/*.spec.ts", "**/*.property.ts", "**/dist/**"]
 }

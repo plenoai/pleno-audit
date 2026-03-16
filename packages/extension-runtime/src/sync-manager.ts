@@ -20,9 +20,9 @@ export class SyncManager {
   }
 
   async init(): Promise<void> {
-    const config = await chrome.storage.local.get([SYNC_ENABLED_KEY, "remoteEndpoint"]);
-    this.enabled = config[SYNC_ENABLED_KEY] || false;
-    this.remoteEndpoint = config.remoteEndpoint || null;
+    const config = await chrome.storage.local.get([SYNC_ENABLED_KEY, "remoteEndpoint"]) as Record<string, unknown>;
+    this.enabled = (config[SYNC_ENABLED_KEY] as boolean) || false;
+    this.remoteEndpoint = (config.remoteEndpoint as string) || null;
 
     if (this.enabled && this.remoteEndpoint) {
       await this.initClients(this.remoteEndpoint);
@@ -53,8 +53,8 @@ export class SyncManager {
       return { sent: 0, received: 0 };
     }
 
-    const { lastSyncTime } = await chrome.storage.local.get(LAST_SYNC_TIME_KEY);
-    const since = lastSyncTime || "1970-01-01T00:00:00.000Z";
+    const syncData = await chrome.storage.local.get(LAST_SYNC_TIME_KEY) as Record<string, unknown>;
+    const since = (syncData[LAST_SYNC_TIME_KEY] as string) || "1970-01-01T00:00:00.000Z";
 
     const { reports: localNew } = await this.localClient.sync(since);
 

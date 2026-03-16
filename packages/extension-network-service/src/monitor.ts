@@ -62,8 +62,8 @@ export async function initExtensionMonitor(context: ExtensionNetworkContext): Pr
         domain: record.domain,
         timestamp: record.timestamp,
         details: {
-          extensionId: record.extensionId,
-          extensionName: record.extensionName,
+          extensionId: record.extensionId ?? "unknown",
+          extensionName: record.extensionName ?? "unknown",
           url: record.url,
           method: record.method,
           resourceType: record.resourceType,

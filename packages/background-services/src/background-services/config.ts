@@ -19,7 +19,7 @@ import { getOrInitParquetStore } from "./events";
 const logger = createLogger("background-config");
 
 export async function getDetectionConfig(): Promise<DetectionConfig> {
-  const storage = await chrome.storage.local.get(["detectionConfig"]);
+  const storage = await chrome.storage.local.get(["detectionConfig"]) as { detectionConfig?: DetectionConfig };
   return storage.detectionConfig || DEFAULT_DETECTION_CONFIG;
 }
 
@@ -38,7 +38,7 @@ export async function setDetectionConfig(
 }
 
 export async function getNotificationConfig(): Promise<NotificationConfig> {
-  const storage = await chrome.storage.local.get(["notificationConfig"]);
+  const storage = await chrome.storage.local.get(["notificationConfig"]) as { notificationConfig?: NotificationConfig };
   return storage.notificationConfig || DEFAULT_NOTIFICATION_CONFIG;
 }
 

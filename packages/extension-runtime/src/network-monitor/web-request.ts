@@ -61,7 +61,7 @@ export function emitRecord(record: NetworkRequestRecord): void {
  * webRequestリスナーのハンドラー
  * 全ネットワークリクエストを処理
  */
-export function handleWebRequest(details: chrome.webRequest.WebRequestBodyDetails): void {
+export function handleWebRequest(details: chrome.webRequest.OnBeforeRequestDetails): chrome.webRequest.BlockingResponse | undefined {
   ensureConfigCachesCurrent();
 
   if (!state.config.enabled) return;

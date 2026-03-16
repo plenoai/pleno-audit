@@ -27,9 +27,9 @@ export async function initStorage(): Promise<StorageData> {
     "detectionConfig",
     "notificationConfig",
     "policyConfig",
-  ]);
+  ]) as Partial<StorageData>;
   return {
-    services: result.services || {},
+    services: result.services || ({} as Record<string, DetectedService>),
     cspReports: result.cspReports || [],
     cspConfig: result.cspConfig || DEFAULT_CSP_CONFIG,
     detectionConfig: result.detectionConfig || DEFAULT_DETECTION_CONFIG,

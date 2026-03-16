@@ -155,8 +155,8 @@ async function disableDoHBlocking(): Promise<void> {
  * webRequestヘッダーリスナーのハンドラー
  */
 function handleBeforeSendHeaders(
-  details: chrome.webRequest.WebRequestHeadersDetails
-): void {
+  details: chrome.webRequest.OnBeforeSendHeadersDetails
+): chrome.webRequest.BlockingResponse | undefined {
   const { isDoH, method } = detectDoHRequest(details.url, details.requestHeaders);
 
   if (!isDoH || !method) return;

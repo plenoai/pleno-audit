@@ -7,6 +7,8 @@
  * - Optional debugger sink for WebSocket forwarding
  */
 
+declare const process: { env?: Record<string, string | undefined> } | undefined;
+
 export type LogLevel = "debug" | "info" | "warn" | "error";
 
 export interface LogEventPayload {
@@ -63,7 +65,7 @@ function getMinLevel(): LogLevel {
   if (typeof globalThis !== "undefined" && (globalThis as Record<string, unknown>).__PLENO_DEV__) {
     return "debug";
   }
-  if (typeof process !== "undefined" && process.env?.NODE_ENV === "development") {
+  if (typeof process !== "undefined" && process?.env?.NODE_ENV === "development") {
     return "debug";
   }
   return "info";

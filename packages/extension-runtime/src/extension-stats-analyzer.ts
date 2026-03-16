@@ -427,7 +427,7 @@ export class ExtensionStatsCache {
     // キャッシュサイズ制限（100エントリまで）
     if (this.cache.size > 100) {
       const firstKey = this.cache.keys().next().value;
-      this.cache.delete(firstKey);
+      if (firstKey !== undefined) this.cache.delete(firstKey);
     }
 
     logger.debug("Generated new dashboard stats");

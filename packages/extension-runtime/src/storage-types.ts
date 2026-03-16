@@ -9,6 +9,7 @@ import type {
   NRDConfig,
 } from "@pleno-audit/detectors";
 import type { CSPConfig, CSPReport, GeneratedCSPByDomain } from "@pleno-audit/csp";
+import type { PolicyConfig } from "@pleno-audit/alerts";
 
 // Forecast config removed - enterprise feature
 
@@ -198,6 +199,7 @@ export interface StorageData {
   blockingConfig?: BlockingConfig;
   notificationConfig?: NotificationConfig;
   alertCooldown?: AlertCooldownData;
+  policyConfig?: PolicyConfig;
 }
 
 /**
@@ -264,15 +266,4 @@ export type {
   CapturedAIPrompt,
   AIMonitorConfig,
   NRDConfig,
-  DoHAction,
-  DoHDetectionMethod,
-  DoHMonitorConfig,
-  DoHRequestRecord,
-  DataRetentionConfig,
-  DetectionConfig,
-  NotificationConfig,
-  AlertCooldownData,
-  InitiatorType,
-  NetworkRequestRecord,
-  NetworkMonitorConfig,
 };

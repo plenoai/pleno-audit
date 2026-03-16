@@ -1,9 +1,9 @@
 import type {
   AIMonitorConfig,
   CapturedAIPrompt,
-  DetectionConfig,
   DetectedService,
 } from "@pleno-audit/detectors";
+import type { DetectionConfig } from "@pleno-audit/extension-runtime";
 import {
   analyzePrompt,
   classifyProvider,
@@ -38,17 +38,17 @@ interface AIPromptMonitorDependencies {
   alertAISensitive: (params: {
     domain: string;
     provider: string;
-    model: string;
+    model?: string;
     dataTypes: string[];
   }) => Promise<unknown>;
   alertShadowAI: (params: {
     domain: string;
     provider: string;
     providerDisplayName: string;
-    category: unknown;
-    riskLevel: unknown;
-    confidence: number;
-    model: string;
+    category: string;
+    riskLevel: string;
+    confidence: string;
+    model?: string;
   }) => Promise<unknown>;
   checkAIServicePolicy: (params: {
     domain: string;
@@ -99,7 +99,7 @@ export function createAIPromptMonitorHandler(
     const providerInfo = getProviderInfo(provider);
     const isShadowAIDetected = isShadowAI(provider);
 
-    await deps.storeAIPrompt({ ...data, provider });
+    await deps.storeAIPrompt({ ...data, provider: provider as CapturedAIPrompt["provider"] });
 
     const apiDomain = resolveHostname(data.apiEndpoint);
 
