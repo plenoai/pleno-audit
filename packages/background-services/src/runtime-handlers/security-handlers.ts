@@ -72,5 +72,21 @@ export function createSecurityEventHandlers(
       execute: (message, sender) => deps.handleServiceWorkerRegistered(message.data, sender),
       fallback: () => ({ success: false }),
     }],
+    ["DYNAMIC_CODE_EXECUTION_DETECTED", {
+      execute: (message, sender) => deps.handleDynamicCodeExecution(message.data, sender),
+      fallback: () => ({ success: false }),
+    }],
+    ["FULLSCREEN_PHISHING_DETECTED", {
+      execute: (message, sender) => deps.handleFullscreenPhishing(message.data, sender),
+      fallback: () => ({ success: false }),
+    }],
+    ["CLIPBOARD_READ_DETECTED", {
+      execute: (message, sender) => deps.handleClipboardRead(message.data, sender),
+      fallback: () => ({ success: false }),
+    }],
+    ["GEOLOCATION_ACCESSED", {
+      execute: (message, sender) => deps.handleGeolocationAccessed(message.data, sender),
+      fallback: () => ({ success: false }),
+    }],
   ];
 }

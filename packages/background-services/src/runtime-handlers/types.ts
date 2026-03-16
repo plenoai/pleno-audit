@@ -103,6 +103,10 @@ handleNetworkInspection: (data: unknown, sender: chrome.runtime.MessageSender) =
   handleWorkerCreated: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
   handleSharedWorkerCreated: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
   handleServiceWorkerRegistered: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
+  handleDynamicCodeExecution: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
+  handleFullscreenPhishing: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
+  handleClipboardRead: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
+  handleGeolocationAccessed: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
 
   getCSPReports: (options?: {
     type?: "csp-violation" | "network-request";

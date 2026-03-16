@@ -142,6 +142,35 @@ export interface ServiceWorkerRegisteredData {
   pageUrl?: string;
 }
 
+export interface DynamicCodeExecutionData {
+  method?: string;
+  codeLength?: number;
+  codeSample?: string;
+  argCount?: number;
+  timestamp?: number;
+  pageUrl?: string;
+}
+
+export interface FullscreenPhishingData {
+  element?: string;
+  elementId?: string | null;
+  className?: string | null;
+  timestamp?: number;
+  pageUrl?: string;
+}
+
+export interface ClipboardReadData {
+  timestamp?: number;
+  pageUrl?: string;
+}
+
+export interface GeolocationAccessedData {
+  method?: string;
+  highAccuracy?: boolean;
+  timestamp?: number;
+  pageUrl?: string;
+}
+
 interface SecurityEventHandlerDependencies {
   addEvent: (event: AuditEventInput) => Promise<unknown>;
   getAlertManager: () => AlertManager;
@@ -708,6 +737,136 @@ export function createSecurityEventHandlers(
           domain: pageDomain,
           url: data.url,
           scope: data.scope,
+        },
+      });
+
+      return { success: true };
+    },
+
+    async handleDynamicCodeExecution(
+      data: DynamicCodeExecutionData,
+      sender: chrome.runtime.MessageSender,
+    ): Promise<{ success: boolean }> {
+      const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+      const eventTimestamp = resolveEventTimestamp(data.timestamp, {
+        logger: deps.logger,
+        context: "dynamic_code_execution_detected",
+      });
+
+      await deps.addEvent({
+        type: "dynamic_code_execution_detected",
+        domain: pageDomain,
+        timestamp: eventTimestamp,
+        details: {
+          method: data.method,
+          codeLength: data.codeLength,
+          codeSample: data.codeSample,
+          argCount: data.argCount,
+          pageUrl: data.pageUrl,
+        },
+      });
+
+      deps.logger.warn({
+        event: "SECURITY_DYNAMIC_CODE_EXECUTION_DETECTED",
+        data: {
+          domain: pageDomain,
+          method: data.method,
+          codeLength: data.codeLength,
+        },
+      });
+
+      return { success: true };
+    },
+
+    async handleFullscreenPhishing(
+      data: FullscreenPhishingData,
+      sender: chrome.runtime.MessageSender,
+    ): Promise<{ success: boolean }> {
+      const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+      const eventTimestamp = resolveEventTimestamp(data.timestamp, {
+        logger: deps.logger,
+        context: "fullscreen_phishing_detected",
+      });
+
+      await deps.addEvent({
+        type: "fullscreen_phishing_detected",
+        domain: pageDomain,
+        timestamp: eventTimestamp,
+        details: {
+          element: data.element,
+          elementId: data.elementId,
+          className: data.className,
+          pageUrl: data.pageUrl,
+        },
+      });
+
+      deps.logger.warn({
+        event: "SECURITY_FULLSCREEN_PHISHING_DETECTED",
+        data: {
+          domain: pageDomain,
+          element: data.element,
+        },
+      });
+
+      return { success: true };
+    },
+
+    async handleClipboardRead(
+      data: ClipboardReadData,
+      sender: chrome.runtime.MessageSender,
+    ): Promise<{ success: boolean }> {
+      const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+      const eventTimestamp = resolveEventTimestamp(data.timestamp, {
+        logger: deps.logger,
+        context: "clipboard_read_detected",
+      });
+
+      await deps.addEvent({
+        type: "clipboard_read_detected",
+        domain: pageDomain,
+        timestamp: eventTimestamp,
+        details: {
+          pageUrl: data.pageUrl,
+        },
+      });
+
+      deps.logger.warn({
+        event: "SECURITY_CLIPBOARD_READ_DETECTED",
+        data: {
+          domain: pageDomain,
+        },
+      });
+
+      return { success: true };
+    },
+
+    async handleGeolocationAccessed(
+      data: GeolocationAccessedData,
+      sender: chrome.runtime.MessageSender,
+    ): Promise<{ success: boolean }> {
+      const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+      const eventTimestamp = resolveEventTimestamp(data.timestamp, {
+        logger: deps.logger,
+        context: "geolocation_accessed",
+      });
+
+      await deps.addEvent({
+        type: "geolocation_accessed",
+        domain: pageDomain,
+        timestamp: eventTimestamp,
+        details: {
+          method: data.method,
+          highAccuracy: data.highAccuracy,
+          pageUrl: data.pageUrl,
+        },
+      });
+
+      deps.logger.warn({
+        event: "SECURITY_GEOLOCATION_ACCESSED",
+        data: {
+          domain: pageDomain,
+          method: data.method,
+          highAccuracy: data.highAccuracy,
         },
       });
 
