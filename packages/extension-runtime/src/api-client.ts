@@ -2,6 +2,7 @@ import type { CSPViolation, NetworkRequest, CSPReport } from "@pleno-audit/csp";
 import type { LocalApiResponse } from "./offscreen/db-schema.js";
 import { createLogger } from "./logger.js";
 import { getSSOManager } from "./sso-manager.js";
+import { RetryableError, errorMessage } from "./errors.js";
 
 const logger = createLogger("api-client");
 
@@ -121,7 +122,10 @@ function resetOffscreenState(): void {
 }
 
 function isRetryableLocalRequestError(error: unknown): boolean {
-  const message = error instanceof Error ? error.message : String(error);
+  if (error instanceof RetryableError) return true;
+
+  // Fallback: string-based detection for Chrome API errors that we don't control
+  const message = errorMessage(error);
   return (
     message.includes("A listener indicated an asynchronous response by returning true")
     || message.includes("message channel closed before a response was received")

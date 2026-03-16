@@ -1,3 +1,6 @@
+// Errors
+export { PlenoAuditError, RetryableError, StorageError, ConfigError, errorMessage } from "./errors.js";
+
 // Storage
 export type { StorageData } from "./storage-types.js";
 export {
