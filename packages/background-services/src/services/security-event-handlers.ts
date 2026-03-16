@@ -93,6 +93,16 @@ export interface DOMScrapingData {
   callCount: number;
 }
 
+export interface WebSocketConnectionData {
+  source?: string;
+  timestamp?: number;
+  pageUrl?: string;
+  url?: string;
+  hostname?: string;
+  protocol?: string;
+  isExternal?: boolean;
+}
+
 export interface SuspiciousDownloadData {
   source?: string;
   timestamp: string;
@@ -532,6 +542,40 @@ export function createSecurityEventHandlers(
           domain: pageDomain,
           type: data.type,
           filename: sanitizeFilename(data.filename),
+        },
+      });
+
+      return { success: true };
+    },
+
+    async handleWebSocketConnection(
+      data: WebSocketConnectionData,
+      sender: chrome.runtime.MessageSender,
+    ): Promise<{ success: boolean }> {
+      const pageDomain = resolvePageDomain(sender, data.pageUrl ?? "", deps.extractDomainFromUrl);
+      const eventTimestamp = resolveEventTimestamp(data.timestamp, {
+        logger: deps.logger,
+        context: "websocket_connection_detected",
+      });
+
+      await deps.addEvent({
+        type: "websocket_connection_detected",
+        domain: pageDomain,
+        timestamp: eventTimestamp,
+        details: {
+          url: data.url,
+          hostname: data.hostname,
+          isExternal: data.isExternal,
+        },
+      });
+
+      deps.logger.warn({
+        event: "SECURITY_WEBSOCKET_CONNECTION_DETECTED",
+        data: {
+          source: sourceLabel(data.source),
+          domain: pageDomain,
+          hostname: data.hostname,
+          isExternal: data.isExternal,
         },
       });
 

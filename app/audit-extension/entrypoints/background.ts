@@ -65,6 +65,7 @@ import {
   type SuspiciousDownloadData,
   type TrackingBeaconData,
   type XSSDetectedData,
+  type WebSocketConnectionData,
 } from "@pleno-audit/background-services";
 import {
   createExtensionNetworkService,
@@ -460,6 +461,7 @@ handleNetworkInspection: (data, sender) => networkSecurityInspector.handleNetwor
     handleXSSDetected: (data, sender) => securityEventHandlers.handleXSSDetected(data as XSSDetectedData, sender),
     handleDOMScraping: (data, sender) => securityEventHandlers.handleDOMScraping(data as DOMScrapingData, sender),
     handleSuspiciousDownload: (data, sender) => securityEventHandlers.handleSuspiciousDownload(data as SuspiciousDownloadData, sender),
+    handleWebSocketConnection: (data, sender) => securityEventHandlers.handleWebSocketConnection(data as WebSocketConnectionData, sender),
     getCSPReports: cspReportingService.getCSPReports,
     generateCSPPolicy: cspReportingService.generateCSPPolicy,
     generateCSPPolicyByDomain: cspReportingService.generateCSPPolicyByDomain,
