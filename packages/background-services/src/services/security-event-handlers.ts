@@ -171,6 +171,30 @@ export interface GeolocationAccessedData {
   pageUrl?: string;
 }
 
+export interface CanvasFingerprintData {
+  source?: string;
+  callCount?: number;
+  canvasWidth?: number;
+  canvasHeight?: number;
+  timestamp?: number;
+  pageUrl?: string;
+}
+
+export interface WebGLFingerprintData {
+  source?: string;
+  parameter?: number;
+  timestamp?: number;
+  pageUrl?: string;
+}
+
+export interface AudioFingerprintData {
+  source?: string;
+  contextCount?: number;
+  sampleRate?: number;
+  timestamp?: number;
+  pageUrl?: string;
+}
+
 interface SecurityEventHandlerDependencies {
   addEvent: (event: AuditEventInput) => Promise<unknown>;
   getAlertManager: () => AlertManager;
@@ -867,6 +891,123 @@ export function createSecurityEventHandlers(
           domain: pageDomain,
           method: data.method,
           highAccuracy: data.highAccuracy,
+        },
+      });
+
+      return { success: true };
+    },
+
+    async handleCanvasFingerprint(
+      data: CanvasFingerprintData,
+      sender: chrome.runtime.MessageSender,
+    ): Promise<{ success: boolean }> {
+      const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+      const eventTimestamp = resolveEventTimestamp(data.timestamp, {
+        logger: deps.logger,
+        context: "canvas_fingerprint_detected",
+      });
+
+      await deps.addEvent({
+        type: "canvas_fingerprint_detected",
+        domain: pageDomain,
+        timestamp: eventTimestamp,
+        details: {
+          callCount: data.callCount,
+          canvasWidth: data.canvasWidth,
+          canvasHeight: data.canvasHeight,
+          pageUrl: data.pageUrl,
+        },
+      });
+
+      await deps.getAlertManager().alertCanvasFingerprint({
+        domain: pageDomain,
+        callCount: data.callCount ?? 0,
+        canvasWidth: data.canvasWidth ?? 0,
+        canvasHeight: data.canvasHeight ?? 0,
+      });
+
+      deps.logger.warn({
+        event: "SECURITY_CANVAS_FINGERPRINT_DETECTED",
+        data: {
+          source: sourceLabel(data.source),
+          domain: pageDomain,
+          callCount: data.callCount,
+        },
+      });
+
+      return { success: true };
+    },
+
+    async handleWebGLFingerprint(
+      data: WebGLFingerprintData,
+      sender: chrome.runtime.MessageSender,
+    ): Promise<{ success: boolean }> {
+      const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+      const eventTimestamp = resolveEventTimestamp(data.timestamp, {
+        logger: deps.logger,
+        context: "webgl_fingerprint_detected",
+      });
+
+      await deps.addEvent({
+        type: "webgl_fingerprint_detected",
+        domain: pageDomain,
+        timestamp: eventTimestamp,
+        details: {
+          parameter: data.parameter,
+          pageUrl: data.pageUrl,
+        },
+      });
+
+      await deps.getAlertManager().alertWebGLFingerprint({
+        domain: pageDomain,
+        parameter: data.parameter ?? 0,
+      });
+
+      deps.logger.warn({
+        event: "SECURITY_WEBGL_FINGERPRINT_DETECTED",
+        data: {
+          source: sourceLabel(data.source),
+          domain: pageDomain,
+          parameter: data.parameter,
+        },
+      });
+
+      return { success: true };
+    },
+
+    async handleAudioFingerprint(
+      data: AudioFingerprintData,
+      sender: chrome.runtime.MessageSender,
+    ): Promise<{ success: boolean }> {
+      const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+      const eventTimestamp = resolveEventTimestamp(data.timestamp, {
+        logger: deps.logger,
+        context: "audio_fingerprint_detected",
+      });
+
+      await deps.addEvent({
+        type: "audio_fingerprint_detected",
+        domain: pageDomain,
+        timestamp: eventTimestamp,
+        details: {
+          contextCount: data.contextCount,
+          sampleRate: data.sampleRate,
+          pageUrl: data.pageUrl,
+        },
+      });
+
+      await deps.getAlertManager().alertAudioFingerprint({
+        domain: pageDomain,
+        contextCount: data.contextCount ?? 0,
+        sampleRate: data.sampleRate,
+      });
+
+      deps.logger.warn({
+        event: "SECURITY_AUDIO_FINGERPRINT_DETECTED",
+        data: {
+          source: sourceLabel(data.source),
+          domain: pageDomain,
+          contextCount: data.contextCount,
         },
       });
 

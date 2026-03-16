@@ -273,6 +273,9 @@ export default defineContentScript({
       "__FULLSCREEN_PHISHING_DETECTED__",
       "__CLIPBOARD_READ_DETECTED__",
       "__GEOLOCATION_ACCESSED__",
+      "__CANVAS_FINGERPRINT_DETECTED__",
+      "__WEBGL_FINGERPRINT_DETECTED__",
+      "__AUDIO_FINGERPRINT_DETECTED__",
     ];
 
     for (const eventType of securityEvents) {

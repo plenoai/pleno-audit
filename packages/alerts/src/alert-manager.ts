@@ -31,6 +31,9 @@ import type {
   XSSInjectionAlertParams,
   DOMScrapingAlertParams,
   SuspiciousDownloadAlertParams,
+  CanvasFingerprintAlertParams,
+  WebGLFingerprintAlertParams,
+  AudioFingerprintAlertParams,
 } from "./alert-builders.js";
 import {
   buildNRDAlert,
@@ -49,6 +52,9 @@ import {
   buildXSSInjectionAlert,
   buildDOMScrapingAlert,
   buildSuspiciousDownloadAlert,
+  buildCanvasFingerprintAlert,
+  buildWebGLFingerprintAlert,
+  buildAudioFingerprintAlert,
 } from "./alert-builders.js";
 
 /**
@@ -334,6 +340,24 @@ export function createAlertManager(
     return createOptionalAlert(buildSuspiciousDownloadAlert(params));
   }
 
+  async function alertCanvasFingerprint(
+    params: CanvasFingerprintAlertParams
+  ): Promise<SecurityAlert | null> {
+    return createAlert(buildCanvasFingerprintAlert(params));
+  }
+
+  async function alertWebGLFingerprint(
+    params: WebGLFingerprintAlertParams
+  ): Promise<SecurityAlert | null> {
+    return createAlert(buildWebGLFingerprintAlert(params));
+  }
+
+  async function alertAudioFingerprint(
+    params: AudioFingerprintAlertParams
+  ): Promise<SecurityAlert | null> {
+    return createAlert(buildAudioFingerprintAlert(params));
+  }
+
   async function updateAlertStatus(
     alertId: string,
     status: AlertStatus
@@ -393,6 +417,9 @@ export function createAlertManager(
     alertXSSInjection,
     alertDOMScraping,
     alertSuspiciousDownload,
+    alertCanvasFingerprint,
+    alertWebGLFingerprint,
+    alertAudioFingerprint,
     updateAlertStatus,
     getAlerts,
     getAlertCount,
