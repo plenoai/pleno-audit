@@ -37,4 +37,7 @@ export {
   type TrackingBeaconData,
   type WebSocketConnectionData,
   type XSSDetectedData,
+  type WorkerCreatedData,
+  type SharedWorkerCreatedData,
+  type ServiceWorkerRegisteredData,
 } from "./services/security-event-handlers.js";

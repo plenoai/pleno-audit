@@ -60,5 +60,17 @@ export function createSecurityEventHandlers(
       execute: (message, sender) => deps.handleWebSocketConnection(message.data, sender),
       fallback: () => ({ success: false }),
     }],
+    ["WORKER_CREATED", {
+      execute: (message, sender) => deps.handleWorkerCreated(message.data, sender),
+      fallback: () => ({ success: false }),
+    }],
+    ["SHARED_WORKER_CREATED", {
+      execute: (message, sender) => deps.handleSharedWorkerCreated(message.data, sender),
+      fallback: () => ({ success: false }),
+    }],
+    ["SERVICE_WORKER_REGISTERED", {
+      execute: (message, sender) => deps.handleServiceWorkerRegistered(message.data, sender),
+      fallback: () => ({ success: false }),
+    }],
   ];
 }

@@ -100,6 +100,9 @@ handleNetworkInspection: (data: unknown, sender: chrome.runtime.MessageSender) =
   handleDOMScraping: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
   handleSuspiciousDownload: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
   handleWebSocketConnection: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
+  handleWorkerCreated: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
+  handleSharedWorkerCreated: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
+  handleServiceWorkerRegistered: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
 
   getCSPReports: (options?: {
     type?: "csp-violation" | "network-request";

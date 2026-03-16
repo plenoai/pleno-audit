@@ -66,6 +66,9 @@ import {
   type TrackingBeaconData,
   type XSSDetectedData,
   type WebSocketConnectionData,
+  type WorkerCreatedData,
+  type SharedWorkerCreatedData,
+  type ServiceWorkerRegisteredData,
 } from "@pleno-audit/background-services";
 import {
   createExtensionNetworkService,
@@ -462,6 +465,9 @@ handleNetworkInspection: (data, sender) => networkSecurityInspector.handleNetwor
     handleDOMScraping: (data, sender) => securityEventHandlers.handleDOMScraping(data as DOMScrapingData, sender),
     handleSuspiciousDownload: (data, sender) => securityEventHandlers.handleSuspiciousDownload(data as SuspiciousDownloadData, sender),
     handleWebSocketConnection: (data, sender) => securityEventHandlers.handleWebSocketConnection(data as WebSocketConnectionData, sender),
+    handleWorkerCreated: (data, sender) => securityEventHandlers.handleWorkerCreated(data as WorkerCreatedData, sender),
+    handleSharedWorkerCreated: (data, sender) => securityEventHandlers.handleSharedWorkerCreated(data as SharedWorkerCreatedData, sender),
+    handleServiceWorkerRegistered: (data, sender) => securityEventHandlers.handleServiceWorkerRegistered(data as ServiceWorkerRegisteredData, sender),
     getCSPReports: cspReportingService.getCSPReports,
     generateCSPPolicy: cspReportingService.generateCSPPolicy,
     generateCSPPolicyByDomain: cspReportingService.generateCSPPolicyByDomain,
