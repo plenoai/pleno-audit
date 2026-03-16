@@ -10,7 +10,7 @@ export async function getStorageValue(params: { key: string }): Promise<DebugHan
   return { success: true, data: storage[params.key] };
 }
 
-function isValidStorageKey(key: string): boolean {
+export function isValidStorageKey(key: string): boolean {
   const dangerousKeys = ["__proto__", "constructor", "prototype"];
   return typeof key === "string" && key.length > 0 && !dangerousKeys.includes(key);
 }
