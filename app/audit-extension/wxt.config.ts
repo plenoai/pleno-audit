@@ -58,10 +58,10 @@ export default defineConfig({
             },
       }),
       web_accessible_resources: isMV2
-        ? ["api-hooks.js", "hooks/websocket-hooks.js", "parquet_wasm_bg.wasm"]
+        ? ["api-hooks.js", "hooks/websocket-hooks.js", "hooks/worker-hooks.js", "parquet_wasm_bg.wasm"]
         : [
             {
-              resources: ["api-hooks.js", "hooks/websocket-hooks.js", "parquet_wasm_bg.wasm"],
+              resources: ["api-hooks.js", "hooks/websocket-hooks.js", "hooks/worker-hooks.js", "parquet_wasm_bg.wasm"],
               matches: ["<all_urls>"],
             },
           ],
@@ -76,6 +76,12 @@ export default defineConfig({
           },
           {
             js: ["hooks/websocket-hooks.js"],
+            matches: ["<all_urls>"],
+            run_at: "document_start",
+            world: "MAIN",
+          },
+          {
+            js: ["hooks/worker-hooks.js"],
             matches: ["<all_urls>"],
             run_at: "document_start",
             world: "MAIN",

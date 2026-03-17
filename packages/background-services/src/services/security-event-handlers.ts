@@ -115,6 +115,33 @@ export interface SuspiciousDownloadData {
   mimeType: string;
 }
 
+export interface WorkerCreatedData {
+  source?: string;
+  url?: string;
+  isBlobUrl?: boolean;
+  type?: string;
+  timestamp?: number;
+  pageUrl?: string;
+}
+
+export interface SharedWorkerCreatedData {
+  source?: string;
+  url?: string;
+  isBlobUrl?: boolean;
+  name?: string;
+  timestamp?: number;
+  pageUrl?: string;
+}
+
+export interface ServiceWorkerRegisteredData {
+  source?: string;
+  url?: string;
+  scope?: string;
+  type?: string;
+  timestamp?: number;
+  pageUrl?: string;
+}
+
 interface SecurityEventHandlerDependencies {
   addEvent: (event: AuditEventInput) => Promise<unknown>;
   getAlertManager: () => AlertManager;
@@ -576,6 +603,111 @@ export function createSecurityEventHandlers(
           domain: pageDomain,
           hostname: data.hostname,
           isExternal: data.isExternal,
+        },
+      });
+
+      return { success: true };
+    },
+
+    async handleWorkerCreated(
+      data: WorkerCreatedData,
+      sender: chrome.runtime.MessageSender,
+    ): Promise<{ success: boolean }> {
+      const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+      const eventTimestamp = resolveEventTimestamp(data.timestamp, {
+        logger: deps.logger,
+        context: "worker_created",
+      });
+
+      await deps.addEvent({
+        type: "worker_created",
+        domain: pageDomain,
+        timestamp: eventTimestamp,
+        details: {
+          url: data.url,
+          isBlobUrl: data.isBlobUrl,
+          type: data.type,
+          pageUrl: data.pageUrl,
+        },
+      });
+
+      deps.logger.debug({
+        event: "SECURITY_WORKER_CREATED",
+        data: {
+          source: sourceLabel(data.source),
+          domain: pageDomain,
+          url: data.url,
+          isBlobUrl: data.isBlobUrl,
+        },
+      });
+
+      return { success: true };
+    },
+
+    async handleSharedWorkerCreated(
+      data: SharedWorkerCreatedData,
+      sender: chrome.runtime.MessageSender,
+    ): Promise<{ success: boolean }> {
+      const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+      const eventTimestamp = resolveEventTimestamp(data.timestamp, {
+        logger: deps.logger,
+        context: "shared_worker_created",
+      });
+
+      await deps.addEvent({
+        type: "shared_worker_created",
+        domain: pageDomain,
+        timestamp: eventTimestamp,
+        details: {
+          url: data.url,
+          isBlobUrl: data.isBlobUrl,
+          name: data.name,
+          pageUrl: data.pageUrl,
+        },
+      });
+
+      deps.logger.debug({
+        event: "SECURITY_SHARED_WORKER_CREATED",
+        data: {
+          source: sourceLabel(data.source),
+          domain: pageDomain,
+          url: data.url,
+          isBlobUrl: data.isBlobUrl,
+        },
+      });
+
+      return { success: true };
+    },
+
+    async handleServiceWorkerRegistered(
+      data: ServiceWorkerRegisteredData,
+      sender: chrome.runtime.MessageSender,
+    ): Promise<{ success: boolean }> {
+      const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+      const eventTimestamp = resolveEventTimestamp(data.timestamp, {
+        logger: deps.logger,
+        context: "service_worker_registered",
+      });
+
+      await deps.addEvent({
+        type: "service_worker_registered",
+        domain: pageDomain,
+        timestamp: eventTimestamp,
+        details: {
+          url: data.url,
+          scope: data.scope,
+          type: data.type,
+          pageUrl: data.pageUrl,
+        },
+      });
+
+      deps.logger.debug({
+        event: "SECURITY_SERVICE_WORKER_REGISTERED",
+        data: {
+          source: sourceLabel(data.source),
+          domain: pageDomain,
+          url: data.url,
+          scope: data.scope,
         },
       });
 
