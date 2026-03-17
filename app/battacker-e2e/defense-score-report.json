@@ -1,0 +1,701 @@
+{
+  "timestamp": "2026-03-17T14:26:02.478Z",
+  "totalScore": 35,
+  "grade": "F",
+  "testsRun": 60,
+  "blocked": 18,
+  "categories": [
+    {
+      "category": "side-channel",
+      "label": "Side-Channel Attacks",
+      "score": 50,
+      "maxScore": 90,
+      "pct": 56,
+      "blocked": 3,
+      "total": 5,
+      "weight": 0.12
+    },
+    {
+      "category": "network",
+      "label": "Network Attacks",
+      "score": 60,
+      "maxScore": 140,
+      "pct": 43,
+      "blocked": 2,
+      "total": 5,
+      "weight": 0.09
+    },
+    {
+      "category": "client-side",
+      "label": "Client-Side Attacks",
+      "score": 0,
+      "maxScore": 60,
+      "pct": 0,
+      "blocked": 0,
+      "total": 3,
+      "weight": 0.09
+    },
+    {
+      "category": "fingerprinting",
+      "label": "Fingerprinting Attacks",
+      "score": 40,
+      "maxScore": 70,
+      "pct": 57,
+      "blocked": 2,
+      "total": 5,
+      "weight": 0.08
+    },
+    {
+      "category": "covert",
+      "label": "Covert Channel Attacks",
+      "score": 30,
+      "maxScore": 120,
+      "pct": 25,
+      "blocked": 1,
+      "total": 5,
+      "weight": 0.08
+    },
+    {
+      "category": "media",
+      "label": "Media Capture Attacks",
+      "score": 60,
+      "maxScore": 90,
+      "pct": 67,
+      "blocked": 2,
+      "total": 3,
+      "weight": 0.07
+    },
+    {
+      "category": "worker",
+      "label": "Worker Attacks",
+      "score": 50,
+      "maxScore": 80,
+      "pct": 63,
+      "blocked": 2,
+      "total": 3,
+      "weight": 0.07
+    },
+    {
+      "category": "privacy",
+      "label": "Privacy Attacks",
+      "score": 30,
+      "maxScore": 75,
+      "pct": 40,
+      "blocked": 1,
+      "total": 5,
+      "weight": 0.06
+    },
+    {
+      "category": "injection",
+      "label": "Injection Attacks",
+      "score": 20,
+      "maxScore": 100,
+      "pct": 20,
+      "blocked": 1,
+      "total": 4,
+      "weight": 0.06
+    },
+    {
+      "category": "phishing",
+      "label": "Phishing Attacks",
+      "score": 10,
+      "maxScore": 50,
+      "pct": 20,
+      "blocked": 1,
+      "total": 3,
+      "weight": 0.05
+    },
+    {
+      "category": "download",
+      "label": "Download Attacks",
+      "score": 0,
+      "maxScore": 70,
+      "pct": 0,
+      "blocked": 0,
+      "total": 3,
+      "weight": 0.05
+    },
+    {
+      "category": "persistence",
+      "label": "Persistence Attacks",
+      "score": 0,
+      "maxScore": 35,
+      "pct": 0,
+      "blocked": 0,
+      "total": 3,
+      "weight": 0.05
+    },
+    {
+      "category": "cryptojacking",
+      "label": "Cryptojacking Attacks",
+      "score": 60,
+      "maxScore": 100,
+      "pct": 60,
+      "blocked": 2,
+      "total": 4,
+      "weight": 0.05
+    },
+    {
+      "category": "storage",
+      "label": "Storage Attacks",
+      "score": 0,
+      "maxScore": 60,
+      "pct": 0,
+      "blocked": 0,
+      "total": 4,
+      "weight": 0.04
+    },
+    {
+      "category": "advanced",
+      "label": "Advanced Exploitation",
+      "score": 20,
+      "maxScore": 90,
+      "pct": 22,
+      "blocked": 1,
+      "total": 5,
+      "weight": 0.04
+    }
+  ],
+  "results": [
+    {
+      "id": "network-beacon",
+      "name": "Tracking Beacon",
+      "category": "network",
+      "severity": "high",
+      "blocked": false,
+      "executionTime": 936.8000000715256,
+      "details": "Beacon sent (status: 200)"
+    },
+    {
+      "id": "network-exfiltration",
+      "name": "Data Exfiltration",
+      "category": "network",
+      "severity": "critical",
+      "blocked": false,
+      "executionTime": 192.60000002384186,
+      "details": "Exfiltration simulated (status: 200)"
+    },
+    {
+      "id": "network-c2",
+      "name": "C2 Communication",
+      "category": "network",
+      "severity": "critical",
+      "blocked": false,
+      "executionTime": 481.90000009536743,
+      "details": "C2 polling successful, received 275 bytes"
+    },
+    {
+      "id": "network-websocket-c2",
+      "name": "WebSocket C2 Communication",
+      "category": "network",
+      "severity": "critical",
+      "blocked": true,
+      "executionTime": 0.30000007152557373,
+      "details": "WebSocket blocked: WebSocket connection to external host blocked by security policy"
+    },
+    {
+      "id": "network-webworker-exfil",
+      "name": "Web Worker Exfiltration",
+      "category": "network",
+      "severity": "critical",
+      "blocked": true,
+      "executionTime": 0.3999999761581421,
+      "details": "Worker exfil blocked: Blob Worker creation blocked by security policy"
+    },
+    {
+      "id": "phishing-clipboard",
+      "name": "Clipboard Hijacking",
+      "category": "phishing",
+      "severity": "high",
+      "blocked": false,
+      "executionTime": 0.3999999761581421,
+      "details": "Clipboard hijack successful"
+    },
+    {
+      "id": "phishing-credential-api",
+      "name": "Credential API Harvest",
+      "category": "phishing",
+      "severity": "high",
+      "blocked": false,
+      "executionTime": 0.3999999761581421,
+      "details": "No stored credentials found"
+    },
+    {
+      "id": "phishing-notification",
+      "name": "Notification Phishing",
+      "category": "phishing",
+      "severity": "medium",
+      "blocked": true,
+      "executionTime": 0.30000007152557373,
+      "details": "Notification permission denied"
+    },
+    {
+      "id": "client-xss",
+      "name": "XSS Payload Injection",
+      "category": "client-side",
+      "severity": "critical",
+      "blocked": false,
+      "executionTime": 0.10000002384185791,
+      "details": "XSS-like injection successful"
+    },
+    {
+      "id": "client-dom",
+      "name": "DOM Manipulation",
+      "category": "client-side",
+      "severity": "medium",
+      "blocked": false,
+      "executionTime": 0,
+      "details": "DOM access: 1 forms, 2 inputs"
+    },
+    {
+      "id": "client-cookie",
+      "name": "Cookie Theft",
+      "category": "client-side",
+      "severity": "high",
+      "blocked": false,
+      "executionTime": 0.20000004768371582,
+      "details": "Cookie access: 0 chars"
+    },
+    {
+      "id": "download-blob",
+      "name": "Blob URL Download",
+      "category": "download",
+      "severity": "high",
+      "blocked": false,
+      "executionTime": 0.5,
+      "details": "Blob URL download link created"
+    },
+    {
+      "id": "download-dataurl",
+      "name": "Data URL Download",
+      "category": "download",
+      "severity": "high",
+      "blocked": false,
+      "executionTime": 0,
+      "details": "Data URL download link created"
+    },
+    {
+      "id": "download-suspicious",
+      "name": "Suspicious File Download",
+      "category": "download",
+      "severity": "critical",
+      "blocked": false,
+      "executionTime": 0,
+      "details": "Suspicious file download link created"
+    },
+    {
+      "id": "persistence-indexeddb",
+      "name": "IndexedDB Data Stash",
+      "category": "persistence",
+      "severity": "high",
+      "blocked": false,
+      "executionTime": 17.100000023841858,
+      "details": "IndexedDB data stash successful"
+    },
+    {
+      "id": "persistence-cache-api",
+      "name": "Cache API Abuse",
+      "category": "persistence",
+      "severity": "medium",
+      "blocked": false,
+      "executionTime": 2,
+      "details": "Cache API abuse successful"
+    },
+    {
+      "id": "persistence-history",
+      "name": "History State Exfil",
+      "category": "persistence",
+      "severity": "low",
+      "blocked": false,
+      "executionTime": 0.20000004768371582,
+      "details": "History state exfil successful"
+    },
+    {
+      "id": "side-channel-canvas",
+      "name": "Canvas Fingerprinting",
+      "category": "side-channel",
+      "severity": "medium",
+      "blocked": true,
+      "executionTime": 0.6999999284744263,
+      "details": "Canvas fingerprinting returned empty data"
+    },
+    {
+      "id": "side-channel-timing",
+      "name": "Performance Timing Attack",
+      "category": "side-channel",
+      "severity": "medium",
+      "blocked": false,
+      "executionTime": 0,
+      "details": "Performance timing: 4 metrics collected"
+    },
+    {
+      "id": "side-channel-broadcast",
+      "name": "BroadcastChannel Leak",
+      "category": "side-channel",
+      "severity": "high",
+      "blocked": true,
+      "executionTime": 0,
+      "details": "BroadcastChannel blocked: BroadcastChannel blocked by security policy"
+    },
+    {
+      "id": "side-channel-spectre-mitigation",
+      "name": "Spectre Timing Mitigation Check",
+      "category": "side-channel",
+      "severity": "critical",
+      "blocked": false,
+      "executionTime": 0.09999990463256836,
+      "details": "High-precision timer available - resolution 0.000000ms"
+    },
+    {
+      "id": "side-channel-sharedarraybuffer",
+      "name": "SharedArrayBuffer Isolation Check",
+      "category": "side-channel",
+      "severity": "high",
+      "blocked": true,
+      "executionTime": 0,
+      "details": "SharedArrayBuffer disabled - Cross-Origin Isolation not enabled"
+    },
+    {
+      "id": "fingerprint-webgl",
+      "name": "WebGL Fingerprinting",
+      "category": "fingerprinting",
+      "severity": "high",
+      "blocked": true,
+      "executionTime": 3.899999976158142,
+      "details": "WebGL blocked: WebGL fingerprinting blocked by security policy"
+    },
+    {
+      "id": "fingerprint-audio",
+      "name": "Audio Fingerprinting",
+      "category": "fingerprinting",
+      "severity": "high",
+      "blocked": true,
+      "executionTime": 0,
+      "details": "Audio blocked: AudioContext blocked by fingerprinting protection"
+    },
+    {
+      "id": "fingerprint-font",
+      "name": "Font Fingerprinting",
+      "category": "fingerprinting",
+      "severity": "medium",
+      "blocked": false,
+      "executionTime": 9.399999976158142,
+      "details": "Font fingerprint: 10/10 fonts detected"
+    },
+    {
+      "id": "fingerprint-screen",
+      "name": "Screen Fingerprinting",
+      "category": "fingerprinting",
+      "severity": "medium",
+      "blocked": false,
+      "executionTime": 0,
+      "details": "Screen fingerprint: 1920x1080 @ 1x"
+    },
+    {
+      "id": "fingerprint-navigator",
+      "name": "Navigator Fingerprinting",
+      "category": "fingerprinting",
+      "severity": "medium",
+      "blocked": false,
+      "executionTime": 0.09999990463256836,
+      "details": "Navigator fingerprint: 6 properties collected"
+    },
+    {
+      "id": "cryptojacking-cpu",
+      "name": "CPU Mining Simulation",
+      "category": "cryptojacking",
+      "severity": "high",
+      "blocked": false,
+      "executionTime": 200,
+      "details": "CPU mining: 3282870 h/s (656574 hashes)"
+    },
+    {
+      "id": "cryptojacking-worker",
+      "name": "Web Worker Mining",
+      "category": "cryptojacking",
+      "severity": "critical",
+      "blocked": true,
+      "executionTime": 0.19999992847442627,
+      "details": "Worker mining blocked: Blob Worker creation blocked by security policy"
+    },
+    {
+      "id": "cryptojacking-multi-worker",
+      "name": "Multi-Worker Mining Pool",
+      "category": "cryptojacking",
+      "severity": "critical",
+      "blocked": true,
+      "executionTime": 0.19999992847442627,
+      "details": "Multi-worker mining blocked: Blob Worker creation blocked by security policy"
+    },
+    {
+      "id": "cryptojacking-wasm",
+      "name": "WASM Mining Capability",
+      "category": "cryptojacking",
+      "severity": "high",
+      "blocked": false,
+      "executionTime": 100.29999995231628,
+      "details": "WASM mining: 458400000 ops/s"
+    },
+    {
+      "id": "privacy-geolocation",
+      "name": "Geolocation Tracking",
+      "category": "privacy",
+      "severity": "critical",
+      "blocked": true,
+      "executionTime": 0.3999999761581421,
+      "details": "Geolocation permission denied"
+    },
+    {
+      "id": "privacy-battery",
+      "name": "Battery Info Extraction",
+      "category": "privacy",
+      "severity": "medium",
+      "blocked": false,
+      "executionTime": 0,
+      "details": "Battery: 87% (charging)"
+    },
+    {
+      "id": "privacy-motion",
+      "name": "Device Motion Tracking",
+      "category": "privacy",
+      "severity": "high",
+      "blocked": false,
+      "executionTime": 18.399999976158142,
+      "details": "Motion data: x=undefined"
+    },
+    {
+      "id": "privacy-media-devices",
+      "name": "Media Device Enumeration",
+      "category": "privacy",
+      "severity": "medium",
+      "blocked": false,
+      "executionTime": 206,
+      "details": "Media devices: 1 cameras, 1 mics"
+    },
+    {
+      "id": "privacy-storage-estimate",
+      "name": "Storage Estimation Probe",
+      "category": "privacy",
+      "severity": "low",
+      "blocked": false,
+      "executionTime": 0.19999992847442627,
+      "details": "Storage: 0.00MB used of 136.96GB"
+    },
+    {
+      "id": "media-screen-capture",
+      "name": "Screen Capture Attack",
+      "category": "media",
+      "severity": "critical",
+      "blocked": false,
+      "executionTime": 3002.0999999046326,
+      "details": "Screen capture permission pending"
+    },
+    {
+      "id": "media-audio-capture",
+      "name": "Audio Recording Attack",
+      "category": "media",
+      "severity": "critical",
+      "blocked": true,
+      "executionTime": 59.40000009536743,
+      "details": "Audio capture blocked"
+    },
+    {
+      "id": "media-device-capture",
+      "name": "Full Media Capture Attack",
+      "category": "media",
+      "severity": "critical",
+      "blocked": true,
+      "executionTime": 33.800000071525574,
+      "details": "Media capture blocked"
+    },
+    {
+      "id": "storage-localstorage-exfil",
+      "name": "localStorage Exfiltration",
+      "category": "storage",
+      "severity": "high",
+      "blocked": false,
+      "executionTime": 0.2999999523162842,
+      "details": "localStorage exfil: 52 bytes"
+    },
+    {
+      "id": "storage-sessionstorage-exfil",
+      "name": "sessionStorage Exfiltration",
+      "category": "storage",
+      "severity": "high",
+      "blocked": false,
+      "executionTime": 2.200000047683716,
+      "details": "sessionStorage exfil: 65 bytes"
+    },
+    {
+      "id": "storage-event-spy",
+      "name": "Storage Event Spying",
+      "category": "storage",
+      "severity": "medium",
+      "blocked": false,
+      "executionTime": 101.40000009536743,
+      "details": "Storage event listener set (single-tab test)"
+    },
+    {
+      "id": "storage-quota-exhaustion",
+      "name": "Storage Quota Exhaustion",
+      "category": "storage",
+      "severity": "medium",
+      "blocked": false,
+      "executionTime": 1.5,
+      "details": "Storage quota probe: 2048000 bytes stored"
+    },
+    {
+      "id": "worker-shared-worker",
+      "name": "SharedWorker Persistence",
+      "category": "worker",
+      "severity": "critical",
+      "blocked": false,
+      "executionTime": 3,
+      "details": "SharedWorker communication successful"
+    },
+    {
+      "id": "worker-service-worker-registration",
+      "name": "Service Worker Registration",
+      "category": "worker",
+      "severity": "critical",
+      "blocked": true,
+      "executionTime": 0.5,
+      "details": "Service Worker blocked: Failed to register a ServiceWorker: The URL protocol of the script ('blob:http://127.0.0.1:56954/7d2cfb09-4764-4858-a582-6f80169ae795') is not supported."
+    },
+    {
+      "id": "worker-spawning-chain",
+      "name": "Worker Spawning Chain",
+      "category": "worker",
+      "severity": "high",
+      "blocked": true,
+      "executionTime": 0.20000004768371582,
+      "details": "Worker chain blocked: Blob Worker creation blocked by security policy"
+    },
+    {
+      "id": "injection-clipboard-read",
+      "name": "Silent Clipboard Read",
+      "category": "injection",
+      "severity": "high",
+      "blocked": true,
+      "executionTime": 12.5,
+      "details": "Clipboard read blocked: Failed to execute 'readText' on 'Clipboard': Read permission denied."
+    },
+    {
+      "id": "injection-fullscreen-phishing",
+      "name": "Fullscreen Phishing Overlay",
+      "category": "injection",
+      "severity": "critical",
+      "blocked": false,
+      "executionTime": 0.7000000476837158,
+      "details": "Fullscreen takeover successful"
+    },
+    {
+      "id": "injection-innerhtml",
+      "name": "innerHTML Malicious Injection",
+      "category": "injection",
+      "severity": "high",
+      "blocked": false,
+      "executionTime": 0.7000000476837158,
+      "details": "innerHTML injection: dangerous elements persisted"
+    },
+    {
+      "id": "injection-dynamic-script",
+      "name": "Dynamic Script Execution",
+      "category": "injection",
+      "severity": "critical",
+      "blocked": false,
+      "executionTime": 0,
+      "details": "Function constructor execution successful"
+    },
+    {
+      "id": "covert-beacon-api",
+      "name": "Beacon API Data Exfiltration",
+      "category": "covert",
+      "severity": "critical",
+      "blocked": false,
+      "executionTime": 0.5,
+      "details": "Beacon API exfiltration successful"
+    },
+    {
+      "id": "covert-dns-prefetch-leak",
+      "name": "DNS Prefetch Covert Channel",
+      "category": "covert",
+      "severity": "high",
+      "blocked": false,
+      "executionTime": 101.70000004768372,
+      "details": "DNS prefetch leak: covert channel established"
+    },
+    {
+      "id": "covert-webtransport",
+      "name": "WebTransport Tunnel",
+      "category": "covert",
+      "severity": "critical",
+      "blocked": true,
+      "executionTime": 2.100000023841858,
+      "details": "WebTransport blocked: Opening handshake failed."
+    },
+    {
+      "id": "covert-webrtc-datachannel",
+      "name": "WebRTC DataChannel P2P",
+      "category": "covert",
+      "severity": "critical",
+      "blocked": false,
+      "executionTime": 3085.2999999523163,
+      "details": "WebRTC DataChannel timed out"
+    },
+    {
+      "id": "covert-image-load-timing",
+      "name": "Image Load Timing Covert Channel",
+      "category": "covert",
+      "severity": "medium",
+      "blocked": false,
+      "executionTime": 1361.5999999046326,
+      "details": "Image timing channel: avg 591ms"
+    },
+    {
+      "id": "advanced-form-submit-hijack",
+      "name": "Form Submission Hijacking",
+      "category": "advanced",
+      "severity": "high",
+      "blocked": false,
+      "executionTime": 0.19999992847442627,
+      "details": "Form submission hijacking successful"
+    },
+    {
+      "id": "advanced-prototype-pollution",
+      "name": "Prototype Chain Pollution",
+      "category": "advanced",
+      "severity": "critical",
+      "blocked": false,
+      "executionTime": 0,
+      "details": "Prototype pollution successful"
+    },
+    {
+      "id": "advanced-request-header-injection",
+      "name": "Request Header Injection",
+      "category": "advanced",
+      "severity": "medium",
+      "blocked": false,
+      "executionTime": 1349.6000000238419,
+      "details": "Request header injection: custom headers sent"
+    },
+    {
+      "id": "advanced-mutation-observer-xss",
+      "name": "MutationObserver DOM XSS",
+      "category": "advanced",
+      "severity": "high",
+      "blocked": true,
+      "executionTime": 0.20000004768371582,
+      "details": "MutationObserver XSS blocked"
+    },
+    {
+      "id": "advanced-cors-preflight-leak",
+      "name": "CORS Preflight Timing Leak",
+      "category": "advanced",
+      "severity": "medium",
+      "blocked": false,
+      "executionTime": 720.3999999761581,
+      "details": "CORS preflight timing: 720ms"
+    }
+  ]
+}

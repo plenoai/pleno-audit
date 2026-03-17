@@ -22,11 +22,16 @@
           hostname: parsed.hostname,
           protocol: parsed.protocol,
           isExternal: true,
+          blocked: true,
           timestamp: Date.now(),
           pageUrl: location.href
         })
+        // Block external WebSocket connections (C2 prevention)
+        throw new DOMException('WebSocket connection to external host blocked by security policy', 'SecurityError')
       }
-    } catch(e) {}
+    } catch(e) {
+      if (e instanceof DOMException) throw e
+    }
 
     if (protocols !== undefined) {
       return new OriginalWebSocket(url, protocols)

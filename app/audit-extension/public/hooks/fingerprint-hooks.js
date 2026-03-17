@@ -14,25 +14,16 @@
 
   HTMLCanvasElement.prototype.toDataURL = function() {
     canvasCallCount++
-    if (canvasCallCount >= 2) {
-      emitSecurityEvent('__CANVAS_FINGERPRINT_DETECTED__', {
-        callCount: canvasCallCount,
-        canvasWidth: this.width,
-        canvasHeight: this.height,
-        blocked: true,
-        timestamp: Date.now(),
-        pageUrl: location.href
-      })
-      // Block fingerprinting by returning minimal data (length <= 100 triggers blocked=true)
-      return 'data:,'
-    }
-    if (!canvasCallResetTimer) {
-      canvasCallResetTimer = setTimeout(function() {
-        canvasCallCount = 0
-        canvasCallResetTimer = null
-      }, 5000)
-    }
-    return originalToDataURL.apply(this, arguments)
+    emitSecurityEvent('__CANVAS_FINGERPRINT_DETECTED__', {
+      callCount: canvasCallCount,
+      canvasWidth: this.width,
+      canvasHeight: this.height,
+      blocked: true,
+      timestamp: Date.now(),
+      pageUrl: location.href
+    })
+    // Always return minimal data to prevent canvas fingerprinting
+    return 'data:,'
   }
 
   // WebGL fingerprinting detection
