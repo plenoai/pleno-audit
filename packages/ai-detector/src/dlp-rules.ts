@@ -88,7 +88,7 @@ export interface DLPAnalysisResult {
 /**
  * 全DLPルール（基本パターン + 拡張パターン）
  */
-export const ALL_DLP_RULES: DLPRule[] = [
+const BASE_DLP_RULES: DLPRule[] = [
   // === Base: Credentials ===
   {
     id: "base-api-key",
@@ -314,6 +314,9 @@ export const ALL_DLP_RULES: DLPRule[] = [
     enabled: true,
   },
 
+];
+
+const EXTENDED_DLP_RULES_INTERNAL: DLPRule[] = [
   // === Extended: Additional API Keys ===
   {
     id: "google-api-key",
@@ -476,12 +479,21 @@ export const ALL_DLP_RULES: DLPRule[] = [
   },
 ];
 
+export const ALL_DLP_RULES: DLPRule[] = [
+  ...BASE_DLP_RULES,
+  ...EXTENDED_DLP_RULES_INTERNAL,
+];
+
 /**
  * 拡張ルールのみ（後方互換）
  */
-export const EXTENDED_DLP_RULES: DLPRule[] = ALL_DLP_RULES.filter(
-  (r) => !r.id.startsWith("base-")
-);
+export const EXTENDED_DLP_RULES: DLPRule[] = EXTENDED_DLP_RULES_INTERNAL;
+
+const RULE_CATALOG = {
+  all: ALL_DLP_RULES,
+  base: BASE_DLP_RULES,
+  extended: EXTENDED_DLP_RULES_INTERNAL,
+} as const;
 
 // ============================================================================
 // Sensitive Data Detection Functions
@@ -502,44 +514,79 @@ function maskText(text: string): string {
   );
 }
 
-/**
- * テキスト内の機密データを検出
- */
-export function detectSensitiveData(text: string): SensitiveDataResult[] {
-  const results: SensitiveDataResult[] = [];
-  const baseRules = ALL_DLP_RULES.filter((r) => r.id.startsWith("base-") && r.enabled);
+function getBaseEnabledRules(): DLPRule[] {
+  return RULE_CATALOG.base.filter((r) => r.enabled);
+}
 
-  for (const rule of baseRules) {
+function scanRules<T>(
+  text: string,
+  rules: DLPRule[],
+  onMatch: (rule: DLPRule, match: RegExpExecArray) => T
+): T[] {
+  const results: T[] = [];
+  for (const rule of rules) {
     const regex = new RegExp(rule.pattern.source, rule.pattern.flags);
     let match: RegExpExecArray | null;
 
     while ((match = regex.exec(text)) !== null) {
-      results.push({
-        classification: rule.classification,
-        confidence: rule.confidence,
-        pattern: rule.name,
-        matchedText: maskText(match[0]),
-        position: match.index,
-      });
+      results.push(onMatch(rule, match));
     }
   }
-
   return results;
 }
 
-/**
- * 機密データが含まれているかチェック
- */
-export function hasSensitiveData(text: string): boolean {
-  const baseRules = ALL_DLP_RULES.filter((r) => r.id.startsWith("base-") && r.enabled);
-
-  for (const rule of baseRules) {
+function hasAnyMatch(text: string, rules: DLPRule[]): boolean {
+  for (const rule of rules) {
     const regex = new RegExp(rule.pattern.source, rule.pattern.flags);
     if (regex.test(text)) {
       return true;
     }
   }
   return false;
+}
+
+function toSensitiveDataResult(
+  rule: DLPRule,
+  match: RegExpExecArray
+): SensitiveDataResult {
+  return {
+    classification: rule.classification,
+    confidence: rule.confidence,
+    pattern: rule.name,
+    matchedText: maskText(match[0]),
+    position: match.index,
+  };
+}
+
+function toDLPDetectionResult(
+  rule: DLPRule,
+  match: RegExpExecArray
+): DLPDetectionResult {
+  return {
+    classification: rule.classification,
+    confidence: rule.confidence,
+    pattern: rule.name,
+    matchedText: maskText(match[0]),
+    position: match.index,
+    ruleId: rule.id,
+    ruleName: rule.name,
+    blocked: false,
+  };
+}
+
+/**
+ * テキスト内の機密データを検出
+ */
+export function detectSensitiveData(text: string): SensitiveDataResult[] {
+  const baseRules = getBaseEnabledRules();
+  return scanRules(text, baseRules, toSensitiveDataResult);
+}
+
+/**
+ * 機密データが含まれているかチェック
+ */
+export function hasSensitiveData(text: string): boolean {
+  return hasAnyMatch(text, getBaseEnabledRules());
 }
 
 /**
@@ -644,69 +691,17 @@ export function createDLPManager(config: DLPConfig = DEFAULT_DLP_CONFIG) {
 
   function analyze(text: string): DLPAnalysisResult {
     if (!currentConfig.enabled) {
-      return {
-        detected: [],
-        blocked: false,
-        riskLevel: "none",
-        summary: {
-          total: 0,
-          byClassification: {
-            credentials: 0,
-            pii: 0,
-            financial: 0,
-            health: 0,
-            code: 0,
-            internal: 0,
-            unknown: 0,
-          },
-          highConfidenceCount: 0,
-        },
-      };
+      return createEmptyAnalysisResult();
     }
 
-    const allResults: DLPDetectionResult[] = [];
-
-    for (const rule of currentConfig.rules.filter((r) => r.enabled)) {
-      const regex = new RegExp(rule.pattern.source, rule.pattern.flags);
-      let match: RegExpExecArray | null;
-
-      while ((match = regex.exec(text)) !== null) {
-        allResults.push({
-          classification: rule.classification,
-          confidence: rule.confidence,
-          pattern: rule.name,
-          matchedText: maskText(match[0]),
-          position: match.index,
-          ruleId: rule.id,
-          ruleName: rule.name,
-          blocked: false,
-        });
-      }
-    }
+    const enabledRules = currentConfig.rules.filter((r) => r.enabled);
+    const allResults = scanRules(text, enabledRules, toDLPDetectionResult);
 
     // 重複除去
     const merged = mergeResults(allResults);
 
     // ブロック判定
-    const shouldBlock =
-      currentConfig.blockOnHighRisk &&
-      merged.some(
-        (r) =>
-          r.confidence === "high" &&
-          (r.classification === "credentials" || r.classification === "financial")
-      );
-
-    if (shouldBlock) {
-      for (const r of merged) {
-        if (
-          r.confidence === "high" &&
-          (r.classification === "credentials" ||
-            r.classification === "financial")
-        ) {
-          r.blocked = true;
-        }
-      }
-    }
+    const shouldBlock = applyBlockingPolicy(merged, currentConfig.blockOnHighRisk);
 
     const summary = createSummary(merged);
     const riskLevel = calculateRiskLevel(merged);
@@ -748,6 +743,53 @@ export type DLPManager = ReturnType<typeof createDLPManager>;
 // ============================================================================
 // Helper Functions
 // ============================================================================
+
+function createEmptyAnalysisResult(): DLPAnalysisResult {
+  return {
+    detected: [],
+    blocked: false,
+    riskLevel: "none",
+    summary: {
+      total: 0,
+      byClassification: {
+        credentials: 0,
+        pii: 0,
+        financial: 0,
+        health: 0,
+        code: 0,
+        internal: 0,
+        unknown: 0,
+      },
+      highConfidenceCount: 0,
+    },
+  };
+}
+
+function applyBlockingPolicy(
+  results: DLPDetectionResult[],
+  blockOnHighRisk: boolean
+): boolean {
+  if (!blockOnHighRisk) return false;
+
+  const shouldBlock = results.some(
+    (r) =>
+      r.confidence === "high" &&
+      (r.classification === "credentials" || r.classification === "financial")
+  );
+
+  if (shouldBlock) {
+    for (const r of results) {
+      if (
+        r.confidence === "high" &&
+        (r.classification === "credentials" || r.classification === "financial")
+      ) {
+        r.blocked = true;
+      }
+    }
+  }
+
+  return shouldBlock;
+}
 
 function mergeResults(results: DLPDetectionResult[]): DLPDetectionResult[] {
   const merged: DLPDetectionResult[] = [];
