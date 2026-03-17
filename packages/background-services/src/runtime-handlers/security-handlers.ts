@@ -88,5 +88,17 @@ export function createSecurityEventHandlers(
       execute: (message, sender) => deps.handleGeolocationAccessed(message.data, sender),
       fallback: () => ({ success: false }),
     }],
+    ["CANVAS_FINGERPRINT_DETECTED", {
+      execute: (message, sender) => deps.handleCanvasFingerprint(message.data, sender),
+      fallback: () => ({ success: false }),
+    }],
+    ["WEBGL_FINGERPRINT_DETECTED", {
+      execute: (message, sender) => deps.handleWebGLFingerprint(message.data, sender),
+      fallback: () => ({ success: false }),
+    }],
+    ["AUDIO_FINGERPRINT_DETECTED", {
+      execute: (message, sender) => deps.handleAudioFingerprint(message.data, sender),
+      fallback: () => ({ success: false }),
+    }],
   ];
 }

@@ -73,6 +73,9 @@ import {
   type FullscreenPhishingData,
   type ClipboardReadData,
   type GeolocationAccessedData,
+  type CanvasFingerprintData,
+  type WebGLFingerprintData,
+  type AudioFingerprintData,
 } from "@pleno-audit/background-services";
 import {
   createExtensionNetworkService,
@@ -476,6 +479,9 @@ handleNetworkInspection: (data, sender) => networkSecurityInspector.handleNetwor
     handleFullscreenPhishing: (data, sender) => securityEventHandlers.handleFullscreenPhishing(data as FullscreenPhishingData, sender),
     handleClipboardRead: (data, sender) => securityEventHandlers.handleClipboardRead(data as ClipboardReadData, sender),
     handleGeolocationAccessed: (data, sender) => securityEventHandlers.handleGeolocationAccessed(data as GeolocationAccessedData, sender),
+    handleCanvasFingerprint: (data, sender) => securityEventHandlers.handleCanvasFingerprint(data as CanvasFingerprintData, sender),
+    handleWebGLFingerprint: (data, sender) => securityEventHandlers.handleWebGLFingerprint(data as WebGLFingerprintData, sender),
+    handleAudioFingerprint: (data, sender) => securityEventHandlers.handleAudioFingerprint(data as AudioFingerprintData, sender),
     getCSPReports: cspReportingService.getCSPReports,
     generateCSPPolicy: cspReportingService.generateCSPPolicy,
     generateCSPPolicyByDomain: cspReportingService.generateCSPPolicyByDomain,

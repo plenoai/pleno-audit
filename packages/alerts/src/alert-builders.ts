@@ -25,6 +25,9 @@ import type {
   XSSInjectionAlertDetails,
   DOMScrapingAlertDetails,
   SuspiciousDownloadAlertDetails,
+  CanvasFingerprintAlertDetails,
+  WebGLFingerprintAlertDetails,
+  AudioFingerprintAlertDetails,
 } from "./types.js";
 
 export interface CreateAlertInput {
@@ -805,4 +808,91 @@ const SUSPICIOUS_DOWNLOAD_ALERT_DEFINITION: AlertDefinition<
 
 export const buildSuspiciousDownloadAlert = createAlertBuilder(
   SUSPICIOUS_DOWNLOAD_ALERT_DEFINITION
+);
+
+export interface CanvasFingerprintAlertParams {
+  domain: string;
+  callCount: number;
+  canvasWidth: number;
+  canvasHeight: number;
+}
+
+const CANVAS_FINGERPRINT_ALERT_DEFINITION: AlertDefinition<
+  CanvasFingerprintAlertParams,
+  CanvasFingerprintAlertDetails
+> = {
+  category: "canvas_fingerprint",
+  detailsType: "canvas_fingerprint",
+  build: (params) => ({
+    severity: "high",
+    title: `Canvas指紋採取検出: ${params.domain}`,
+    description: `Canvas APIを${params.callCount}回呼び出してフィンガープリントを収集`,
+    domain: params.domain,
+    details: {
+      domain: params.domain,
+      callCount: params.callCount,
+      canvasWidth: params.canvasWidth,
+      canvasHeight: params.canvasHeight,
+    },
+  }),
+};
+
+export const buildCanvasFingerprintAlert = createAlertBuilder(
+  CANVAS_FINGERPRINT_ALERT_DEFINITION
+);
+
+export interface WebGLFingerprintAlertParams {
+  domain: string;
+  parameter: number;
+}
+
+const WEBGL_FINGERPRINT_ALERT_DEFINITION: AlertDefinition<
+  WebGLFingerprintAlertParams,
+  WebGLFingerprintAlertDetails
+> = {
+  category: "webgl_fingerprint",
+  detailsType: "webgl_fingerprint",
+  build: (params) => ({
+    severity: "high",
+    title: `WebGL指紋採取検出: ${params.domain}`,
+    description: "WebGLパラメータを取得してフィンガープリントを収集",
+    domain: params.domain,
+    details: {
+      domain: params.domain,
+      parameter: params.parameter,
+    },
+  }),
+};
+
+export const buildWebGLFingerprintAlert = createAlertBuilder(
+  WEBGL_FINGERPRINT_ALERT_DEFINITION
+);
+
+export interface AudioFingerprintAlertParams {
+  domain: string;
+  contextCount: number;
+  sampleRate?: number;
+}
+
+const AUDIO_FINGERPRINT_ALERT_DEFINITION: AlertDefinition<
+  AudioFingerprintAlertParams,
+  AudioFingerprintAlertDetails
+> = {
+  category: "audio_fingerprint",
+  detailsType: "audio_fingerprint",
+  build: (params) => ({
+    severity: "high",
+    title: `Audio指紋採取検出: ${params.domain}`,
+    description: `AudioContextを${params.contextCount}回生成してフィンガープリントを収集`,
+    domain: params.domain,
+    details: {
+      domain: params.domain,
+      contextCount: params.contextCount,
+      sampleRate: params.sampleRate,
+    },
+  }),
+};
+
+export const buildAudioFingerprintAlert = createAlertBuilder(
+  AUDIO_FINGERPRINT_ALERT_DEFINITION
 );

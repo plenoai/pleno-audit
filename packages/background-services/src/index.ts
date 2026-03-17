@@ -44,4 +44,7 @@ export {
   type FullscreenPhishingData,
   type ClipboardReadData,
   type GeolocationAccessedData,
+  type CanvasFingerprintData,
+  type WebGLFingerprintData,
+  type AudioFingerprintData,
 } from "./services/security-event-handlers.js";

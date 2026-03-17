@@ -33,7 +33,10 @@ export type AlertCategory =
   | "cookie_access" // Suspicious cookie access
   | "xss_injection" // XSS payload detected
   | "dom_scraping" // DOM scraping detected
-  | "suspicious_download"; // Suspicious file download
+  | "suspicious_download" // Suspicious file download
+  | "canvas_fingerprint" // Canvas fingerprinting detected
+  | "webgl_fingerprint" // WebGL fingerprinting detected
+  | "audio_fingerprint"; // AudioContext fingerprinting detected
 
 /**
  * Alert status
@@ -85,7 +88,10 @@ export type AlertDetails =
   | CookieAccessAlertDetails
   | XSSInjectionAlertDetails
   | DOMScrapingAlertDetails
-  | SuspiciousDownloadAlertDetails;
+  | SuspiciousDownloadAlertDetails
+  | CanvasFingerprintAlertDetails
+  | WebGLFingerprintAlertDetails
+  | AudioFingerprintAlertDetails;
 
 export interface NRDAlertDetails {
   type: "nrd";
@@ -253,6 +259,27 @@ export interface SuspiciousDownloadAlertDetails {
   extension: string;
   size: number;
   mimeType: string;
+}
+
+export interface CanvasFingerprintAlertDetails {
+  type: "canvas_fingerprint";
+  domain: string;
+  callCount: number;
+  canvasWidth: number;
+  canvasHeight: number;
+}
+
+export interface WebGLFingerprintAlertDetails {
+  type: "webgl_fingerprint";
+  domain: string;
+  parameter: number;
+}
+
+export interface AudioFingerprintAlertDetails {
+  type: "audio_fingerprint";
+  domain: string;
+  contextCount: number;
+  sampleRate?: number;
 }
 
 /**

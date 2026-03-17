@@ -107,6 +107,9 @@ handleNetworkInspection: (data: unknown, sender: chrome.runtime.MessageSender) =
   handleFullscreenPhishing: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
   handleClipboardRead: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
   handleGeolocationAccessed: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
+  handleCanvasFingerprint: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
+  handleWebGLFingerprint: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
+  handleAudioFingerprint: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
 
   getCSPReports: (options?: {
     type?: "csp-violation" | "network-request";
