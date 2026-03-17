@@ -17,9 +17,15 @@
       url: isBlobUrl ? 'blob:' : url,
       isBlobUrl: isBlobUrl,
       type: options?.type || 'classic',
+      blocked: isBlobUrl,
       timestamp: Date.now(),
       pageUrl: location.href
     })
+
+    // Block blob URL workers (cryptojacking/exfiltration prevention)
+    if (isBlobUrl) {
+      throw new DOMException('Blob Worker creation blocked by security policy', 'SecurityError')
+    }
 
     return new OriginalWorker(scriptURL, options)
   }

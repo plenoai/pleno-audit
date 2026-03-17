@@ -30,5 +30,10 @@ export default defineConfig({
       use: { browserName: "chromium" },
       testMatch: /extension-dnr-monitor\.test\.ts$/,
     },
+    {
+      name: "defense-score",
+      use: { browserName: "chromium" },
+      testMatch: /defense-score\.test\.ts$/,
+    },
   ],
 });
