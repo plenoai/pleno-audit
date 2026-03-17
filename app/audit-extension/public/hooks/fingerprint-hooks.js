@@ -87,6 +87,27 @@
     }
   }
 
+  // Reduce performance.now() precision to prevent timing attacks (Spectre mitigation)
+  var originalNow = performance.now.bind(performance)
+  performance.now = function() {
+    // Round to 0.1ms (100μs) to prevent high-precision timing attacks
+    return Math.round(originalNow() * 10) / 10
+  }
+
+  // Block RTCPeerConnection (prevents WebRTC data exfiltration)
+  if (window.RTCPeerConnection) {
+    var OriginalRTCPeerConnection = window.RTCPeerConnection
+    window.RTCPeerConnection = function() {
+      emitSecurityEvent('__WEBRTC_BLOCKED__', {
+        blocked: true,
+        timestamp: Date.now(),
+        pageUrl: location.href
+      })
+      throw new DOMException('RTCPeerConnection blocked by security policy', 'NotAllowedError')
+    }
+    window.RTCPeerConnection.prototype = OriginalRTCPeerConnection.prototype
+  }
+
   // BroadcastChannel side-channel blocking
   if (window.BroadcastChannel) {
     var OriginalBroadcastChannel = window.BroadcastChannel
