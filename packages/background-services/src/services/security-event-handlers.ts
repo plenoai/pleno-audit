@@ -1013,5 +1013,38 @@ export function createSecurityEventHandlers(
 
       return { success: true };
     },
+
+    async handleBroadcastChannel(
+      data: { channelName?: string; blocked?: boolean; timestamp?: number; pageUrl?: string; source?: string },
+      sender: chrome.runtime.MessageSender,
+    ): Promise<{ success: boolean }> {
+      const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+      const eventTimestamp = resolveEventTimestamp(data.timestamp, {
+        logger: deps.logger,
+        context: "broadcast_channel_detected",
+      });
+
+      await deps.addEvent({
+        type: "broadcast_channel_detected",
+        domain: pageDomain,
+        timestamp: eventTimestamp,
+        details: {
+          channelName: data.channelName,
+          blocked: data.blocked,
+          pageUrl: data.pageUrl,
+        },
+      });
+
+      deps.logger.warn({
+        event: "SECURITY_BROADCAST_CHANNEL_DETECTED",
+        data: {
+          source: sourceLabel(data.source),
+          domain: pageDomain,
+          channelName: data.channelName,
+        },
+      });
+
+      return { success: true };
+    },
   };
 }

@@ -276,6 +276,7 @@ export default defineContentScript({
       "__CANVAS_FINGERPRINT_DETECTED__",
       "__WEBGL_FINGERPRINT_DETECTED__",
       "__AUDIO_FINGERPRINT_DETECTED__",
+      "__BROADCAST_CHANNEL_DETECTED__",
     ];
 
     for (const eventType of securityEvents) {
