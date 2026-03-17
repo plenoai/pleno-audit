@@ -343,19 +343,19 @@ export function createAlertManager(
   async function alertCanvasFingerprint(
     params: CanvasFingerprintAlertParams
   ): Promise<SecurityAlert | null> {
-    return createAlert(buildCanvasFingerprintAlert(params));
+    return createOptionalAlert(buildCanvasFingerprintAlert(params));
   }
 
   async function alertWebGLFingerprint(
     params: WebGLFingerprintAlertParams
   ): Promise<SecurityAlert | null> {
-    return createAlert(buildWebGLFingerprintAlert(params));
+    return createOptionalAlert(buildWebGLFingerprintAlert(params));
   }
 
   async function alertAudioFingerprint(
     params: AudioFingerprintAlertParams
   ): Promise<SecurityAlert | null> {
-    return createAlert(buildAudioFingerprintAlert(params));
+    return createOptionalAlert(buildAudioFingerprintAlert(params));
   }
 
   async function updateAlertStatus(
