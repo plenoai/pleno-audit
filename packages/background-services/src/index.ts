@@ -35,5 +35,6 @@ export {
   type SupplyChainRiskData,
   type SuspiciousDownloadData,
   type TrackingBeaconData,
+  type WebSocketConnectionData,
   type XSSDetectedData,
 } from "./services/security-event-handlers.js";

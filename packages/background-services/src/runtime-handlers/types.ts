@@ -99,6 +99,7 @@ handleNetworkInspection: (data: unknown, sender: chrome.runtime.MessageSender) =
   handleXSSDetected: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
   handleDOMScraping: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
   handleSuspiciousDownload: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
+  handleWebSocketConnection: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
 
   getCSPReports: (options?: {
     type?: "csp-violation" | "network-request";

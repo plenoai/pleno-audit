@@ -263,6 +263,7 @@ export default defineContentScript({
       "__XSS_DETECTED__",
       "__DOM_SCRAPING_DETECTED__",
       "__SUSPICIOUS_DOWNLOAD_DETECTED__",
+      "__WEBSOCKET_CONNECTION_DETECTED__",
     ];
 
     for (const eventType of securityEvents) {

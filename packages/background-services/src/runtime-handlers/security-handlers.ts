@@ -56,5 +56,9 @@ export function createSecurityEventHandlers(
       execute: (message, sender) => deps.handleSuspiciousDownload(message.data, sender),
       fallback: () => ({ success: false }),
     }],
+    ["WEBSOCKET_CONNECTION_DETECTED", {
+      execute: (message, sender) => deps.handleWebSocketConnection(message.data, sender),
+      fallback: () => ({ success: false }),
+    }],
   ];
 }
