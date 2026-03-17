@@ -40,4 +40,8 @@ export {
   type WorkerCreatedData,
   type SharedWorkerCreatedData,
   type ServiceWorkerRegisteredData,
+  type DynamicCodeExecutionData,
+  type FullscreenPhishingData,
+  type ClipboardReadData,
+  type GeolocationAccessedData,
 } from "./services/security-event-handlers.js";

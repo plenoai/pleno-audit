@@ -99,6 +99,8 @@ export default defineContentScript({
       "DOM_SCRAPING_DETECTED",
       "TRACKING_BEACON_DETECTED",
       "NETWORK_INSPECTION_REQUEST",
+      "DYNAMIC_CODE_EXECUTION_DETECTED",
+      "GEOLOCATION_ACCESSED",
     ]);
     const HIGH_PRIORITY_TYPES = new Set([
       "AI_PROMPT_CAPTURED",
@@ -267,6 +269,10 @@ export default defineContentScript({
       "__WORKER_CREATED__",
       "__SHARED_WORKER_CREATED__",
       "__SERVICE_WORKER_REGISTERED__",
+      "__DYNAMIC_CODE_EXECUTION_DETECTED__",
+      "__FULLSCREEN_PHISHING_DETECTED__",
+      "__CLIPBOARD_READ_DETECTED__",
+      "__GEOLOCATION_ACCESSED__",
     ];
 
     for (const eventType of securityEvents) {

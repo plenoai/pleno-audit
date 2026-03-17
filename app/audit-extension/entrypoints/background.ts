@@ -69,6 +69,10 @@ import {
   type WorkerCreatedData,
   type SharedWorkerCreatedData,
   type ServiceWorkerRegisteredData,
+  type DynamicCodeExecutionData,
+  type FullscreenPhishingData,
+  type ClipboardReadData,
+  type GeolocationAccessedData,
 } from "@pleno-audit/background-services";
 import {
   createExtensionNetworkService,
@@ -468,6 +472,10 @@ handleNetworkInspection: (data, sender) => networkSecurityInspector.handleNetwor
     handleWorkerCreated: (data, sender) => securityEventHandlers.handleWorkerCreated(data as WorkerCreatedData, sender),
     handleSharedWorkerCreated: (data, sender) => securityEventHandlers.handleSharedWorkerCreated(data as SharedWorkerCreatedData, sender),
     handleServiceWorkerRegistered: (data, sender) => securityEventHandlers.handleServiceWorkerRegistered(data as ServiceWorkerRegisteredData, sender),
+    handleDynamicCodeExecution: (data, sender) => securityEventHandlers.handleDynamicCodeExecution(data as DynamicCodeExecutionData, sender),
+    handleFullscreenPhishing: (data, sender) => securityEventHandlers.handleFullscreenPhishing(data as FullscreenPhishingData, sender),
+    handleClipboardRead: (data, sender) => securityEventHandlers.handleClipboardRead(data as ClipboardReadData, sender),
+    handleGeolocationAccessed: (data, sender) => securityEventHandlers.handleGeolocationAccessed(data as GeolocationAccessedData, sender),
     getCSPReports: cspReportingService.getCSPReports,
     generateCSPPolicy: cspReportingService.generateCSPPolicy,
     generateCSPPolicyByDomain: cspReportingService.generateCSPPolicyByDomain,
