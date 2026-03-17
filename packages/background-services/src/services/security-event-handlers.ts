@@ -1046,5 +1046,35 @@ export function createSecurityEventHandlers(
 
       return { success: true };
     },
+
+    async handleWebRTCConnection(
+      data: { ts?: number; timestamp?: number; pageUrl?: string; source?: string },
+      sender: chrome.runtime.MessageSender,
+    ): Promise<{ success: boolean }> {
+      const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+      const eventTimestamp = resolveEventTimestamp(data.ts || data.timestamp, {
+        logger: deps.logger,
+        context: "webrtc_connection_detected",
+      });
+
+      await deps.addEvent({
+        type: "webrtc_connection_detected",
+        domain: pageDomain,
+        timestamp: eventTimestamp,
+        details: {
+          pageUrl: data.pageUrl,
+        },
+      });
+
+      deps.logger.warn({
+        event: "SECURITY_WEBRTC_CONNECTION_DETECTED",
+        data: {
+          source: sourceLabel(data.source),
+          domain: pageDomain,
+        },
+      });
+
+      return { success: true };
+    },
   };
 }

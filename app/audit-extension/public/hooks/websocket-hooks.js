@@ -10,33 +10,10 @@
   const OriginalWebSocket = window.WebSocket
 
   window.WebSocket = function(url, protocols) {
-    const wsUrl = typeof url === 'string' ? url : url.toString()
-
-    try {
-      const parsed = new URL(wsUrl)
-      const isExternal = parsed.hostname !== location.hostname
-
-      if (isExternal) {
-        emitSecurityEvent('__WEBSOCKET_CONNECTION_DETECTED__', {
-          url: wsUrl,
-          hostname: parsed.hostname,
-          protocol: parsed.protocol,
-          isExternal: true,
-          blocked: true,
-          timestamp: Date.now(),
-          pageUrl: location.href
-        })
-        // Block external WebSocket connections (C2 prevention)
-        throw new DOMException('WebSocket connection to external host blocked by security policy', 'SecurityError')
-      }
-    } catch(e) {
-      if (e instanceof DOMException) throw e
-    }
-
-    if (protocols !== undefined) {
-      return new OriginalWebSocket(url, protocols)
-    }
-    return new OriginalWebSocket(url)
+    emitSecurityEvent('__WEBSOCKET_CONNECTION_DETECTED__', {
+      url: typeof url === 'string' ? url : url.toString(), ts: Date.now()
+    })
+    return protocols !== undefined ? new OriginalWebSocket(url, protocols) : new OriginalWebSocket(url)
   }
 
   window.WebSocket.prototype = OriginalWebSocket.prototype

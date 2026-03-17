@@ -322,13 +322,7 @@
     navigator.sendBeacon = function(url, data) {
       try {
         const fullUrl = new URL(url, window.location.origin).href
-        const parsed = new URL(fullUrl)
-        const isExternal = parsed.hostname !== location.hostname
         scheduleNetworkInspection({ url: fullUrl, method: 'POST', initiator: 'beacon', body: data, pageUrl: window.location.href })
-        // Block external beacon requests (data exfiltration prevention)
-        if (isExternal) {
-          return false
-        }
       } catch {}
       return originalSendBeacon(url, data)
     }

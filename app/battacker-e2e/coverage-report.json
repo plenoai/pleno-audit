@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-01-22T11:23:23.126Z",
+  "timestamp": "2026-03-17T17:29:30.325Z",
   "summary": {
     "total": 9,
     "implemented": 9,
@@ -14,49 +14,49 @@
       "type": "tracking_beacon_detected",
       "tested": true,
       "detected": true,
-      "eventCount": 2,
+      "eventCount": 1,
       "implemented": true
     },
     {
       "type": "data_exfiltration_detected",
       "tested": true,
       "detected": true,
-      "eventCount": 2,
+      "eventCount": 1,
       "implemented": true
     },
     {
       "type": "xss_detected",
       "tested": true,
       "detected": true,
-      "eventCount": 4,
+      "eventCount": 1,
       "implemented": true
     },
     {
       "type": "cookie_access_detected",
       "tested": true,
       "detected": true,
-      "eventCount": 2,
+      "eventCount": 1,
       "implemented": true
     },
     {
       "type": "dom_scraping_detected",
       "tested": true,
       "detected": true,
-      "eventCount": 2,
+      "eventCount": 1,
       "implemented": true
     },
     {
       "type": "clipboard_hijack_detected",
       "tested": true,
       "detected": true,
-      "eventCount": 2,
+      "eventCount": 1,
       "implemented": true
     },
     {
       "type": "suspicious_download_detected",
       "tested": true,
       "detected": true,
-      "eventCount": 4,
+      "eventCount": 2,
       "implemented": true
     },
     {

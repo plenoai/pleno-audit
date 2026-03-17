@@ -9,25 +9,15 @@
 
   // Canvas fingerprinting detection
   var originalToDataURL = HTMLCanvasElement.prototype.toDataURL
-  var canvasCallCount = 0
-  var canvasCallResetTimer = null
 
   HTMLCanvasElement.prototype.toDataURL = function() {
-    canvasCallCount++
     emitSecurityEvent('__CANVAS_FINGERPRINT_DETECTED__', {
-      callCount: canvasCallCount,
-      canvasWidth: this.width,
-      canvasHeight: this.height,
-      blocked: true,
-      timestamp: Date.now(),
-      pageUrl: location.href
+      w: this.width, h: this.height, ts: Date.now()
     })
-    // Always return minimal data to prevent canvas fingerprinting
-    return 'data:,'
+    return originalToDataURL.apply(this, arguments)
   }
 
   // WebGL fingerprinting detection
-  var webglDetected = false
   var originalGetParameter = null
 
   function hookWebGLGetParameter(gl) {
@@ -37,17 +27,7 @@
     gl.__proto__.getParameter = function(pname) {
       // RENDERER, VENDOR, or debug renderer info extension params
       if (pname === 0x1F01 || pname === 0x1F00 || pname === 0x9245 || pname === 0x9246) {
-        if (!webglDetected) {
-          webglDetected = true
-          emitSecurityEvent('__WEBGL_FINGERPRINT_DETECTED__', {
-            parameter: pname,
-            blocked: true,
-            timestamp: Date.now(),
-            pageUrl: location.href
-          })
-        }
-        // Block fingerprinting by throwing (triggers catch → blocked=true in Battacker)
-        throw new DOMException('WebGL fingerprinting blocked by security policy', 'SecurityError')
+        emitSecurityEvent('__WEBGL_FINGERPRINT_DETECTED__', { pname: pname, ts: Date.now() })
       }
       return originalGetParameter.call(this, pname)
     }
@@ -66,19 +46,10 @@
   // AudioContext fingerprinting detection
   if (window.AudioContext || window.webkitAudioContext) {
     var OriginalAudioContext = window.AudioContext || window.webkitAudioContext
-    var audioContextCount = 0
 
     var NewAudioContext = function AudioContext(options) {
-      audioContextCount++
-      emitSecurityEvent('__AUDIO_FINGERPRINT_DETECTED__', {
-        contextCount: audioContextCount,
-        sampleRate: options?.sampleRate,
-        blocked: true,
-        timestamp: Date.now(),
-        pageUrl: location.href
-      })
-      // Block audio fingerprinting (triggers catch → blocked=true in Battacker)
-      throw new DOMException('AudioContext blocked by fingerprinting protection', 'NotAllowedError')
+      emitSecurityEvent('__AUDIO_FINGERPRINT_DETECTED__', { ts: Date.now() })
+      return options !== undefined ? new OriginalAudioContext(options) : new OriginalAudioContext()
     }
     NewAudioContext.prototype = OriginalAudioContext.prototype
     window.AudioContext = NewAudioContext
@@ -87,39 +58,22 @@
     }
   }
 
-  // Reduce performance.now() precision to prevent timing attacks (Spectre mitigation)
-  var originalNow = performance.now.bind(performance)
-  performance.now = function() {
-    // Round to 0.1ms (100μs) to prevent high-precision timing attacks
-    return Math.round(originalNow() * 10) / 10
-  }
-
-  // Block RTCPeerConnection (prevents WebRTC data exfiltration)
+  // RTCPeerConnection detection
   if (window.RTCPeerConnection) {
     var OriginalRTCPeerConnection = window.RTCPeerConnection
     window.RTCPeerConnection = function() {
-      emitSecurityEvent('__WEBRTC_BLOCKED__', {
-        blocked: true,
-        timestamp: Date.now(),
-        pageUrl: location.href
-      })
-      throw new DOMException('RTCPeerConnection blocked by security policy', 'NotAllowedError')
+      emitSecurityEvent('__WEBRTC_CONNECTION_DETECTED__', { ts: Date.now() })
+      return new OriginalRTCPeerConnection(...arguments)
     }
     window.RTCPeerConnection.prototype = OriginalRTCPeerConnection.prototype
   }
 
-  // BroadcastChannel side-channel blocking
+  // BroadcastChannel detection
   if (window.BroadcastChannel) {
     var OriginalBroadcastChannel = window.BroadcastChannel
     window.BroadcastChannel = function(name) {
-      emitSecurityEvent('__BROADCAST_CHANNEL_DETECTED__', {
-        channelName: name,
-        blocked: true,
-        timestamp: Date.now(),
-        pageUrl: location.href
-      })
-      // Block cross-tab data sharing (triggers catch → blocked=true in Battacker)
-      throw new DOMException('BroadcastChannel blocked by security policy', 'SecurityError')
+      emitSecurityEvent('__BROADCAST_CHANNEL_DETECTED__', { name: name, ts: Date.now() })
+      return new OriginalBroadcastChannel(name)
     }
     window.BroadcastChannel.prototype = OriginalBroadcastChannel.prototype
   }

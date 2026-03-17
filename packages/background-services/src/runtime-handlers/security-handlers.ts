@@ -104,5 +104,9 @@ export function createSecurityEventHandlers(
       execute: (message, sender) => deps.handleBroadcastChannel(message.data, sender),
       fallback: () => ({ success: false }),
     }],
+    ["WEBRTC_CONNECTION_DETECTED", {
+      execute: (message, sender) => deps.handleWebRTCConnection(message.data, sender),
+      fallback: () => ({ success: false }),
+    }],
   ];
 }

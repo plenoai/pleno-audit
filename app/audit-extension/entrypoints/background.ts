@@ -483,6 +483,7 @@ handleNetworkInspection: (data, sender) => networkSecurityInspector.handleNetwor
     handleWebGLFingerprint: (data, sender) => securityEventHandlers.handleWebGLFingerprint(data as WebGLFingerprintData, sender),
     handleAudioFingerprint: (data, sender) => securityEventHandlers.handleAudioFingerprint(data as AudioFingerprintData, sender),
     handleBroadcastChannel: (data, sender) => securityEventHandlers.handleBroadcastChannel(data as Record<string, unknown>, sender),
+    handleWebRTCConnection: (data, sender) => securityEventHandlers.handleWebRTCConnection(data as Record<string, unknown>, sender),
     getCSPReports: cspReportingService.getCSPReports,
     generateCSPPolicy: cspReportingService.generateCSPPolicy,
     generateCSPPolicyByDomain: cspReportingService.generateCSPPolicyByDomain,
