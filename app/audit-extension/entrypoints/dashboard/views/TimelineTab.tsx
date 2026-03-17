@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "preact/hooks";
+import { useState, useCallback } from "preact/hooks";
 import { useTheme } from "../../../lib/theme";
 import { Card, Select } from "../../../components";
 import {
@@ -16,178 +16,29 @@ import {
   Activity,
   Calendar,
 } from "lucide-preact";
-import type { EventLog } from "@pleno-audit/detectors";
-
-// イベントタイプの色定義
-const EVENT_TYPE_COLORS: Record<string, string> = {
-  login_detected: "#3b82f6", // blue
-  privacy_policy_found: "#22c55e", // green
-  terms_of_service_found: "#22c55e", // green
-  cookie_set: "#f59e0b", // amber
-  csp_violation: "#ef4444", // red
-  network_request: "#6b7280", // gray
-  ai_prompt_sent: "#8b5cf6", // purple
-  ai_response_received: "#8b5cf6", // purple
-  nrd_detected: "#f97316", // orange
-  typosquat_detected: "#dc2626", // red-600
-  extension_request: "#06b6d4", // cyan
-  ai_sensitive_data_detected: "#be185d", // pink-700
-};
-
-// イベントタイプの日本語ラベル
-const EVENT_TYPE_LABELS: Record<string, string> = {
-  login_detected: "ログイン検出",
-  privacy_policy_found: "プライバシーポリシー",
-  terms_of_service_found: "利用規約",
-  cookie_set: "Cookie設定",
-  csp_violation: "CSP違反",
-  network_request: "ネットワーク",
-  ai_prompt_sent: "AIプロンプト",
-  ai_response_received: "AIレスポンス",
-  nrd_detected: "NRD検出",
-  typosquat_detected: "タイポスクワット",
-  extension_request: "拡張機能リクエスト",
-  ai_sensitive_data_detected: "AI機密情報検出",
-};
-
-// イベントタイプのカテゴリ
-const EVENT_CATEGORIES = {
-  security: [
-    "nrd_detected",
-    "typosquat_detected",
-    "csp_violation",
-    "ai_sensitive_data_detected",
-  ],
-  ai: ["ai_prompt_sent", "ai_response_received", "ai_sensitive_data_detected"],
-  policy: ["privacy_policy_found", "terms_of_service_found"],
-  session: ["login_detected", "cookie_set"],
-  network: ["network_request", "extension_request"],
-};
-
-type EventCategory = keyof typeof EVENT_CATEGORIES | "all";
+import type { EventCategory } from "../domain/events";
+import { useTimelineModel } from "../state/useTimelineModel";
 
 export function TimelineTab() {
   const { colors } = useTheme();
-  const [events, setEvents] = useState<EventLog[]>([]);
-  const [loading, setLoading] = useState(true);
   const [granularity, setGranularity] = useState<TimeGranularity>("day");
-  const [category, setCategory] = useState<EventCategory>("all");
+  const [category, setCategory] = useState<EventCategory | "all">("all");
   const [period, setPeriod] = useState<"7d" | "30d" | "90d">("7d");
 
-  // イベントデータを取得
-  useEffect(() => {
-    let cancelled = false;
-    async function loadEvents() {
-      setLoading(true);
-      try {
-        const periodMs = {
-          "7d": 7 * 24 * 60 * 60 * 1000,
-          "30d": 30 * 24 * 60 * 60 * 1000,
-          "90d": 90 * 24 * 60 * 60 * 1000,
-        };
-        const since = Date.now() - periodMs[period];
-
-        const result = await chrome.runtime.sendMessage({
-          type: "GET_EVENTS",
-          data: { limit: 5000, since },
-        });
-
-        if (cancelled) return;
-
-        if (result?.events) {
-          const normalizedEvents = result.events.map(
-            (e: EventLog & { timestamp: string | number }) => ({
-              ...e,
-              timestamp:
-                typeof e.timestamp === "string"
-                  ? new Date(e.timestamp).getTime()
-                  : e.timestamp,
-            })
-          );
-          setEvents(normalizedEvents);
-        } else {
-          setEvents([]);
-        }
-      } catch {
-        if (!cancelled) setEvents([]);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-    loadEvents();
-    return () => { cancelled = true; };
-  }, [period]);
-
-  // カテゴリでフィルタリング
-  const filteredEvents = useMemo(() => {
-    if (category === "all") return events;
-    const types = EVENT_CATEGORIES[category];
-    return events.filter((e) => types.includes(e.type));
-  }, [events, category]);
-
-  // イベントタイプ別の統計
-  const eventStats = useMemo(() => {
-    const stats: Record<string, { count: number; trend: number }> = {};
-    const now = Date.now();
-    const halfPeriod =
-      period === "7d"
-        ? 3.5 * 24 * 60 * 60 * 1000
-        : period === "30d"
-          ? 15 * 24 * 60 * 60 * 1000
-          : 45 * 24 * 60 * 60 * 1000;
-
-    for (const event of filteredEvents) {
-      if (!stats[event.type]) {
-        stats[event.type] = { count: 0, trend: 0 };
-      }
-      stats[event.type].count++;
-
-      // トレンド計算（後半 vs 前半）
-      if (event.timestamp > now - halfPeriod) {
-        stats[event.type].trend++;
-      } else {
-        stats[event.type].trend--;
-      }
-    }
-
-    return Object.entries(stats)
-      .map(([type, data]) => ({
-        type,
-        label: EVENT_TYPE_LABELS[type] || type,
-        color: EVENT_TYPE_COLORS[type] || colors.textMuted,
-        ...data,
-      }))
-      .sort((a, b) => b.count - a.count);
-  }, [filteredEvents, colors.textMuted, period]);
-
-  const domainStats = useMemo(() => {
-    const stats: Record<string, number> = {};
-    for (const event of filteredEvents) {
-      const key = event.domain || "(unknown)";
-      stats[key] = (stats[key] || 0) + 1;
-    }
-    const sorted = Object.entries(stats)
-      .map(([domain, count]) => ({ domain, count }))
-      .sort((a, b) => b.count - a.count);
-    return { total: sorted.length, top10: sorted.slice(0, 10) };
-  }, [filteredEvents]);
-
-  // 時間帯別イベント数
-  const hourlyDistribution = useMemo(() => {
-    const hours = Array(24).fill(0);
-    for (const event of filteredEvents) {
-      const hour = new Date(event.timestamp).getHours();
-      hours[hour]++;
-    }
-    return hours;
-  }, [filteredEvents]);
-
-  const peakHour = useMemo(() => {
-    let max = 0;
-    for (const v of hourlyDistribution) { if (v > max) max = v; }
-    if (max === 0) return null;
-    return hourlyDistribution.indexOf(max);
-  }, [hourlyDistribution]);
+  const {
+    loading,
+    filteredEvents,
+    eventStats,
+    domainStats,
+    peakHour,
+    maxBars,
+    typeColors,
+  } = useTimelineModel({
+    period,
+    category,
+    granularity,
+    fallbackColor: colors.textMuted,
+  });
 
   const getTrendIcon = useCallback(
     (trend: number) => {
@@ -379,15 +230,9 @@ export function TimelineTab() {
             type: e.type,
           }))}
           granularity={granularity}
-          typeColors={EVENT_TYPE_COLORS}
+          typeColors={typeColors}
           height={160}
-          maxBars={
-            granularity === "hour"
-              ? { "7d": 48, "30d": 72, "90d": 96 }[period]
-              : granularity === "day"
-                ? { "7d": 7, "30d": 30, "90d": 90 }[period]
-                : { "7d": 1, "30d": 5, "90d": 13 }[period]
-          }
+          maxBars={maxBars}
         />
 
         {/* 凡例 */}

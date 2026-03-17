@@ -2,6 +2,7 @@ import type { EventLog } from "@pleno-audit/detectors";
 import { useMemo, useState } from "preact/hooks";
 import { Badge, DataTable, SearchInput, Select } from "../../../components";
 import type { DashboardStyles } from "../styles";
+import { EVENT_FILTER_TYPES, getEventBadgeVariant, getEventLabel } from "../domain/events";
 import { truncate } from "../utils";
 
 interface EventsTabProps {
@@ -26,12 +27,10 @@ export function EventsTab({ styles, events, searchQuery, setSearchQuery }: Event
         <Select
           value={selectedType}
           onChange={setSelectedType}
-          options={[
-            { value: "csp_violation", label: "CSP違反" },
-            { value: "login_detected", label: "ログイン検出" },
-            { value: "ai_prompt_sent", label: "AIプロンプト" },
-            { value: "nrd_detected", label: "NRD検出" },
-          ]}
+          options={EVENT_FILTER_TYPES.map((type) => ({
+            value: type,
+            label: getEventLabel(type),
+          }))}
           placeholder="タイプ"
         />
       </div>
@@ -52,13 +51,7 @@ export function EventsTab({ styles, events, searchQuery, setSearchQuery }: Event
             width: "140px",
             render: (e) => (
               <Badge
-                variant={
-                  e.type.includes("violation") || e.type.includes("nrd")
-                    ? "danger"
-                    : e.type.includes("ai") || e.type.includes("login")
-                      ? "warning"
-                      : "default"
-                }
+                variant={getEventBadgeVariant(e.type)}
               >
                 {e.type}
               </Badge>

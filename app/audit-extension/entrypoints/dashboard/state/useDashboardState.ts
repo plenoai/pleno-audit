@@ -3,6 +3,7 @@ import type { CSPReport, CSPViolation, NetworkRequest } from "@pleno-audit/csp";
 import type { CapturedAIPrompt, DetectedService, EventLog } from "@pleno-audit/detectors";
 import type { Notification } from "../../../components/NotificationBanner";
 import type { Period, TabType, TotalCounts } from "../types";
+import { getThreatNotification, isThreatEventType } from "../domain/events";
 import { getPeriodMs, getStatusBadge } from "../utils";
 
 interface UseDashboardStateOptions {
@@ -130,40 +131,15 @@ export function useDashboardState({
   useEffect(() => {
     if (events.length === 0 || loading) return;
 
-    const threatEventTypes = [
-      "nrd_detected",
-      "typosquat_detected",
-      "threat_intel_match",
-      "DATA_EXFILTRATION_DETECTED",
-      "CREDENTIAL_THEFT_DETECTED",
-      "SUPPLY_CHAIN_RISK_DETECTED",
-    ];
-
     const latestEvent = events[0];
     if (!latestEvent || latestEvent.id === lastNotifiedEventId) return;
 
-    if (threatEventTypes.includes(latestEvent.type)) {
-      const severityMap: Record<string, "critical" | "warning" | "info"> = {
-        DATA_EXFILTRATION_DETECTED: "critical",
-        CREDENTIAL_THEFT_DETECTED: "critical",
-        threat_intel_match: "critical",
-        nrd_detected: "warning",
-        typosquat_detected: "warning",
-        SUPPLY_CHAIN_RISK_DETECTED: "warning",
-      };
-
-      const titleMap: Record<string, string> = {
-        nrd_detected: "新規登録ドメイン検出",
-        typosquat_detected: "タイポスクワット検出",
-        threat_intel_match: "脅威インテリジェンス一致",
-        DATA_EXFILTRATION_DETECTED: "データ漏洩の可能性",
-        CREDENTIAL_THEFT_DETECTED: "認証情報窃取の可能性",
-        SUPPLY_CHAIN_RISK_DETECTED: "サプライチェーンリスク",
-      };
-
+    if (isThreatEventType(latestEvent.type)) {
+      const threatNotification = getThreatNotification(latestEvent.type);
+      if (!threatNotification) return;
       addNotification({
-        severity: severityMap[latestEvent.type] || "warning",
-        title: titleMap[latestEvent.type] || "セキュリティアラート",
+        severity: threatNotification.severity,
+        title: threatNotification.title,
         message: latestEvent.domain || latestEvent.url || "詳細はイベントログを確認してください",
         autoDismiss: 8000,
         action: {

@@ -80,7 +80,7 @@ Pleno Auditは収集したデータを第三者に販売・提供しません。
 ## オープンソース
 
 Pleno Auditはオープンソースソフトウェアです。
-ソースコードは https://github.com/HikaruEgashira/pleno-audit で公開されています。
+ソースコードは https://github.com/plenoai/pleno-audit で公開されています。
 
 ## お問い合わせ
 

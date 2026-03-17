@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Shield, Github } from 'lucide-react';
 
-const GITHUB_URL = 'https://github.com/HikaruEgashira/pleno-audit';
+const GITHUB_URL = 'https://github.com/plenoai/pleno-audit';
 
 export default function Footer() {
   return (

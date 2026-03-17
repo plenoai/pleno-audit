@@ -104,7 +104,7 @@ export const GETTING_STARTED_STEPS: GettingStartedStep[] = [
     title: 'Chrome拡張機能をインストール',
     description: 'Chrome Web Storeから拡張機能をインストールします。',
     cta: {
-      href: 'https://github.com/HikaruEgashira/pleno-audit/releases',
+      href: 'https://github.com/plenoai/pleno-audit/releases',
       label: 'GitHubリリースを開く',
       icon: Chrome,
     },
