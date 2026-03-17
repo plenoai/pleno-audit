@@ -311,6 +311,7 @@ export class ParquetStore {
     startDate: string,
     endDate: string
   ): Promise<Record<string, unknown>[]> {
+    await this.writeBuffer.flush(type);
     const records = await this.indexedDB.listByDateRange(type, startDate, endDate);
     const allData: Record<string, unknown>[] = [];
 
