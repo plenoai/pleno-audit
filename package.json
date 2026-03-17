@@ -26,14 +26,14 @@
   "devDependencies": {
     "@testing-library/dom": "^10.4.1",
     "@testing-library/preact": "^3.2.4",
-    "@types/chrome": "^0.1.37",
-    "@vitest/coverage-v8": "^4.0.18",
+    "@types/chrome": "^0.1.38",
+    "@vitest/coverage-v8": "^4.1.0",
     "concurrently": "^9.1.2",
-    "fast-check": "^4.5.3",
-    "jsdom": "^28.1.0",
-    "oxlint": "^1.50.0",
+    "fast-check": "^4.6.0",
+    "jsdom": "^29.0.0",
+    "oxlint": "^1.56.0",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.18",
+    "vitest": "^4.1.0",
     "ws": "^8.19.0"
   }
 }
