@@ -10,23 +10,8 @@
   // Hook Worker constructor
   const OriginalWorker = window.Worker
   window.Worker = function(scriptURL, options) {
-    const url = typeof scriptURL === 'string' ? scriptURL : scriptURL.toString()
-    const isBlobUrl = url.startsWith('blob:')
-
-    emitSecurityEvent('__WORKER_CREATED__', {
-      url: isBlobUrl ? 'blob:' : url,
-      isBlobUrl: isBlobUrl,
-      type: options?.type || 'classic',
-      blocked: isBlobUrl,
-      timestamp: Date.now(),
-      pageUrl: location.href
-    })
-
-    // Block blob URL workers (cryptojacking/exfiltration prevention)
-    if (isBlobUrl) {
-      throw new DOMException('Blob Worker creation blocked by security policy', 'SecurityError')
-    }
-
+    var url = typeof scriptURL === 'string' ? scriptURL : scriptURL.toString()
+    emitSecurityEvent('__WORKER_CREATED__', { url: url, ts: Date.now() })
     return new OriginalWorker(scriptURL, options)
   }
   window.Worker.prototype = OriginalWorker.prototype
@@ -36,14 +21,11 @@
     const OriginalSharedWorker = window.SharedWorker
     window.SharedWorker = function(scriptURL, options) {
       const url = typeof scriptURL === 'string' ? scriptURL : scriptURL.toString()
-      const isBlobUrl = url.startsWith('blob:')
 
       emitSecurityEvent('__SHARED_WORKER_CREATED__', {
-        url: isBlobUrl ? 'blob:' : url,
-        isBlobUrl: isBlobUrl,
+        url: url,
         name: typeof options === 'string' ? options : options?.name,
         timestamp: Date.now(),
-        pageUrl: location.href
       })
 
       return new OriginalSharedWorker(scriptURL, options)
@@ -62,7 +44,6 @@
         scope: options?.scope,
         type: options?.type || 'classic',
         timestamp: Date.now(),
-        pageUrl: location.href
       })
 
       return originalRegister(scriptURL, options)

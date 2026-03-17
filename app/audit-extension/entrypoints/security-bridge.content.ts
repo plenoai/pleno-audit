@@ -277,6 +277,7 @@ export default defineContentScript({
       "__WEBGL_FINGERPRINT_DETECTED__",
       "__AUDIO_FINGERPRINT_DETECTED__",
       "__BROADCAST_CHANNEL_DETECTED__",
+      "__WEBRTC_CONNECTION_DETECTED__",
     ];
 
     for (const eventType of securityEvents) {

@@ -111,6 +111,7 @@ handleNetworkInspection: (data: unknown, sender: chrome.runtime.MessageSender) =
   handleWebGLFingerprint: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
   handleAudioFingerprint: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
   handleBroadcastChannel: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
+  handleWebRTCConnection: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
 
   getCSPReports: (options?: {
     type?: "csp-violation" | "network-request";
