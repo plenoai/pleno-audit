@@ -78,8 +78,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/storage
       hono:
-        specifier: ^4.12.2
-        version: 4.12.2
+        specifier: ^4.12.7
+        version: 4.12.7
       lucide-preact:
         specifier: ^0.575.0
         version: 0.575.0(preact@10.28.4)
@@ -194,7 +194,7 @@ importers:
     dependencies:
       '@hono/node-server':
         specifier: ^1.19.10
-        version: 1.19.10(hono@4.12.2)
+        version: 1.19.10(hono@4.12.7)
       '@pleno-audit/api':
         specifier: workspace:*
         version: link:../../packages/api
@@ -205,8 +205,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/parquet-storage
       hono:
-        specifier: ^4.12.2
-        version: 4.12.2
+        specifier: ^4.12.7
+        version: 4.12.7
     devDependencies:
       tsx:
         specifier: ^4.21.0
@@ -297,8 +297,8 @@ importers:
         specifier: workspace:*
         version: link:../parquet-storage
       hono:
-        specifier: ^4.12.2
-        version: 4.12.2
+        specifier: ^4.12.7
+        version: 4.12.7
 
   packages/background-services:
     dependencies:
@@ -2169,8 +2169,8 @@ packages:
     resolution: {integrity: sha512-F/1DnUGPopORZi0ni+CvrCgHQ5FyEAHRLSApuYWMmrbSwoN2Mn/7k+Gl38gJnR7yyDZk6WLXwiGod1JOWNDKGw==}
     hasBin: true
 
-  hono@4.12.2:
-    resolution: {integrity: sha512-gJnaDHXKDayjt8ue0n8Gs0A007yKXj4Xzb8+cNjZeYsSzzwKc0Lr+OZgYwVfB0pHfUs17EPoLvrOsEaJ9mj+Tg==}
+  hono@4.12.7:
+    resolution: {integrity: sha512-jq9l1DM0zVIvsm3lv9Nw9nlJnMNPOcAtsbsgiUhWcFzPE99Gvo6yRTlszSLLYacMeQ6quHD6hMfId8crVHvexw==}
     engines: {node: '>=16.9.0'}
 
   hookable@6.0.1:
@@ -3963,9 +3963,9 @@ snapshots:
 
   '@exodus/bytes@1.14.1': {}
 
-  '@hono/node-server@1.19.10(hono@4.12.2)':
+  '@hono/node-server@1.19.10(hono@4.12.7)':
     dependencies:
-      hono: 4.12.2
+      hono: 4.12.7
 
   '@jridgewell/gen-mapping@0.3.13':
     dependencies:
@@ -5144,7 +5144,7 @@ snapshots:
 
   he@1.2.0: {}
 
-  hono@4.12.2: {}
+  hono@4.12.7: {}
 
   hookable@6.0.1: {}
 
