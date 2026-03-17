@@ -100,5 +100,9 @@ export function createSecurityEventHandlers(
       execute: (message, sender) => deps.handleAudioFingerprint(message.data, sender),
       fallback: () => ({ success: false }),
     }],
+    ["BROADCAST_CHANNEL_DETECTED", {
+      execute: (message, sender) => deps.handleBroadcastChannel(message.data, sender),
+      fallback: () => ({ success: false }),
+    }],
   ];
 }

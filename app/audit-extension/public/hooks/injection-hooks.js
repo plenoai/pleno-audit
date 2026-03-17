@@ -7,7 +7,7 @@
   if (!shared) return
   var emitSecurityEvent = shared.emitSecurityEvent
 
-  // Hook eval()
+  // Hook eval() - observe dynamic code execution
   var originalEval = window.eval
   window.eval = function(code) {
     emitSecurityEvent('__DYNAMIC_CODE_EXECUTION_DETECTED__', {
@@ -20,7 +20,7 @@
     return originalEval.call(this, code)
   }
 
-  // Hook Function constructor
+  // Hook Function constructor - observe dynamic code execution
   var OriginalFunction = window.Function
   window.Function = function() {
     var args = Array.prototype.slice.call(arguments)
