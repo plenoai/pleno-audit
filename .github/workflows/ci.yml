@@ -106,7 +106,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Prepare WXT types
-        run: pnpm --filter @pleno-audit/audit-extension wxt prepare
+        run: pnpm --filter @pleno-audit/audit-extension exec wxt prepare
 
       - name: Run UI tests
         run: pnpm test:ui
