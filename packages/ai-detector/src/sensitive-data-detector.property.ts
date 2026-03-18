@@ -16,7 +16,7 @@ import {
   getSensitiveDataSummary,
   type DataClassification,
   type SensitiveDataResult,
-} from "./sensitive-data-detector.js";
+} from "./dlp-rules.js";
 
 // カスタムArbitrary
 const validClassifications: DataClassification[] = [

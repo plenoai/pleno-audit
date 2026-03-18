@@ -22,132 +22,71 @@ export class ParquetAdapter implements DatabaseAdapter {
   }
 
   async init(): Promise<void> {
-    try {
-      await this.store.init();
-      logger.info("ParquetAdapter initialized");
-    } catch (error) {
-      logger.error("Failed to initialize ParquetAdapter", error);
-      throw error;
-    }
+    await this.store.init();
+    logger.info("ParquetAdapter initialized");
   }
 
   async insertReports(reports: CSPReport[]): Promise<void> {
-    try {
-      await this.store.insertReports(reports);
-    } catch (error) {
-      logger.error("Failed to insert reports", error);
-      throw error;
-    }
+    await this.store.insertReports(reports);
   }
 
   async getAllReports(): Promise<CSPReport[]> {
-    try {
-      const result = await this.store.getReports({
-        limit: -1, // 全取得
-      });
-      return result.data;
-    } catch (error) {
-      logger.error("Failed to get all reports", error);
-      throw error;
-    }
+    const result = await this.store.getReports({
+      limit: -1,
+    });
+    return result.data;
   }
 
   async getAllViolations(): Promise<CSPViolation[]> {
-    try {
-      const result = await this.store.getViolations({
-        limit: -1, // 全取得
-      });
-      return result.data;
-    } catch (error) {
-      logger.error("Failed to get all violations", error);
-      throw error;
-    }
+    const result = await this.store.getViolations({
+      limit: -1,
+    });
+    return result.data;
   }
 
   async getAllNetworkRequests(): Promise<NetworkRequest[]> {
-    try {
-      const result = await this.store.getNetworkRequests({
-        limit: -1, // 全取得
-      });
-      return result.data;
-    } catch (error) {
-      logger.error("Failed to get all network requests", error);
-      throw error;
-    }
+    const result = await this.store.getNetworkRequests({
+      limit: -1,
+    });
+    return result.data;
   }
 
   async getReportsSince(timestamp: string): Promise<CSPReport[]> {
-    try {
-      const result = await this.store.getReports({
-        since: timestamp,
-        limit: -1,
-      });
-      return result.data;
-    } catch (error) {
-      logger.error("Failed to get reports since", error);
-      throw error;
-    }
+    const result = await this.store.getReports({
+      since: timestamp,
+      limit: -1,
+    });
+    return result.data;
   }
 
   async getReports(options?: QueryOptions): Promise<PaginatedResult<CSPReport>> {
-    try {
-      return await this.store.getReports(options);
-    } catch (error) {
-      logger.error("Failed to get reports", error);
-      throw error;
-    }
+    return await this.store.getReports(options);
   }
 
   async getViolations(
     options?: QueryOptions
   ): Promise<PaginatedResult<CSPViolation>> {
-    try {
-      return await this.store.getViolations(options);
-    } catch (error) {
-      logger.error("Failed to get violations", error);
-      throw error;
-    }
+    return await this.store.getViolations(options);
   }
 
   async getNetworkRequests(
     options?: QueryOptions
   ): Promise<PaginatedResult<NetworkRequest>> {
-    try {
-      return await this.store.getNetworkRequests(options);
-    } catch (error) {
-      logger.error("Failed to get network requests", error);
-      throw error;
-    }
+    return await this.store.getNetworkRequests(options);
   }
 
   async getStats(): Promise<DatabaseStats> {
-    try {
-      return await this.store.getStats();
-    } catch (error) {
-      logger.error("Failed to get stats", error);
-      throw error;
-    }
+    return await this.store.getStats();
   }
 
   async deleteOldReports(beforeTimestamp: string): Promise<number> {
-    try {
-      // タイムスタンプから日付に変換
-      const date = new Date(beforeTimestamp).toISOString().split("T")[0];
-      return await this.store.deleteOldReports(date);
-    } catch (error) {
-      logger.error("Failed to delete old reports", error);
-      throw error;
-    }
+    const date = new Date(beforeTimestamp).toISOString().split("T")[0];
+    return await this.store.deleteOldReports(date);
   }
 
   async clearAll(): Promise<void> {
-    try {
-      await this.store.clearAll();
-      logger.info("All data cleared");
-    } catch (error) {
-      logger.error("Failed to clear all data", error);
-      throw error;
-    }
+    await this.store.clearAll();
+    logger.info("All data cleared");
   }
 
   async close(): Promise<void> {

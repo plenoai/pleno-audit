@@ -5,12 +5,10 @@ import {
   getHighestRiskClassification,
   getSensitiveDataSummary,
   type SensitiveDataResult,
-} from "./sensitive-data-detector.js";
+} from "./dlp-rules.js";
 import {
   analyzePromptPII,
   calculatePromptRiskScore,
-  scoreToRiskLevel,
-  assessPromptRisk,
   analyzePrompt,
 } from "./pii-analyzer.js";
 
@@ -329,66 +327,39 @@ describe("calculatePromptRiskScore", () => {
   });
 });
 
-describe("scoreToRiskLevel", () => {
-  it("returns critical for score >= 80", () => {
-    expect(scoreToRiskLevel(80)).toBe("critical");
-    expect(scoreToRiskLevel(100)).toBe("critical");
-  });
-
-  it("returns high for score >= 60", () => {
-    expect(scoreToRiskLevel(60)).toBe("high");
-    expect(scoreToRiskLevel(79)).toBe("high");
-  });
-
-  it("returns medium for score >= 40", () => {
-    expect(scoreToRiskLevel(40)).toBe("medium");
-    expect(scoreToRiskLevel(59)).toBe("medium");
-  });
-
-  it("returns low for score >= 20", () => {
-    expect(scoreToRiskLevel(20)).toBe("low");
-    expect(scoreToRiskLevel(39)).toBe("low");
-  });
-
-  it("returns info for score < 20", () => {
-    expect(scoreToRiskLevel(0)).toBe("info");
-    expect(scoreToRiskLevel(19)).toBe("info");
-  });
-});
-
-describe("assessPromptRisk", () => {
+describe("analyzePrompt", () => {
   it("returns low risk for safe prompt", () => {
     const prompt = {
       messages: [{ role: "user", content: "What is 2 + 2?" }],
     };
-    const assessment = assessPromptRisk(prompt);
-    expect(assessment.riskScore).toBe(0);
-    expect(assessment.riskLevel).toBe("info");
-    expect(assessment.shouldAlert).toBe(false);
+    const { risk } = analyzePrompt(prompt);
+    expect(risk.riskScore).toBe(0);
+    expect(risk.riskLevel).toBe("info");
+    expect(risk.shouldAlert).toBe(false);
   });
 
   it("returns high risk for credentials", () => {
     const prompt = {
       messages: [{ role: "user", content: "API key: sk-12345678901234567890123456789012" }],
     };
-    const assessment = assessPromptRisk(prompt);
-    expect(assessment.riskScore).toBeGreaterThanOrEqual(60);
-    expect(assessment.factors.credentialsDetected).toBe(true);
-    expect(assessment.shouldAlert).toBe(true);
+    const { risk } = analyzePrompt(prompt);
+    expect(risk.riskScore).toBeGreaterThanOrEqual(60);
+    expect(risk.factors.credentialsDetected).toBe(true);
+    expect(risk.shouldAlert).toBe(true);
   });
 
   it("sets correct factor flags", () => {
     const prompt = {
       text: "Email: user@example.com, Card: 4111111111111111",
     };
-    const assessment = assessPromptRisk(prompt);
-    expect(assessment.factors.piiDetected).toBe(true);
-    expect(assessment.factors.financialDetected).toBe(true);
-    expect(assessment.factors.credentialsDetected).toBe(false);
+    const { risk } = analyzePrompt(prompt);
+    expect(risk.factors.piiDetected).toBe(true);
+    expect(risk.factors.financialDetected).toBe(true);
+    expect(risk.factors.credentialsDetected).toBe(false);
   });
 });
 
-describe("analyzePrompt", () => {
+describe("analyzePrompt - complete analysis", () => {
   it("returns complete analysis result", () => {
     const prompt = {
       messages: [

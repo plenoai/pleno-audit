@@ -165,47 +165,6 @@ export function calculatePromptRiskScore(piiResult: AIPromptPIIResult): number {
 }
 
 /**
- * リスクスコアからリスクレベルへ変換
- *
- * @deprecated scoreToRiskLevel5 from @pleno-audit/alerts を直接使用してください
- */
-export function scoreToRiskLevel(score: number): RiskLevel5 {
-  return scoreToRiskLevel5(score);
-}
-
-/**
- * AIプロンプトのリスク評価を実行
- */
-export function assessPromptRisk(
-  prompt: CapturedAIPrompt["prompt"]
-): AIPromptRiskAssessment {
-  const piiResult = analyzePromptPII(prompt);
-  const riskScore = calculatePromptRiskScore(piiResult);
-  const riskLevel = scoreToRiskLevel(riskScore);
-
-  const factors = {
-    sensitiveDataPresent: piiResult.hasSensitiveData,
-    dataTypes: piiResult.classifications,
-    credentialsDetected: piiResult.classifications.includes("credentials"),
-    piiDetected: piiResult.classifications.includes("pii"),
-    financialDetected: piiResult.classifications.includes("financial"),
-    healthDetected: piiResult.classifications.includes("health"),
-  };
-
-  // high以上のリスクでアラート発火
-  const shouldAlert =
-    piiResult.hasSensitiveData &&
-    (riskLevel === "critical" || riskLevel === "high");
-
-  return {
-    riskScore,
-    riskLevel,
-    factors,
-    shouldAlert,
-  };
-}
-
-/**
  * AIプロンプトの完全な分析結果
  */
 export interface AIPromptAnalysisResult {
@@ -221,7 +180,7 @@ export function analyzePrompt(
 ): AIPromptAnalysisResult {
   const pii = analyzePromptPII(prompt);
   const riskScore = calculatePromptRiskScore(pii);
-  const riskLevel = scoreToRiskLevel(riskScore);
+  const riskLevel = scoreToRiskLevel5(riskScore);
 
   const factors = {
     sensitiveDataPresent: pii.hasSensitiveData,

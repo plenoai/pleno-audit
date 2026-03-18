@@ -1,4 +1,7 @@
 import type { DOMAdapter } from "@pleno-audit/detectors";
+import { createLogger } from "./logger.js";
+
+const logger = createLogger("browser-adapter");
 
 /**
  * Browser environment detection
@@ -112,8 +115,8 @@ export async function setSessionStorage<T>(key: string, value: T): Promise<void>
 
   try {
     sessionStorage.setItem(SESSION_STORAGE_PREFIX + key, JSON.stringify(value));
-  } catch {
-    // ignore
+  } catch (error) {
+    logger.debug("sessionStorage.setItem failed", error);
   }
 }
 
@@ -127,8 +130,8 @@ export async function removeSessionStorage(key: string): Promise<void> {
 
   try {
     sessionStorage.removeItem(SESSION_STORAGE_PREFIX + key);
-  } catch {
-    // ignore
+  } catch (error) {
+    logger.debug("sessionStorage.removeItem failed", error);
   }
 }
 

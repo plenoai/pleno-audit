@@ -3,7 +3,7 @@ import type { DetectedService, CapturedAIPrompt } from "@pleno-audit/detectors";
 import type { CSPViolation, NetworkRequest } from "@pleno-audit/csp";
 import type { DoHRequestRecord } from "@pleno-audit/extension-runtime";
 import type { AlertSeverity, AlertCategory } from "@pleno-audit/detectors";
-import { analyzePromptPII, assessPromptRisk } from "@pleno-audit/detectors";
+import { analyzePrompt } from "@pleno-audit/detectors";
 import { Badge, Button } from "../../../components";
 import { usePopupStyles } from "../styles";
 import { useTheme } from "../../../lib/theme";
@@ -60,9 +60,8 @@ function convertToEvents(
   }
 
   for (const prompt of aiPrompts) {
-    const pii = analyzePromptPII(prompt.prompt);
+    const { pii, risk } = analyzePrompt(prompt.prompt);
     if (pii.hasSensitiveData) {
-      const risk = assessPromptRisk(prompt.prompt);
       if (risk.riskLevel !== "info" && risk.riskLevel !== "low") {
         events.push({
           id: `ai-${prompt.id}`,

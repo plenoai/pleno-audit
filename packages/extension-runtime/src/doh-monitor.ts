@@ -15,9 +15,6 @@ import type {
 
 const logger = createLogger("doh-monitor");
 
-// Re-export types from storage-types.ts for backward compatibility
-export type { DoHAction, DoHDetectionMethod, DoHMonitorConfig, DoHRequestRecord };
-
 export const DEFAULT_DOH_MONITOR_CONFIG: DoHMonitorConfig = {
   action: "detect",
   maxStoredRequests: 1000,

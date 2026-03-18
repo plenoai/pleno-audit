@@ -386,14 +386,6 @@ export function calculateRiskScore(
   return Math.min(100, score);
 }
 
-/**
- * リスクレベルを判定
- *
- * @deprecated scoreToExtensionRiskLevel from @pleno-audit/alerts を直接使用してください
- */
-export function scoreToRiskLevel(score: number): ExtensionRiskLevel {
-  return scoreToExtensionRiskLevel(score);
-}
 
 /**
  * リスクフラグを生成
@@ -486,7 +478,7 @@ export function analyzeExtensionRisk(
   const permissionRisks = analyzePermissions(permissions);
   const networkRisks = analyzeNetworkActivity(requests);
   const riskScore = calculateRiskScore(permissionRisks, networkRisks);
-  const riskLevel = scoreToRiskLevel(riskScore);
+  const riskLevel = scoreToExtensionRiskLevel(riskScore);
   const flags = generateRiskFlags(permissionRisks, networkRisks);
 
   return {

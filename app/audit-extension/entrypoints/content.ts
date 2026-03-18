@@ -64,36 +64,13 @@ function analyzePage(): PageAnalysis {
   };
 }
 
-async function sendToBackground(analysis: PageAnalysis) {
+async function safeSendMessage(type: string, data?: Record<string, unknown>) {
   try {
-    await chrome.runtime.sendMessage({
-      type: "PAGE_ANALYZED",
-      payload: analysis,
-    });
+    await chrome.runtime.sendMessage(
+      data !== undefined ? { type, ...data } : { type }
+    );
   } catch (error) {
-    console.warn("[content] PAGE_ANALYZED send failed", error);
-  }
-}
-
-async function checkNRD(domain: string) {
-  try {
-    await chrome.runtime.sendMessage({
-      type: "CHECK_NRD",
-      data: { domain },
-    });
-  } catch (error) {
-    console.warn("[content] CHECK_NRD failed", error);
-  }
-}
-
-async function checkTyposquat(domain: string) {
-  try {
-    await chrome.runtime.sendMessage({
-      type: "CHECK_TYPOSQUAT",
-      data: { domain },
-    });
-  } catch (error) {
-    console.warn("[content] CHECK_TYPOSQUAT failed", error);
+    console.warn(`[content] ${type} send failed`, error);
   }
 }
 
@@ -111,14 +88,14 @@ async function runAnalysis() {
     cookieBanner.found ||
     faviconUrl
   ) {
-    await sendToBackground(analysis);
+    await safeSendMessage("PAGE_ANALYZED", { payload: analysis });
   }
 
   // Check NRD in background (non-blocking)
-  checkNRD(domain);
+  safeSendMessage("CHECK_NRD", { data: { domain } });
 
   // Check Typosquatting in background (non-blocking)
-  checkTyposquat(domain);
+  safeSendMessage("CHECK_TYPOSQUAT", { data: { domain } });
 }
 
 export default defineContentScript({

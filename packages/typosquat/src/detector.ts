@@ -76,15 +76,7 @@ export function createTyposquatDetector(
     return result;
   }
 
-  /**
-   * 非同期ラッパー（NRD Detectorとの一貫性のため）
-   */
-  async function checkDomainAsync(domain: string): Promise<TyposquatResult> {
-    return checkDomain(domain);
-  }
-
   return {
     checkDomain,
-    checkDomainAsync,
   };
 }

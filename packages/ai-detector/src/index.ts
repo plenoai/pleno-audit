@@ -32,8 +32,6 @@ export {
 export {
   analyzePromptPII,
   calculatePromptRiskScore,
-  scoreToRiskLevel,
-  assessPromptRisk,
   analyzePrompt,
   type AIPromptPIIResult,
   type AIPromptRiskAssessment,
