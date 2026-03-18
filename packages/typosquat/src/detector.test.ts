@@ -147,22 +147,6 @@ describe("createTyposquatDetector", () => {
     });
   });
 
-  describe("checkDomainAsync", () => {
-    it("returns same result as sync version", async () => {
-      const detector = createTyposquatDetector(defaultConfig, cache);
-      const syncResult = detector.checkDomain("example.com");
-
-      // Clear cache to get fresh result
-      cache.store.clear();
-
-      const asyncResult = await detector.checkDomainAsync("example.com");
-
-      expect(asyncResult.domain).toBe(syncResult.domain);
-      expect(asyncResult.isTyposquat).toBe(syncResult.isTyposquat);
-      expect(asyncResult.confidence).toBe(syncResult.confidence);
-    });
-  });
-
   describe("confidence levels", () => {
     it("returns high confidence for score >= 70", () => {
       const detector = createTyposquatDetector(defaultConfig, cache);

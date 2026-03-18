@@ -316,7 +316,7 @@ const BASE_DLP_RULES: DLPRule[] = [
 
 ];
 
-const EXTENDED_DLP_RULES_INTERNAL: DLPRule[] = [
+export const EXTENDED_DLP_RULES: DLPRule[] = [
   // === Extended: Additional API Keys ===
   {
     id: "google-api-key",
@@ -481,18 +481,13 @@ const EXTENDED_DLP_RULES_INTERNAL: DLPRule[] = [
 
 export const ALL_DLP_RULES: DLPRule[] = [
   ...BASE_DLP_RULES,
-  ...EXTENDED_DLP_RULES_INTERNAL,
+  ...EXTENDED_DLP_RULES,
 ];
-
-/**
- * 拡張ルールのみ（後方互換）
- */
-export const EXTENDED_DLP_RULES: DLPRule[] = EXTENDED_DLP_RULES_INTERNAL;
 
 const RULE_CATALOG = {
   all: ALL_DLP_RULES,
   base: BASE_DLP_RULES,
-  extended: EXTENDED_DLP_RULES_INTERNAL,
+  extended: EXTENDED_DLP_RULES,
 } as const;
 
 // ============================================================================

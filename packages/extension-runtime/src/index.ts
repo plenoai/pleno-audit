@@ -132,7 +132,6 @@ export {
   analyzePermissions,
   analyzeNetworkActivity,
   calculateRiskScore,
-  scoreToRiskLevel,
   generateRiskFlags,
   analyzeExtensionRisk,
   analyzeInstalledExtension,
@@ -194,11 +193,14 @@ export {
   DEFAULT_DOH_MONITOR_CONFIG,
   DOH_URL_PATTERNS,
   type DoHMonitor,
-  type DoHAction,
-  type DoHMonitorConfig,
-  type DoHRequestRecord,
-  type DoHDetectionMethod,
 } from "./doh-monitor.js";
+
+export type {
+  DoHAction,
+  DoHMonitorConfig,
+  DoHRequestRecord,
+  DoHDetectionMethod,
+} from "./storage-types.js";
 
 // Enterprise Manager
 export {

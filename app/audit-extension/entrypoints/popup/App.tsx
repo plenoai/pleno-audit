@@ -3,7 +3,7 @@ import type {
   DetectedService,
   CapturedAIPrompt,
 } from "@pleno-audit/detectors";
-import { analyzePromptPII, assessPromptRisk } from "@pleno-audit/detectors";
+import { analyzePrompt } from "@pleno-audit/detectors";
 import type { CSPViolation, NetworkRequest } from "@pleno-audit/csp";
 import {
   createLogger,
@@ -30,9 +30,8 @@ function countEvents(data: TabData): number {
   const typosquatCount = data.services.filter((s) => s.typosquatResult?.isTyposquat).length;
   let aiRiskCount = 0;
   for (const prompt of data.aiPrompts) {
-    const pii = analyzePromptPII(prompt.prompt);
+    const { pii, risk } = analyzePrompt(prompt.prompt);
     if (pii.hasSensitiveData) {
-      const risk = assessPromptRisk(prompt.prompt);
       if (risk.riskLevel !== "info" && risk.riskLevel !== "low") {
         aiRiskCount++;
       }

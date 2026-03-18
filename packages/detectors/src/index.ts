@@ -32,22 +32,6 @@ export type {
 
 export {
   DEFAULT_NRD_CONFIG,
-  SUSPICIOUS_TLDS,
-  calculateEntropy,
-  extractSLD,
-  extractTLD,
-  hasExcessiveHyphens,
-  hasExcessiveNumbers,
-  isRandomLooking,
-  calculateSuspiciousScore,
-  isHighRiskDomain,
-  queryRDAP,
-  extractRegistrationDate,
-  extractDomainStatus,
-  DDNS_PROVIDERS,
-  checkDDNS,
-  getDDNSProviderDomains,
-  getDDNSProviderNames,
   createNRDDetector,
 } from "@pleno-audit/nrd";
 
@@ -147,8 +131,6 @@ export {
   inferProviderFromResponse,
   analyzePromptPII,
   calculatePromptRiskScore,
-  scoreToRiskLevel,
-  assessPromptRisk,
   analyzePrompt,
   // Provider Classification Functions
   classifyByModelName,
