@@ -13,11 +13,11 @@
     "dev": "tsx watch src/index.ts"
   },
   "dependencies": {
-    "@hono/node-server": "^1.19.10",
+    "@hono/node-server": "^1.19.11",
     "@pleno-audit/api": "workspace:*",
     "@pleno-audit/csp": "workspace:*",
     "@pleno-audit/parquet-storage": "workspace:*",
-    "hono": "^4.12.7"
+    "hono": "^4.12.8"
   },
   "devDependencies": {
     "tsx": "^4.21.0",
