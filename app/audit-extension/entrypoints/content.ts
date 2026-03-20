@@ -10,7 +10,9 @@ import {
   type CookiePolicyResult,
   type CookieBannerResult,
 } from "@pleno-audit/detectors";
-import { browserAdapter } from "@pleno-audit/extension-runtime";
+import { browserAdapter, createLogger } from "@pleno-audit/extension-runtime";
+
+const logger = createLogger("content");
 
 // Create detector instances with browser adapter
 const loginDetector = createLoginDetector(browserAdapter);
@@ -47,21 +49,27 @@ function findFaviconFromDOM(): string | null {
   return `${window.location.origin}/favicon.ico`;
 }
 
-function analyzePage(): PageAnalysis {
+function yieldToMain(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 0));
+}
+
+async function analyzePage(): Promise<PageAnalysis> {
   const url = window.location.href;
   const domain = window.location.hostname;
+  const timestamp = Date.now();
 
-  return {
-    url,
-    domain,
-    timestamp: Date.now(),
-    login: loginDetector.detectLoginPage(),
-    privacy: findPrivacyPolicy(),
-    tos: findTermsOfService(),
-    cookiePolicy: findCookiePolicy(),
-    cookieBanner: findCookieBanner(),
-    faviconUrl: findFaviconFromDOM(),
-  };
+  const login = loginDetector.detectLoginPage();
+  await yieldToMain();
+  const privacy = findPrivacyPolicy();
+  await yieldToMain();
+  const tos = findTermsOfService();
+  await yieldToMain();
+  const cookiePolicy = findCookiePolicy();
+  await yieldToMain();
+  const cookieBanner = findCookieBanner();
+  const faviconUrl = findFaviconFromDOM();
+
+  return { url, domain, timestamp, login, privacy, tos, cookiePolicy, cookieBanner, faviconUrl };
 }
 
 async function safeSendMessage(type: string, data?: Record<string, unknown>) {
@@ -70,12 +78,12 @@ async function safeSendMessage(type: string, data?: Record<string, unknown>) {
       data !== undefined ? { type, ...data } : { type }
     );
   } catch (error) {
-    console.warn(`[content] ${type} send failed`, error);
+    logger.warn(`${type} send failed`, error);
   }
 }
 
 async function runAnalysis() {
-  const analysis = analyzePage();
+  const analysis = await analyzePage();
   const { login, privacy, tos, cookiePolicy, cookieBanner, domain, faviconUrl } = analysis;
 
   // Send to background if any info found (including favicon and cookie detection)
@@ -104,12 +112,12 @@ export default defineContentScript({
   main() {
     if (document.readyState === "complete") {
       runAnalysis().catch((error) => {
-        console.warn("[content] initial runAnalysis failed", error);
+        logger.warn("initial runAnalysis failed", error);
       });
     } else {
       window.addEventListener("load", () => {
         runAnalysis().catch((error) => {
-          console.warn("[content] load runAnalysis failed", error);
+          logger.warn("load runAnalysis failed", error);
         });
       });
     }

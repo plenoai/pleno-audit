@@ -168,11 +168,12 @@ export function createPolicyFinder(
     }
 
     // 6. 全リンクスキャン
-    const allLinks = Array.from(
-      dom.querySelectorAll<HTMLAnchorElement>("a[href]")
-    ).slice(0, MAX_LINKS_TO_SCAN);
-
+    let linkCount = 0;
+    const allLinks = dom.querySelectorAll<HTMLAnchorElement>("a[href]");
     for (const link of allLinks) {
+      if (linkCount >= MAX_LINKS_TO_SCAN) break;
+      linkCount++;
+
       const text = link.textContent?.trim() || "";
       const href = link.href;
 
