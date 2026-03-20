@@ -10,13 +10,13 @@ import { createCspHandlers } from "./csp-handlers.js";
 import { createDomainRiskHandlers } from "./domain-risk-handlers.js";
 import { createEventStoreHandlers } from "./event-store-handlers.js";
 import { createNetworkAndExtensionHandlers } from "./network-extension-handlers.js";
-import { createSecurityEventHandlers } from "./security-handlers.js";
+import { createSecurityAsyncHandlers } from "./security-handlers.js";
 
 export function createAsyncHandlers(
   deps: RuntimeHandlerDependencies,
 ): Map<string, AsyncMessageHandlerConfig> {
   const entries: AsyncHandlerEntry[] = [
-    ...createSecurityEventHandlers(deps),
+    ...createSecurityAsyncHandlers(deps),
     ...createCspHandlers(deps),
     ...createConnectionAndAuthHandlers(deps),
     ...createAIPromptHandlers(deps),

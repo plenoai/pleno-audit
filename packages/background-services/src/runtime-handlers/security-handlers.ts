@@ -1,7 +1,7 @@
 import type { CSPViolation } from "@pleno-audit/csp";
 import type { AsyncHandlerEntry, RuntimeHandlerDependencies } from "./types.js";
 
-export function createSecurityEventHandlers(
+export function createSecurityAsyncHandlers(
   deps: RuntimeHandlerDependencies,
 ): AsyncHandlerEntry[] {
   return [
