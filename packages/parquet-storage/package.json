@@ -7,19 +7,9 @@
   "exports": {
     ".": "./src/index.ts"
   },
-  "files": [
-    "dist"
-  ],
-  "scripts": {
-    "build": "tsc",
-    "dev": "tsc --watch"
-  },
   "dependencies": {
     "@pleno-audit/csp": "workspace:*",
     "@pleno-audit/detectors": "workspace:*",
     "@pleno-audit/extension-runtime": "workspace:*"
-  },
-  "devDependencies": {
-    "typescript": "^5.9.3"
   }
 }
