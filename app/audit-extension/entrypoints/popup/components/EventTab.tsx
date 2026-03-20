@@ -1,20 +1,9 @@
-import { useMemo, useState } from "preact/hooks";
-import type { DetectedService, CapturedAIPrompt } from "@pleno-audit/detectors";
-import type { CSPViolation, NetworkRequest } from "@pleno-audit/csp";
-import type { DoHRequestRecord } from "@pleno-audit/extension-runtime";
+import { useState, useEffect, useMemo } from "preact/hooks";
 import type { AlertSeverity, AlertCategory } from "@pleno-audit/detectors";
-import { analyzePrompt } from "@pleno-audit/detectors";
 import { Badge, Button } from "../../../components";
 import { usePopupStyles } from "../styles";
 import { useTheme } from "../../../lib/theme";
-
-interface EventTabProps {
-  services: DetectedService[];
-  violations: CSPViolation[];
-  networkRequests: NetworkRequest[];
-  aiPrompts: CapturedAIPrompt[];
-  doHRequests: DoHRequestRecord[];
-}
+import { sendMessage } from "../utils/messaging";
 
 interface EventItem {
   id: string;
@@ -23,100 +12,6 @@ interface EventItem {
   title: string;
   domain: string;
   timestamp: number;
-}
-
-function convertToEvents(
-  services: DetectedService[],
-  violations: CSPViolation[],
-  networkRequests: NetworkRequest[],
-  aiPrompts: CapturedAIPrompt[],
-  doHRequests: DoHRequestRecord[]
-): EventItem[] {
-  const events: EventItem[] = [];
-
-  for (const service of services) {
-    if (service.nrdResult?.isNRD) {
-      const age = service.nrdResult.domainAge;
-      events.push({
-        id: `nrd-${service.domain}`,
-        category: "nrd",
-        severity: age !== null && age < 7 ? "critical" : "high",
-        title: service.domain,
-        domain: service.domain,
-        timestamp: service.nrdResult.checkedAt,
-      });
-    }
-    if (service.typosquatResult?.isTyposquat) {
-      const score = service.typosquatResult.totalScore;
-      events.push({
-        id: `typosquat-${service.domain}`,
-        category: "typosquat",
-        severity: score >= 70 ? "critical" : score >= 40 ? "high" : "medium",
-        title: service.domain,
-        domain: service.domain,
-        timestamp: service.typosquatResult.checkedAt,
-      });
-    }
-  }
-
-  for (const prompt of aiPrompts) {
-    const { pii, risk } = analyzePrompt(prompt.prompt);
-    if (pii.hasSensitiveData) {
-      if (risk.riskLevel !== "info" && risk.riskLevel !== "low") {
-        events.push({
-          id: `ai-${prompt.id}`,
-          category: "ai_sensitive",
-          severity: risk.riskLevel,
-          title: prompt.provider || new URL(prompt.apiEndpoint).hostname,
-          domain: new URL(prompt.apiEndpoint).hostname,
-          timestamp: prompt.timestamp,
-        });
-      }
-    }
-  }
-
-  for (const v of violations.slice(0, 50)) {
-    events.push({
-      id: `csp-${v.timestamp}-${v.blockedURL}`,
-      category: "csp_violation",
-      severity: v.directive === "script-src" || v.directive === "default-src" ? "high" : "medium",
-      title: v.directive,
-      domain: new URL(v.pageUrl).hostname,
-      timestamp: new Date(v.timestamp).getTime(),
-    });
-  }
-
-  for (const r of doHRequests.slice(0, 20)) {
-    events.push({
-      id: `doh-${r.id}`,
-      category: "shadow_ai",
-      severity: r.blocked ? "high" : "medium",
-      title: r.domain,
-      domain: r.domain,
-      timestamp: r.timestamp,
-    });
-  }
-
-  // Network requests (info level)
-  for (const req of networkRequests.slice(0, 100)) {
-    let domain: string;
-    try {
-      domain = new URL(req.url).hostname;
-    } catch {
-      domain = req.url;
-    }
-    events.push({
-      id: `net-${req.timestamp}-${req.url}`,
-      category: "network" as AlertCategory,
-      severity: "info",
-      title: `${req.method} ${domain}`,
-      domain,
-      timestamp: new Date(req.timestamp).getTime(),
-    });
-  }
-
-  // Sort by timestamp descending (newest first)
-  return events.sort((a, b) => b.timestamp - a.timestamp);
 }
 
 function getSeverityVariant(sev: AlertSeverity): "danger" | "warning" | "info" | "default" {
@@ -141,32 +36,28 @@ function formatTime(ts: number): string {
   return new Date(ts).toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" });
 }
 
-export function EventTab({ services, violations, networkRequests, aiPrompts, doHRequests }: EventTabProps) {
+export function EventTab() {
   const styles = usePopupStyles();
   const { colors } = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
+  const [events, setEvents] = useState<EventItem[]>([]);
+  const [counts, setCounts] = useState<Record<string, number>>({});
 
-  const events = useMemo(
-    () => convertToEvents(services, violations, networkRequests, aiPrompts, doHRequests),
-    [services, violations, networkRequests, aiPrompts, doHRequests]
-  );
-
-  const counts = useMemo(() => {
-    const bySeverity: Record<string, number> = {};
-    for (const e of events) {
-      bySeverity[e.severity] = (bySeverity[e.severity] || 0) + 1;
-    }
-    return bySeverity;
-  }, [events]);
+  useEffect(() => {
+    sendMessage<{ events: EventItem[]; counts: Record<string, number> }>({ type: "GET_POPUP_EVENTS" })
+      .then((result) => {
+        if (result?.events) setEvents(result.events);
+        if (result?.counts) setCounts(result.counts);
+      })
+      .catch(() => {});
+  }, []);
 
   const filtered = useMemo(() => {
     if (!searchQuery) return events;
     const q = searchQuery.toLowerCase();
-    // Severity filter
     if (["critical", "high", "medium", "low", "info"].includes(q)) {
       return events.filter((e) => e.severity === q);
     }
-    // Text search
     return events.filter((e) => e.title.toLowerCase().includes(q) || e.domain.toLowerCase().includes(q));
   }, [events, searchQuery]);
 

@@ -3,12 +3,10 @@ import type {
   DetectedService,
   CapturedAIPrompt,
 } from "@pleno-audit/detectors";
-import { analyzePrompt } from "@pleno-audit/detectors";
-import type { CSPViolation, NetworkRequest } from "@pleno-audit/csp";
+import type { CSPViolation } from "@pleno-audit/csp";
 import {
   createLogger,
   type StorageData,
-  type DoHRequestRecord,
 } from "@pleno-audit/extension-runtime";
 import { Shield } from "lucide-preact";
 import { ThemeContext, useThemeState, useTheme } from "../../lib/theme";
@@ -19,43 +17,25 @@ import {
   PolicyTab,
 } from "./components";
 import { createStyles } from "./styles";
-import { aggregateServices, type UnifiedService } from "./utils/serviceAggregator";
+import type { UnifiedService } from "./utils/serviceAggregator";
 import { sendMessage } from "./utils/messaging";
 
 type Tab = "service" | "event" | "policy";
 const logger = createLogger("popup-app");
 
-function countEvents(data: TabData): number {
-  const nrdCount = data.services.filter((s) => s.nrdResult?.isNRD).length;
-  const typosquatCount = data.services.filter((s) => s.typosquatResult?.isTyposquat).length;
-  let aiRiskCount = 0;
-  for (const prompt of data.aiPrompts) {
-    const { pii, risk } = analyzePrompt(prompt.prompt);
-    if (pii.hasSensitiveData) {
-      if (risk.riskLevel !== "info" && risk.riskLevel !== "low") {
-        aiRiskCount++;
-      }
-    }
-  }
-  return nrdCount + typosquatCount + aiRiskCount + data.violations.length + data.doHRequests.length + data.networkRequests.length;
-}
-
-const TABS: { key: Tab; label: string; count?: (data: TabData) => number }[] = [
-  { key: "service", label: "Service", count: (d) => d.unifiedServices.length },
-  { key: "event", label: "Event", count: countEvents },
+const TABS: { key: Tab; label: string }[] = [
+  { key: "service", label: "Service" },
+  { key: "event", label: "Event" },
   { key: "policy", label: "Policy" },
 ];
 
-interface TabData {
+interface StatusData {
   services: DetectedService[];
-  unifiedServices: UnifiedService[];
-  aiPrompts: CapturedAIPrompt[];
   violations: CSPViolation[];
-  networkRequests: NetworkRequest[];
-  doHRequests: DoHRequestRecord[];
+  aiPrompts: CapturedAIPrompt[];
 }
 
-function getStatus(data: TabData) {
+function getStatus(data: StatusData) {
   const nrdCount = data.services.filter(s => s.nrdResult?.isNRD).length;
   if (nrdCount > 0) return { variant: "danger" as const, label: "警告", dot: false };
   if (data.violations.length > 10) return { variant: "warning" as const, label: "注意", dot: false };
@@ -70,30 +50,34 @@ function PopupContent() {
   const [tab, setTab] = useState<Tab>("service");
   const [loading, setLoading] = useState(true);
   const [violations, setViolations] = useState<CSPViolation[]>([]);
-  const [networkRequests, setNetworkRequests] = useState<NetworkRequest[]>([]);
   const [aiPrompts, setAIPrompts] = useState<CapturedAIPrompt[]>([]);
-  const [doHRequests, setDoHRequests] = useState<DoHRequestRecord[]>([]);
   const [unifiedServices, setUnifiedServices] = useState<UnifiedService[]>([]);
+  const [eventCount, setEventCount] = useState(0);
 
   useEffect(() => {
     loadData();
     loadCSPData();
     loadAIData();
-    loadDoHData();
+    loadPopupEvents();
+    loadUnifiedServices();
     const listener = (changes: {
       [key: string]: chrome.storage.StorageChange;
     }) => {
       if (changes.services) {
         loadData();
+        loadUnifiedServices();
       }
       if (changes.cspReports) {
         loadCSPData();
+        loadPopupEvents();
+        loadUnifiedServices();
       }
       if (changes.aiPrompts) {
         loadAIData();
+        loadPopupEvents();
       }
       if (changes.doHRequests) {
-        loadDoHData();
+        loadPopupEvents();
       }
     };
     chrome.storage.onChanged.addListener(listener);
@@ -123,18 +107,11 @@ function PopupContent() {
 
   async function loadCSPData() {
     try {
-      const [vData, nData] = await Promise.all([
-        sendMessage<CSPViolation[]>({
-          type: "GET_CSP_REPORTS",
-          data: { type: "csp-violation" },
-        }),
-        sendMessage<NetworkRequest[]>({
-          type: "GET_CSP_REPORTS",
-          data: { type: "network-request" },
-        }),
-      ]);
+      const vData = await sendMessage<CSPViolation[]>({
+        type: "GET_CSP_REPORTS",
+        data: { type: "csp-violation" },
+      });
       if (Array.isArray(vData)) setViolations(vData);
-      if (Array.isArray(nData)) setNetworkRequests(nData);
     } catch (error) {
       logger.warn({
         event: "POPUP_CSP_DATA_LOAD_FAILED",
@@ -155,30 +132,23 @@ function PopupContent() {
     }
   }
 
-  async function loadDoHData() {
+  async function loadPopupEvents() {
     try {
-      const result = await sendMessage<{ requests: DoHRequestRecord[] }>({ type: "GET_DOH_REQUESTS", data: { limit: 100 } });
-      if (result?.requests) setDoHRequests(result.requests);
+      const result = await sendMessage<{ total: number }>({ type: "GET_POPUP_EVENTS" });
+      if (result?.total !== undefined) setEventCount(result.total);
     } catch (error) {
-      logger.warn({
-        event: "POPUP_DOH_DATA_LOAD_FAILED",
-        error,
-      });
+      logger.warn({ event: "POPUP_EVENTS_LOAD_FAILED", error });
     }
   }
 
-  // Update unified services when dependencies change
-  useEffect(() => {
-    const services = Object.values(data.services) as DetectedService[];
-    aggregateServices(services, networkRequests, violations)
-      .then(setUnifiedServices)
-      .catch((error) => {
-        logger.warn({
-          event: "POPUP_AGGREGATE_SERVICES_FAILED",
-          error,
-        });
-      });
-  }, [data.services, networkRequests, violations]);
+  async function loadUnifiedServices() {
+    try {
+      const result = await sendMessage<UnifiedService[]>({ type: "GET_AGGREGATED_SERVICES" });
+      if (Array.isArray(result)) setUnifiedServices(result);
+    } catch (error) {
+      logger.warn({ event: "POPUP_UNIFIED_SERVICES_LOAD_FAILED", error });
+    }
+  }
 
   function openDashboard() {
     const url = chrome.runtime.getURL("dashboard.html");
@@ -187,8 +157,13 @@ function PopupContent() {
 
   const services = Object.values(data.services) as DetectedService[];
 
-  const tabData: TabData = { services, unifiedServices, aiPrompts, violations, networkRequests, doHRequests };
-  const status = getStatus(tabData);
+  const status = getStatus({ services, violations, aiPrompts });
+
+  const tabCounts: Record<Tab, number | undefined> = {
+    service: unifiedServices.length,
+    event: eventCount,
+    policy: undefined,
+  };
 
   function renderContent() {
     if (loading) {
@@ -196,23 +171,9 @@ function PopupContent() {
     }
     switch (tab) {
       case "service":
-        return (
-          <ServiceTab
-            services={services}
-            violations={violations}
-            networkRequests={networkRequests}
-          />
-        );
+        return <ServiceTab />;
       case "event":
-        return (
-          <EventTab
-            services={services}
-            violations={violations}
-            networkRequests={networkRequests}
-            aiPrompts={aiPrompts}
-            doHRequests={doHRequests}
-          />
-        );
+        return <EventTab />;
       case "policy":
         return <PolicyTab violations={violations} />;
       default:
@@ -238,7 +199,7 @@ function PopupContent() {
 
       <nav style={styles.tabNav}>
         {TABS.map((t) => {
-          const count = t.count?.(tabData) || 0;
+          const count = tabCounts[t.key] || 0;
           return (
             <button
               key={t.key}
