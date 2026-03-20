@@ -4,9 +4,7 @@
 import type {
   StorageData,
   CSPConfig,
-  CSPReport,
   DetectedService,
-  EventLog,
   CapturedAIPrompt,
   AIMonitorConfig,
   DataRetentionConfig,
@@ -29,9 +27,10 @@ import { getBrowserAPI } from "./browser-adapter.js";
 
 const STORAGE_KEYS = [
   "services",
-  "events",
-  "cspReports",
+  "policyConfig",
+  "alerts",
   "cspConfig",
+  "generatedCSPPolicy",
   "aiPrompts",
   "aiMonitorConfig",
   "nrdConfig",
@@ -62,8 +61,8 @@ export async function getStorage(): Promise<StorageData> {
   const result = await api.storage.local.get(STORAGE_KEYS as unknown as string[]);
   return {
     services: (result.services as Record<string, DetectedService>) || {},
-    events: (result.events as EventLog[]) || [],
-    cspReports: (result.cspReports as CSPReport[]) || [],
+    policyConfig: result.policyConfig as StorageData["policyConfig"],
+    alerts: (result.alerts as StorageData["alerts"]) || [],
     cspConfig: (result.cspConfig as CSPConfig) || DEFAULT_CSP_CONFIG,
     aiPrompts: (result.aiPrompts as CapturedAIPrompt[]) || [],
     aiMonitorConfig:
@@ -101,8 +100,7 @@ export async function getStorageKey<K extends StorageKey>(
   const result = await api.storage.local.get([key]);
   const defaults: StorageData = {
     services: {},
-    events: [],
-    cspReports: [],
+    alerts: [],
     cspConfig: DEFAULT_CSP_CONFIG,
     aiPrompts: [],
     aiMonitorConfig: DEFAULT_AI_MONITOR_CONFIG,
@@ -122,11 +120,6 @@ export async function getStorageKey<K extends StorageKey>(
 export async function getServiceCount(): Promise<number> {
   const services = await getStorageKey("services");
   return Object.keys(services).length;
-}
-
-export async function clearCSPReports(): Promise<void> {
-  const api = getBrowserAPI();
-  await api.storage.local.remove(["cspReports"]);
 }
 
 /**
@@ -157,8 +150,7 @@ export async function clearAllStorage(options?: { preserveTheme?: boolean }): Pr
   // デフォルト設定を復元
   const defaultSettings: Partial<StorageData> = {
     services: {},
-    events: [],
-    cspReports: [],
+    alerts: [],
     cspConfig: DEFAULT_CSP_CONFIG,
     aiPrompts: [],
     aiMonitorConfig: DEFAULT_AI_MONITOR_CONFIG,

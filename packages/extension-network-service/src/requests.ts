@@ -4,24 +4,17 @@ import {
   queryNetworkRequests,
   type NetworkRequestQueryOptions,
 } from "./helpers.js";
-import { parquetRecordToNetworkRequestRecord } from "@pleno-audit/parquet-storage";
 import type { ExtensionNetworkContext } from "./types.js";
 
+/**
+ * ネットワークリクエストを取得する。
+ * parquet-storage廃止後、リアルタイム監視のみ。保存済みデータの問い合わせは空を返す。
+ */
 export async function getNetworkRequests(
-  context: ExtensionNetworkContext,
+  _context: ExtensionNetworkContext,
   options?: NetworkRequestQueryOptions
 ): Promise<{ requests: NetworkRequestRecord[]; total: number }> {
-  try {
-    const store = await context.deps.getOrInitParquetStore();
-    const allRecords = await store.queryRows("network-requests");
-    const parsedRecords = allRecords.map((record) =>
-      parquetRecordToNetworkRequestRecord(record)
-    );
-    return queryNetworkRequests(parsedRecords, options);
-  } catch (error) {
-    context.deps.logger.error("Failed to query network requests:", error);
-    return { requests: [], total: 0 };
-  }
+  return queryNetworkRequests([], options);
 }
 
 export async function getExtensionRequests(

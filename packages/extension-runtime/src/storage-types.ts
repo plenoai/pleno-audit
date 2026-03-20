@@ -9,7 +9,7 @@ import type {
   NRDConfig,
 } from "@pleno-audit/detectors";
 import type { CSPConfig, CSPReport, GeneratedCSPByDomain } from "@pleno-audit/csp";
-import type { PolicyConfig } from "@pleno-audit/alerts";
+import type { PolicyConfig, SecurityAlert } from "@pleno-audit/alerts";
 
 // Forecast config removed - enterprise feature
 
@@ -182,9 +182,13 @@ export interface DoHRequestRecord {
 }
 
 export interface StorageData {
+  /** Posture: ドメインごとのセキュリティ態勢 */
   services: Record<string, DetectedService>;
-  events: EventLog[];
-  cspReports?: CSPReport[];
+  /** Policy: セキュリティポリシー定義 */
+  policyConfig?: PolicyConfig;
+  /** Alert: セキュリティアラート履歴（永続化） */
+  alerts?: SecurityAlert[];
+
   cspConfig?: CSPConfig;
   generatedCSPPolicy?: GeneratedCSPByDomain;
   aiPrompts?: CapturedAIPrompt[];
@@ -199,7 +203,6 @@ export interface StorageData {
   blockingConfig?: BlockingConfig;
   notificationConfig?: NotificationConfig;
   alertCooldown?: AlertCooldownData;
-  policyConfig?: PolicyConfig;
 }
 
 /**
@@ -266,4 +269,5 @@ export type {
   CapturedAIPrompt,
   AIMonitorConfig,
   NRDConfig,
+  SecurityAlert,
 };

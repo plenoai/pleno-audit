@@ -11,7 +11,6 @@
   },
   "dependencies": {
     "@pleno-audit/alerts": "workspace:*",
-    "@pleno-audit/api": "workspace:*",
     "@pleno-audit/background-services": "workspace:*",
     "@pleno-audit/csp": "workspace:*",
     "@pleno-audit/data-export": "workspace:*",
@@ -19,9 +18,7 @@
     "@pleno-audit/detectors": "workspace:*",
     "@pleno-audit/extension-network-service": "workspace:*",
     "@pleno-audit/extension-runtime": "workspace:*",
-    "@pleno-audit/parquet-storage": "workspace:*",
     "@pleno-audit/storage": "workspace:*",
-    "hono": "^4.12.8",
     "lucide-preact": "^0.577.0",
     "preact": "^10.29.0"
   },

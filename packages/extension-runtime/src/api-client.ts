@@ -1,8 +1,6 @@
 import type { CSPViolation, NetworkRequest, CSPReport } from "@pleno-audit/csp";
-import type { LocalApiResponse } from "./offscreen/db-schema.js";
 import { createLogger } from "./logger.js";
 import { getSSOManager } from "./sso-manager.js";
-import { RetryableError, errorMessage } from "./errors.js";
 
 const logger = createLogger("api-client");
 
@@ -26,154 +24,6 @@ export interface ApiClientConfig {
   remoteEndpoint?: string;
 }
 
-const LOCAL_REQUEST_MAX_RETRIES = 1;
-
-type OffscreenPhase = "idle" | "creating" | "ready";
-
-class OffscreenDocGuard {
-  private phase: OffscreenPhase = "idle";
-  private createPromise: Promise<void> | null = null;
-  private readyResolvers: (() => void)[] = [];
-
-  markReady(): void {
-    this.phase = "ready";
-    this.createPromise = null;
-    const resolvers = this.readyResolvers;
-    this.readyResolvers = [];
-    for (const resolve of resolvers) {
-      resolve();
-    }
-  }
-
-  reset(): void {
-    this.phase = "idle";
-    this.createPromise = null;
-    this.readyResolvers = [];
-  }
-
-  get isReady(): boolean {
-    return this.phase === "ready";
-  }
-
-  async ensure(): Promise<void> {
-    if (this.phase === "ready") return;
-
-    if (this.phase === "creating" && this.createPromise) {
-      await this.createPromise;
-      return;
-    }
-
-    this.phase = "creating";
-    this.createPromise = (async () => {
-      if (this.phase === "ready") return;
-
-      try {
-        await chrome.offscreen.createDocument({
-          url: "offscreen.html",
-          reasons: [chrome.offscreen.Reason.LOCAL_STORAGE],
-          justification: "Running local parquet-storage database",
-        });
-        await this.waitForReady();
-      } catch (error) {
-        if (error instanceof Error && (
-          error.message.includes("already exists") ||
-          error.message.includes("Only a single offscreen document")
-        )) {
-          this.phase = "ready";
-          return;
-        }
-        this.phase = "idle";
-        throw error;
-      }
-    })();
-
-    try {
-      await this.createPromise;
-    } finally {
-      this.createPromise = null;
-    }
-  }
-
-  private waitForReady(timeout = 15000): Promise<void> {
-    if (this.phase === "ready") return Promise.resolve();
-
-    return new Promise((resolve, reject) => {
-      const timer = setTimeout(() => {
-        logger.error("Offscreen document did not respond within timeout");
-        reject(new Error("Offscreen ready timeout"));
-      }, timeout);
-
-      this.readyResolvers.push(() => {
-        clearTimeout(timer);
-        resolve();
-      });
-    });
-  }
-}
-
-const offscreenGuard = new OffscreenDocGuard();
-
-export function markOffscreenReady(): void {
-  offscreenGuard.markReady();
-}
-
-function resetOffscreenState(): void {
-  offscreenGuard.reset();
-}
-
-function isRetryableLocalRequestError(error: unknown): boolean {
-  if (error instanceof RetryableError) return true;
-
-  // Fallback: string-based detection for Chrome API errors that we don't control
-  const message = errorMessage(error);
-  return (
-    message.includes("A listener indicated an asynchronous response by returning true")
-    || message.includes("message channel closed before a response was received")
-    || message.includes("The message port closed before a response was received")
-    || message.includes("Could not establish connection. Receiving end does not exist")
-    || message.includes("Local server not initialized")
-  );
-}
-
-export async function ensureOffscreenDocument(): Promise<void> {
-  return offscreenGuard.ensure();
-}
-
-function generateId(): string {
-  return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-}
-
-function sendLocalApiMessage<T>(
-  request: { method: string; path: string; body?: unknown },
-): Promise<T> {
-  return new Promise((resolve, reject) => {
-    const id = generateId();
-
-    chrome.runtime.sendMessage(
-      {
-        type: "LOCAL_API_REQUEST",
-        id,
-        request,
-      },
-      (response: LocalApiResponse | undefined) => {
-        if (chrome.runtime.lastError) {
-          reject(new Error(chrome.runtime.lastError.message));
-          return;
-        }
-        if (!response) {
-          reject(new Error("No response from LOCAL_API_REQUEST"));
-          return;
-        }
-        if (response.error) {
-          reject(new Error(response.error));
-          return;
-        }
-        resolve(response.data as T);
-      }
-    );
-  });
-}
-
 export class ApiClient {
   private mode: ConnectionMode;
   private endpoint: string | null;
@@ -187,13 +37,12 @@ export class ApiClient {
     if (this.mode === "remote" && this.endpoint) {
       return this.remoteRequest(path, options);
     }
-    return this.localRequest(path, options);
+    throw new Error("Local API mode is no longer supported. Use remote mode with an endpoint.");
   }
 
   private async remoteRequest<T>(path: string, options: { method?: string; body?: unknown }): Promise<T> {
     const headers: Record<string, string> = { "Content-Type": "application/json" };
 
-    // Add SSO authentication header if available
     try {
       const ssoManager = await getSSOManager();
       const session = await ssoManager.getSession();
@@ -201,7 +50,7 @@ export class ApiClient {
         headers["Authorization"] = `Bearer ${session.accessToken}`;
         logger.debug("SSO auth header added to remote request");
       }
-    } catch (error) {
+    } catch {
       logger.debug("No SSO session available for remote request");
     }
 
@@ -216,32 +65,6 @@ export class ApiClient {
     }
 
     return response.json();
-  }
-
-  private async localRequest<T>(path: string, options: { method?: string; body?: unknown }): Promise<T> {
-    await ensureOffscreenDocument();
-    const request = {
-      method: options.method || "GET",
-      path,
-      body: options.body,
-    };
-
-    let attempt = 0;
-    while (true) {
-      try {
-        return await sendLocalApiMessage<T>(request);
-      } catch (error) {
-        const canRetry = attempt < LOCAL_REQUEST_MAX_RETRIES && isRetryableLocalRequestError(error);
-        if (!canRetry) {
-          throw error;
-        }
-
-        logger.warn("LOCAL_API_REQUEST failed with message channel error, retrying once");
-        attempt += 1;
-        resetOffscreenState();
-        await ensureOffscreenDocument();
-      }
-    }
   }
 
   setMode(mode: ConnectionMode, endpoint?: string): void {
@@ -328,7 +151,7 @@ export async function getApiClient(): Promise<ApiClient> {
 
   const config = await chrome.storage.local.get(["connectionMode", "remoteEndpoint"]) as Record<string, unknown>;
   apiClientInstance = new ApiClient({
-    mode: (config.connectionMode as ConnectionMode) || "local",
+    mode: (config.connectionMode as ConnectionMode) || "remote",
     remoteEndpoint: config.remoteEndpoint as string | undefined,
   });
 

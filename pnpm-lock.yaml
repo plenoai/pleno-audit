@@ -47,9 +47,6 @@ importers:
       '@pleno-audit/alerts':
         specifier: workspace:*
         version: link:../../packages/alerts
-      '@pleno-audit/api':
-        specifier: workspace:*
-        version: link:../../packages/api
       '@pleno-audit/background-services':
         specifier: workspace:*
         version: link:../../packages/background-services
@@ -71,15 +68,9 @@ importers:
       '@pleno-audit/extension-runtime':
         specifier: workspace:*
         version: link:../../packages/extension-runtime
-      '@pleno-audit/parquet-storage':
-        specifier: workspace:*
-        version: link:../../packages/parquet-storage
       '@pleno-audit/storage':
         specifier: workspace:*
         version: link:../../packages/storage
-      hono:
-        specifier: ^4.12.8
-        version: 4.12.8
       lucide-preact:
         specifier: ^0.577.0
         version: 0.577.0(preact@10.29.0)
@@ -190,31 +181,6 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
 
-  app/server:
-    dependencies:
-      '@hono/node-server':
-        specifier: ^1.19.11
-        version: 1.19.11(hono@4.12.8)
-      '@pleno-audit/api':
-        specifier: workspace:*
-        version: link:../../packages/api
-      '@pleno-audit/csp':
-        specifier: workspace:*
-        version: link:../../packages/csp
-      '@pleno-audit/parquet-storage':
-        specifier: workspace:*
-        version: link:../../packages/parquet-storage
-      hono:
-        specifier: ^4.12.8
-        version: 4.12.8
-    devDependencies:
-      tsx:
-        specifier: ^4.21.0
-        version: 4.21.0
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
   app/web-dashboard:
     dependencies:
       '@pleno-audit/csp':
@@ -285,21 +251,6 @@ importers:
 
   packages/alerts: {}
 
-  packages/api:
-    dependencies:
-      '@pleno-audit/csp':
-        specifier: workspace:*
-        version: link:../csp
-      '@pleno-audit/extension-runtime':
-        specifier: workspace:*
-        version: link:../extension-runtime
-      '@pleno-audit/parquet-storage':
-        specifier: workspace:*
-        version: link:../parquet-storage
-      hono:
-        specifier: ^4.12.8
-        version: 4.12.8
-
   packages/background-services:
     dependencies:
       '@pleno-audit/alerts':
@@ -314,9 +265,6 @@ importers:
       '@pleno-audit/extension-runtime':
         specifier: workspace:*
         version: link:../extension-runtime
-      '@pleno-audit/parquet-storage':
-        specifier: workspace:*
-        version: link:../parquet-storage
       '@pleno-audit/storage':
         specifier: workspace:*
         version: link:../storage
@@ -336,9 +284,6 @@ importers:
       '@pleno-audit/extension-runtime':
         specifier: workspace:*
         version: link:../extension-runtime
-      '@pleno-audit/parquet-storage':
-        specifier: workspace:*
-        version: link:../parquet-storage
 
   packages/detectors:
     dependencies:
@@ -366,9 +311,6 @@ importers:
       '@pleno-audit/extension-runtime':
         specifier: workspace:*
         version: link:../extension-runtime
-      '@pleno-audit/parquet-storage':
-        specifier: workspace:*
-        version: link:../parquet-storage
 
   packages/extension-runtime:
     dependencies:
@@ -383,18 +325,6 @@ importers:
         version: link:../detectors
 
   packages/nrd: {}
-
-  packages/parquet-storage:
-    dependencies:
-      '@pleno-audit/csp':
-        specifier: workspace:*
-        version: link:../csp
-      '@pleno-audit/detectors':
-        specifier: workspace:*
-        version: link:../detectors
-      '@pleno-audit/extension-runtime':
-        specifier: workspace:*
-        version: link:../extension-runtime
 
   packages/storage:
     dependencies:
@@ -938,12 +868,6 @@ packages:
     peerDependenciesMeta:
       '@noble/hashes':
         optional: true
-
-  '@hono/node-server@1.19.11':
-    resolution: {integrity: sha512-dr8/3zEaB+p0D2n/IUrlPF1HZm586qgJNXK1a9fhg/PzdtkK7Ksd5l312tJX2yBuALqDYBlG20QEbayqPyxn+g==}
-    engines: {node: '>=18.14.1'}
-    peerDependencies:
-      hono: ^4
 
   '@jridgewell/gen-mapping@0.3.13':
     resolution: {integrity: sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA==}
@@ -2265,10 +2189,6 @@ packages:
   he@1.2.0:
     resolution: {integrity: sha512-F/1DnUGPopORZi0ni+CvrCgHQ5FyEAHRLSApuYWMmrbSwoN2Mn/7k+Gl38gJnR7yyDZk6WLXwiGod1JOWNDKGw==}
     hasBin: true
-
-  hono@4.12.8:
-    resolution: {integrity: sha512-VJCEvtrezO1IAR+kqEYnxUOoStaQPGrCmX3j4wDTNOcD1uRPFpGlwQUIW8niPuvHXaTUxeOUl5MMDGrl+tmO9A==}
-    engines: {node: '>=16.9.0'}
 
   hookable@6.1.0:
     resolution: {integrity: sha512-ZoKZSJgu8voGK2geJS+6YtYjvIzu9AOM/KZXsBxr83uhLL++e9pEv/dlgwgy3dvHg06kTz6JOh1hk3C8Ceiymw==}
@@ -4068,10 +3988,6 @@ snapshots:
 
   '@exodus/bytes@1.15.0': {}
 
-  '@hono/node-server@1.19.11(hono@4.12.8)':
-    dependencies:
-      hono: 4.12.8
-
   '@jridgewell/gen-mapping@0.3.13':
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.5
@@ -5299,8 +5215,6 @@ snapshots:
       function-bind: 1.1.2
 
   he@1.2.0: {}
-
-  hono@4.12.8: {}
 
   hookable@6.1.0: {}
 

@@ -9,7 +9,6 @@
   },
   "dependencies": {
     "@pleno-audit/extension-runtime": "workspace:*",
-    "@pleno-audit/parquet-storage": "workspace:*",
     "@pleno-audit/alerts": "workspace:*"
   }
 }

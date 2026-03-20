@@ -44,7 +44,7 @@ vi.stubGlobal("chrome", {
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
 
-import { ApiClient, markOffscreenReady, type QueryOptions } from "./api-client.js";
+import { ApiClient, type QueryOptions } from "./api-client.js";
 
 describe("ApiClient", () => {
   let client: ApiClient;
@@ -395,65 +395,13 @@ describe("ApiClient", () => {
     });
   });
 
-  describe("local requests", () => {
-    it("sends LOCAL_API_REQUEST and returns response data", async () => {
+  describe("local mode", () => {
+    it("throws error for local mode (no longer supported)", async () => {
       const localClient = new ApiClient({ mode: "local" });
-      markOffscreenReady();
 
-      vi.mocked(chrome.runtime.sendMessage).mockImplementation((_message, callback) => {
-        chrome.runtime.lastError = null;
-        callback?.({
-          id: "req-1",
-          status: 200,
-          data: { reports: [], lastUpdated: "2024-01-01T00:00:00.000Z" },
-        });
-      });
-
-      const result = await localClient.getReports();
-
-      expect(chrome.runtime.sendMessage).toHaveBeenCalledWith(
-        expect.objectContaining({
-          type: "LOCAL_API_REQUEST",
-          request: expect.objectContaining({
-            method: "GET",
-            path: "/api/v1/reports",
-          }),
-        }),
-        expect.any(Function)
+      await expect(localClient.getReports()).rejects.toThrow(
+        "Local API mode is no longer supported"
       );
-      expect(result).toEqual({ reports: [], lastUpdated: "2024-01-01T00:00:00.000Z" });
-    });
-
-    it("retries once when message channel is closed", async () => {
-      const localClient = new ApiClient({ mode: "local" });
-      markOffscreenReady();
-      vi.mocked(chrome.offscreen.createDocument).mockImplementation(async () => {
-        markOffscreenReady();
-      });
-
-      let callCount = 0;
-      vi.mocked(chrome.runtime.sendMessage).mockImplementation((_message, callback) => {
-        callCount += 1;
-        if (callCount === 1) {
-          chrome.runtime.lastError = {
-            message: "The message port closed before a response was received.",
-          } as chrome.runtime.LastError;
-          callback?.(undefined);
-          return;
-        }
-
-        chrome.runtime.lastError = null;
-        callback?.({
-          id: "req-2",
-          status: 200,
-          data: { reports: [], lastUpdated: "2024-01-01T00:00:00.000Z" },
-        });
-      });
-
-      const result = await localClient.getReports();
-
-      expect(callCount).toBe(2);
-      expect(result).toEqual({ reports: [], lastUpdated: "2024-01-01T00:00:00.000Z" });
     });
   });
 });

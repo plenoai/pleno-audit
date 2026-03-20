@@ -26,7 +26,7 @@ export default defineConfig({
     const basePermissions = ["cookies", "storage", "unlimitedStorage", "activeTab", "alarms", "webRequest", "management", "notifications"];
 
     // Chrome/Edge MV3 permissions
-    const mv3Permissions = [...basePermissions, "offscreen", "scripting", "declarativeNetRequest", "declarativeNetRequestFeedback", "identity"];
+    const mv3Permissions = [...basePermissions, "scripting", "declarativeNetRequest", "declarativeNetRequestFeedback", "identity"];
 
     // Firefox/Safari MV2 permissions (no offscreen, no scripting)
     const mv2Permissions = basePermissions;
@@ -52,16 +52,16 @@ export default defineConfig({
       host_permissions: ["<all_urls>"],
       ...(!isDev && {
         content_security_policy: isMV2
-          ? "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';"
+          ? "script-src 'self'; object-src 'self';"
           : {
-              extension_pages: "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';",
+              extension_pages: "script-src 'self'; object-src 'self';",
             },
       }),
       web_accessible_resources: isMV2
-        ? ["api-hooks.js", "hooks/websocket-hooks.js", "hooks/worker-hooks.js", "hooks/injection-hooks.js", "hooks/fingerprint-hooks.js", "parquet_wasm_bg.wasm"]
+        ? ["api-hooks.js", "hooks/websocket-hooks.js", "hooks/worker-hooks.js", "hooks/injection-hooks.js", "hooks/fingerprint-hooks.js"]
         : [
             {
-              resources: ["api-hooks.js", "hooks/websocket-hooks.js", "hooks/worker-hooks.js", "hooks/injection-hooks.js", "hooks/fingerprint-hooks.js", "parquet_wasm_bg.wasm"],
+              resources: ["api-hooks.js", "hooks/websocket-hooks.js", "hooks/worker-hooks.js", "hooks/injection-hooks.js", "hooks/fingerprint-hooks.js"],
               matches: ["<all_urls>"],
             },
           ],
@@ -125,9 +125,6 @@ export default defineConfig({
     build: {
       target: "esnext",
       modulePreload: false,
-      rollupOptions: {
-        external: ["parquet-wasm"],
-      },
     },
     define: {
       "import.meta.hot": "undefined",
@@ -138,11 +135,8 @@ export default defineConfig({
       include: [
         "@pleno-audit/csp",
         "@pleno-audit/detectors",
-        "@pleno-audit/api",
         "@pleno-audit/extension-runtime",
-        "@pleno-audit/parquet-storage",
       ],
-      exclude: ["parquet-wasm"],
     },
   }),
 });
