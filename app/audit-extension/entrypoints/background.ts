@@ -1,4 +1,4 @@
-import type { CapturedAIPrompt } from "@pleno-audit/detectors";
+import type { CapturedAIPrompt, DetectedService } from "@pleno-audit/detectors";
 import {
   DEFAULT_AI_MONITOR_CONFIG,
   DEFAULT_NRD_CONFIG,
@@ -394,6 +394,10 @@ function createRuntimeHandlerDependencies(): RuntimeHandlerDependencies {
     handleDebugBridgeForward,
     getKnownExtensions,
     markOffscreenReady: () => { /* offscreen removed */ },
+    getServices: async () => {
+      const storage = await getStorage();
+      return Object.values(storage.services || {}) as DetectedService[];
+    },
     handlePageAnalysis: async (payload) =>
       backgroundAnalysis.handlePageAnalysis(payload as PageAnalysis),
     handleCSPViolation: (data, sender) => cspReportingService.handleCSPViolation(data as Omit<CSPViolation, "type">, sender),

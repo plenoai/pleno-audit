@@ -1,7 +1,7 @@
-import type { EventLog } from "./types";
-import type { BackgroundServiceState } from "./state";
-import type { NewEvent } from "./types";
-import { resolveEventTimestamp } from "../services/event-timestamp";
+import type { EventLog } from "./types.js";
+import type { BackgroundServiceState } from "./state.js";
+import type { NewEvent } from "./types.js";
+import { resolveEventTimestamp } from "../services/event-timestamp.js";
 
 function generateEventId(): string {
   return crypto.randomUUID();

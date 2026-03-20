@@ -129,7 +129,7 @@ function DashboardContent() {
           <DomainsTab
             styles={styles}
             domainStats={dashboard.domainStats}
-            violations={dashboard.violations}
+            domainViolationMeta={dashboard.domainViolationMeta}
             networkRequests={dashboard.networkRequests}
           />
         )}

@@ -1,4 +1,4 @@
-import type { ExtensionNetworkState } from "./types";
+import type { ExtensionNetworkState } from "./types.js";
 
 export function createExtensionNetworkState(): ExtensionNetworkState {
   return {

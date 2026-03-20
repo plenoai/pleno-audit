@@ -1,5 +1,5 @@
 import type { AIMonitorConfig, CapturedAIPrompt } from "@pleno-audit/detectors";
-import type { AsyncHandlerEntry, RuntimeHandlerDependencies } from "./types";
+import type { AsyncHandlerEntry, RuntimeHandlerDependencies } from "./types.js";
 
 export function createAIPromptHandlers(
   deps: RuntimeHandlerDependencies,

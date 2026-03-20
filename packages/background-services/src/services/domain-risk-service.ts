@@ -17,7 +17,7 @@ import {
 } from "@pleno-audit/detectors";
 import { DEFAULT_DETECTION_CONFIG, type DetectionConfig } from "@pleno-audit/extension-runtime";
 import type { AlertManager } from "@pleno-audit/alerts";
-import { resolveEventTimestamp } from "./event-timestamp";
+import { resolveEventTimestamp } from "./event-timestamp.js";
 
 interface LoggerLike {
   error: (...args: unknown[]) => void;

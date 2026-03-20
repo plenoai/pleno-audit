@@ -12,8 +12,8 @@ import {
   type DetectionConfig,
   type NotificationConfig,
 } from "@pleno-audit/extension-runtime";
-import type { BackgroundServiceState } from "./state";
-import { ensureApiClient, ensureSyncManager, setConnectionConfigInternal } from "./client";
+import type { BackgroundServiceState } from "./state.js";
+import { ensureApiClient, ensureSyncManager, setConnectionConfigInternal } from "./client.js";
 
 const logger = createLogger("background-config");
 

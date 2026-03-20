@@ -1,6 +1,6 @@
 import type { ApiClient, ConnectionMode, SyncManager } from "@pleno-audit/extension-runtime";
 import { getApiClient, getSyncManager, updateApiClientConfig } from "@pleno-audit/extension-runtime";
-import type { BackgroundServiceState } from "./state";
+import type { BackgroundServiceState } from "./state.js";
 
 let apiClientPromise: Promise<ApiClient> | null = null;
 let syncManagerPromise: Promise<SyncManager> | null = null;

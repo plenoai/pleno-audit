@@ -1,7 +1,7 @@
 import type {
   DataExfiltrationData,
   TrackingBeaconData,
-} from "./security-event-handlers";
+} from "./security-event-handlers.js";
 
 const DATA_EXFILTRATION_THRESHOLD = 10 * 1024;
 const TRACKING_BEACON_SIZE_LIMIT = 2048;

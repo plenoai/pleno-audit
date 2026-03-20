@@ -1,12 +1,12 @@
 import { queryExistingCookies, type Logger } from "@pleno-audit/extension-runtime";
-import { createBackgroundServiceContext } from "./background-services/context";
+import { createBackgroundServiceContext } from "./background-services/context.js";
 import {
   ensureApiClient,
   ensureSyncManager,
   initializeApiClientWithMigration,
   initializeSyncManagerWithAutoStart,
-} from "./background-services/client";
-import { addEvent } from "./background-services/events";
+} from "./background-services/client.js";
+import { addEvent } from "./background-services/events.js";
 import {
   checkAIServicePolicy,
   checkDataTransferPolicy,
@@ -14,14 +14,14 @@ import {
   getAlertManager,
   getPolicyManager,
   registerNotificationClickHandler,
-} from "./background-services/alerts";
+} from "./background-services/alerts.js";
 import {
   initStorage,
   saveStorage,
   queueStorageOperation,
   updateService,
   addCookieToService,
-} from "./background-services/storage";
+} from "./background-services/storage.js";
 import {
   getDetectionConfig,
   setDetectionConfig,
@@ -37,11 +37,11 @@ import {
   getSyncConfig,
   setSyncConfig,
   triggerSync,
-} from "./background-services/config";
-import { createPageAnalysisHandler } from "./background-services/analysis";
-import { extractDomainFromUrl } from "./background-services/utils";
+} from "./background-services/config.js";
+import { createPageAnalysisHandler } from "./background-services/analysis.js";
+import { extractDomainFromUrl } from "./background-services/utils.js";
 
-export type { NewEvent, PageAnalysis } from "./background-services/types";
+export type { NewEvent, PageAnalysis } from "./background-services/types.js";
 
 export function createBackgroundServices(serviceLogger: Logger) {
   const { state, bind } = createBackgroundServiceContext(serviceLogger);

@@ -4,8 +4,8 @@ import {
   DEFAULT_NOTIFICATION_CONFIG,
 } from "@pleno-audit/extension-runtime";
 import { DEFAULT_POLICY_CONFIG } from "@pleno-audit/alerts";
-import type { BackgroundServiceState } from "./state";
-import type { CookieInfo, DetectedService, StorageData } from "./types";
+import type { BackgroundServiceState } from "./state.js";
+import type { CookieInfo, DetectedService, StorageData } from "./types.js";
 
 export function queueStorageOperation<T>(
   state: BackgroundServiceState,

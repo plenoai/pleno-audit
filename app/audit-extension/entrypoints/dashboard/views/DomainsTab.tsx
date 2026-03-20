@@ -1,15 +1,24 @@
-import type { CSPViolation, NetworkRequest } from "@pleno-audit/csp";
+import { useMemo } from "preact/hooks";
+import type { NetworkRequest } from "@pleno-audit/csp";
 import { Badge, Button, DataTable } from "../../../components";
 import type { DashboardStyles } from "../styles";
 
 interface DomainsTabProps {
   styles: DashboardStyles;
   domainStats: { label: string; value: number }[];
-  violations: CSPViolation[];
+  domainViolationMeta: Record<string, { count: number; lastSeen: number }>;
   networkRequests: NetworkRequest[];
 }
 
-export function DomainsTab({ styles, domainStats, violations, networkRequests }: DomainsTabProps) {
+export function DomainsTab({ styles, domainStats, domainViolationMeta, networkRequests }: DomainsTabProps) {
+  const networkByDomain = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const r of networkRequests) {
+      map[r.domain] = (map[r.domain] || 0) + 1;
+    }
+    return map;
+  }, [networkRequests]);
+
   return (
     <div style={styles.section}>
       <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "16px" }}>
@@ -36,24 +45,12 @@ export function DomainsTab({ styles, domainStats, violations, networkRequests }:
       </div>
 
       <DataTable
-        data={domainStats.map((d, i) => {
-          const domainViolations = violations.filter((v) => {
-            try {
-              return new URL(v.blockedURL).hostname === d.label;
-            } catch {
-              return false;
-            }
-          });
-          const timestamps = domainViolations.map((v) => new Date(v.timestamp).getTime());
-          let lastSeenMs = 0;
-          for (const t of timestamps) { if (t > lastSeenMs) lastSeenMs = t; }
-          return {
-            ...d,
-            requests: networkRequests.filter((r) => r.domain === d.label).length,
-            lastSeen: lastSeenMs,
-            index: i,
-          };
-        })}
+        data={domainStats.map((d, i) => ({
+          ...d,
+          requests: networkByDomain[d.label] || 0,
+          lastSeen: domainViolationMeta[d.label]?.lastSeen ?? 0,
+          index: i,
+        }))}
         rowKey={(d) => d.label}
         rowHighlight={(d) => d.value > 10}
         emptyMessage="ドメインデータなし"

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { DB_CONFIG, initializeDatabase } from "./schema";
+import { DB_CONFIG, initializeDatabase } from "./schema.js";
 
 describe("DB_CONFIG", () => {
   it("has correct database name", () => {

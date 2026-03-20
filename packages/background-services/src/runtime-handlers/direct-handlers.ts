@@ -1,4 +1,4 @@
-import type { RuntimeHandlerDependencies, RuntimeMessageHandler } from "./types";
+import type { RuntimeHandlerDependencies, RuntimeMessageHandler } from "./types.js";
 
 export function createDirectHandlers(
   deps: RuntimeHandlerDependencies,

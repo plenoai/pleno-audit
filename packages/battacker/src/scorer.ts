@@ -4,8 +4,8 @@ import type {
   CategoryScore,
   DefenseScore,
   TestResult,
-} from "./types";
-import { CATEGORY_WEIGHTS, scoreToGrade } from "./types";
+} from "./types.js";
+import { CATEGORY_WEIGHTS, scoreToGrade } from "./types.js";
 
 const SEVERITY_SCORES = {
   critical: 30,

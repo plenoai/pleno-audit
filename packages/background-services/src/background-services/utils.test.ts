@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { extractDomainFromUrl } from "./utils";
+import { extractDomainFromUrl } from "./utils.js";
 
 describe("extractDomainFromUrl", () => {
   it("標準的なHTTPS URLからホスト名を抽出する", () => {

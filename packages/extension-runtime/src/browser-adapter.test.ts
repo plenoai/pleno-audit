@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 import { describe, it, expect, beforeEach } from "vitest";
-import { createBrowserAdapter, browserAdapter } from "./browser-adapter";
+import { createBrowserAdapter, browserAdapter } from "./browser-adapter.js";
 
 describe("createBrowserAdapter", () => {
   let adapter: ReturnType<typeof createBrowserAdapter>;

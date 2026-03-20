@@ -4,7 +4,7 @@ import {
   queryNetworkRequests,
   type NetworkRequestQueryOptions,
 } from "./helpers.js";
-import type { ExtensionNetworkContext } from "./types";
+import type { ExtensionNetworkContext } from "./types.js";
 
 /**
  * ネットワークリクエストを取得する。

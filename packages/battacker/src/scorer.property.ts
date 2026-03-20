@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
 import fc from "fast-check";
-import { calculateCategoryScore, calculateDefenseScore } from "./scorer";
-import { scoreToGrade } from "./types";
-import type { AttackCategory, Severity, TestResult, Grade } from "./types";
+import { calculateCategoryScore, calculateDefenseScore } from "./scorer.js";
+import { scoreToGrade } from "./types.js";
+import type { AttackCategory, Severity, TestResult, Grade } from "./types.js";
 
 const GRADE_ORDER: Record<Grade, number> = { F: 0, D: 1, C: 2, B: 3, A: 4 };
 

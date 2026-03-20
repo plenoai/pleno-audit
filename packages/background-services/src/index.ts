@@ -13,6 +13,9 @@ export {
   type RuntimeHandlerDependencies,
 } from "./runtime-handlers/index.js";
 
+// Computation handlers (popup offload)
+export { createComputationHandlers } from "./runtime-handlers/computation-handlers.js";
+
 // Alarm handlers
 export { createAlarmHandlers } from "./services/alarm-handlers.js";
 

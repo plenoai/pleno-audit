@@ -8,9 +8,9 @@ import {
   groupRequestsByExtensionId,
   mapToExtensionAnalysisRequest,
 } from "./helpers.js";
-import type { ExtensionNetworkContext } from "./types";
-import { getCooldownManager } from "./cooldown";
-import { getExtensionInitiatedRequests } from "./requests";
+import type { ExtensionNetworkContext } from "./types.js";
+import { getCooldownManager } from "./cooldown.js";
+import { getExtensionInitiatedRequests } from "./requests.js";
 
 export async function analyzeExtensionRisks(context: ExtensionNetworkContext): Promise<void> {
   try {

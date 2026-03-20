@@ -1,5 +1,5 @@
 import type { CSPConfig, CSPGenerationOptions } from "@pleno-audit/csp";
-import type { AsyncHandlerEntry, RuntimeHandlerDependencies } from "./types";
+import type { AsyncHandlerEntry, RuntimeHandlerDependencies } from "./types.js";
 
 export function createCspHandlers(
   deps: RuntimeHandlerDependencies,
