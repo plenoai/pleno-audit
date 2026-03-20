@@ -2,7 +2,7 @@
 
 ## ステータス
 
-Accepted
+Superseded by [ADR-051](./051-deprecate-parquet-storage.md)
 
 ## コンテキスト
 
