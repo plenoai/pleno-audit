@@ -175,19 +175,27 @@ export function useDashboardState({
       .map(([label, value]) => ({ label, value }));
   }, [violations]);
 
-  const domainStats = useMemo(() => {
-    const stats: Record<string, number> = {};
+  const { domainStats, domainViolationMeta } = useMemo(() => {
+    const stats: Record<string, { count: number; lastSeen: number }> = {};
     for (const v of violations) {
       try {
         const domain = new URL(v.blockedURL).hostname;
-        stats[domain] = (stats[domain] ?? 0) + 1;
+        const ts = new Date(v.timestamp).getTime();
+        const existing = stats[domain];
+        if (existing) {
+          existing.count++;
+          if (ts > existing.lastSeen) existing.lastSeen = ts;
+        } else {
+          stats[domain] = { count: 1, lastSeen: ts };
+        }
       } catch {
         // invalid URL
       }
     }
-    return Object.entries(stats)
-      .sort((a, b) => b[1] - a[1])
-      .map(([label, value]) => ({ label, value }));
+    const domainStats = Object.entries(stats)
+      .sort((a, b) => b[1].count - a[1].count)
+      .map(([label, { count }]) => ({ label, value: count }));
+    return { domainStats, domainViolationMeta: stats };
   }, [violations]);
 
   const nrdServices = useMemo(() => services.filter((s) => s.nrdResult?.isNRD), [services]);
@@ -264,6 +272,7 @@ export function useDashboardState({
     directives,
     directiveStats,
     domainStats,
+    domainViolationMeta,
     nrdServices,
     loginServices,
     typosquatServices,

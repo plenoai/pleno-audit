@@ -2,7 +2,7 @@ import type {
   AsyncMessageHandlerConfig,
   LoggerLike,
   RuntimeMessage,
-} from "./types";
+} from "./types.js";
 
 export function runAsyncMessageHandler(
   logger: LoggerLike,

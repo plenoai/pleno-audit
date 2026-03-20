@@ -5,7 +5,7 @@ import {
   type NetworkRequestRecord,
 } from "@pleno-audit/extension-runtime";
 import { networkRequestRecordToParquetRecord } from "@pleno-audit/parquet-storage";
-import type { ExtensionNetworkContext } from "./types";
+import type { ExtensionNetworkContext } from "./types.js";
 
 export async function getNetworkMonitorConfig(
   context: ExtensionNetworkContext

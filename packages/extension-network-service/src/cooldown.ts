@@ -1,6 +1,6 @@
 import { createCooldownManager, createPersistentCooldownStorage } from "@pleno-audit/extension-runtime";
 import type { CooldownManager } from "@pleno-audit/extension-runtime";
-import type { ExtensionNetworkContext } from "./types";
+import type { ExtensionNetworkContext } from "./types.js";
 
 const EXTENSION_ALERT_COOLDOWN_MS = 1000 * 60 * 60;
 

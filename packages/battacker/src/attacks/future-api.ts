@@ -1,5 +1,5 @@
 // @ts-nocheck
-import type { AttackResult, AttackTest } from "../types";
+import type { AttackResult, AttackTest } from "../types.js";
 
 async function simulateWebGPUMemoryLeak(): Promise<AttackResult> {
   const startTime = performance.now();

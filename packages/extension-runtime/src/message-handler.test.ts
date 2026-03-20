@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createMessageRouter, fireAndForget } from "./message-handler";
+import { createMessageRouter, fireAndForget } from "./message-handler.js";
 
 const mockAddListener = vi.fn();
 

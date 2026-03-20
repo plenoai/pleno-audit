@@ -1,5 +1,5 @@
 import type { CSPViolation, NetworkRequest } from "@pleno-audit/csp";
-import type { DynamicIndex, ParquetEvent } from "./types";
+import type { DynamicIndex, ParquetEvent } from "./types.js";
 
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5分
 

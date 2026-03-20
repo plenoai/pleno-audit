@@ -1,6 +1,6 @@
-import type { RuntimeHandlerDependencies, RuntimeMessageHandlers } from "./types";
-import { createAsyncHandlers } from "./async-handlers";
-import { createDirectHandlers } from "./direct-handlers";
+import type { RuntimeHandlerDependencies, RuntimeMessageHandlers } from "./types.js";
+import { createAsyncHandlers } from "./async-handlers.js";
+import { createDirectHandlers } from "./direct-handlers.js";
 
 export function createRuntimeMessageHandlers(
   deps: RuntimeHandlerDependencies,
@@ -11,7 +11,7 @@ export function createRuntimeMessageHandlers(
   };
 }
 
-export { runAsyncMessageHandler } from "./async-runner";
+export { runAsyncMessageHandler } from "./async-runner.js";
 export type {
   AsyncMessageHandlerConfig,
   LoggerLike,
@@ -20,4 +20,4 @@ export type {
   RuntimeMessage,
   RuntimeMessageHandler,
   RuntimeMessageHandlers,
-} from "./types";
+} from "./types.js";

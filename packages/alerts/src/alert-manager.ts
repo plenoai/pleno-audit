@@ -61,7 +61,7 @@ import {
  * Generate unique alert ID
  */
 function generateAlertId(): string {
-  return `alert-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  return `alert-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 }
 
 /**

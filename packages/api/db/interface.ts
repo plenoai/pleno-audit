@@ -1,23 +1,7 @@
 import type { CSPViolation, NetworkRequest, CSPReport } from '@pleno-audit/csp'
+import type { DatabaseStats, QueryOptions, PaginatedResult } from '@pleno-audit/parquet-storage'
 
-export interface DatabaseStats {
-  violations: number
-  requests: number
-  uniqueDomains: number
-}
-
-export interface QueryOptions {
-  limit?: number
-  offset?: number
-  since?: string
-  until?: string
-}
-
-export interface PaginatedResult<T> {
-  data: T[]
-  total: number
-  hasMore: boolean
-}
+export type { DatabaseStats, QueryOptions, PaginatedResult }
 
 export interface DatabaseAdapter {
   init(): Promise<void>

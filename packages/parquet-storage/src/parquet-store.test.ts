@@ -19,7 +19,7 @@ vi.mock("./indexeddb-adapter", () => ({
   },
 }));
 
-import { ParquetStore } from "./parquet-store";
+import { ParquetStore } from "./parquet-store.js";
 
 describe("ParquetStore", () => {
   let store: ParquetStore;

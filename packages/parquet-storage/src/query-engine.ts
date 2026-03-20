@@ -1,10 +1,10 @@
 import type { CSPViolation, NetworkRequest, CSPReport } from "@pleno-audit/csp";
-import type { ParquetEvent, QueryOptions, PaginatedResult, DynamicIndex } from "./types";
+import type { ParquetEvent, QueryOptions, PaginatedResult, DynamicIndex } from "./types.js";
 import {
   parquetRecordToCspViolation,
   parquetRecordToNetworkRequest,
   parquetRecordToEvent,
-} from "./schema";
+} from "./schema.js";
 
 export class QueryEngine {
   queryReports(

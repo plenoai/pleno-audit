@@ -1,5 +1,5 @@
-import { getDateString } from "./schema";
-import type { ParquetLogType, WriteBuffer as WriteBufferType } from "./types";
+import { getDateString } from "./schema.js";
+import type { ParquetLogType, WriteBuffer as WriteBufferType } from "./types.js";
 
 const BUFFER_CONFIG = {
   flushIntervalMs: 5000, // 5秒

@@ -1,13 +1,11 @@
 import { useState, useEffect, useMemo } from "preact/hooks";
-import type { DetectedService } from "@pleno-audit/detectors";
-import type { CSPViolation, NetworkRequest } from "@pleno-audit/csp";
 import { createLogger } from "@pleno-audit/extension-runtime";
 import { useTheme } from "../../../lib/theme";
 import { Badge, Button } from "../../../components";
 import {
-  aggregateServices,
   type ServiceTag,
   type SortType,
+  type UnifiedService,
 } from "../utils/serviceAggregator";
 import {
   buildServiceIndex,
@@ -15,14 +13,9 @@ import {
   type FilterCategory,
 } from "../utils/serviceExplorer";
 import { usePopupStyles } from "../styles";
+import { sendMessage } from "../utils/messaging";
 
 const logger = createLogger("popup-service-tab");
-
-interface ServiceTabProps {
-  services: DetectedService[];
-  violations: CSPViolation[];
-  networkRequests: NetworkRequest[];
-}
 
 function sanitizeUrl(url: string, domain: string): string {
   try {
@@ -100,7 +93,7 @@ function formatRelativeTime(timestamp: number): string {
   return "たった今";
 }
 
-export function ServiceTab({ services, violations, networkRequests }: ServiceTabProps) {
+export function ServiceTab() {
   const { colors } = useTheme();
   const popupStyles = usePopupStyles();
   const [unifiedServices, setUnifiedServices] = useState<UnifiedService[]>([]);
@@ -130,8 +123,8 @@ export function ServiceTab({ services, violations, networkRequests }: ServiceTab
     async function loadData() {
       setLoading(true);
       try {
-        const result = await aggregateServices(services, networkRequests, violations);
-        setUnifiedServices(result);
+        const result = await sendMessage<UnifiedService[]>({ type: "GET_AGGREGATED_SERVICES" });
+        if (Array.isArray(result)) setUnifiedServices(result);
       } catch (error) {
         logger.warn({
           event: "POPUP_AGGREGATE_SERVICES_FAILED",
@@ -142,7 +135,7 @@ export function ServiceTab({ services, violations, networkRequests }: ServiceTab
       }
     }
     loadData();
-  }, [services, violations, networkRequests]);
+  }, []);
 
   function toggleExpand(id: string) {
     setExpandedIds((prev) => {

@@ -5,7 +5,7 @@ import {
   type NetworkRequestQueryOptions,
 } from "./helpers.js";
 import { parquetRecordToNetworkRequestRecord } from "@pleno-audit/parquet-storage";
-import type { ExtensionNetworkContext } from "./types";
+import type { ExtensionNetworkContext } from "./types.js";
 
 export async function getNetworkRequests(
   context: ExtensionNetworkContext,

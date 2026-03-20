@@ -7,7 +7,7 @@ import {
   type PolicyManager,
   type SecurityAlert,
 } from "@pleno-audit/alerts";
-import type { BackgroundServiceState } from "./state";
+import type { BackgroundServiceState } from "./state.js";
 
 type PolicyViolation = ReturnType<PolicyManager["checkDomain"]>["violations"][number];
 

@@ -1,4 +1,4 @@
-import type { AttackResult, AttackTest } from "../types";
+import type { AttackResult, AttackTest } from "../types.js";
 
 /**
  * Phase 13: User & Device Layer Attacks

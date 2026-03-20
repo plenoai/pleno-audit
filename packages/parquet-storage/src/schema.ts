@@ -1,7 +1,7 @@
 import type { CSPViolation, NetworkRequest } from "@pleno-audit/csp";
 import type { NRDResult, TyposquatResult } from "@pleno-audit/detectors";
 import type { NetworkRequestRecord } from "@pleno-audit/extension-runtime";
-import type { ParquetEvent } from "./types";
+import type { ParquetEvent } from "./types.js";
 
 // Parquetスキーマ定義（parquet-wasmで使用可能な形式）
 export const SCHEMAS = {
@@ -319,7 +319,7 @@ export function parquetRecordToEvent(
 
 // ユーティリティ関数
 function generateId(): string {
-  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  return `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 }
 
 export function getDateString(timestamp?: number | string | Date): string {
@@ -473,6 +473,10 @@ interface ServiceForRiskProfile {
 export function domainRiskProfileToParquetRecord(
   service: ServiceForRiskProfile
 ): Record<string, unknown> {
+  // TODO: This ad-hoc risk level calculation diverges from the score-based
+  // approach in @pleno-audit/alerts scoring-utils.ts. Consider unifying into
+  // a shared risk-level strategy when parquet-storage can depend on alerts,
+  // or extract a lightweight shared package.
   let riskLevel = "low";
   const riskFactors = [
     service.nrdResult?.isNRD || false,
@@ -543,7 +547,7 @@ export function createServiceInventorySnapshot(
   }
 
   return {
-    snapshotId: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    snapshotId: `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
     snapshotAt: Date.now(),
     totalServices: serviceList.length,
     servicesWithLogin,

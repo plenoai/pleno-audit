@@ -1,4 +1,4 @@
-import type { AttackResult, AttackTest } from "../types";
+import type { AttackResult, AttackTest } from "../types.js";
 
 /**
  * Phase 17: Extension Sandbox & Privilege Model Layer Attacks

@@ -9,7 +9,7 @@ import type {
   DatabaseStats,
   PaginatedResult,
   QueryOptions,
-} from "./interface";
+} from "./interface.js";
 import { createLogger } from "@pleno-audit/extension-runtime";
 
 const logger = createLogger("parquet-adapter");

@@ -1,5 +1,8 @@
 import type {
+  CookieBannerDetectedDetails,
+  CookieBannerResult,
   CookieInfo,
+  CookiePolicyFoundDetails,
   CookieSetDetails,
   DetectedService,
   DetectionResult,
@@ -167,28 +170,6 @@ export interface SupplyChainRiskDetails {
   pageUrl: string;
 }
 
-export interface CookieBannerResult {
-  found: boolean;
-  selector: string | null;
-  hasAcceptButton: boolean;
-  hasRejectButton: boolean;
-  hasSettingsButton: boolean;
-  isGDPRCompliant: boolean;
-}
-
-export interface CookiePolicyFoundDetails {
-  url: string;
-  method?: string;
-}
-
-export interface CookieBannerDetectedDetails {
-  selector: string | null;
-  hasAcceptButton: boolean;
-  hasRejectButton: boolean;
-  hasSettingsButton: boolean;
-  isGDPRCompliant: boolean;
-}
-
 export interface PageAnalysis {
   url: string;
   domain: string;
@@ -201,4 +182,11 @@ export interface PageAnalysis {
   faviconUrl?: string | null;
 }
 
-export type { CookieInfo, EventLog, DetectedService };
+export type {
+  CookieBannerDetectedDetails,
+  CookieBannerResult,
+  CookieInfo,
+  CookiePolicyFoundDetails,
+  DetectedService,
+  EventLog,
+};

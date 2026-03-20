@@ -69,11 +69,6 @@
       "files": ["app/website/**/*"],
       "rules": { "no-restricted-globals": "off" }
     },
-    // Integration manager - user-configured Slack/Webhook notifications (default: OFF)
-    {
-      "files": ["packages/integrations/src/manager.ts"],
-      "rules": { "no-restricted-globals": "off" }
-    },
     // Pleno Battacker - intentionally simulates attacks including network communication
     {
       "files": ["app/battacker-extension/**/*"],

@@ -22,7 +22,7 @@ import {
   typosquatResultToParquetRecord,
   type ParquetStore,
 } from "@pleno-audit/parquet-storage";
-import { resolveEventTimestamp } from "./event-timestamp";
+import { resolveEventTimestamp } from "./event-timestamp.js";
 
 interface LoggerLike {
   error: (...args: unknown[]) => void;

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { EventStore, type EventQueryOptions } from "./event-store";
+import { EventStore, type EventQueryOptions } from "./event-store.js";
 import type { EventLog } from "@pleno-audit/detectors";
 
 // Mock IDBKeyRange

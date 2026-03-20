@@ -1,5 +1,8 @@
 import { DEFAULT_DOH_CONFIG } from "./constants.js";
 import type { DebugHandlerResult } from "./types.js";
+import { createLogger } from "@pleno-audit/extension-runtime";
+
+const logger = createLogger("debug-bridge:doh");
 
 export async function getDoHConfig(): Promise<DebugHandlerResult> {
   try {
@@ -32,7 +35,7 @@ export async function setDoHConfig(params: {
         data: params,
       })
       .catch((err) => {
-        console.warn("[doh] Failed to notify SET_DOH_MONITOR_CONFIG:", err);
+        logger.warn("Failed to notify SET_DOH_MONITOR_CONFIG:", err);
       });
 
     return { success: true };

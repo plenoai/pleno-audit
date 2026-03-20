@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   createNetworkSecurityInspector,
   detectSensitiveData,
-} from "./network-security-inspector";
+} from "./network-security-inspector.js";
 
 describe("createNetworkSecurityInspector", () => {
   it("閾値超過でデータ漏洩判定を返す", async () => {

@@ -1,5 +1,5 @@
-import type { DefenseScore } from "../types";
-import type { BattackerStorage } from "./types";
+import type { DefenseScore } from "../types.js";
+import type { BattackerStorage } from "./types.js";
 
 const DB_NAME = "battacker";
 const DB_VERSION = 1;

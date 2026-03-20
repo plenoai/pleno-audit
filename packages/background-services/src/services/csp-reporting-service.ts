@@ -8,7 +8,7 @@ import type {
 } from "@pleno-audit/csp";
 import { CSPAnalyzer, CSPReporter, DEFAULT_CSP_CONFIG, type GeneratedCSPByDomain } from "@pleno-audit/csp";
 import type { QueryOptions } from "@pleno-audit/extension-runtime";
-import { resolveEventTimestamp } from "./event-timestamp";
+import { resolveEventTimestamp } from "./event-timestamp.js";
 
 interface MessageSenderLike {
   tab?: {

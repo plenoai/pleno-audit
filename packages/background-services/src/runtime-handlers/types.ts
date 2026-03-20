@@ -1,6 +1,7 @@
 import type {
   AIMonitorConfig,
   CapturedAIPrompt,
+  DetectedService,
   NRDConfig,
   TyposquatConfig,
 } from "@pleno-audit/detectors";
@@ -112,6 +113,8 @@ handleNetworkInspection: (data: unknown, sender: chrome.runtime.MessageSender) =
   handleAudioFingerprint: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
   handleBroadcastChannel: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
   handleWebRTCConnection: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
+
+  getServices: () => Promise<DetectedService[]>;
 
   getCSPReports: (options?: {
     type?: "csp-violation" | "network-request";

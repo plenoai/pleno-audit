@@ -1,6 +1,6 @@
-import { createExtensionNetworkState } from "./state";
-import type { ExtensionNetworkService, ExtensionNetworkServiceDeps } from "./types";
-import { getNetworkRequests, getExtensionRequests } from "./requests";
+import { createExtensionNetworkState } from "./state.js";
+import type { ExtensionNetworkService, ExtensionNetworkServiceDeps } from "./types.js";
+import { getNetworkRequests, getExtensionRequests } from "./requests.js";
 import {
   getNetworkMonitorConfig,
   initExtensionMonitor,
@@ -8,16 +8,16 @@ import {
   setNetworkMonitorConfig,
   checkDNRMatchesHandler,
   getKnownExtensions,
-} from "./monitor";
+} from "./monitor.js";
 import {
   analyzeExtensionRisks,
   getAllExtensionRisks,
   getExtensionRiskAnalysis,
-} from "./risk-analysis";
-import { getExtensionStats } from "./stats";
+} from "./risk-analysis.js";
+import { getExtensionStats } from "./stats.js";
 
 export type { ExtensionStats } from "./helpers.js";
-export type { ExtensionNetworkService, ExtensionNetworkServiceDeps } from "./types";
+export type { ExtensionNetworkService, ExtensionNetworkServiceDeps } from "./types.js";
 
 export function createExtensionNetworkService(
   deps: ExtensionNetworkServiceDeps

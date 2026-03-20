@@ -1,5 +1,5 @@
 import type { ParquetEvent, ParquetStore } from "@pleno-audit/parquet-storage";
-import type { AsyncHandlerEntry, RuntimeHandlerDependencies } from "./types";
+import type { AsyncHandlerEntry, RuntimeHandlerDependencies } from "./types.js";
 
 type ParquetEventQueryOptions = Parameters<ParquetStore["getEvents"]>[0];
 
