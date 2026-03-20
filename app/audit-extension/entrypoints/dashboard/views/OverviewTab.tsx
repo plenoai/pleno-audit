@@ -1,3 +1,4 @@
+import { useMemo } from "preact/hooks";
 import type { CapturedAIPrompt, DetectedService, EventLog } from "@pleno-audit/detectors";
 import type { CSPViolation } from "@pleno-audit/csp";
 import type { ThemeColors } from "../../../lib/theme";
@@ -30,6 +31,30 @@ export function OverviewTab({
   directiveStats,
   domainStats,
 }: OverviewTabProps) {
+  const chartData = useMemo(() => {
+    const days = 7;
+    const dayMs = 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    const dayData = Array.from({ length: days }, (_, index) => {
+      const offset = days - 1 - index;
+      const dayStart = now - (offset + 1) * dayMs;
+      const dayEnd = now - offset * dayMs;
+      const count = events.filter((e) => e.timestamp >= dayStart && e.timestamp < dayEnd).length;
+      const hasRisk = events.some(
+        (e) =>
+          e.timestamp >= dayStart &&
+          e.timestamp < dayEnd &&
+          (e.type.includes("nrd") || e.type.includes("typosquat"))
+      );
+      return { offset, count, hasRisk };
+    });
+    let maxCount = 1;
+    for (const d of dayData) {
+      if (d.count > maxCount) maxCount = d.count;
+    }
+    return { dayData, maxCount };
+  }, [events]);
+
   const securityScore = Math.max(
     0,
     100 -
@@ -128,29 +153,11 @@ export function OverviewTab({
       <Card title="7日間のアクティビティ" style={{ marginBottom: "24px" }}>
         <div style={{ display: "flex", alignItems: "flex-end", gap: "4px", height: "80px" }}>
           {(() => {
-            const days = 7;
-            const dayMs = 24 * 60 * 60 * 1000;
-            const now = Date.now();
-            const dayData = Array.from({ length: days }, (_, index) => {
-              const offset = days - 1 - index;
-              const dayStart = now - (offset + 1) * dayMs;
-              const dayEnd = now - offset * dayMs;
-              const count = events.filter((e) => e.timestamp >= dayStart && e.timestamp < dayEnd).length;
-              const hasRisk = events.some(
-                (e) =>
-                  e.timestamp >= dayStart &&
-                  e.timestamp < dayEnd &&
-                  (e.type.includes("nrd") || e.type.includes("typosquat"))
-              );
-              return { offset, dayStart, dayEnd, count, hasRisk };
-            });
-            let maxCount = 1;
-            for (const d of dayData) { if (d.count > maxCount) maxCount = d.count; }
             const dayLabels = ["月", "火", "水", "木", "金", "土", "日"];
             const todayIndex = new Date().getDay();
-            return dayData.map(({ offset, count, hasRisk }, i) => {
+            return chartData.dayData.map(({ offset, count, hasRisk }, i) => {
               const dayOfWeek = (todayIndex - offset + 7) % 7;
-              const height = Math.max(4, (count / maxCount) * 60);
+              const height = Math.max(4, (count / chartData.maxCount) * 60);
               return (
                 <div
                   key={i}
