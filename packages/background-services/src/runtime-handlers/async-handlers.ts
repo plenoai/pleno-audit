@@ -2,22 +2,22 @@ import type {
   AsyncHandlerEntry,
   AsyncMessageHandlerConfig,
   RuntimeHandlerDependencies,
-} from "./types";
-import { createAIPromptHandlers } from "./ai-handlers";
-import { createConfigurationHandlers } from "./config-handlers";
-import { createConnectionAndAuthHandlers } from "./connection-auth-handlers";
-import { createCspHandlers } from "./csp-handlers";
-import { createDomainRiskHandlers } from "./domain-risk-handlers";
-import { createEventStoreHandlers } from "./event-store-handlers";
-import { createNetworkAndExtensionHandlers } from "./network-extension-handlers";
-import { createComputationHandlers } from "./computation-handlers";
-import { createSecurityEventHandlers } from "./security-handlers";
+} from "./types.js";
+import { createAIPromptHandlers } from "./ai-handlers.js";
+import { createConfigurationHandlers } from "./config-handlers.js";
+import { createConnectionAndAuthHandlers } from "./connection-auth-handlers.js";
+import { createCspHandlers } from "./csp-handlers.js";
+import { createDomainRiskHandlers } from "./domain-risk-handlers.js";
+import { createEventStoreHandlers } from "./event-store-handlers.js";
+import { createNetworkAndExtensionHandlers } from "./network-extension-handlers.js";
+import { createSecurityAsyncHandlers } from "./security-handlers.js";
+import { createComputationHandlers } from "./computation-handlers.js";
 
 export function createAsyncHandlers(
   deps: RuntimeHandlerDependencies,
 ): Map<string, AsyncMessageHandlerConfig> {
   const entries: AsyncHandlerEntry[] = [
-    ...createSecurityEventHandlers(deps),
+    ...createSecurityAsyncHandlers(deps),
     ...createCspHandlers(deps),
     ...createConnectionAndAuthHandlers(deps),
     ...createAIPromptHandlers(deps),
