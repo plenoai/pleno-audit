@@ -76,7 +76,7 @@ export {
   createPolicyGenerator,
   type PolicyRule,
   type PolicyCategory,
-  type PolicyAction,
+  type AIPolicyAction,
   type PolicyCondition,
   type ConditionType,
   type PolicyGenerationInput,
