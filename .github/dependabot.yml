@@ -5,9 +5,12 @@ updates:
     schedule:
       interval: monthly
     groups:
-      all-dependencies:
+      minor-and-patch:
         patterns:
           - "*"
+        update-types:
+          - minor
+          - patch
     commit-message:
       prefix: chore
     open-pull-requests-limit: 5
