@@ -1,8 +1,8 @@
-export { ParquetStore } from "./parquet-store";
-export { ParquetIndexedDBAdapter } from "./indexeddb-adapter";
-export { WriteBuffer } from "./write-buffer";
-export { DynamicIndexCache, DynamicIndexBuilder } from "./dynamic-index";
-export { QueryEngine } from "./query-engine";
+export { ParquetStore } from "./parquet-store.js";
+export { ParquetIndexedDBAdapter } from "./indexeddb-adapter.js";
+export { WriteBuffer } from "./write-buffer.js";
+export { DynamicIndexCache, DynamicIndexBuilder } from "./dynamic-index.js";
+export { QueryEngine } from "./query-engine.js";
 
 export type {
   ParquetLogType,
@@ -16,7 +16,7 @@ export type {
   QueryResult,
   ExportOptions,
   MigrationResult,
-} from "./types";
+} from "./types.js";
 
 export {
   cspViolationToParquetRecord,
@@ -32,4 +32,4 @@ export {
   parseParquetFileName,
   nrdResultToParquetRecord,
   typosquatResultToParquetRecord,
-} from "./schema";
+} from "./schema.js";

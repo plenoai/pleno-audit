@@ -3,9 +3,9 @@ import {
   calculateCategoryScore,
   calculateDefenseScore,
   runAllTests,
-} from "./scorer";
-import { scoreToGrade } from "./types";
-import type { AttackTest, TestResult, AttackCategory, Severity } from "./types";
+} from "./scorer.js";
+import { scoreToGrade } from "./types.js";
+import type { AttackTest, TestResult, AttackCategory, Severity } from "./types.js";
 
 function makeTestResult(
   overrides: {

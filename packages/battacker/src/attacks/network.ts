@@ -1,4 +1,4 @@
-import type { AttackResult, AttackTest } from "../types";
+import type { AttackResult, AttackTest } from "../types.js";
 
 async function simulateBeacon(): Promise<AttackResult> {
   const startTime = performance.now();

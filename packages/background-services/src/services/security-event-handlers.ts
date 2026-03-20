@@ -1,5 +1,5 @@
 import type { AlertManager } from "@pleno-audit/alerts";
-import { resolveEventTimestamp } from "./event-timestamp";
+import { resolveEventTimestamp } from "./event-timestamp.js";
 
 interface LoggerLike {
   debug: (...args: unknown[]) => void;

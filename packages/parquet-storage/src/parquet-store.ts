@@ -6,17 +6,17 @@ import type {
   DatabaseStats,
   ParquetEvent,
   ParquetFileRecord,
-} from "./types";
-import { WriteBuffer } from "./write-buffer";
-import { ParquetIndexedDBAdapter } from "./indexeddb-adapter";
-import { DynamicIndexCache, DynamicIndexBuilder } from "./dynamic-index";
-import { QueryEngine } from "./query-engine";
+} from "./types.js";
+import { WriteBuffer } from "./write-buffer.js";
+import { ParquetIndexedDBAdapter } from "./indexeddb-adapter.js";
+import { DynamicIndexCache, DynamicIndexBuilder } from "./dynamic-index.js";
+import { QueryEngine } from "./query-engine.js";
 import {
   cspViolationToParquetRecord,
   networkRequestToParquetRecord,
   eventToParquetRecord,
   getDateString,
-} from "./schema";
+} from "./schema.js";
 
 export class ParquetStore {
   private indexedDB: ParquetIndexedDBAdapter;

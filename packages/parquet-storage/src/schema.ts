@@ -1,7 +1,7 @@
 import type { CSPViolation, NetworkRequest } from "@pleno-audit/csp";
 import type { NRDResult, TyposquatResult } from "@pleno-audit/detectors";
 import type { NetworkRequestRecord } from "@pleno-audit/extension-runtime";
-import type { ParquetEvent } from "./types";
+import type { ParquetEvent } from "./types.js";
 
 // Parquetスキーマ定義（parquet-wasmで使用可能な形式）
 export const SCHEMAS = {

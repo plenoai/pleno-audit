@@ -5,7 +5,7 @@ import {
   getStorageValue,
   isValidStorageKey,
   setStorageValue,
-} from "./storage";
+} from "./storage.js";
 
 function createMockChromeStorage() {
   const store: Record<string, unknown> = {};

@@ -5,7 +5,7 @@ import type {
   DoHMonitorConfig,
   NotificationConfig,
 } from "@pleno-audit/extension-runtime";
-import type { AsyncHandlerEntry, RuntimeHandlerDependencies } from "./types";
+import type { AsyncHandlerEntry, RuntimeHandlerDependencies } from "./types.js";
 
 export function createConfigurationHandlers(
   deps: RuntimeHandlerDependencies,

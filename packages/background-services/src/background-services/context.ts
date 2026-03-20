@@ -1,6 +1,6 @@
 import type { Logger } from "@pleno-audit/extension-runtime";
-import { createBackgroundServiceState } from "./state";
-import type { BackgroundServiceState } from "./state";
+import { createBackgroundServiceState } from "./state.js";
+import type { BackgroundServiceState } from "./state.js";
 
 type Tail<T extends unknown[]> = T extends [unknown, ...infer Rest] ? Rest : never;
 

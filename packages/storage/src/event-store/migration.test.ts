@@ -4,7 +4,7 @@ import {
   migrateEventsToIndexedDB,
   resetEventsMigration,
   type ParquetStoreLike,
-} from "./migration";
+} from "./migration.js";
 
 const mockGet = vi.fn();
 const mockSet = vi.fn();

@@ -1,4 +1,4 @@
-import type { AttackResult, AttackTest } from "../types";
+import type { AttackResult, AttackTest } from "../types.js";
 
 /**
  * Phase 14: Protocol & Standards Layer Attacks

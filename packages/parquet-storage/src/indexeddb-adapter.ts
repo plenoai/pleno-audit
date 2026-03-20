@@ -1,4 +1,4 @@
-import type { ParquetFileRecord } from "./types";
+import type { ParquetFileRecord } from "./types.js";
 
 const DB_NAME = "PlenoAuditParquet";
 const DB_VERSION = 1;
