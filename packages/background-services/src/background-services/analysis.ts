@@ -21,38 +21,39 @@ export function createPageAnalysisHandler(deps: PageAnalysisDependencies) {
   const detectionConfig = storage.detectionConfig || DEFAULT_DETECTION_CONFIG;
   const isNewDomain = !storage.services[domain];
 
+  // Batch all service field updates into a single write
+  const serviceUpdate: Partial<DetectedService> = {};
+  const events: NewEvent[] = [];
+
   if (faviconUrl) {
-    await deps.updateService(domain, { faviconUrl });
+    serviceUpdate.faviconUrl = faviconUrl;
   }
 
-  if (detectionConfig.enableLogin && (login.hasPasswordInput || login.isLoginUrl)) {
-    await deps.updateService(domain, { hasLoginPage: true });
-    await deps.addEvent({
-      type: "login_detected",
-      domain,
-      timestamp,
-      details: login,
-    });
+  const hasLoginForm = login.hasPasswordInput || login.isLoginUrl;
+
+  if (detectionConfig.enableLogin && hasLoginForm) {
+    serviceUpdate.hasLoginPage = true;
+    events.push({ type: "login_detected", domain, timestamp, details: login });
   }
 
   if (detectionConfig.enablePrivacy && privacy.found && privacy.url) {
-    await deps.updateService(domain, { privacyPolicyUrl: privacy.url });
-    await deps.addEvent({
-      type: "privacy_policy_found",
-      domain,
-      timestamp,
-      details: { url: privacy.url, method: privacy.method },
-    });
+    serviceUpdate.privacyPolicyUrl = privacy.url;
+    events.push({ type: "privacy_policy_found", domain, timestamp, details: { url: privacy.url, method: privacy.method } });
   }
 
   if (detectionConfig.enableTos && tos.found && tos.url) {
-    await deps.updateService(domain, { termsOfServiceUrl: tos.url });
-    await deps.addEvent({
-      type: "terms_of_service_found",
-      domain,
-      timestamp,
-      details: { url: tos.url, method: tos.method },
-    });
+    serviceUpdate.termsOfServiceUrl = tos.url;
+    events.push({ type: "terms_of_service_found", domain, timestamp, details: { url: tos.url, method: tos.method } });
+  }
+
+  // Single storage write for all service updates
+  if (Object.keys(serviceUpdate).length > 0) {
+    await deps.updateService(domain, serviceUpdate);
+  }
+
+  // Add events to parquet store
+  for (const event of events) {
+    await deps.addEvent(event);
   }
 
   if (cookiePolicy?.found && cookiePolicy.url) {
@@ -79,7 +80,6 @@ export function createPageAnalysisHandler(deps: PageAnalysisDependencies) {
     });
   }
 
-  const hasLoginForm = login.hasPasswordInput || login.isLoginUrl;
   const hasPrivacyPolicy = privacy.found;
   const hasTermsOfService = tos.found;
   const hasCookiePolicy = cookiePolicy?.found ?? false;
