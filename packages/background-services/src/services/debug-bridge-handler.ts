@@ -7,19 +7,6 @@ interface DebugBridgeResponse {
 }
 
 interface DebugBridgeHandlerDependencies {
-  getOrInitParquetStore: () => Promise<{
-    getEvents: (options: { limit: number }) => Promise<{
-      data: Array<{
-        id: string;
-        type: string;
-        domain: string;
-        timestamp: number;
-        details: unknown;
-      }>;
-      total: number;
-    }>;
-    clearAll: () => Promise<void>;
-  }>;
   getDoHMonitorConfig: () => Promise<DoHMonitorConfig>;
   setDoHMonitorConfig: (config: Partial<DoHMonitorConfig>) => Promise<{ success: boolean }>;
   getDoHRequests: (options?: { limit?: number; offset?: number }) => Promise<{
@@ -29,18 +16,6 @@ interface DebugBridgeHandlerDependencies {
 }
 
 type DebugHandler = (data: unknown) => Promise<DebugBridgeResponse>;
-
-function parseEventDetails(details: unknown): unknown {
-  if (typeof details !== "string") {
-    return details;
-  }
-
-  try {
-    return JSON.parse(details);
-  } catch {
-    return details;
-  }
-}
 
 function normalizeUrl(rawUrl: string): string {
   if (rawUrl.startsWith("http://") || rawUrl.startsWith("https://")) {
@@ -53,33 +28,6 @@ export function createDebugBridgeHandler(
   deps: DebugBridgeHandlerDependencies,
 ): (type: string, data: unknown) => Promise<DebugBridgeResponse> {
   const handlers = new Map<string, DebugHandler>([
-    ["DEBUG_EVENTS_LIST", async (rawData) => {
-      const params = rawData as { limit?: number; type?: string } | undefined;
-      const store = await deps.getOrInitParquetStore();
-      const result = await store.getEvents({ limit: params?.limit || 100 });
-      const events = result.data.map((event) => ({
-        id: event.id,
-        type: event.type,
-        domain: event.domain,
-        timestamp: event.timestamp,
-        details: parseEventDetails(event.details),
-      }));
-
-      const filteredEvents = params?.type
-        ? events.filter((event) => event.type === params.type)
-        : events;
-      return { success: true, data: filteredEvents };
-    }],
-    ["DEBUG_EVENTS_COUNT", async () => {
-      const store = await deps.getOrInitParquetStore();
-      const result = await store.getEvents({ limit: 0 });
-      return { success: true, data: result.total };
-    }],
-    ["DEBUG_EVENTS_CLEAR", async () => {
-      const store = await deps.getOrInitParquetStore();
-      await store.clearAll();
-      return { success: true };
-    }],
     ["DEBUG_TAB_OPEN", async (rawData) => {
       const params = rawData as { url: string };
       if (typeof params?.url !== "string" || params.url.trim() === "") {

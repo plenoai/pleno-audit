@@ -8,7 +8,6 @@ import { createConfigurationHandlers } from "./config-handlers";
 import { createConnectionAndAuthHandlers } from "./connection-auth-handlers";
 import { createCspHandlers } from "./csp-handlers";
 import { createDomainRiskHandlers } from "./domain-risk-handlers";
-import { createEventStoreHandlers } from "./event-store-handlers";
 import { createNetworkAndExtensionHandlers } from "./network-extension-handlers";
 import { createSecurityEventHandlers } from "./security-handlers";
 
@@ -21,7 +20,6 @@ export function createAsyncHandlers(
     ...createConnectionAndAuthHandlers(deps),
     ...createAIPromptHandlers(deps),
     ...createDomainRiskHandlers(deps),
-    ...createEventStoreHandlers(deps),
     ...createNetworkAndExtensionHandlers(deps),
     ...createConfigurationHandlers(deps),
   ];

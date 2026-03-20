@@ -4,7 +4,6 @@ import {
   type NetworkMonitorConfig,
   type NetworkRequestRecord,
 } from "@pleno-audit/extension-runtime";
-import { networkRequestRecordToParquetRecord } from "@pleno-audit/parquet-storage";
 import type { ExtensionNetworkContext } from "./types";
 
 export async function getNetworkMonitorConfig(
@@ -21,23 +20,6 @@ export async function getNetworkMonitorConfig(
   };
 }
 
-/**
- * リクエストを直接Parquetストアへ書き込む。
- *
- * MV3 Service Workerは30秒アイドルでkillされるため、
- * インメモリバッファに溜めてアラームでflushする方式では
- * flush前にバッファが消失する。Parquetストアの WriteBuffer が
- * 内部で書き込みを直列化するため、呼び出し側でのバッファリングは不要。
- */
-async function persistRecord(
-  context: ExtensionNetworkContext,
-  record: NetworkRequestRecord,
-): Promise<void> {
-  const store = await context.deps.getOrInitParquetStore();
-  const parquetRecord = networkRequestRecordToParquetRecord(record);
-  await store.appendRows("network-requests", [parquetRecord]);
-}
-
 export async function initExtensionMonitor(context: ExtensionNetworkContext): Promise<void> {
   if (context.state.extensionMonitor) {
     context.deps.logger.debug("Extension monitor already started");
@@ -51,10 +33,6 @@ export async function initExtensionMonitor(context: ExtensionNetworkContext): Pr
 
   context.state.extensionMonitor.onRequest((record) => {
     const networkRecord = record as NetworkRequestRecord;
-
-    void persistRecord(context, networkRecord).catch((error) => {
-      context.deps.logger.error("Failed to persist network request:", error);
-    });
 
     void context.deps
       .addEvent({

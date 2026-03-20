@@ -7,7 +7,6 @@ import type {
   NetworkMonitorConfig,
   NetworkRequestRecord,
 } from "@pleno-audit/extension-runtime";
-import type { ParquetStore } from "@pleno-audit/parquet-storage";
 import type { ExtensionStats, NetworkRequestQueryOptions } from "./helpers.js";
 
 export interface ExtensionNetworkServiceDeps {
@@ -21,7 +20,6 @@ export interface ExtensionNetworkServiceDeps {
     alertCooldown?: Record<string, number>;
     networkMonitorConfig?: NetworkMonitorConfig;
   }) => Promise<void>;
-  getOrInitParquetStore: () => Promise<ParquetStore>;
   addEvent: (event: {
     type: "extension_request";
     domain: string;

@@ -12,7 +12,6 @@
     "@pleno-audit/alerts": "workspace:*",
     "@pleno-audit/csp": "workspace:*",
     "@pleno-audit/detectors": "workspace:*",
-    "@pleno-audit/parquet-storage": "workspace:*",
     "@pleno-audit/storage": "workspace:*"
   }
 }

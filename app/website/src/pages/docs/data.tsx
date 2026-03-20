@@ -145,7 +145,7 @@ export const FEATURE_CARDS: FeatureCard[] = [
       'CSP違反イベントのリアルタイム検出',
       '違反タイプ別の分類（script-src、img-src等）',
       'ポリシー生成のサポート',
-      'parquet-storageによるローカルストレージで高速な分析',
+      'chrome.storage.localによるローカルストレージ',
     ],
   },
   {
@@ -189,7 +189,7 @@ export const FEATURE_CARDS: FeatureCard[] = [
     details: [
       'リアルタイムのイベント表示',
       'フィルタリング・検索機能',
-      'parquet-storageによる高速なクエリ処理',
+      'chrome.storage.localによるデータ管理',
       'ダークモード対応',
     ],
   },
@@ -236,7 +236,7 @@ export const TECH_STACK_ROWS: TechStackRow[] = [
   { label: '拡張機能', value: 'Chrome Manifest V3' },
   { label: 'ビルド', value: 'WXT' },
   { label: 'UI', value: 'Preact' },
-  { label: 'DB', value: 'parquet-storage (IndexedDB)' },
+  { label: 'ストレージ', value: 'chrome.storage.local' },
   { label: '言語', value: 'TypeScript' },
 ];
 
@@ -260,11 +260,6 @@ export const PACKAGE_ITEMS: PackageItem[] = [
     icon: Zap,
     title: 'packages/ai-detector',
     description: 'AIサービス検出アルゴリズム',
-  },
-  {
-    icon: Server,
-    title: 'packages/api',
-    description: 'REST API（Hono + parquet-storage）',
   },
   {
     icon: Chrome,

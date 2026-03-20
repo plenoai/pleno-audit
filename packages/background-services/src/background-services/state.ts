@@ -1,11 +1,9 @@
 import type { ApiClient, Logger, SyncManager } from "@pleno-audit/extension-runtime";
-import type { ParquetStore } from "@pleno-audit/parquet-storage";
 import type { AlertManager, PolicyManager } from "@pleno-audit/alerts";
 
 export interface BackgroundServiceState {
   apiClient: ApiClient | null;
   syncManager: SyncManager | null;
-  parquetStore: ParquetStore | null;
   alertManager: AlertManager | null;
   policyManager: PolicyManager | null;
   logger: Logger;
@@ -16,7 +14,6 @@ export function createBackgroundServiceState(logger: Logger): BackgroundServiceS
   return {
     apiClient: null,
     syncManager: null,
-    parquetStore: null,
     alertManager: null,
     policyManager: null,
     logger,

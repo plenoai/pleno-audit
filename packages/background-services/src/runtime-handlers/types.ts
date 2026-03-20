@@ -20,10 +20,6 @@ import type {
   NetworkMonitorConfig,
   NotificationConfig,
 } from "@pleno-audit/extension-runtime";
-import type {
-  ParquetEvent,
-  ParquetStore,
-} from "@pleno-audit/parquet-storage";
 
 export type RuntimeMessage = {
   type?: string;
@@ -165,8 +161,6 @@ handleNetworkInspection: (data: unknown, sender: chrome.runtime.MessageSender) =
   getTyposquatConfig: () => Promise<TyposquatConfig>;
   setTyposquatConfig: (config: TyposquatConfig) => Promise<{ success: boolean }>;
 
-  getOrInitParquetStore: () => Promise<ParquetStore>;
-
   getNetworkRequests: (options?: {
     limit?: number;
     offset?: number;
@@ -203,4 +197,3 @@ handleNetworkInspection: (data: unknown, sender: chrome.runtime.MessageSender) =
   }) => Promise<unknown>;
 }
 
-export type { ParquetEvent, ParquetStore };

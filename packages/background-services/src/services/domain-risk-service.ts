@@ -17,11 +17,6 @@ import {
 } from "@pleno-audit/detectors";
 import { DEFAULT_DETECTION_CONFIG, type DetectionConfig } from "@pleno-audit/extension-runtime";
 import type { AlertManager } from "@pleno-audit/alerts";
-import {
-  nrdResultToParquetRecord,
-  typosquatResultToParquetRecord,
-  type ParquetStore,
-} from "@pleno-audit/parquet-storage";
 import { resolveEventTimestamp } from "./event-timestamp";
 
 interface LoggerLike {
@@ -55,7 +50,6 @@ interface DomainRiskServiceDeps {
   setStorage: (data: Partial<DomainRiskStorage>) => Promise<void>;
   updateService: (domain: string, update: Partial<DetectedService>) => Promise<void>;
   addEvent: (event: DomainRiskEvent) => Promise<unknown>;
-  getOrInitParquetStore: () => Promise<ParquetStore>;
   getAlertManager: () => AlertManager;
 }
 
@@ -153,10 +147,6 @@ export function createDomainRiskService(deps: DomainRiskServiceDeps): DomainRisk
         });
       }
 
-      const store = await deps.getOrInitParquetStore();
-      const record = nrdResultToParquetRecord(result);
-      await store.write("nrd-detections", [record]);
-
       return result;
     } catch (error) {
       deps.logger.error("NRD check failed:", error);
@@ -246,10 +236,6 @@ export function createDomainRiskService(deps: DomainRiskServiceDeps): DomainRisk
           confidence: result.confidence,
         });
       }
-
-      const store = await deps.getOrInitParquetStore();
-      const record = typosquatResultToParquetRecord(result);
-      await store.write("typosquat-detections", [record]);
 
       return result;
     } catch (error) {

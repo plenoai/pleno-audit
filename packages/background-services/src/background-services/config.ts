@@ -14,7 +14,6 @@ import {
 } from "@pleno-audit/extension-runtime";
 import type { BackgroundServiceState } from "./state";
 import { ensureApiClient, ensureSyncManager, setConnectionConfigInternal } from "./client";
-import { getOrInitParquetStore } from "./events";
 
 const logger = createLogger("background-config");
 
@@ -86,12 +85,13 @@ export async function cleanupOldData(state: BackgroundServiceState): Promise<{ d
     const cutoffTimestamp = cutoffDate.toISOString();
     const cutoffMs = cutoffDate.getTime();
 
-    const client = await ensureApiClient(state);
-    const deleted = await client.deleteOldReports(cutoffTimestamp);
-
-    const store = await getOrInitParquetStore(state);
-    const cutoffDateStr = cutoffDate.toISOString().split("T")[0];
-    await store.deleteOldReports(cutoffDateStr);
+    let deleted = 0;
+    try {
+      const client = await ensureApiClient(state);
+      deleted = await client.deleteOldReports(cutoffTimestamp);
+    } catch {
+      // Remote API may not be configured
+    }
 
     const storage = await getStorage();
     const aiPrompts = storage.aiPrompts || [];

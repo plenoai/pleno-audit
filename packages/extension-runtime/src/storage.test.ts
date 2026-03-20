@@ -32,7 +32,6 @@ import {
   setStorage,
   getStorageKey,
   getServiceCount,
-  clearCSPReports,
   clearAIPrompts,
   clearAllStorage,
   queueStorageOperation,
@@ -54,8 +53,7 @@ describe("storage", () => {
       const result = await getStorage();
 
       expect(result.services).toEqual({});
-      expect(result.events).toEqual([]);
-      expect(result.cspReports).toEqual([]);
+      expect(result.alerts).toEqual([]);
       expect(result.aiPrompts).toEqual([]);
       expect(result.networkMonitorConfig).toEqual({
         enabled: true,
@@ -72,14 +70,14 @@ describe("storage", () => {
 
     it("returns stored values when available", async () => {
       const services = { "example.com": { domain: "example.com", firstSeen: "2024-01-01" } };
-      const events = [{ type: "page_visit", timestamp: "2024-01-01" }];
+      const alerts = [{ id: "a1", category: "nrd", severity: "high" }];
 
-      mockStorageGet.mockResolvedValue({ services, events });
+      mockStorageGet.mockResolvedValue({ services, alerts });
 
       const result = await getStorage();
 
       expect(result.services).toEqual(services);
-      expect(result.events).toEqual(events);
+      expect(result.alerts).toEqual(alerts);
     });
 
     it("merges stored and default configs", async () => {
@@ -98,8 +96,8 @@ describe("storage", () => {
       expect(mockStorageGet).toHaveBeenCalledWith(
         expect.arrayContaining([
           "services",
-          "events",
-          "cspReports",
+          "policyConfig",
+          "alerts",
           "cspConfig",
           "aiPrompts",
           "aiMonitorConfig",
@@ -127,9 +125,9 @@ describe("storage", () => {
     });
 
     it("allows partial updates", async () => {
-      await setStorage({ events: [{ type: "test" }] });
+      await setStorage({ alerts: [] });
 
-      expect(mockStorageSet).toHaveBeenCalledWith({ events: [{ type: "test" }] });
+      expect(mockStorageSet).toHaveBeenCalledWith({ alerts: [] });
     });
   });
 
@@ -152,18 +150,10 @@ describe("storage", () => {
       expect(result).toEqual({});
     });
 
-    it("returns default for events", async () => {
+    it("returns default for alerts", async () => {
       mockStorageGet.mockResolvedValue({});
 
-      const result = await getStorageKey("events");
-
-      expect(result).toEqual([]);
-    });
-
-    it("returns default for cspReports", async () => {
-      mockStorageGet.mockResolvedValue({});
-
-      const result = await getStorageKey("cspReports");
+      const result = await getStorageKey("alerts");
 
       expect(result).toEqual([]);
     });
@@ -223,14 +213,6 @@ describe("storage", () => {
     });
   });
 
-  describe("clearCSPReports", () => {
-    it("removes cspReports from storage", async () => {
-      await clearCSPReports();
-
-      expect(mockStorageRemove).toHaveBeenCalledWith(["cspReports"]);
-    });
-  });
-
   describe("clearAIPrompts", () => {
     it("removes aiPrompts from storage", async () => {
       await clearAIPrompts();
@@ -247,8 +229,7 @@ describe("storage", () => {
       expect(mockStorageSet).toHaveBeenCalledWith(
         expect.objectContaining({
           services: {},
-          events: [],
-          cspReports: [],
+          alerts: [],
           aiPrompts: [],
         })
       );

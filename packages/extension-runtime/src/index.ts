@@ -2,25 +2,22 @@
 export { PlenoAuditError, RetryableError, StorageError, ConfigError, errorMessage } from "./errors.js";
 
 // Storage
-export type { StorageData } from "./storage-types.js";
+export type { StorageData, SecurityAlert } from "./storage-types.js";
 export {
   queueStorageOperation,
   getStorage,
   setStorage,
   getStorageKey,
   getServiceCount,
-  clearCSPReports,
   clearAIPrompts,
   clearAllStorage,
 } from "./storage.js";
 
-// API Client
+// API Client (remote mode only - local offscreen mode removed with parquet-storage)
 export {
   ApiClient,
   getApiClient,
   updateApiClientConfig,
-  ensureOffscreenDocument,
-  markOffscreenReady,
   type ConnectionMode,
   type ApiClientConfig,
   type QueryOptions,
@@ -29,9 +26,6 @@ export {
 
 // Sync Manager
 export { SyncManager, getSyncManager } from "./sync-manager.js";
-
-// Migration
-export { checkMigrationNeeded, migrateToDatabase } from "./migration.js";
 
 // Cookie Monitor
 export {
@@ -67,6 +61,7 @@ export type {
   EventLog,
   CSPConfig,
   CSPReport,
+  GeneratedCSPByDomain,
   CapturedAIPrompt,
   AIMonitorConfig,
   ExtensionRequestRecord,

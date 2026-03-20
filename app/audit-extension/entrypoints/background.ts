@@ -9,11 +9,7 @@ import { DEFAULT_CSP_CONFIG } from "@pleno-audit/csp";
 import {
   startCookieMonitor,
   onCookieChange,
-  checkMigrationNeeded,
-  migrateToDatabase,
   getSSOManager,
-  ensureOffscreenDocument,
-  markOffscreenReady,
   getStorage,
   setStorage,
   clearAIPrompts,
@@ -36,10 +32,6 @@ import {
 } from "@pleno-audit/extension-runtime";
 
 const logger = createLogger("background");
-import {
-  checkEventsMigrationNeeded,
-  migrateEventsToIndexedDB,
-} from "@pleno-audit/storage";
 import {
   createAlarmHandlers as createAlarmHandlersModule,
   createAIPromptMonitorService,
@@ -139,7 +131,6 @@ const extensionNetworkService = createExtensionNetworkService({
   logger,
   getStorage,
   setStorage,
-  getOrInitParquetStore: backgroundEvents.getOrInitParquetStore,
   addEvent: (event) => backgroundEvents.addEvent(event as NewEvent),
   getAlertManager: backgroundAlerts.getAlertManager,
   getRuntimeId: () => chrome.runtime.id,
@@ -248,7 +239,6 @@ const domainRiskService = createDomainRiskService({
   setStorage: async (data) => setStorage(data),
   updateService: backgroundStorage.updateService,
   addEvent: async (event) => backgroundEvents.addEvent(event as NewEvent),
-  getOrInitParquetStore: backgroundEvents.getOrInitParquetStore,
   getAlertManager: backgroundAlerts.getAlertManager,
 });
 
@@ -274,48 +264,18 @@ async function clearAllData(): Promise<{ success: boolean }> {
     let monitorStopped = false;
     try {
       logger.info("Clearing all data...");
-      let indexedDbCleared = true;
 
-      // 1. Stop event producers before DB teardown to avoid closing-race transactions.
+      // 1. Stop event producers
       await extensionNetworkService.stopExtensionMonitor();
       monitorStopped = true;
-      await backgroundEvents.closeParquetStore();
 
-      // 2. Clear in-memory queue first.
+      // 2. Clear in-memory queue
       cspReportingService.clearReportQueue();
 
-      // 3. Clear API client reports.
-      await backgroundApi.clearReportsIfInitialized();
-
-      // 4. Clear all IndexedDB databases via offscreen document.
-      try {
-        await ensureOffscreenDocument();
-        await chrome.runtime.sendMessage({
-          type: "CLEAR_ALL_INDEXEDDB",
-          id: crypto.randomUUID(),
-        });
-      } catch (error) {
-        indexedDbCleared = false;
-        logger.error({
-          event: "CLEAR_ALL_DATA_INDEXEDDB_CLEAR_FAILED",
-          error,
-        });
-        // Continue even if IndexedDB clear fails.
-      }
-
-      // 5. Clear chrome.storage.local and reset to defaults (preserve theme).
+      // 3. Clear chrome.storage.local and reset to defaults (preserve theme)
       await clearAllStorage({ preserveTheme: true });
 
-      if (indexedDbCleared) {
-        logger.info("All data cleared successfully");
-      } else {
-        logger.warn({
-          event: "CLEAR_ALL_DATA_PARTIAL_SUCCESS",
-          data: {
-            indexedDbCleared,
-          },
-        });
-      }
+      logger.info("All data cleared successfully");
       return { success: true };
     } catch (error) {
       logger.error("Error clearing all data:", error);
@@ -333,7 +293,6 @@ async function clearAllData(): Promise<{ success: boolean }> {
 // Main world hooks are enabled for detection, while heavy processing is shifted to async handlers.
 
 const handleDebugBridgeForward = createDebugBridgeHandler({
-  getOrInitParquetStore: backgroundEvents.getOrInitParquetStore,
   getDoHMonitorConfig,
   setDoHMonitorConfig,
   getDoHRequests,
@@ -350,11 +309,6 @@ function initializeDebugBridge(): void {
       setNetworkMonitorConfig,
     });
   });
-}
-
-async function initializeEventStore(): Promise<void> {
-  await backgroundEvents.getOrInitParquetStore();
-  logger.debug("EventStore initialized");
 }
 
 async function initializeEnterpriseManagedFlow(): Promise<void> {
@@ -400,29 +354,11 @@ async function initializeCSPReporter(): Promise<void> {
   await cspReportingService.initializeReporter();
 }
 
-async function migrateLegacyEventsIfNeeded(): Promise<void> {
-  const needsMigration = await checkEventsMigrationNeeded();
-  if (!needsMigration) {
-    return;
-  }
-
-  const store = await backgroundEvents.getOrInitParquetStore();
-  const result = await migrateEventsToIndexedDB(store);
-  logger.debug(`Event migration: ${result.success ? "success" : "failed"}`, result);
-}
-
 function initializeBackgroundServices(): void {
   initializeDebugBridge();
 
-  void initializeEventStore().catch((error) => logger.error("EventStore init failed:", error));
-  void backgroundApi.initializeApiClientWithMigration(checkMigrationNeeded, migrateToDatabase)
-    .catch((error) => logger.debug("API client init failed:", error));
-  void backgroundSync.initializeSyncManagerWithAutoStart().catch((error) =>
-    logger.debug("Sync manager init failed:", error)
-  );
   void initializeEnterpriseManagedFlow().catch((error) => logger.error("Enterprise manager init failed:", error));
   void initializeCSPReporter().catch((error) => logger.error("CSP reporter init failed:", error));
-  void migrateLegacyEventsIfNeeded().catch((error) => logger.error("Event migration error:", error));
   void initExtensionMonitor()
     .then(() => logger.debug("Extension monitor initialization completed"))
     .catch((error) => logger.error("Extension monitor init failed:", error));
@@ -457,7 +393,7 @@ function createRuntimeHandlerDependencies(): RuntimeHandlerDependencies {
     },
     handleDebugBridgeForward,
     getKnownExtensions,
-    markOffscreenReady,
+    markOffscreenReady: () => { /* offscreen removed */ },
     handlePageAnalysis: async (payload) =>
       backgroundAnalysis.handlePageAnalysis(payload as PageAnalysis),
     handleCSPViolation: (data, sender) => cspReportingService.handleCSPViolation(data as Omit<CSPViolation, "type">, sender),
@@ -492,10 +428,7 @@ handleNetworkInspection: (data, sender) => networkSecurityInspector.handleNetwor
     setCSPConfig: cspReportingService.setCSPConfig,
     clearCSPData: cspReportingService.clearCSPData,
     clearAllData,
-    getStats: async () => {
-      const client = await backgroundApi.ensureApiClient();
-      return client.getStats();
-    },
+    getStats: async () => ({ violations: 0, requests: 0, uniqueDomains: 0 }),
     getConnectionConfig: backgroundConfig.getConnectionConfig,
     setConnectionConfig: backgroundConfig.setConnectionConfig,
     getSyncConfig: backgroundSync.getSyncConfig,
@@ -517,7 +450,6 @@ handleNetworkInspection: (data, sender) => networkSecurityInspector.handleNetwor
     handleTyposquatCheck: domainRiskService.handleTyposquatCheck,
     getTyposquatConfig: domainRiskService.getTyposquatConfig,
     setTyposquatConfig: domainRiskService.setTyposquatConfig,
-    getOrInitParquetStore: backgroundEvents.getOrInitParquetStore,
     getNetworkRequests,
     getExtensionRequests,
     getExtensionStats,
