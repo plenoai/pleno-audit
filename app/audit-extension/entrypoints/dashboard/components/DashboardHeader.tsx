@@ -22,7 +22,6 @@ interface DashboardHeaderProps {
   services: DetectedService[];
   loginServices: DetectedService[];
   setActiveTab: (tab: TabType) => void;
-  setSearchQuery: (value: string) => void;
 }
 
 export function DashboardHeader({
@@ -41,7 +40,6 @@ export function DashboardHeader({
   services,
   loginServices,
   setActiveTab,
-  setSearchQuery,
 }: DashboardHeaderProps) {
   return (
     <header style={styles.header}>
@@ -82,10 +80,7 @@ export function DashboardHeader({
                 ? { value: nrdServices.length, isUp: true }
                 : undefined
             }
-            onClick={() => {
-              setActiveTab("services");
-              setSearchQuery("nrd");
-            }}
+            onClick={() => setActiveTab("services")}
           />
           <StatCard
             value={totalCounts.aiPrompts}
@@ -100,10 +95,7 @@ export function DashboardHeader({
           <StatCard
             value={loginServices.length}
             label="ログイン検出"
-            onClick={() => {
-              setActiveTab("services");
-              setSearchQuery("login");
-            }}
+            onClick={() => setActiveTab("services")}
           />
           <StatCard
             value={totalCounts.events}

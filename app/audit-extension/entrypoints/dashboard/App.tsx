@@ -19,15 +19,11 @@ function DashboardContent() {
 
   const [period, setPeriod] = useState<Period>("24h");
   const [activeTab, setActiveTab] = useState<TabType>(getInitialTab);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [directiveFilter, setDirectiveFilter] = useState("");
 
   const { notifications, addNotification, dismissNotification } = useNotifications();
 
   const dashboard = useDashboardState({
     period,
-    searchQuery,
-    directiveFilter,
     addNotification,
     setActiveTab,
   });
@@ -43,8 +39,6 @@ function DashboardContent() {
   useDashboardNavigation({
     activeTab,
     setActiveTab,
-    setSearchQuery,
-    setDirectiveFilter,
     loadData: dashboard.loadData,
   });
 
@@ -80,7 +74,6 @@ function DashboardContent() {
           services={dashboard.services}
           loginServices={dashboard.loginServices}
           setActiveTab={setActiveTab}
-          setSearchQuery={setSearchQuery}
         />
 
         {activeTab === "overview" && (
@@ -106,28 +99,17 @@ function DashboardContent() {
 
         {activeTab === "violations" && (
           <ViolationsTab
-            styles={styles}
-            violations={dashboard.filteredViolations}
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            directiveFilter={directiveFilter}
-            setDirectiveFilter={setDirectiveFilter}
+            violations={dashboard.violations}
             directives={dashboard.directives}
           />
         )}
 
         {activeTab === "network" && (
-          <NetworkTab
-            styles={styles}
-            requests={dashboard.filteredNetworkRequests}
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-          />
+          <NetworkTab requests={dashboard.networkRequests} />
         )}
 
         {activeTab === "domains" && (
           <DomainsTab
-            styles={styles}
             domainStats={dashboard.domainStats}
             domainViolationMeta={dashboard.domainViolationMeta}
             networkRequests={dashboard.networkRequests}
@@ -135,32 +117,19 @@ function DashboardContent() {
         )}
 
         {activeTab === "ai" && (
-          <AITab
-            styles={styles}
-            prompts={dashboard.filteredAIPrompts}
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-          />
+          <AITab prompts={dashboard.aiPrompts} />
         )}
 
         {activeTab === "services" && (
           <ServicesTab
-            styles={styles}
-            services={dashboard.filteredServices}
+            services={dashboard.services}
             nrdServices={dashboard.nrdServices}
             loginServices={dashboard.loginServices}
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
           />
         )}
 
         {activeTab === "events" && (
-          <EventsTab
-            styles={styles}
-            events={dashboard.filteredEvents}
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-          />
+          <EventsTab events={dashboard.events} />
         )}
 
         {activeTab === "extensions" && (

@@ -73,6 +73,7 @@ import {
   createExtensionNetworkService,
   type ExtensionStats,
 } from "@pleno-audit/extension-network-service";
+import { createConsumer, type StorageAdapter, type QueueItem } from "@pleno-audit/event-queue";
 
 const DEV_REPORT_ENDPOINT = "http://localhost:3001/api/v1/reports";
 
@@ -364,9 +365,15 @@ function initializeBackgroundServices(): void {
     .catch((error) => logger.error("Extension monitor init failed:", error));
 }
 
+const queueStorageAdapter: StorageAdapter = {
+  get: (keys) => chrome.storage.local.get(keys),
+  set: (items) => chrome.storage.local.set(items),
+  remove: (keys) => chrome.storage.local.remove(keys),
+};
+
 function registerRecurringAlarms(): void {
-  // ServiceWorker keep-alive用のalarm（30秒ごとにwake-up）
-  chrome.alarms.create("keepAlive", { periodInMinutes: 0.4 });
+  // Event queue processing（30秒ごとにキューを処理）
+  chrome.alarms.create("processEventQueue", { periodInMinutes: 0.5 });
   chrome.alarms.create("flushCSPReports", { periodInMinutes: 0.5 });
   // DNR API rate limit対応: 36秒間隔（Chrome制限: 10分間に最大20回、30秒以上の間隔）
   chrome.alarms.create("checkDNRMatches", { periodInMinutes: 0.6 });
@@ -393,7 +400,6 @@ function createRuntimeHandlerDependencies(): RuntimeHandlerDependencies {
     },
     handleDebugBridgeForward,
     getKnownExtensions,
-    markOffscreenReady: () => { /* offscreen removed */ },
     getServices: async () => {
       const storage = await getStorage();
       return Object.values(storage.services || {}) as DetectedService[];
@@ -476,15 +482,48 @@ handleNetworkInspection: (data, sender) => networkSecurityInspector.handleNetwor
 }
 
 export default defineBackground(() => {
-  const MAX_INCOMING_BATCH = 100;
-  const PROCESS_CHUNK_SIZE = 20;
-
   // MV3 Service Worker: webRequestリスナーは起動直後に同期的に登録する必要がある
   registerNetworkMonitorListener();
   registerDoHMonitorListener();
 
   initializeBackgroundServices();
   registerRecurringAlarms();
+
+  // ============================================================================
+  // Event Queue Consumer
+  // ============================================================================
+
+  const eventQueueConsumer = createConsumer(queueStorageAdapter);
+
+  const runtimeHandlers = createRuntimeMessageHandlersModule(
+    createRuntimeHandlerDependencies(),
+  );
+
+  async function processEventQueue(): Promise<void> {
+    const result = await eventQueueConsumer.process(async (item: QueueItem) => {
+      const asyncHandler = runtimeHandlers.async.get(item.type);
+      if (!asyncHandler) {
+        logger.debug("No handler for queued event", { type: item.type });
+        return;
+      }
+
+      // Bridge QueueItem → RuntimeMessage + MessageSender
+      const message: RuntimeMessage = { type: item.type, ...(item.data as object) };
+      const sender: chrome.runtime.MessageSender = {
+        tab: { id: item.tabId, url: item.senderUrl } as chrome.tabs.Tab,
+      };
+
+      await asyncHandler.execute(message, sender);
+    });
+
+    if (result.processed > 0 || result.failed > 0) {
+      logger.debug("Event queue processed", result);
+    }
+  }
+
+  // ============================================================================
+  // Alarm Handlers
+  // ============================================================================
 
   const alarmHandlers = createAlarmHandlersModule({
     logger,
@@ -493,8 +532,12 @@ export default defineBackground(() => {
     analyzeExtensionRisks,
     cleanupOldData: backgroundConfig.cleanupOldData,
   });
+
   chrome.alarms.onAlarm.addListener((alarm) => {
-    if (alarm.name === "keepAlive") {
+    if (alarm.name === "processEventQueue") {
+      processEventQueue().catch((error) =>
+        logger.error("Event queue processing failed:", error),
+      );
       return;
     }
     const handler = alarmHandlers.get(alarm.name);
@@ -503,9 +546,23 @@ export default defineBackground(() => {
     }
   });
 
-  const runtimeHandlers = createRuntimeMessageHandlersModule(
-    createRuntimeHandlerDependencies(),
-  );
+  // ============================================================================
+  // Tab cleanup: remove orphan queue entries when tabs close
+  // ============================================================================
+
+  chrome.tabs.onRemoved.addListener(() => {
+    chrome.tabs.query({}, (tabs) => {
+      const activeTabIds = tabs.map((t) => t.id).filter((id): id is number => id != null);
+      eventQueueConsumer.cleanup(activeTabIds).catch((error) =>
+        logger.debug("Queue cleanup failed:", error),
+      );
+    });
+  });
+
+  // ============================================================================
+  // Runtime Message Listener (popup/dashboard request-response only)
+  // ============================================================================
+
   chrome.runtime.onMessage.addListener((rawMessage, sender, sendResponse) => {
     const message = rawMessage as RuntimeMessage;
     const type = typeof message.type === "string" ? message.type : "";
@@ -519,72 +576,6 @@ export default defineBackground(() => {
         },
       });
       return false;
-    }
-
-    if (type === "BATCH_RUNTIME_EVENTS") {
-      const incomingEvents = Array.isArray((message.data as { events?: unknown[] } | undefined)?.events)
-        ? ((message.data as { events: RuntimeMessage[] }).events)
-        : [];
-      const dropped = Math.max(0, incomingEvents.length - MAX_INCOMING_BATCH);
-      const events = dropped > 0
-        ? incomingEvents.slice(0, MAX_INCOMING_BATCH)
-        : incomingEvents;
-
-      if (events.length === 0) {
-        sendResponse({ success: true, processed: 0, failed: 0, dropped });
-        return false;
-      }
-
-      void (async () => {
-        let processed = 0;
-        let failed = 0;
-        let chunkCount = 0;
-
-        for (const batched of events) {
-          chunkCount++;
-          const eventType = typeof batched?.type === "string" ? batched.type : "";
-          if (!eventType) {
-            failed++;
-            continue;
-          }
-
-          const asyncHandler = runtimeHandlers.async.get(eventType);
-          if (!asyncHandler) {
-            failed++;
-            continue;
-          }
-
-          try {
-            await asyncHandler.execute(batched, sender);
-            processed++;
-          } catch (error) {
-            failed++;
-            logger.debug("Batched event failed", {
-              type: eventType,
-              error: error instanceof Error ? error.message : String(error),
-            });
-          }
-
-          if (chunkCount >= PROCESS_CHUNK_SIZE) {
-            chunkCount = 0;
-            await new Promise((resolve) => setTimeout(resolve, 0));
-          }
-        }
-
-        if (dropped > 0) {
-          logger.warn("Dropped excessive batched runtime events", {
-            incoming: incomingEvents.length,
-            processedTarget: events.length,
-            dropped,
-            senderTabId: sender.tab?.id,
-            senderUrl: sender.tab?.url,
-          });
-        }
-
-        sendResponse({ success: true, processed, failed, dropped });
-      })();
-
-      return true;
     }
 
     const directHandler = runtimeHandlers.direct.get(type);

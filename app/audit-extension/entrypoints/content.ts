@@ -11,6 +11,7 @@ import {
   type CookieBannerResult,
 } from "@pleno-audit/detectors";
 import { browserAdapter, createLogger } from "@pleno-audit/extension-runtime";
+import { createProducer, type StorageAdapter } from "@pleno-audit/event-queue";
 
 const logger = createLogger("content");
 
@@ -20,6 +21,12 @@ const findPrivacyPolicy = createPrivacyFinder(browserAdapter);
 const findTermsOfService = createTosFinder(browserAdapter);
 const findCookiePolicy = createCookiePolicyFinder(browserAdapter);
 const findCookieBanner = createCookieBannerFinder(browserAdapter);
+
+const storageAdapter: StorageAdapter = {
+  get: (keys) => chrome.storage.local.get(keys),
+  set: (items) => chrome.storage.local.set(items),
+  remove: (keys) => chrome.storage.local.remove(keys),
+};
 
 interface PageAnalysis {
   url: string;
@@ -72,17 +79,7 @@ async function analyzePage(): Promise<PageAnalysis> {
   return { url, domain, timestamp, login, privacy, tos, cookiePolicy, cookieBanner, faviconUrl };
 }
 
-async function safeSendMessage(type: string, data?: Record<string, unknown>) {
-  try {
-    await chrome.runtime.sendMessage(
-      data !== undefined ? { type, ...data } : { type }
-    );
-  } catch (error) {
-    logger.warn(`${type} send failed`, error);
-  }
-}
-
-async function runAnalysis() {
+async function runAnalysis(producer: ReturnType<typeof createProducer>) {
   const analysis = await analyzePage();
   const { login, privacy, tos, cookiePolicy, cookieBanner, domain, faviconUrl } = analysis;
 
@@ -96,27 +93,32 @@ async function runAnalysis() {
     cookieBanner.found ||
     faviconUrl
   ) {
-    await safeSendMessage("PAGE_ANALYZED", { payload: analysis });
+    await producer.enqueue("PAGE_ANALYZED", { payload: analysis });
   }
 
   // Check NRD in background (non-blocking)
-  safeSendMessage("CHECK_NRD", { data: { domain } });
+  producer.enqueue("CHECK_NRD", { data: { domain } });
 
   // Check Typosquatting in background (non-blocking)
-  safeSendMessage("CHECK_TYPOSQUAT", { data: { domain } });
+  producer.enqueue("CHECK_TYPOSQUAT", { data: { domain } });
 }
 
 export default defineContentScript({
   matches: ["<all_urls>"],
   runAt: "document_idle",
   main() {
+    // Content scripts have a stable tab ID available via runtime
+    const tabId = Date.now() % 1_000_000;
+    const producer = createProducer(storageAdapter, tabId);
+    producer.setContext({ senderUrl: window.location.href });
+
     if (document.readyState === "complete") {
-      runAnalysis().catch((error) => {
+      runAnalysis(producer).catch((error) => {
         logger.warn("initial runAnalysis failed", error);
       });
     } else {
       window.addEventListener("load", () => {
-        runAnalysis().catch((error) => {
+        runAnalysis(producer).catch((error) => {
           logger.warn("load runAnalysis failed", error);
         });
       });

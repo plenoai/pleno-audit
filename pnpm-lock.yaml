@@ -62,6 +62,9 @@ importers:
       '@pleno-audit/detectors':
         specifier: workspace:*
         version: link:../../packages/detectors
+      '@pleno-audit/event-queue':
+        specifier: workspace:*
+        version: link:../../packages/event-queue
       '@pleno-audit/extension-network-service':
         specifier: workspace:*
         version: link:../../packages/extension-network-service
@@ -302,6 +305,8 @@ importers:
       '@pleno-audit/typosquat':
         specifier: workspace:*
         version: link:../typosquat
+
+  packages/event-queue: {}
 
   packages/extension-network-service:
     dependencies:

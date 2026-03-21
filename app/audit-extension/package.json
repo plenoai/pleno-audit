@@ -16,6 +16,7 @@
     "@pleno-audit/data-export": "workspace:*",
     "@pleno-audit/debug-bridge": "workspace:*",
     "@pleno-audit/detectors": "workspace:*",
+    "@pleno-audit/event-queue": "workspace:*",
     "@pleno-audit/extension-network-service": "workspace:*",
     "@pleno-audit/extension-runtime": "workspace:*",
     "@pleno-audit/storage": "workspace:*",

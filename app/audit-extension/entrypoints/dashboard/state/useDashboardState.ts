@@ -8,16 +8,12 @@ import { getPeriodMs, getStatusBadge } from "../utils";
 
 interface UseDashboardStateOptions {
   period: Period;
-  searchQuery: string;
-  directiveFilter: string;
   addNotification: (notification: Omit<Notification, "id" | "timestamp">) => string;
   setActiveTab: (tab: TabType) => void;
 }
 
 export function useDashboardState({
   period,
-  searchQuery,
-  directiveFilter,
   addNotification,
   setActiveTab,
 }: UseDashboardStateOptions) {
@@ -205,52 +201,6 @@ export function useDashboardState({
     [services]
   );
 
-  const filteredViolations = useMemo(() => {
-    return violations.filter((v) => {
-      if (directiveFilter && v.directive !== directiveFilter) return false;
-      if (searchQuery) {
-        const q = searchQuery.toLowerCase();
-        return (
-          v.pageUrl.toLowerCase().includes(q) ||
-          v.blockedURL.toLowerCase().includes(q) ||
-          v.directive.toLowerCase().includes(q)
-        );
-      }
-      return true;
-    });
-  }, [violations, searchQuery, directiveFilter]);
-
-  const filteredNetworkRequests = useMemo(() => {
-    if (!searchQuery) return networkRequests;
-    const q = searchQuery.toLowerCase();
-    return networkRequests.filter((r) => r.url.toLowerCase().includes(q) || r.domain.toLowerCase().includes(q));
-  }, [networkRequests, searchQuery]);
-
-  const filteredAIPrompts = useMemo(() => {
-    if (!searchQuery) return aiPrompts;
-    const q = searchQuery.toLowerCase();
-    return aiPrompts.filter(
-      (p) =>
-        p.provider?.toLowerCase().includes(q) ||
-        p.model?.toLowerCase().includes(q) ||
-        p.apiEndpoint.toLowerCase().includes(q)
-    );
-  }, [aiPrompts, searchQuery]);
-
-  const filteredServices = useMemo(() => {
-    if (!searchQuery) return services;
-    const q = searchQuery.toLowerCase();
-    if (q === "nrd") return services.filter((s) => s.nrdResult?.isNRD);
-    if (q === "login") return services.filter((s) => s.hasLoginPage);
-    return services.filter((s) => s.domain.toLowerCase().includes(q));
-  }, [services, searchQuery]);
-
-  const filteredEvents = useMemo(() => {
-    if (!searchQuery) return events;
-    const q = searchQuery.toLowerCase();
-    return events.filter((e) => e.type.toLowerCase().includes(q) || e.domain.toLowerCase().includes(q));
-  }, [events, searchQuery]);
-
   const status = useMemo(
     () => getStatusBadge(nrdServices.length, violations.length, aiPrompts.length),
     [aiPrompts.length, nrdServices.length, violations.length]
@@ -276,11 +226,6 @@ export function useDashboardState({
     nrdServices,
     loginServices,
     typosquatServices,
-    filteredViolations,
-    filteredNetworkRequests,
-    filteredAIPrompts,
-    filteredServices,
-    filteredEvents,
     status,
   };
 }

@@ -6,16 +6,12 @@ import { resolveTabFromHash } from "../utils";
 interface UseDashboardNavigationOptions {
   activeTab: TabType;
   setActiveTab: (tab: TabType) => void;
-  setSearchQuery: (value: string) => void;
-  setDirectiveFilter: (value: string) => void;
   loadData: () => void;
 }
 
 export function useDashboardNavigation({
   activeTab,
   setActiveTab,
-  setSearchQuery,
-  setDirectiveFilter,
   loadData,
 }: UseDashboardNavigationOptions) {
   useEffect(() => {
@@ -49,16 +45,8 @@ export function useDashboardNavigation({
       if (e.key === "r" && !e.ctrlKey && !e.metaKey && !isEditableTarget) {
         loadData();
       }
-      if (e.key === "/" && !isEditableTarget) {
-        e.preventDefault();
-        (document.querySelector("[data-dashboard-search]") as HTMLInputElement | null)?.focus();
-      }
-      if (e.key === "Escape") {
-        setSearchQuery("");
-        setDirectiveFilter("");
-      }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [loadData, setActiveTab, setDirectiveFilter, setSearchQuery]);
+  }, [loadData, setActiveTab]);
 }

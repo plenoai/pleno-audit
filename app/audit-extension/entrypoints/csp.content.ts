@@ -1,35 +1,34 @@
 /**
  * CSP Content Script
- * Detects CSP violations and forwards events to background.
+ * Detects CSP violations and writes them to the persistent event queue.
  * Main world custom events are handled by security-bridge.content.ts.
  */
 
 import type { CSPViolation } from "@pleno-audit/csp";
+import { createProducer, type StorageAdapter } from "@pleno-audit/event-queue";
 
-function isExtensionContextValid(): boolean {
+const storageAdapter: StorageAdapter = {
+  get: (keys) => chrome.storage.local.get(keys),
+  set: (items) => chrome.storage.local.set(items),
+  remove: (keys) => chrome.storage.local.remove(keys),
+};
+
+function extractDomain(url: string): string {
   try {
-    return chrome.runtime?.id != null;
+    return new URL(url).hostname;
   } catch {
-    return false;
+    return url;
   }
-}
-
-function safeSendMessage(message: unknown): void {
-  if (!isExtensionContextValid()) return;
-  chrome.runtime.sendMessage(message).catch(() => {
-    // Ignore if extension context is invalid
-  });
-}
-
-function enqueueMessage(message: unknown): void {
-  // Avoid doing extension messaging work in the same browser event tick.
-  queueMicrotask(() => safeSendMessage(message));
 }
 
 export default defineContentScript({
   matches: ["<all_urls>"],
   runAt: "document_start",
   main() {
+    const tabId = Date.now() % 1_000_000;
+    const producer = createProducer(storageAdapter, tabId);
+    producer.setContext({ senderUrl: document.location.href });
+
     // Listen for CSP violation events
     document.addEventListener(
       "securitypolicyviolation",
@@ -49,20 +48,12 @@ export default defineContentScript({
           statusCode: event.statusCode,
         };
 
-        enqueueMessage({
-          type: "CSP_VIOLATION",
-          data: violation,
+        // Avoid doing heavy work in the same browser event tick.
+        queueMicrotask(() => {
+          void producer.enqueue("CSP_VIOLATION", { data: violation });
         });
       },
       true
     );
   },
 });
-
-function extractDomain(url: string): string {
-  try {
-    return new URL(url).hostname;
-  } catch {
-    return url;
-  }
-}

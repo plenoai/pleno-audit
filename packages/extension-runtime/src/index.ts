@@ -35,9 +35,6 @@ export {
   type CookieChangeCallback,
 } from "./cookie-monitor.js";
 
-// Message Handler
-export { createMessageRouter, fireAndForget } from "./message-handler.js";
-
 // Browser Adapter
 export {
   createBrowserAdapter,
