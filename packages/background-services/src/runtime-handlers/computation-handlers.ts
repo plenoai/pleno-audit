@@ -222,7 +222,7 @@ export function createComputationHandlers(
               connections,
               tags: extractTags(service),
               lastActivity: service.detectedAt,
-              faviconUrl: service.faviconUrl,
+              faviconUrl: service.faviconUrl ?? undefined,
             });
           }
 

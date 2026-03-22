@@ -30,6 +30,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Prepare WXT types
+        run: pnpm --filter @pleno-audit/audit-extension exec wxt prepare
+
       - name: Run tests
         run: pnpm test
 

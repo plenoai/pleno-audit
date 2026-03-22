@@ -3,7 +3,7 @@ import type { CSPViolation, NetworkRequest, CSPReport } from "@pleno-audit/csp";
 import { Shield, AlertTriangle, Globe, Activity, RefreshCw, Trash2, Download } from "lucide-preact";
 import { ThemeContext, type ThemeColors, spacing } from "./lib/theme";
 import { useWebThemeState } from "./useWebTheme";
-import { Badge, Button, Card, DataTable, SearchInput, Select, StatCard, Sidebar, StatsGrid } from "./components";
+import { Badge, Button, Card, DataTable, SearchInput, Select, Sidebar } from "./components";
 import { SkeletonDashboard } from "./components/Skeleton";
 import { getPeriodMs, truncate, type Period } from "./dashboardUtils";
 
@@ -307,18 +307,10 @@ function DashboardContent() {
           </header>
 
           {activeTab === "overview" && (
-            <>
-              <StatsGrid>
-                <StatCard title="Total Events" value={reports.length} icon={Activity} />
-                <StatCard title="CSP Violations" value={totalCounts.violations} icon={AlertTriangle} variant={totalCounts.violations > 0 ? "warning" : "default"} />
-                <StatCard title="Network Requests" value={totalCounts.networkRequests} icon={Globe} />
-                <StatCard title="Unique Domains" value={domainStats.length} icon={Shield} />
-              </StatsGrid>
-              <div style={styles.twoColumn}>
-                <HorizontalBarChart data={directiveStats} title="ディレクティブ別" colors={colors} isDark={isDark} />
-                <HorizontalBarChart data={domainStats.slice(0, 8)} title="ドメイン別" colors={colors} isDark={isDark} />
-              </div>
-            </>
+            <div style={styles.twoColumn}>
+              <HorizontalBarChart data={directiveStats} title="ディレクティブ別" colors={colors} isDark={isDark} />
+              <HorizontalBarChart data={domainStats.slice(0, 8)} title="ドメイン別" colors={colors} isDark={isDark} />
+            </div>
           )}
 
           {activeTab === "violations" && (
