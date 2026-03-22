@@ -160,12 +160,17 @@ export function ExtensionsTab() {
         {
           key: "tags",
           header: "タグ",
-          width: "160px",
+          width: "220px",
           render: (ext) => {
-            const level = getPermissionRiskLevel(ext.permissions, ext.hostPermissions);
+            const allPerms = [...ext.permissions, ...ext.hostPermissions];
             const tags: { label: string; variant: "danger" | "warning" | "info" | "success" }[] = [];
-            if (level === "critical") tags.push({ label: "重大", variant: "danger" });
-            else if (level === "high") tags.push({ label: "高リスク", variant: "warning" });
+            for (const p of allPerms) {
+              if (criticalPermissions.includes(p)) tags.push({ label: p, variant: "danger" });
+            }
+            const hasAllUrls = ext.hostPermissions.some(
+              (p) => p === "<all_urls>" || p === "*://*/*" || p === "http://*/*" || p === "https://*/*"
+            );
+            if (hasAllUrls) tags.push({ label: "<all_urls>", variant: "danger" });
             if (!ext.enabled) tags.push({ label: "無効", variant: "info" });
             if (ext.installType === "admin") tags.push({ label: "管理者", variant: "warning" });
             if (tags.length === 0) return <span style={{ color: colors.textMuted }}>-</span>;
