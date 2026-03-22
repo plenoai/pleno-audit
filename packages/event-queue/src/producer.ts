@@ -18,7 +18,8 @@ import {
 let idCounter = 0;
 
 function generateId(): string {
-  return `${Date.now()}-${idCounter++}-${Math.random().toString(36).slice(2, 6)}`;
+  const random = crypto.getRandomValues(new Uint32Array(1))[0];
+  return `${Date.now()}-${idCounter++}-${random.toString(36)}`;
 }
 
 export interface ProducerContext {
@@ -41,6 +42,7 @@ export function createProducer(
   const evictionThreshold = Math.floor(
     maxPerTab * (config?.evictionThreshold ?? DEFAULTS.evictionThreshold),
   );
+  const onEviction = config?.onEviction;
   const key = `${QUEUE_KEY_PREFIX}${tabId}`;
   let senderUrl: string | undefined;
 
@@ -58,11 +60,16 @@ export function createProducer(
   }
 
   function applyBackpressure(queue: QueueItem[]): QueueItem[] {
+    const beforeLen = queue.length;
     if (queue.length >= evictionThreshold) {
       queue = queue.filter((item) => item.priority !== "low");
+      const evicted = beforeLen - queue.length;
+      if (evicted > 0) onEviction?.(evicted, "low-priority");
     }
     if (queue.length >= maxPerTab) {
-      queue = queue.slice(queue.length - maxPerTab + 1);
+      const evicted = queue.length - maxPerTab + 1;
+      queue = queue.slice(evicted);
+      if (evicted > 0) onEviction?.(evicted, "overflow");
     }
     return queue;
   }

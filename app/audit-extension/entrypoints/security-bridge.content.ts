@@ -25,7 +25,7 @@ export default defineContentScript({
   matches: ["<all_urls>"],
   runAt: "document_start",
   main() {
-    const tabId = chrome.runtime.id ? (Date.now() % 1_000_000) : 0;
+    const tabId = chrome.runtime.id ? crypto.getRandomValues(new Uint32Array(1))[0] : 0;
     const MAX_QUEUE = 200;
     const MAX_UNLOAD_BATCH = 50;
     const queue: RuntimeEvent[] = [];
