@@ -4,13 +4,11 @@ import type { DebugHandlerResult } from "./types.js";
 export async function getSnapshot(logger: Logger): Promise<DebugHandlerResult> {
   try {
     const storage = await chrome.storage.local.get(null);
-    const services = storage.services || {};
 
     return {
       success: true,
       data: {
         storage,
-        services,
         extensionId: chrome.runtime.id,
         timestamp: Date.now(),
       },

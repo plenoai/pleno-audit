@@ -4,8 +4,8 @@ import { h } from "preact";
 import { Badge } from "./Badge";
 import { TestWrapper } from "../test-setup";
 
-function renderWithTheme(ui: preact.VNode) {
-  return render(h(TestWrapper, {}, ui));
+function renderWithTheme(ui: preact.ComponentChild) {
+  return render(h(TestWrapper, { children: ui }));
 }
 
 describe("Badge", () => {
