@@ -194,6 +194,8 @@ handleNetworkInspection: (data: unknown, sender: chrome.runtime.MessageSender) =
     offset?: number;
   }) => Promise<unknown>;
 
+  getServiceConnections: () => Promise<Record<string, Record<string, number>>>;
+
   getEvents: (options?: {
     limit?: number;
     offset?: number;

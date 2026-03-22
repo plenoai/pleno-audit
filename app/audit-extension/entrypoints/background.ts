@@ -572,6 +572,10 @@ handleNetworkInspection: (data, sender) => networkSecurityInspector.handleNetwor
     getAllExtensionRisks,
     getExtensionRiskAnalysis,
     analyzeExtensionRisks,
+    getServiceConnections: async () => {
+      const storage = await chrome.storage.local.get("serviceConnections");
+      return (storage.serviceConnections as Record<string, Record<string, number>>) || {};
+    },
     getDataRetentionConfig: backgroundConfig.getDataRetentionConfig,
     setDataRetentionConfig: backgroundConfig.setDataRetentionConfig,
     cleanupOldData: backgroundConfig.cleanupOldData,

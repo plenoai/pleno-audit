@@ -5,7 +5,6 @@ import type { DetectedService } from "@pleno-audit/casb-types";
 import type { CSPViolation, NetworkRequest } from "@pleno-audit/csp";
 
 // analyzePromptは実モジュールを使う（純関数のため）
-// findFaviconUrlも実モジュールを使う
 
 // ---------------------------------------------------------------------------
 // テストデータファクトリ
@@ -63,6 +62,7 @@ function createMockDeps(): Pick<
   | "getDoHRequests"
   | "getExtensionStats"
   | "getKnownExtensions"
+  | "getServiceConnections"
 > {
   return {
     logger: { debug: vi.fn(), warn: vi.fn(), error: vi.fn() },
@@ -73,6 +73,7 @@ function createMockDeps(): Pick<
     getDoHRequests: vi.fn().mockResolvedValue({ requests: [] }),
     getExtensionStats: vi.fn().mockResolvedValue(null),
     getKnownExtensions: vi.fn().mockReturnValue({}),
+    getServiceConnections: vi.fn().mockResolvedValue({}),
   };
 }
 
@@ -741,120 +742,49 @@ describe("GET_AGGREGATED_SERVICES", () => {
   });
 
   // -------------------------------------------------------------------------
-  // getConnectionsForDomain
+  // serviceConnections からの通信先取得
   // -------------------------------------------------------------------------
 
-  describe("getConnectionsForDomain", () => {
-    it("ネットワークリクエストから接続先ドメインを抽出する", async () => {
+  describe("serviceConnectionsからの通信先取得", () => {
+    it("serviceConnectionsから接続先ドメインを取得する", async () => {
       (deps.getServices as ReturnType<typeof vi.fn>).mockResolvedValue([
         createService({ domain: "example.com" }),
       ]);
-      (deps.getNetworkRequests as ReturnType<typeof vi.fn>).mockResolvedValue({
-        requests: [
-          createNetworkRequest({ pageUrl: "https://example.com/page", domain: "cdn.example.net" }),
-          createNetworkRequest({ pageUrl: "https://example.com/page", domain: "api.example.net" }),
-          createNetworkRequest({ pageUrl: "https://example.com/page", domain: "cdn.example.net" }),
-        ],
+      (deps.getServiceConnections as ReturnType<typeof vi.fn>).mockResolvedValue({
+        "example.com": { "cdn.example.net": 2, "api.example.net": 1 },
       });
 
       const result = (await execute()) as Array<{ connections: Array<{ domain: string; requestCount: number }> }>;
 
       expect(result[0].connections).toHaveLength(2);
-      // requestCount降順でソートされる
-      const cdnConn = result[0].connections.find((c) => c.domain === "cdn.example.net");
-      expect(cdnConn?.requestCount).toBe(2);
-      const apiConn = result[0].connections.find((c) => c.domain === "api.example.net");
-      expect(apiConn?.requestCount).toBe(1);
+      expect(result[0].connections[0]).toEqual({ domain: "cdn.example.net", requestCount: 2 });
+      expect(result[0].connections[1]).toEqual({ domain: "api.example.net", requestCount: 1 });
     });
 
-    it("CSP違反から接続先ドメインを抽出する", async () => {
+    it("serviceConnectionsにサービスがない場合、空の接続を返す", async () => {
       (deps.getServices as ReturnType<typeof vi.fn>).mockResolvedValue([
         createService({ domain: "example.com" }),
       ]);
-      (deps.getCSPReports as ReturnType<typeof vi.fn>).mockResolvedValue({
-        reports: [
-          createViolation({ pageUrl: "https://example.com/page", blockedURL: "https://tracker.ad.com/pixel.js" }),
-          createViolation({ pageUrl: "https://example.com/page", blockedURL: "https://tracker.ad.com/beacon.js" }),
-        ],
-      });
-
-      const result = (await execute()) as Array<{ connections: Array<{ domain: string; requestCount: number }> }>;
-
-      const trackerConn = result[0].connections.find((c) => c.domain === "tracker.ad.com");
-      expect(trackerConn).toBeDefined();
-      expect(trackerConn?.requestCount).toBe(2);
-    });
-
-    it("自身のドメインへの接続は除外する", async () => {
-      (deps.getServices as ReturnType<typeof vi.fn>).mockResolvedValue([
-        createService({ domain: "example.com" }),
-      ]);
-      (deps.getNetworkRequests as ReturnType<typeof vi.fn>).mockResolvedValue({
-        requests: [
-          createNetworkRequest({ pageUrl: "https://example.com/page", domain: "example.com" }),
-        ],
-      });
+      (deps.getServiceConnections as ReturnType<typeof vi.fn>).mockResolvedValue({});
 
       const result = (await execute()) as Array<{ connections: unknown[] }>;
 
       expect(result[0].connections).toHaveLength(0);
-    });
-
-    it("異なるページドメインからのリクエストは含めない", async () => {
-      (deps.getServices as ReturnType<typeof vi.fn>).mockResolvedValue([
-        createService({ domain: "example.com" }),
-      ]);
-      (deps.getNetworkRequests as ReturnType<typeof vi.fn>).mockResolvedValue({
-        requests: [
-          createNetworkRequest({ pageUrl: "https://other-site.com/page", domain: "cdn.example.net" }),
-        ],
-      });
-
-      const result = (await execute()) as Array<{ connections: unknown[] }>;
-
-      expect(result[0].connections).toHaveLength(0);
-    });
-
-    it("ネットワークリクエストとCSP違反の接続カウントを合算する", async () => {
-      (deps.getServices as ReturnType<typeof vi.fn>).mockResolvedValue([
-        createService({ domain: "example.com" }),
-      ]);
-      (deps.getNetworkRequests as ReturnType<typeof vi.fn>).mockResolvedValue({
-        requests: [
-          createNetworkRequest({ pageUrl: "https://example.com/page", domain: "shared.cdn.com" }),
-        ],
-      });
-      (deps.getCSPReports as ReturnType<typeof vi.fn>).mockResolvedValue({
-        reports: [
-          createViolation({ pageUrl: "https://example.com/page", blockedURL: "https://shared.cdn.com/script.js" }),
-        ],
-      });
-
-      const result = (await execute()) as Array<{ connections: Array<{ domain: string; requestCount: number }> }>;
-
-      const conn = result[0].connections.find((c) => c.domain === "shared.cdn.com");
-      expect(conn?.requestCount).toBe(2);
     });
 
     it("接続はrequestCount降順でソートされる", async () => {
       (deps.getServices as ReturnType<typeof vi.fn>).mockResolvedValue([
         createService({ domain: "example.com" }),
       ]);
-      (deps.getNetworkRequests as ReturnType<typeof vi.fn>).mockResolvedValue({
-        requests: [
-          createNetworkRequest({ pageUrl: "https://example.com/page", domain: "low.com" }),
-          createNetworkRequest({ pageUrl: "https://example.com/page", domain: "high.com" }),
-          createNetworkRequest({ pageUrl: "https://example.com/page", domain: "high.com" }),
-          createNetworkRequest({ pageUrl: "https://example.com/page", domain: "high.com" }),
-        ],
+      (deps.getServiceConnections as ReturnType<typeof vi.fn>).mockResolvedValue({
+        "example.com": { "low.com": 1, "high.com": 3, "mid.com": 2 },
       });
 
       const result = (await execute()) as Array<{ connections: Array<{ domain: string; requestCount: number }> }>;
 
-      expect(result[0].connections[0].domain).toBe("high.com");
-      expect(result[0].connections[0].requestCount).toBe(3);
-      expect(result[0].connections[1].domain).toBe("low.com");
-      expect(result[0].connections[1].requestCount).toBe(1);
+      expect(result[0].connections[0]).toEqual({ domain: "high.com", requestCount: 3 });
+      expect(result[0].connections[1]).toEqual({ domain: "mid.com", requestCount: 2 });
+      expect(result[0].connections[2]).toEqual({ domain: "low.com", requestCount: 1 });
     });
   });
 

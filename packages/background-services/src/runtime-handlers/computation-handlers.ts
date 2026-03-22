@@ -1,4 +1,3 @@
-import { findFaviconUrl } from "@pleno-audit/detectors";
 import type { DetectedService } from "@pleno-audit/casb-types";
 import { analyzePrompt } from "@pleno-audit/ai-detector";
 import type { CapturedAIPrompt } from "@pleno-audit/ai-detector";
@@ -66,34 +65,6 @@ function extractTags(service: DetectedService): ServiceTag[] {
   return tags;
 }
 
-function getConnectionsForDomain(
-  sourceDomain: string,
-  networkRequests: NetworkRequest[],
-  violations: CSPViolation[]
-): ConnectionInfo[] {
-  const connectionMap = new Map<string, number>();
-  for (const req of networkRequests) {
-    const pageDomain = extractDomain(req.pageUrl);
-    if (pageDomain === sourceDomain) {
-      const targetDomain = req.domain;
-      if (targetDomain && targetDomain !== sourceDomain) {
-        connectionMap.set(targetDomain, (connectionMap.get(targetDomain) || 0) + 1);
-      }
-    }
-  }
-  for (const v of violations) {
-    const sourceDomainFromViolation = extractDomain(v.pageUrl);
-    if (sourceDomainFromViolation === sourceDomain) {
-      const targetDomain = extractDomain(v.blockedURL);
-      if (targetDomain && targetDomain !== sourceDomain) {
-        connectionMap.set(targetDomain, (connectionMap.get(targetDomain) || 0) + 1);
-      }
-    }
-  }
-  return Array.from(connectionMap.entries())
-    .map(([domain, requestCount]) => ({ domain, requestCount }))
-    .sort((a, b) => b.requestCount - a.requestCount);
-}
 
 function convertToEvents(
   services: DetectedService[],
@@ -228,33 +199,30 @@ export function createComputationHandlers(
       "GET_AGGREGATED_SERVICES",
       {
         execute: async () => {
-          const [services, violationsResult, networkResult, extensionStats, knownExtensions] =
+          const [services, serviceConnections, extensionStats, knownExtensions] =
             await Promise.all([
               deps.getServices(),
-              deps.getCSPReports({ type: "csp-violation", limit: 500 }),
-              deps.getNetworkRequests({ limit: 500 }),
+              deps.getServiceConnections(),
               deps.getExtensionStats(),
               Promise.resolve(deps.getKnownExtensions()),
             ]);
 
-          const violations: CSPViolation[] = Array.isArray(violationsResult)
-            ? violationsResult
-            : (violationsResult as { reports?: CSPViolation[] })?.reports ?? [];
-          const networkRequests: NetworkRequest[] = Array.isArray(networkResult)
-            ? networkResult
-            : (networkResult as { requests?: NetworkRequest[] })?.requests ?? [];
-
           const result: UnifiedService[] = [];
 
           for (const service of services) {
-            const connections = getConnectionsForDomain(service.domain, networkRequests, violations);
+            const destMap = serviceConnections[service.domain];
+            const connections: ConnectionInfo[] = destMap
+              ? Object.entries(destMap)
+                  .map(([domain, requestCount]) => ({ domain, requestCount }))
+                  .sort((a, b) => b.requestCount - a.requestCount)
+              : [];
             result.push({
               id: `domain:${service.domain}`,
               source: { type: "domain", domain: service.domain, service },
               connections,
               tags: extractTags(service),
               lastActivity: service.detectedAt,
-              faviconUrl: service.faviconUrl || findFaviconUrl(service.domain, networkRequests),
+              faviconUrl: service.faviconUrl,
             });
           }
 
