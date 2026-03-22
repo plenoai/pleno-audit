@@ -3,6 +3,7 @@ import { Badge, Button, SearchInput } from "../../../components";
 import { FilteredTab } from "../components/FilteredTab";
 import { useTabFilter } from "../hooks/useTabFilter";
 import { useTheme } from "../../../lib/theme";
+import { truncate } from "../utils";
 import { createLogger } from "@pleno-audit/extension-runtime";
 
 const logger = createLogger("extensions-tab");
@@ -17,6 +18,7 @@ interface ExtensionInfo {
   installType: string;
   type: string;
   mayDisable: boolean;
+  homepageUrl?: string;
   icons?: { size: number; url: string }[];
 }
 
@@ -67,6 +69,7 @@ export function ExtensionsTab() {
               installType: ext.installType,
               type: ext.type,
               mayDisable: ext.mayDisable,
+              homepageUrl: ext.homepageUrl,
               icons: ext.icons,
             }))
         );
@@ -239,6 +242,24 @@ export function ExtensionsTab() {
               </div>
             );
           },
+        },
+        {
+          key: "homepage",
+          header: "ホームページ",
+          width: "160px",
+          render: (ext) =>
+            ext.homepageUrl ? (
+              <a
+                href={ext.homepageUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: isDark ? "#60a5fa" : "#0070f3", fontSize: "12px" }}
+              >
+                {truncate(ext.homepageUrl, 25)}
+              </a>
+            ) : (
+              <span style={{ color: colors.textMuted }}>-</span>
+            ),
         },
         {
           key: "version",
