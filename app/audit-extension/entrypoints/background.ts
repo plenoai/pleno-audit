@@ -73,7 +73,7 @@ import {
   createExtensionNetworkService,
   type ExtensionStats,
 } from "@pleno-audit/extension-network-service";
-import { createConsumer, type StorageAdapter, type QueueItem } from "@pleno-audit/event-queue";
+import { createConsumer, type QueueAdapter, type QueueItem } from "@pleno-audit/event-queue";
 
 const DEV_REPORT_ENDPOINT = "http://localhost:3001/api/v1/reports";
 
@@ -365,7 +365,7 @@ function initializeBackgroundServices(): void {
     .catch((error) => logger.error("Extension monitor init failed:", error));
 }
 
-const queueStorageAdapter: StorageAdapter = {
+const queueQueueAdapter: QueueAdapter = {
   get: (keys) => chrome.storage.local.get(keys),
   set: (items) => chrome.storage.local.set(items),
   remove: (keys) => chrome.storage.local.remove(keys),
@@ -493,7 +493,7 @@ export default defineBackground(() => {
   // Event Queue Consumer
   // ============================================================================
 
-  const eventQueueConsumer = createConsumer(queueStorageAdapter);
+  const eventQueueConsumer = createConsumer(queueQueueAdapter);
 
   const runtimeHandlers = createRuntimeMessageHandlersModule(
     createRuntimeHandlerDependencies(),

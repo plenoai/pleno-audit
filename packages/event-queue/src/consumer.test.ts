@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { createConsumer } from "./consumer.js";
-import type { StorageAdapter, QueueItem } from "./types.js";
+import type { QueueAdapter, QueueItem } from "./types.js";
 import { QUEUE_KEY_PREFIX } from "./types.js";
 
-function createMockStorage(): StorageAdapter & { data: Record<string, unknown> } {
+function createMockStorage(): QueueAdapter & { data: Record<string, unknown> } {
   const data: Record<string, unknown> = {};
   return {
     data,

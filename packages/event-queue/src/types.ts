@@ -37,10 +37,10 @@ export interface ConsumerConfig {
 }
 
 /**
- * Minimal storage adapter interface.
+ * Minimal queue persistence adapter.
  * Abstracts chrome.storage.local for testability.
  */
-export interface StorageAdapter {
+export interface QueueAdapter {
   get(keys: string | string[] | null): Promise<Record<string, unknown>>;
   set(items: Record<string, unknown>): Promise<void>;
   remove(keys: string | string[]): Promise<void>;

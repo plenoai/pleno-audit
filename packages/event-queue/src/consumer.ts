@@ -9,7 +9,7 @@
 import {
   type QueueItem,
   type ConsumerConfig,
-  type StorageAdapter,
+  type QueueAdapter,
   QUEUE_KEY_PREFIX,
   DEFAULTS,
 } from "./types.js";
@@ -29,19 +29,19 @@ export interface Consumer {
 }
 
 export function createConsumer(
-  storage: StorageAdapter,
+  adapter: QueueAdapter,
   config?: ConsumerConfig,
 ): Consumer {
   const chunkSize = config?.chunkSize ?? DEFAULTS.chunkSize;
 
   async function getAllQueueKeys(): Promise<string[]> {
-    const all = await storage.get(null);
+    const all = await adapter.get(null);
     return Object.keys(all).filter((k) => k.startsWith(QUEUE_KEY_PREFIX));
   }
 
   return {
     async process(handler: ProcessFn): Promise<ProcessResult> {
-      const all = await storage.get(null);
+      const all = await adapter.get(null);
       const keys = Object.keys(all).filter((k) => k.startsWith(QUEUE_KEY_PREFIX));
 
       let processed = 0;
@@ -82,9 +82,9 @@ export function createConsumer(
         remaining += rest.length;
 
         if (rest.length === 0) {
-          await storage.remove(key);
+          await adapter.remove(key);
         } else {
-          await storage.set({ [key]: rest });
+          await adapter.set({ [key]: rest });
         }
       }
 
@@ -97,14 +97,14 @@ export function createConsumer(
       const orphanKeys = keys.filter((k) => !activeSet.has(k));
 
       if (orphanKeys.length > 0) {
-        await storage.remove(orphanKeys);
+        await adapter.remove(orphanKeys);
       }
 
       return orphanKeys.length;
     },
 
     async pending(): Promise<number> {
-      const all = await storage.get(null);
+      const all = await adapter.get(null);
       let count = 0;
       for (const [key, value] of Object.entries(all)) {
         if (key.startsWith(QUEUE_KEY_PREFIX) && Array.isArray(value)) {

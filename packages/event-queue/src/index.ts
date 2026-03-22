@@ -10,5 +10,5 @@ export type {
   Priority,
   ProducerConfig,
   ConsumerConfig,
-  StorageAdapter,
+  QueueAdapter,
 } from "./types.js";
