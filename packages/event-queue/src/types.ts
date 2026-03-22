@@ -29,6 +29,8 @@ export interface ProducerConfig {
   maxPerTab?: number;
   /** Threshold (0-1) at which low-priority items are evicted. Default: 0.8 */
   evictionThreshold?: number;
+  /** Called when events are evicted due to backpressure */
+  onEviction?: (evictedCount: number, reason: "low-priority" | "overflow") => void;
 }
 
 export interface ConsumerConfig {

@@ -6,6 +6,23 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
+    "./logger": "./src/logger.ts",
+    "./storage": "./src/storage.ts",
+    "./storage-types": "./src/storage-types.ts",
+    "./network": "./src/network-monitor.ts",
+    "./blocking": "./src/blocking-engine.ts",
+    "./cooldown": "./src/cooldown-manager.ts",
+    "./browser": "./src/browser-adapter.ts",
+    "./sync": "./src/sync-manager.ts",
+    "./api": "./src/api-client.ts",
+    "./cookie": "./src/cookie-monitor.ts",
+    "./stats": "./src/extension-stats-analyzer.ts",
+    "./risk": "./src/extension-risk-analyzer.ts",
+    "./suspicious": "./src/suspicious-pattern-detector.ts",
+    "./doh": "./src/doh-monitor.ts",
+    "./sso": "./src/sso-manager.ts",
+    "./enterprise": "./src/enterprise-manager.ts",
+    "./errors": "./src/errors.ts",
     "./offscreen": "./src/offscreen/index.ts"
   },
   "dependencies": {

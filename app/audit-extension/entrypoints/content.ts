@@ -108,7 +108,7 @@ export default defineContentScript({
   runAt: "document_idle",
   main() {
     // Content scripts have a stable tab ID available via runtime
-    const tabId = Date.now() % 1_000_000;
+    const tabId = crypto.getRandomValues(new Uint32Array(1))[0];
     const producer = createProducer(queueAdapter, tabId);
     producer.setContext({ senderUrl: window.location.href });
 

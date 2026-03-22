@@ -579,7 +579,11 @@ export default defineBackground(() => {
     }
     const handler = alarmHandlers.get(alarm.name);
     if (handler) {
-      handler();
+      try {
+        handler();
+      } catch (error) {
+        logger.error(`Alarm handler "${alarm.name}" failed:`, error);
+      }
     }
   });
 

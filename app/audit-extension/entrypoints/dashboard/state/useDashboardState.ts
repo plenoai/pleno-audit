@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import type { CSPReport, CSPViolation, NetworkRequest } from "@pleno-audit/csp";
 import type { CapturedAIPrompt, DetectedService, EventLog } from "@pleno-audit/detectors";
+import { createLogger } from "@pleno-audit/extension-runtime";
 import type { Notification } from "../../../components/NotificationBanner";
 import type { Period, TabType, TotalCounts } from "../types";
 import { getThreatNotification, isThreatEventType } from "../domain/events";
 import { getPeriodMs, getStatusBadge } from "../utils";
+
+const logger = createLogger("dashboard-state");
 
 interface UseDashboardStateOptions {
   period: Period;
@@ -45,7 +48,7 @@ export function useDashboardState({
           return (await chrome.runtime.sendMessage(msg)) ?? fallback;
         } catch (error) {
           const type = (msg as { type?: string }).type ?? "unknown";
-          console.warn(`[dashboard] Runtime message failed: ${type}`, error);
+          logger.warn(`[dashboard] Runtime message failed: ${type}`, error);
           return fallback;
         }
       };
@@ -71,7 +74,7 @@ export function useDashboardState({
         safeMessage({ type: "GET_CONNECTION_CONFIG" }, { mode: "local" }),
         safeMessage({ type: "GET_AI_PROMPTS" }, []),
         chrome.storage.local.get(["services"]).catch((error) => {
-          console.warn("[dashboard] Failed to load services from chrome.storage.", error);
+          logger.warn("[dashboard] Failed to load services from chrome.storage.", error);
           return { services: {} };
         }),
         safeMessage({ type: "GET_EVENTS", data: { since: sinceTs, limit: 500 } }, { events: [], total: 0 }),
@@ -111,7 +114,7 @@ export function useDashboardState({
       }
       setLastUpdated(new Date().toISOString());
     } catch (error) {
-      console.warn("[dashboard] Failed to load dashboard data.", error);
+      logger.warn("[dashboard] Failed to load dashboard data.", error);
     } finally {
       setLoading(false);
       setIsRefreshing(false);
@@ -120,8 +123,22 @@ export function useDashboardState({
 
   useEffect(() => {
     loadData();
-    const interval = setInterval(loadData, 30000);
-    return () => clearInterval(interval);
+    let interval = setInterval(loadData, 30000);
+
+    function handleVisibilityChange() {
+      if (document.hidden) {
+        clearInterval(interval);
+      } else {
+        loadData();
+        interval = setInterval(loadData, 30000);
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, [loadData]);
 
   useEffect(() => {
