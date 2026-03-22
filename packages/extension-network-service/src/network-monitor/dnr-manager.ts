@@ -5,8 +5,8 @@
  * Chrome 111+ で利用可能
  */
 
-import type { NetworkRequestRecord } from "../storage-types.js";
-import { createLogger } from "../logger.js";
+import type { NetworkRequestRecord } from "@pleno-audit/extension-runtime";
+import { createLogger } from "@pleno-audit/extension-runtime";
 import { state, ensureConfigCachesCurrent } from "./state.js";
 import {
   EXTENSION_ID_PATTERN,

@@ -1,4 +1,5 @@
-import type { ConnectionMode, EnterpriseStatus } from "@pleno-audit/extension-runtime";
+import type { EnterpriseStatus } from "@pleno-audit/extension-runtime";
+import type { ConnectionMode } from "@pleno-audit/extension-enterprise";
 import type { AsyncHandlerEntry, RuntimeHandlerDependencies } from "./types.js";
 
 export function createConnectionAndAuthHandlers(

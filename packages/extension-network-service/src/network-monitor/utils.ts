@@ -7,7 +7,7 @@
 import type {
   NetworkRequestRecord,
   ExtensionRequestRecord,
-} from "../storage-types.js";
+} from "@pleno-audit/extension-runtime";
 
 /**
  * NetworkRequestRecord から ExtensionRequestRecord へ変換

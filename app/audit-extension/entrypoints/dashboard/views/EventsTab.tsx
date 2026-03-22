@@ -1,5 +1,5 @@
 import { useMemo } from "preact/hooks";
-import type { EventLog } from "@pleno-audit/detectors";
+import type { EventLog } from "@pleno-audit/casb-types";
 import { Badge, SearchInput, Select } from "../../../components";
 import { FilteredTab } from "../components/FilteredTab";
 import { useTabFilter } from "../hooks/useTabFilter";

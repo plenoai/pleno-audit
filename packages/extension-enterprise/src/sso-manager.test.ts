@@ -15,13 +15,18 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // Mock logger
-vi.mock("./logger.js", () => ({
+vi.mock("@pleno-audit/extension-runtime", () => ({
   createLogger: () => ({
     info: vi.fn(),
     error: vi.fn(),
     debug: vi.fn(),
     warn: vi.fn(),
   }),
+  getBrowserAPI: () => chrome,
+  hasIdentityAPI: () => !!chrome.identity,
+  getSessionStorage: vi.fn().mockResolvedValue(null),
+  setSessionStorage: vi.fn().mockResolvedValue(undefined),
+  removeSessionStorage: vi.fn().mockResolvedValue(undefined),
 }));
 
 // Mock chrome API - 最小限のモック

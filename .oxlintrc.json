@@ -46,7 +46,7 @@
     },
     // Remote API client (default: local mode)
     {
-      "files": ["packages/extension-runtime/src/api-client.ts"],
+      "files": ["packages/extension-enterprise/src/api-client.ts"],
       "rules": { "no-restricted-globals": "off" }
     },
     // CSP violation report sender (default: OFF)
@@ -76,7 +76,7 @@
     },
     // SSO Manager - requires OAuth token exchange (enterprise feature, default: OFF)
     {
-      "files": ["packages/extension-runtime/src/sso-manager.ts"],
+      "files": ["packages/extension-enterprise/src/sso-manager.ts"],
       "rules": { "no-restricted-globals": "off" }
     },
     // Debug WebSocket - developer tooling for debugging

@@ -1,13 +1,9 @@
 /**
  * Extension Storage Schema
  */
-import type {
-  DetectedService,
-  EventLog,
-  CapturedAIPrompt,
-  AIMonitorConfig,
-  NRDConfig,
-} from "@pleno-audit/detectors";
+import type { DetectedService, EventLog } from "@pleno-audit/casb-types";
+import type { CapturedAIPrompt, AIMonitorConfig } from "@pleno-audit/ai-detector";
+import type { NRDConfig } from "@pleno-audit/nrd";
 import type { CSPConfig, CSPReport, GeneratedCSPByDomain } from "@pleno-audit/csp";
 import type { PolicyConfig, SecurityAlert } from "@pleno-audit/alerts";
 

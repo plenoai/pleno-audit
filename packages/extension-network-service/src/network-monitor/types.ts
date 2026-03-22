@@ -7,9 +7,9 @@
 import type {
   NetworkMonitorConfig,
   NetworkRequestRecord,
-} from "../storage-types.js";
-import type { DashboardStats } from "../extension-stats-analyzer.js";
-import type { SuspiciousPattern } from "../suspicious-pattern-detector.js";
+  DashboardStats,
+  SuspiciousPattern,
+} from "@pleno-audit/extension-runtime";
 
 // Re-export for convenience
 export type {
@@ -64,4 +64,3 @@ export interface NetworkMonitor {
   generateStats(records: NetworkRequestRecord[]): DashboardStats;
   detectSuspiciousPatterns(records: NetworkRequestRecord[]): SuspiciousPattern[];
 }
-

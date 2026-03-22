@@ -1,20 +1,8 @@
-import type {
-  DetectedService,
-  NRDCache,
-  NRDConfig,
-  NRDDetectedDetails,
-  NRDResult,
-  TyposquatCache,
-  TyposquatConfig,
-  TyposquatDetectedDetails,
-  TyposquatResult,
-} from "@pleno-audit/detectors";
-import {
-  DEFAULT_NRD_CONFIG,
-  DEFAULT_TYPOSQUAT_CONFIG,
-  createNRDDetector,
-  createTyposquatDetector,
-} from "@pleno-audit/detectors";
+import type { DetectedService, NRDDetectedDetails } from "@pleno-audit/casb-types";
+import type { NRDCache, NRDConfig, NRDResult } from "@pleno-audit/nrd";
+import { DEFAULT_NRD_CONFIG, createNRDDetector } from "@pleno-audit/nrd";
+import type { TyposquatCache, TyposquatConfig, TyposquatDetectedDetails, TyposquatResult } from "@pleno-audit/typosquat";
+import { DEFAULT_TYPOSQUAT_CONFIG, createTyposquatDetector } from "@pleno-audit/typosquat";
 import { DEFAULT_DETECTION_CONFIG, type DetectionConfig } from "@pleno-audit/extension-runtime";
 import type { AlertManager } from "@pleno-audit/alerts";
 import { resolveEventTimestamp } from "./event-timestamp.js";

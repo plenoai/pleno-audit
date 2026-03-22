@@ -1,7 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { createComputationHandlers } from "./computation-handlers.js";
 import type { RuntimeHandlerDependencies } from "./types.js";
-import type { DetectedService } from "@pleno-audit/detectors";
+import type { DetectedService } from "@pleno-audit/casb-types";
 import type { CSPViolation, NetworkRequest } from "@pleno-audit/csp";
 
 // analyzePromptは実モジュールを使う（純関数のため）

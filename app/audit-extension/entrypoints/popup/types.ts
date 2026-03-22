@@ -1,8 +1,6 @@
 import type { CSPViolation, NetworkRequest } from "@pleno-audit/csp";
-import type {
-  DetectedService,
-  CapturedAIPrompt,
-} from "@pleno-audit/detectors";
+import type { DetectedService } from "@pleno-audit/casb-types";
+import type { CapturedAIPrompt } from "@pleno-audit/ai-detector";
 import type { DoHRequestRecord } from "@pleno-audit/extension-runtime";
 
 export interface ViolationProps {

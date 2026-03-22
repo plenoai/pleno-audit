@@ -13,20 +13,6 @@ export {
   clearAllStorage,
 } from "./storage.js";
 
-// API Client (remote mode only - local offscreen mode removed with parquet-storage)
-export {
-  ApiClient,
-  getApiClient,
-  updateApiClientConfig,
-  type ConnectionMode,
-  type ApiClientConfig,
-  type QueryOptions,
-  type PaginatedResult,
-} from "./api-client.js";
-
-// Sync Manager
-export { SyncManager, getSyncManager } from "./sync-manager.js";
-
 // Cookie Monitor
 export {
   startCookieMonitor,
@@ -78,20 +64,6 @@ export {
   DEFAULT_NOTIFICATION_CONFIG,
   DEFAULT_NETWORK_MONITOR_CONFIG,
 } from "./storage-types.js";
-
-// Network Monitor (primary)
-export {
-  createNetworkMonitor,
-  registerNetworkMonitorListener,
-  clearGlobalCallbacks,
-  registerDNRRulesForExtensions,
-  checkMatchedDNRRules,
-  clearDNRRules,
-  addDNRRuleForExtension,
-  removeDNRRuleForExtension,
-  type NetworkMonitor,
-  type ExtensionInfo,
-} from "./network-monitor.js";
 
 // Extension Stats Analyzer
 export {
@@ -154,18 +126,6 @@ export {
   type LogEventPayload,
 } from "./logger.js";
 
-// SSO Manager
-export {
-  getSSOManager,
-  createSSOManager,
-  type SSOProvider,
-  type OIDCConfig,
-  type SAMLConfig,
-  type SSOConfig,
-  type SSOSession,
-  type SSOStatus,
-} from "./sso-manager.js";
-
 // Cooldown Manager
 export {
   createCooldownManager,
@@ -193,13 +153,6 @@ export type {
   DoHRequestRecord,
   DoHDetectionMethod,
 } from "./storage-types.js";
-
-// Enterprise Manager
-export {
-  getEnterpriseManager,
-  createEnterpriseManager,
-  EnterpriseManager,
-} from "./enterprise-manager.js";
 
 export type {
   EnterpriseManagedConfig,

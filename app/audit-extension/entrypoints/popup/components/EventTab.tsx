@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "preact/hooks";
-import type { AlertSeverity, AlertCategory } from "@pleno-audit/detectors";
+import type { AlertSeverity, AlertCategory } from "@pleno-audit/alerts";
 import { Badge, Button } from "../../../components";
 import { usePopupStyles } from "../styles";
 import { useTheme } from "../../../lib/theme";

@@ -1,11 +1,11 @@
-import { createLogger } from "./logger.js";
+import { createLogger } from "@pleno-audit/extension-runtime";
 import {
   getBrowserAPI,
   hasIdentityAPI,
   getSessionStorage,
   setSessionStorage,
   removeSessionStorage,
-} from "./browser-adapter.js";
+} from "@pleno-audit/extension-runtime";
 
 const logger = createLogger("sso-manager");
 

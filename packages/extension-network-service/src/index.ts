@@ -19,6 +19,19 @@ import { getExtensionStats } from "./stats.js";
 export type { ExtensionStats } from "./helpers.js";
 export type { ExtensionNetworkService, ExtensionNetworkServiceDeps } from "./types.js";
 
+// Network Monitor public API
+export {
+  createNetworkMonitor,
+  registerNetworkMonitorListener,
+  clearGlobalCallbacks,
+  registerDNRRulesForExtensions,
+  checkMatchedDNRRules,
+  clearDNRRules,
+  addDNRRuleForExtension,
+  removeDNRRuleForExtension,
+} from "./network-monitor/index.js";
+export type { NetworkMonitor, ExtensionInfo } from "./network-monitor/types.js";
+
 export function createExtensionNetworkService(
   deps: ExtensionNetworkServiceDeps
 ): ExtensionNetworkService {

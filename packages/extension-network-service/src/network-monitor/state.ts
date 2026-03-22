@@ -4,8 +4,8 @@
  * グローバル状態の管理とキャッシュ
  */
 
-import type { NetworkMonitorConfig } from "../storage-types.js";
-import { DEFAULT_NETWORK_MONITOR_CONFIG } from "../storage-types.js";
+import type { NetworkMonitorConfig } from "@pleno-audit/extension-runtime";
+import { DEFAULT_NETWORK_MONITOR_CONFIG } from "@pleno-audit/extension-runtime";
 import type { NetworkMonitorState, ExtensionInfo } from "./types.js";
 
 /**

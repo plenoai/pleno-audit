@@ -171,7 +171,13 @@ describe("storage", () => {
 
       const result = await getStorageKey("aiMonitorConfig");
 
-      expect(result).toEqual({ enabled: true });
+      expect(result).toEqual({
+        enabled: true,
+        capturePrompts: true,
+        captureResponses: true,
+        maxContentSize: 10000,
+        maxStoredRecords: 500,
+      });
     });
 
     it("returns default config for networkMonitorConfig", async () => {

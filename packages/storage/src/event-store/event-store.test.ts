@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { EventStore, type EventQueryOptions } from "./event-store.js";
-import type { EventLog } from "@pleno-audit/detectors";
+import type { EventLog } from "@pleno-audit/casb-types";
 
 // Mock IDBKeyRange
 vi.stubGlobal("IDBKeyRange", {

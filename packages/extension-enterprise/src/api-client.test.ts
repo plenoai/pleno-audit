@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import type { CSPReport, CSPViolation, NetworkRequest } from "@pleno-audit/csp";
 
 // Mock logger
-vi.mock("./logger.js", () => ({
+vi.mock("@pleno-audit/extension-runtime", () => ({
   createLogger: () => ({
     info: vi.fn(),
     error: vi.fn(),

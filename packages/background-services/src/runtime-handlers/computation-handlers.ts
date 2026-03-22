@@ -1,5 +1,8 @@
-import { analyzePrompt, findFaviconUrl } from "@pleno-audit/detectors";
-import type { CapturedAIPrompt, DetectedService, AlertSeverity, AlertCategory } from "@pleno-audit/detectors";
+import { findFaviconUrl } from "@pleno-audit/detectors";
+import type { DetectedService } from "@pleno-audit/casb-types";
+import { analyzePrompt } from "@pleno-audit/ai-detector";
+import type { CapturedAIPrompt } from "@pleno-audit/ai-detector";
+import type { AlertSeverity, AlertCategory } from "@pleno-audit/alerts";
 import type { CSPViolation, NetworkRequest } from "@pleno-audit/csp";
 import type { AsyncHandlerEntry, RuntimeHandlerDependencies } from "./types.js";
 

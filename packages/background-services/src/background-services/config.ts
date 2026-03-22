@@ -7,11 +7,11 @@ import {
   setStorage,
   createLogger,
   type BlockingConfig,
-  type ConnectionMode,
   type DataRetentionConfig,
   type DetectionConfig,
   type NotificationConfig,
 } from "@pleno-audit/extension-runtime";
+import type { ConnectionMode } from "@pleno-audit/extension-enterprise";
 import type { BackgroundServiceState } from "./state.js";
 import { ensureApiClient, ensureSyncManager, setConnectionConfigInternal } from "./client.js";
 

@@ -1,4 +1,4 @@
-import type { EventLog } from "@pleno-audit/detectors";
+import type { EventLog } from "@pleno-audit/casb-types";
 import type { TimeGranularity } from "../../../components/TimelineChart";
 import { EVENT_CATEGORIES, getEventColor, getEventLabel } from "./events";
 import type { EventCategory } from "./events";

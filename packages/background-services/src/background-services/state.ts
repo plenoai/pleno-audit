@@ -1,4 +1,5 @@
-import type { ApiClient, Logger, SyncManager } from "@pleno-audit/extension-runtime";
+import type { Logger } from "@pleno-audit/extension-runtime";
+import type { ApiClient, SyncManager } from "@pleno-audit/extension-enterprise";
 import type { AlertManager, PolicyManager } from "@pleno-audit/alerts";
 
 export interface BackgroundServiceState {

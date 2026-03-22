@@ -1,4 +1,5 @@
-import type { NRDConfig, TyposquatConfig } from "@pleno-audit/detectors";
+import type { NRDConfig } from "@pleno-audit/nrd";
+import type { TyposquatConfig } from "@pleno-audit/typosquat";
 import type { AsyncHandlerEntry, RuntimeHandlerDependencies } from "./types.js";
 
 export function createDomainRiskHandlers(

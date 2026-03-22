@@ -1,5 +1,5 @@
 import { useState, useEffect } from "preact/hooks";
-import type { CSPConfig } from "@pleno-audit/detectors";
+import type { CSPConfig } from "@pleno-audit/csp";
 import { DEFAULT_CSP_CONFIG } from "@pleno-audit/csp";
 import { createLogger } from "@pleno-audit/extension-runtime";
 import { useTheme } from "../../../lib/theme";

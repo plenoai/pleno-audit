@@ -1,5 +1,5 @@
 import { useMemo } from "preact/hooks";
-import type { CapturedAIPrompt } from "@pleno-audit/detectors";
+import type { CapturedAIPrompt } from "@pleno-audit/ai-detector";
 import { Badge, SearchInput } from "../../../components";
 import { FilteredTab } from "../components/FilteredTab";
 import { useTabFilter } from "../hooks/useTabFilter";

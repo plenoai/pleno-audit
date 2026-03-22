@@ -1,6 +1,7 @@
 import { useState, useEffect } from "preact/hooks";
-import type { CSPConfig, NRDConfig } from "@pleno-audit/detectors";
-import { DEFAULT_NRD_CONFIG } from "@pleno-audit/detectors";
+import type { CSPConfig } from "@pleno-audit/csp";
+import type { NRDConfig } from "@pleno-audit/nrd";
+import { DEFAULT_NRD_CONFIG } from "@pleno-audit/nrd";
 import { DEFAULT_CSP_CONFIG } from "@pleno-audit/csp";
 import {
   createLogger,

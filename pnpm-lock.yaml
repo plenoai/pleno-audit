@@ -44,12 +44,18 @@ importers:
 
   app/audit-extension:
     dependencies:
+      '@pleno-audit/ai-detector':
+        specifier: workspace:*
+        version: link:../../packages/ai-detector
       '@pleno-audit/alerts':
         specifier: workspace:*
         version: link:../../packages/alerts
       '@pleno-audit/background-services':
         specifier: workspace:*
         version: link:../../packages/background-services
+      '@pleno-audit/casb-types':
+        specifier: workspace:*
+        version: link:../../packages/casb-types
       '@pleno-audit/csp':
         specifier: workspace:*
         version: link:../../packages/csp
@@ -65,15 +71,24 @@ importers:
       '@pleno-audit/event-queue':
         specifier: workspace:*
         version: link:../../packages/event-queue
+      '@pleno-audit/extension-enterprise':
+        specifier: workspace:*
+        version: link:../../packages/extension-enterprise
       '@pleno-audit/extension-network-service':
         specifier: workspace:*
         version: link:../../packages/extension-network-service
       '@pleno-audit/extension-runtime':
         specifier: workspace:*
         version: link:../../packages/extension-runtime
+      '@pleno-audit/nrd':
+        specifier: workspace:*
+        version: link:../../packages/nrd
       '@pleno-audit/storage':
         specifier: workspace:*
         version: link:../../packages/storage
+      '@pleno-audit/typosquat':
+        specifier: workspace:*
+        version: link:../../packages/typosquat
       lucide-preact:
         specifier: ^0.577.0
         version: 0.577.0(preact@10.29.0)
@@ -256,27 +271,54 @@ importers:
 
   packages/background-services:
     dependencies:
+      '@pleno-audit/ai-detector':
+        specifier: workspace:*
+        version: link:../ai-detector
       '@pleno-audit/alerts':
         specifier: workspace:*
         version: link:../alerts
+      '@pleno-audit/casb-types':
+        specifier: workspace:*
+        version: link:../casb-types
       '@pleno-audit/csp':
         specifier: workspace:*
         version: link:../csp
       '@pleno-audit/detectors':
         specifier: workspace:*
         version: link:../detectors
+      '@pleno-audit/extension-enterprise':
+        specifier: workspace:*
+        version: link:../extension-enterprise
       '@pleno-audit/extension-runtime':
         specifier: workspace:*
         version: link:../extension-runtime
+      '@pleno-audit/nrd':
+        specifier: workspace:*
+        version: link:../nrd
       '@pleno-audit/storage':
         specifier: workspace:*
         version: link:../storage
+      '@pleno-audit/typosquat':
+        specifier: workspace:*
+        version: link:../typosquat
 
   packages/battacker:
     devDependencies:
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
+
+  packages/casb-types:
+    dependencies:
+      '@pleno-audit/ai-detector':
+        specifier: workspace:*
+        version: link:../ai-detector
+      '@pleno-audit/csp':
+        specifier: workspace:*
+        version: link:../csp
+      '@pleno-audit/typosquat':
+        specifier: workspace:*
+        version: link:../typosquat
 
   packages/csp: {}
 
@@ -290,23 +332,20 @@ importers:
 
   packages/detectors:
     dependencies:
-      '@pleno-audit/ai-detector':
+      '@pleno-audit/casb-types':
         specifier: workspace:*
-        version: link:../ai-detector
-      '@pleno-audit/alerts':
-        specifier: workspace:*
-        version: link:../alerts
+        version: link:../casb-types
+
+  packages/event-queue: {}
+
+  packages/extension-enterprise:
+    dependencies:
       '@pleno-audit/csp':
         specifier: workspace:*
         version: link:../csp
-      '@pleno-audit/nrd':
+      '@pleno-audit/extension-runtime':
         specifier: workspace:*
-        version: link:../nrd
-      '@pleno-audit/typosquat':
-        specifier: workspace:*
-        version: link:../typosquat
-
-  packages/event-queue: {}
+        version: link:../extension-runtime
 
   packages/extension-network-service:
     dependencies:
@@ -319,23 +358,32 @@ importers:
 
   packages/extension-runtime:
     dependencies:
+      '@pleno-audit/ai-detector':
+        specifier: workspace:*
+        version: link:../ai-detector
       '@pleno-audit/alerts':
         specifier: workspace:*
         version: link:../alerts
+      '@pleno-audit/casb-types':
+        specifier: workspace:*
+        version: link:../casb-types
       '@pleno-audit/csp':
         specifier: workspace:*
         version: link:../csp
       '@pleno-audit/detectors':
         specifier: workspace:*
         version: link:../detectors
+      '@pleno-audit/nrd':
+        specifier: workspace:*
+        version: link:../nrd
 
   packages/nrd: {}
 
   packages/storage:
     dependencies:
-      '@pleno-audit/detectors':
+      '@pleno-audit/casb-types':
         specifier: workspace:*
-        version: link:../detectors
+        version: link:../casb-types
 
   packages/typosquat: {}
 

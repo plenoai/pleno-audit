@@ -1,8 +1,6 @@
 import { useState, useEffect } from "preact/hooks";
-import type {
-  DetectedService,
-  CapturedAIPrompt,
-} from "@pleno-audit/detectors";
+import type { DetectedService } from "@pleno-audit/casb-types";
+import type { CapturedAIPrompt } from "@pleno-audit/ai-detector";
 import type { CSPViolation } from "@pleno-audit/csp";
 import {
   createLogger,

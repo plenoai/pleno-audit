@@ -18,10 +18,10 @@ import {
   DEFAULT_NETWORK_MONITOR_CONFIG,
   DEFAULT_NOTIFICATION_CONFIG,
 } from "./storage-types.js";
-import type { NRDConfig } from "@pleno-audit/detectors";
-import { DEFAULT_NRD_CONFIG } from "@pleno-audit/detectors";
+import type { NRDConfig } from "@pleno-audit/nrd";
+import { DEFAULT_NRD_CONFIG } from "@pleno-audit/nrd";
 import { DEFAULT_CSP_CONFIG } from "@pleno-audit/csp";
-import { DEFAULT_AI_MONITOR_CONFIG } from "@pleno-audit/detectors";
+import { DEFAULT_AI_MONITOR_CONFIG } from "@pleno-audit/ai-detector";
 import { DEFAULT_DOH_MONITOR_CONFIG } from "./doh-monitor.js";
 import { getBrowserAPI } from "./browser-adapter.js";
 

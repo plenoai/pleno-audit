@@ -1,4 +1,5 @@
-import { isSessionCookie, type CookieInfo } from "@pleno-audit/detectors";
+import { isSessionCookie } from "@pleno-audit/detectors";
+import type { CookieInfo } from "@pleno-audit/casb-types";
 
 export type CookieChangeCallback = (cookie: CookieInfo, removed: boolean) => void;
 

@@ -7,7 +7,7 @@ const mockLocalSync = vi.hoisted(() => vi.fn());
 const mockRemotePushAndPull = vi.hoisted(() => vi.fn());
 
 // Mock logger
-vi.mock("./logger.js", () => ({
+vi.mock("@pleno-audit/extension-runtime", () => ({
   createLogger: () => ({
     info: vi.fn(),
     error: vi.fn(),

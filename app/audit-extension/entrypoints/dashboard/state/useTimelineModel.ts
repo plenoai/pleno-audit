@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "preact/hooks";
-import type { EventLog } from "@pleno-audit/detectors";
+import type { EventLog } from "@pleno-audit/casb-types";
 import type { TimeGranularity } from "../../../components/TimelineChart";
 import type { EventCategory } from "../domain/events";
 import { EVENT_COLOR_MAP } from "../domain/events";

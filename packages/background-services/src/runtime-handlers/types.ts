@@ -1,19 +1,14 @@
-import type {
-  AIMonitorConfig,
-  CapturedAIPrompt,
-  DetectedService,
-  NRDConfig,
-  TyposquatConfig,
-} from "@pleno-audit/detectors";
+import type { DetectedService } from "@pleno-audit/casb-types";
+import type { AIMonitorConfig, CapturedAIPrompt } from "@pleno-audit/ai-detector";
+import type { NRDConfig } from "@pleno-audit/nrd";
+import type { TyposquatConfig } from "@pleno-audit/typosquat";
 import type {
   CSPConfig,
   CSPGenerationOptions,
   CSPViolation,
-  NetworkRequest,
 } from "@pleno-audit/csp";
 import type {
   BlockingConfig,
-  ConnectionMode,
   DataRetentionConfig,
   DetectionConfig,
   DoHMonitorConfig,
@@ -21,6 +16,7 @@ import type {
   NetworkMonitorConfig,
   NotificationConfig,
 } from "@pleno-audit/extension-runtime";
+import type { ConnectionMode } from "@pleno-audit/extension-enterprise";
 
 export type RuntimeMessage = {
   type?: string;

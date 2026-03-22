@@ -1,5 +1,6 @@
 import { useMemo } from "preact/hooks";
-import type { CapturedAIPrompt, DetectedService, EventLog } from "@pleno-audit/detectors";
+import type { DetectedService, EventLog } from "@pleno-audit/casb-types";
+import type { CapturedAIPrompt } from "@pleno-audit/ai-detector";
 import type { CSPViolation } from "@pleno-audit/csp";
 import type { ThemeColors } from "../../../lib/theme";
 import { Badge, Card } from "../../../components";

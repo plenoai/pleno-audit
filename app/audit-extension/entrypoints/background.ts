@@ -1,21 +1,18 @@
-import type { CapturedAIPrompt, DetectedService } from "@pleno-audit/detectors";
-import {
-  DEFAULT_AI_MONITOR_CONFIG,
-  DEFAULT_NRD_CONFIG,
-  DEFAULT_TYPOSQUAT_CONFIG,
-} from "@pleno-audit/detectors";
+import type { DetectedService } from "@pleno-audit/casb-types";
+import type { CapturedAIPrompt } from "@pleno-audit/ai-detector";
+import { DEFAULT_AI_MONITOR_CONFIG } from "@pleno-audit/ai-detector";
+import { DEFAULT_NRD_CONFIG } from "@pleno-audit/nrd";
+import { DEFAULT_TYPOSQUAT_CONFIG } from "@pleno-audit/typosquat";
 import type { CSPViolation } from "@pleno-audit/csp";
 import { DEFAULT_CSP_CONFIG } from "@pleno-audit/csp";
 import { EventStore } from "@pleno-audit/storage";
 import {
   startCookieMonitor,
   onCookieChange,
-  getSSOManager,
   getStorage,
   setStorage,
   clearAIPrompts,
   clearAllStorage,
-  registerNetworkMonitorListener,
   createLogger,
   DEFAULT_NETWORK_MONITOR_CONFIG,
   DEFAULT_DATA_RETENTION_CONFIG,
@@ -25,12 +22,12 @@ import {
   createDoHMonitor,
   registerDoHMonitorListener,
   DEFAULT_DOH_MONITOR_CONFIG,
-  getEnterpriseManager,
   type NetworkMonitorConfig,
   type DoHMonitor,
   type DoHMonitorConfig,
   type DoHRequestRecord,
 } from "@pleno-audit/extension-runtime";
+import { getSSOManager, getEnterpriseManager } from "@pleno-audit/extension-enterprise";
 
 const logger = createLogger("background");
 import {
@@ -72,6 +69,7 @@ import {
 } from "@pleno-audit/background-services";
 import {
   createExtensionNetworkService,
+  registerNetworkMonitorListener,
   type ExtensionStats,
 } from "@pleno-audit/extension-network-service";
 import { createConsumer, type QueueAdapter, type QueueItem } from "@pleno-audit/event-queue";
@@ -508,12 +506,12 @@ handleNetworkInspection: (data, sender) => networkSecurityInspector.handleNetwor
       offset: options?.offset,
       since: options?.since,
       until: options?.until,
-      type: options?.type as import("@pleno-audit/detectors").EventLogType[],
+      type: options?.type as import("@pleno-audit/casb-types").EventLogType[],
     }),
     getEventsCount: async (options) => eventStore.count({
       since: options?.since,
       until: options?.until,
-      type: options?.type as import("@pleno-audit/detectors").EventLogType[],
+      type: options?.type as import("@pleno-audit/casb-types").EventLogType[],
     }),
   };
 }

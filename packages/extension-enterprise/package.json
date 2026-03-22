@@ -1,5 +1,5 @@
 {
-  "name": "@pleno-audit/storage",
+  "name": "@pleno-audit/extension-enterprise",
   "version": "0.0.1",
   "type": "module",
   "main": "./src/index.ts",
@@ -8,6 +8,7 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@pleno-audit/casb-types": "workspace:*"
+    "@pleno-audit/extension-runtime": "workspace:*",
+    "@pleno-audit/csp": "workspace:*"
   }
 }

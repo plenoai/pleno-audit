@@ -1,4 +1,4 @@
-import type { EventLogType } from "@pleno-audit/detectors";
+import type { EventLogType } from "@pleno-audit/casb-types";
 
 export type EventCategory = "security" | "ai" | "policy" | "session" | "network";
 

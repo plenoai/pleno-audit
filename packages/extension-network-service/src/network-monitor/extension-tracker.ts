@@ -4,7 +4,7 @@
  * インストール済み拡張機能のリスト管理
  */
 
-import { createLogger } from "../logger.js";
+import { createLogger } from "@pleno-audit/extension-runtime";
 import { state } from "./state.js";
 import type { ExtensionInfo } from "./types.js";
 

@@ -1,5 +1,5 @@
 import type { AlertManager } from "@pleno-audit/alerts";
-import type { CookieInfo, DetectedService } from "@pleno-audit/detectors";
+import type { CookieInfo, DetectedService } from "@pleno-audit/casb-types";
 import type { Logger } from "@pleno-audit/extension-runtime";
 import { DEFAULT_DETECTION_CONFIG, queryExistingCookies } from "@pleno-audit/extension-runtime";
 import type { NewEvent, PageAnalysis, StorageData } from "./types.js";

@@ -1,4 +1,3 @@
-import type { AIMonitorConfig, CapturedAIPrompt } from "@pleno-audit/detectors";
 import type { DetectionConfig } from "@pleno-audit/extension-runtime";
 import {
   DEFAULT_AI_MONITOR_CONFIG,
@@ -6,7 +5,8 @@ import {
   classifyProvider,
   getProviderInfo,
   isShadowAI,
-} from "@pleno-audit/detectors";
+} from "@pleno-audit/ai-detector";
+import type { AIMonitorConfig, CapturedAIPrompt } from "@pleno-audit/ai-detector";
 
 const MAX_AI_PROMPTS = 500;
 const AI_RISK_LEVEL_PRIORITY: Record<string, number> = {

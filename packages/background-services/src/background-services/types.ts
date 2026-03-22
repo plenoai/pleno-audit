@@ -1,20 +1,18 @@
 import type {
   CookieBannerDetectedDetails,
-  CookieBannerResult,
   CookieInfo,
   CookiePolicyFoundDetails,
   CookieSetDetails,
   DetectedService,
-  DetectionResult,
   EventLog,
   ExtensionRequestDetails,
   LoginDetectedDetails,
   PrivacyPolicyFoundDetails,
   TosFoundDetails,
-  AIPromptSentDetails,
-  AIResponseReceivedDetails,
-  TyposquatDetectedDetails,
-} from "@pleno-audit/detectors";
+} from "@pleno-audit/casb-types";
+import type { CookieBannerResult, DetectionResult } from "@pleno-audit/detectors";
+import type { AIPromptSentDetails, AIResponseReceivedDetails } from "@pleno-audit/ai-detector";
+import type { TyposquatDetectedDetails } from "@pleno-audit/typosquat";
 import type { CSPConfig, CSPViolationDetails, NetworkRequestDetails } from "@pleno-audit/csp";
 import type { DetectionConfig, NotificationConfig } from "@pleno-audit/extension-runtime";
 import type { PolicyConfig } from "@pleno-audit/alerts";

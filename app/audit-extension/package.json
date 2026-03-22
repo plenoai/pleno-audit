@@ -10,16 +10,21 @@
     "build:all": "wxt build && wxt build -b firefox"
   },
   "dependencies": {
+    "@pleno-audit/ai-detector": "workspace:*",
     "@pleno-audit/alerts": "workspace:*",
     "@pleno-audit/background-services": "workspace:*",
+    "@pleno-audit/casb-types": "workspace:*",
     "@pleno-audit/csp": "workspace:*",
     "@pleno-audit/data-export": "workspace:*",
     "@pleno-audit/debug-bridge": "workspace:*",
     "@pleno-audit/detectors": "workspace:*",
     "@pleno-audit/event-queue": "workspace:*",
     "@pleno-audit/extension-network-service": "workspace:*",
+    "@pleno-audit/extension-enterprise": "workspace:*",
     "@pleno-audit/extension-runtime": "workspace:*",
+    "@pleno-audit/nrd": "workspace:*",
     "@pleno-audit/storage": "workspace:*",
+    "@pleno-audit/typosquat": "workspace:*",
     "lucide-preact": "^0.577.0",
     "preact": "^10.29.0"
   },

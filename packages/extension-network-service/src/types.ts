@@ -2,11 +2,11 @@ import type { AlertManager } from "@pleno-audit/alerts";
 import type {
   CooldownManager,
   DetectionConfig,
-  NetworkMonitor,
   ExtensionRiskAnalysis,
   NetworkMonitorConfig,
   NetworkRequestRecord,
 } from "@pleno-audit/extension-runtime";
+import type { NetworkMonitor } from "./network-monitor/types.js";
 import type { ExtensionStats, NetworkRequestQueryOptions } from "./helpers.js";
 
 export interface ExtensionNetworkServiceDeps {

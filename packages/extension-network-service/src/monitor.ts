@@ -1,9 +1,9 @@
 import {
-  createNetworkMonitor,
   DEFAULT_NETWORK_MONITOR_CONFIG,
   type NetworkMonitorConfig,
   type NetworkRequestRecord,
 } from "@pleno-audit/extension-runtime";
+import { createNetworkMonitor } from "./network-monitor/index.js";
 import type { ExtensionNetworkContext } from "./types.js";
 
 export async function getNetworkMonitorConfig(

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import type { CSPReport, CSPViolation, NetworkRequest } from "@pleno-audit/csp";
-import type { CapturedAIPrompt, DetectedService, EventLog } from "@pleno-audit/detectors";
+import type { DetectedService, EventLog } from "@pleno-audit/casb-types";
+import type { CapturedAIPrompt } from "@pleno-audit/ai-detector";
 import { createLogger } from "@pleno-audit/extension-runtime";
 import type { Notification } from "../../../components/NotificationBanner";
 import type { Period, TabType, TotalCounts } from "../types";

@@ -7,8 +7,8 @@
 import type {
   NetworkRequestRecord,
   InitiatorType,
-} from "../storage-types.js";
-import { createLogger } from "../logger.js";
+} from "@pleno-audit/extension-runtime";
+import { createLogger } from "@pleno-audit/extension-runtime";
 import { state, ensureConfigCachesCurrent } from "./state.js";
 
 const logger = createLogger("network-monitor");

@@ -8,10 +8,15 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@pleno-audit/extension-runtime": "workspace:*",
+    "@pleno-audit/ai-detector": "workspace:*",
     "@pleno-audit/alerts": "workspace:*",
+    "@pleno-audit/casb-types": "workspace:*",
     "@pleno-audit/csp": "workspace:*",
     "@pleno-audit/detectors": "workspace:*",
-    "@pleno-audit/storage": "workspace:*"
+    "@pleno-audit/extension-enterprise": "workspace:*",
+    "@pleno-audit/extension-runtime": "workspace:*",
+    "@pleno-audit/nrd": "workspace:*",
+    "@pleno-audit/storage": "workspace:*",
+    "@pleno-audit/typosquat": "workspace:*"
   }
 }

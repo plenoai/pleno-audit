@@ -10,10 +10,6 @@
     "./patterns": "./src/patterns.ts"
   },
   "dependencies": {
-    "@pleno-audit/ai-detector": "workspace:*",
-    "@pleno-audit/alerts": "workspace:*",
-    "@pleno-audit/csp": "workspace:*",
-    "@pleno-audit/nrd": "workspace:*",
-    "@pleno-audit/typosquat": "workspace:*"
+    "@pleno-audit/casb-types": "workspace:*"
   }
 }

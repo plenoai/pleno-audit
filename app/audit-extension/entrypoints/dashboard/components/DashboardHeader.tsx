@@ -3,7 +3,7 @@ import { Badge, Button, Select, SettingsMenu, StatCard, StatsGrid } from "../../
 import { spacing } from "../../../lib/theme";
 import type { DashboardStyles } from "../styles";
 import type { Period, TabType, TotalCounts } from "../types";
-import type { DetectedService } from "@pleno-audit/detectors";
+import type { DetectedService } from "@pleno-audit/casb-types";
 import { periodOptions } from "../constants";
 
 interface DashboardHeaderProps {

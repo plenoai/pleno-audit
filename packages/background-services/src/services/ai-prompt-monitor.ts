@@ -1,15 +1,12 @@
-import type {
-  AIMonitorConfig,
-  CapturedAIPrompt,
-  DetectedService,
-} from "@pleno-audit/detectors";
+import type { DetectedService } from "@pleno-audit/casb-types";
 import type { DetectionConfig } from "@pleno-audit/extension-runtime";
 import {
   analyzePrompt,
   classifyProvider,
   getProviderInfo,
   isShadowAI,
-} from "@pleno-audit/detectors";
+} from "@pleno-audit/ai-detector";
+import type { AIMonitorConfig, CapturedAIPrompt } from "@pleno-audit/ai-detector";
 
 interface AIPromptEvent {
   type: "ai_prompt_sent" | "ai_sensitive_data_detected" | "ai_response_received";

@@ -16,15 +16,13 @@
 import type {
   NetworkMonitorConfig,
   NetworkRequestRecord,
-} from "../storage-types.js";
-import { createLogger } from "../logger.js";
+} from "@pleno-audit/extension-runtime";
 import {
+  createLogger,
   globalExtensionStatsCache,
-} from "../extension-stats-analyzer.js";
-import {
   detectAllSuspiciousPatterns,
   DEFAULT_SUSPICIOUS_PATTERN_CONFIG,
-} from "../suspicious-pattern-detector.js";
+} from "@pleno-audit/extension-runtime";
 
 // Internal modules
 import { state, applyConfig, clearGlobalCallbacks } from "./state.js";
@@ -161,4 +159,3 @@ export function createNetworkMonitor(
     },
   };
 }
-
