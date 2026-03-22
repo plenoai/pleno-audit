@@ -82,6 +82,9 @@ jobs:
       - name: Build battacker package
         run: pnpm --filter @pleno-audit/battacker build
 
+      - name: Prepare WXT types
+        run: pnpm --filter @pleno-audit/audit-extension exec wxt prepare
+
       - name: Build extension
         run: pnpm build
 
