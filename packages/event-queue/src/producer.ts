@@ -10,7 +10,7 @@ import {
   type QueueItem,
   type Priority,
   type ProducerConfig,
-  type StorageAdapter,
+  type QueueAdapter,
   QUEUE_KEY_PREFIX,
   DEFAULTS,
 } from "./types.js";
@@ -33,7 +33,7 @@ export interface Producer {
 }
 
 export function createProducer(
-  storage: StorageAdapter,
+  adapter: QueueAdapter,
   tabId: number,
   config?: ProducerConfig,
 ): Producer {
@@ -53,7 +53,7 @@ export function createProducer(
   }
 
   async function readQueue(): Promise<QueueItem[]> {
-    const data = await storage.get(key);
+    const data = await adapter.get(key);
     return (data[key] as QueueItem[] | undefined) ?? [];
   }
 
@@ -84,7 +84,7 @@ export function createProducer(
 
         queue.push(item);
         queue = applyBackpressure(queue);
-        await storage.set({ [key]: queue });
+        await adapter.set({ [key]: queue });
       });
     },
 
@@ -108,7 +108,7 @@ export function createProducer(
         }
 
         queue = applyBackpressure(queue);
-        await storage.set({ [key]: queue });
+        await adapter.set({ [key]: queue });
       });
     },
 

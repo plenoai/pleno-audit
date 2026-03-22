@@ -11,7 +11,7 @@ import {
   type CookieBannerResult,
 } from "@pleno-audit/detectors";
 import { browserAdapter, createLogger } from "@pleno-audit/extension-runtime";
-import { createProducer, type StorageAdapter } from "@pleno-audit/event-queue";
+import { createProducer, type QueueAdapter } from "@pleno-audit/event-queue";
 
 const logger = createLogger("content");
 
@@ -22,7 +22,7 @@ const findTermsOfService = createTosFinder(browserAdapter);
 const findCookiePolicy = createCookiePolicyFinder(browserAdapter);
 const findCookieBanner = createCookieBannerFinder(browserAdapter);
 
-const storageAdapter: StorageAdapter = {
+const queueAdapter: QueueAdapter = {
   get: (keys) => chrome.storage.local.get(keys),
   set: (items) => chrome.storage.local.set(items),
   remove: (keys) => chrome.storage.local.remove(keys),
@@ -109,7 +109,7 @@ export default defineContentScript({
   main() {
     // Content scripts have a stable tab ID available via runtime
     const tabId = Date.now() % 1_000_000;
-    const producer = createProducer(storageAdapter, tabId);
+    const producer = createProducer(queueAdapter, tabId);
     producer.setContext({ senderUrl: window.location.href });
 
     if (document.readyState === "complete") {

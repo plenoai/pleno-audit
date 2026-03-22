@@ -5,11 +5,11 @@
  */
 
 import { createLogger } from "@pleno-audit/extension-runtime";
-import { createProducer, type StorageAdapter, type Priority } from "@pleno-audit/event-queue";
+import { createProducer, type QueueAdapter, type Priority } from "@pleno-audit/event-queue";
 
 const logger = createLogger("security-bridge");
 
-const storageAdapter: StorageAdapter = {
+const queueAdapter: QueueAdapter = {
   get: (keys) => chrome.storage.local.get(keys),
   set: (items) => chrome.storage.local.set(items),
   remove: (keys) => chrome.storage.local.remove(keys),
@@ -40,7 +40,7 @@ export default defineContentScript({
       if (!producer) {
         // Use a stable ID derived from runtime. Content scripts don't have sender.tab.id,
         // so we use a combination that's unique per content script instance.
-        producer = createProducer(storageAdapter, tabId);
+        producer = createProducer(queueAdapter, tabId);
         producer.setContext({ senderUrl: window.location.href });
       }
       return producer;
