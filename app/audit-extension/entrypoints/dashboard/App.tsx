@@ -89,9 +89,7 @@ function DashboardContent() {
         )}
 
         {activeTab === "extensions" && (
-          <div style={styles.section}>
-            <ExtensionsTab colors={colors} />
-          </div>
+          <ExtensionsTab />
         )}
       </div>
     </div>
