@@ -2,47 +2,25 @@
  * Network Monitor - Web Request Handler
  *
  * webRequest API を使用したネットワークリクエストの監視
+ * 純粋なリクエスト分類ロジックは request-classifier.ts に分離済み
  */
 
-import type {
-  NetworkRequestRecord,
-  InitiatorType,
-} from "@pleno-audit/extension-runtime";
 import { createLogger } from "@pleno-audit/extension-runtime";
+import type { NetworkRequestRecord } from "@pleno-audit/extension-runtime";
 import { state, ensureConfigCachesCurrent } from "./state.js";
+import {
+  classifyWebRequest,
+  type RequestClassificationContext,
+} from "./request-classifier.js";
 
 const logger = createLogger("network-monitor");
 
-/**
- * initiatorからタイプを判定
- */
-export function classifyInitiator(initiator: string | undefined): InitiatorType {
-  if (!initiator) return "browser";
-  if (initiator.startsWith("chrome-extension://")) return "extension";
-  if (initiator.startsWith("http://") || initiator.startsWith("https://")) {
-    return "page";
-  }
-  return "unknown";
-}
-
-/**
- * 拡張機能IDを抽出
- */
-export function extractExtensionId(initiator: string): string | null {
-  const match = initiator.match(/^chrome-extension:\/\/([a-z]{32})/);
-  return match?.[1] ?? null;
-}
-
-/**
- * ドメインを抽出
- */
-export function extractDomain(url: string): string {
-  try {
-    return new URL(url).hostname;
-  } catch {
-    return "unknown";
-  }
-}
+// Re-export pure functions for external consumers
+export {
+  classifyInitiator,
+  extractExtensionId,
+  extractDomain,
+} from "./request-classifier.js";
 
 /**
  * レコードをコールバックに通知
@@ -58,70 +36,55 @@ export function emitRecord(record: NetworkRequestRecord): void {
 }
 
 /**
+ * 現在のグローバル状態からRequestClassificationContextを構築
+ */
+function buildClassificationContext(): RequestClassificationContext {
+  return {
+    ownExtensionId: state.ownExtensionId,
+    excludeOwnExtension: state.config.excludeOwnExtension,
+    excludedExtensions: state.excludedExtensions,
+    excludedDomains: state.excludedDomains,
+    captureAllRequests: state.config.captureAllRequests,
+    resolveExtensionName: (extensionId) =>
+      state.knownExtensions.get(extensionId)?.name,
+  };
+}
+
+/**
  * webRequestリスナーのハンドラー
  * 全ネットワークリクエストを処理
  */
-export function handleWebRequest(details: chrome.webRequest.OnBeforeRequestDetails): chrome.webRequest.BlockingResponse | undefined {
+export function handleWebRequest(
+  details: chrome.webRequest.OnBeforeRequestDetails,
+): chrome.webRequest.BlockingResponse | undefined {
   ensureConfigCachesCurrent();
 
   if (!state.config.enabled) return;
 
-  const initiatorType = classifyInitiator(details.initiator);
-  if (!state.config.captureAllRequests && initiatorType !== "extension") {
-    return;
-  }
+  const result = classifyWebRequest(
+    details,
+    buildClassificationContext(),
+    Date.now(),
+  );
 
-  let extensionId: string | undefined;
-  let extensionName: string | undefined;
+  if (result.action === "skip") return;
 
-  if (initiatorType === "extension" && details.initiator) {
-    extensionId = extractExtensionId(details.initiator) ?? undefined;
-
-    if (
-      state.config.excludeOwnExtension &&
-      extensionId &&
-      extensionId === state.ownExtensionId
-    ) {
-      return;
-    }
-
-    if (extensionId && state.excludedExtensions.has(extensionId)) {
-      return;
-    }
-
-    extensionName = extensionId
-      ? state.knownExtensions.get(extensionId)?.name
-      : undefined;
-  }
-
-  const domain = extractDomain(details.url);
-  if (state.excludedDomains.has(domain)) return;
-
-  const now = Date.now();
   const record: NetworkRequestRecord = {
     id: crypto.randomUUID(),
-    timestamp: now,
-    url: details.url,
-    method: details.method,
-    domain,
-    resourceType: details.type,
-    initiator: details.initiator || null,
-    initiatorType,
-    extensionId,
-    extensionName,
-    tabId: details.tabId,
-    frameId: details.frameId,
-    detectedBy: "webRequest",
+    ...result.record,
   };
 
-  if (extensionId) {
-    state.recentWebRequestHits.set(`${extensionId}:${details.tabId}`, now);
+  if (record.extensionId) {
+    state.recentWebRequestHits.set(
+      `${record.extensionId}:${details.tabId}`,
+      record.timestamp,
+    );
   }
 
   logger.debug("Network request detected:", {
-    initiatorType,
-    domain,
-    resourceType: details.type,
+    initiatorType: record.initiatorType,
+    domain: record.domain,
+    resourceType: record.resourceType,
   });
 
   emitRecord(record);
@@ -137,12 +100,13 @@ export function registerNetworkMonitorListener(): void {
   }
 
   try {
-    chrome.webRequest.onBeforeRequest.addListener(
-      handleWebRequest,
-      { urls: ["<all_urls>"] }
-    );
+    chrome.webRequest.onBeforeRequest.addListener(handleWebRequest, {
+      urls: ["<all_urls>"],
+    });
     state.listenerRegistered = true;
-    logger.info("webRequest.onBeforeRequest listener registered for all requests");
+    logger.info(
+      "webRequest.onBeforeRequest listener registered for all requests",
+    );
   } catch (error) {
     logger.error("Failed to register webRequest listener:", error);
   }

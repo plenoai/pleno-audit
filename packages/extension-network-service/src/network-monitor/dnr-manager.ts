@@ -3,6 +3,8 @@
  *
  * declarativeNetRequest API を使用した Service Worker からのリクエスト補完
  * Chrome 111+ で利用可能
+ *
+ * 純粋なルール管理ロジックは dnr-rules.ts、レート制限は rate-limiter.ts に分離済み
  */
 
 import type { NetworkRequestRecord } from "@pleno-audit/extension-runtime";
@@ -15,96 +17,44 @@ import {
   DNR_RESOURCE_TYPES,
   DNR_QUOTA_INTERVAL_MS,
   DNR_MAX_CALLS_PER_INTERVAL,
-  DNR_MIN_INTERVAL_MS,
 } from "./constants.js";
-import { emitRecord, extractDomain } from "./web-request.js";
+import {
+  isMonitorRuleId,
+  buildDNRRuleSpec,
+  findRuleIdByExtensionId,
+  nextAvailableRuleId,
+  type DNRRuleSpec,
+} from "./dnr-rules.js";
+import {
+  checkDNRRateLimit,
+  isAlreadyCoveredByWebRequest,
+  pruneRecentHits,
+} from "./rate-limiter.js";
+import { emitRecord } from "./web-request.js";
+import { extractDomain } from "./request-classifier.js";
 
 const logger = createLogger("network-monitor");
 
-/**
- * ルールIDがモニター用かどうかを判定
- */
-export function isMonitorRuleId(ruleId: number): boolean {
-  return ruleId >= DNR_RULE_ID_BASE && ruleId < DNR_RULE_ID_MAX;
-}
+// Re-export pure function
+export { isMonitorRuleId } from "./dnr-rules.js";
 
 /**
- * DNRルールを作成
+ * DNRRuleSpecをchrome.declarativeNetRequest.Ruleにキャスト
  */
-export function createDNRRule(
-  extensionId: string,
-  ruleId: number
-): chrome.declarativeNetRequest.Rule {
-  return {
-    id: ruleId,
-    priority: 1,
-    action: {
-      type: chrome.declarativeNetRequest.RuleActionType.ALLOW,
-    },
-    condition: {
-      initiatorDomains: [extensionId],
-      resourceTypes: DNR_RESOURCE_TYPES,
-    },
-  };
+function toChromeRule(spec: DNRRuleSpec): chrome.declarativeNetRequest.Rule {
+  return spec as unknown as chrome.declarativeNetRequest.Rule;
 }
 
-/**
- * DNR APIのレート制限をチェック
- */
-export function canCheckDNRMatches(now: number): boolean {
-  if (now - state.dnrQuotaWindowStart >= DNR_QUOTA_INTERVAL_MS) {
-    state.dnrQuotaWindowStart = now;
-    state.dnrCallCount = 0;
-  }
-
-  if (state.dnrCallCount >= DNR_MAX_CALLS_PER_INTERVAL) {
-    return false;
-  }
-
-  if (now - state.lastDNRCallTime < DNR_MIN_INTERVAL_MS) {
-    return false;
-  }
-
-  state.lastDNRCallTime = now;
-  state.dnrCallCount++;
-  return true;
-}
-
-/**
- * 拡張機能IDからルールIDを検索
- */
-export function findRuleIdByExtensionId(extensionId: string): number | null {
-  for (const [ruleId, mappedExtensionId] of state.dnrRuleToExtensionMap.entries()) {
-    if (mappedExtensionId === extensionId) {
-      return ruleId;
-    }
-  }
-  return null;
-}
-
-/**
- * 次に利用可能なルールIDを取得
- */
-export function nextAvailableRuleId(): number | null {
-  const usedRuleIds = new Set(state.dnrRuleToExtensionMap.keys());
-  for (let ruleId = DNR_RULE_ID_BASE; ruleId < DNR_RULE_ID_MAX; ruleId++) {
-    if (!usedRuleIds.has(ruleId)) {
-      return ruleId;
-    }
-  }
-  return null;
-}
+const DNR_RESOURCE_TYPE_STRINGS = DNR_RESOURCE_TYPES.map(String);
 
 /**
  * DNRルールを登録
  */
 export async function registerDNRRulesForExtensions(
-  extensionIds: string[]
+  extensionIds: string[],
 ): Promise<void> {
   if (extensionIds.length === 0) {
-    logger.debug({
-      event: "DNR_RULES_REGISTER_SKIPPED_NO_EXTENSIONS",
-    });
+    logger.debug({ event: "DNR_RULES_REGISTER_SKIPPED_NO_EXTENSIONS" });
     return;
   }
 
@@ -114,12 +64,17 @@ export async function registerDNRRulesForExtensions(
       .filter((rule) => isMonitorRuleId(rule.id))
       .map((rule) => rule.id);
 
-    const targetExtensions = extensionIds.slice(0, DNR_RULE_ID_MAX - DNR_RULE_ID_BASE);
+    const targetExtensions = extensionIds.slice(
+      0,
+      DNR_RULE_ID_MAX - DNR_RULE_ID_BASE,
+    );
     const nextRuleMap = new Map<number, string>();
     const newRules = targetExtensions.map((extensionId, index) => {
       const ruleId = DNR_RULE_ID_BASE + index;
       nextRuleMap.set(ruleId, extensionId);
-      return createDNRRule(extensionId, ruleId);
+      return toChromeRule(
+        buildDNRRuleSpec(extensionId, ruleId, DNR_RESOURCE_TYPE_STRINGS),
+      );
     });
 
     await chrome.declarativeNetRequest.updateDynamicRules({
@@ -134,36 +89,7 @@ export async function registerDNRRulesForExtensions(
       data: { extensionCount: newRules.length },
     });
   } catch (error) {
-    logger.error({
-      event: "DNR_RULES_REGISTER_FAILED",
-      error,
-    });
-  }
-}
-
-/**
- * DNRマッチルールをチェック
- */
-/**
- * webRequestで既に検出済みか判定
- *
- * DNRのチェック間隔(35秒+)内にwebRequestで同じ(extensionId, tabId)の
- * リクエストが検出されていれば、DNRのマッチは重複とみなす
- */
-function isAlreadyCoveredByWebRequest(extensionId: string, tabId: number, since: number): boolean {
-  const key = `${extensionId}:${tabId}`;
-  const lastSeen = state.recentWebRequestHits.get(key);
-  return lastSeen != null && lastSeen >= since;
-}
-
-/**
- * recentWebRequestHitsから古いエントリを除去
- */
-function pruneRecentWebRequestHits(cutoff: number): void {
-  for (const [key, timestamp] of state.recentWebRequestHits) {
-    if (timestamp < cutoff) {
-      state.recentWebRequestHits.delete(key);
-    }
+    logger.error({ event: "DNR_RULES_REGISTER_FAILED", error });
   }
 }
 
@@ -180,6 +106,9 @@ async function resolveTabUrl(tabId: number): Promise<string | null> {
   }
 }
 
+/**
+ * DNRマッチルールをチェック
+ */
 export async function checkMatchedDNRRules(): Promise<NetworkRequestRecord[]> {
   ensureConfigCachesCurrent();
 
@@ -188,7 +117,20 @@ export async function checkMatchedDNRRules(): Promise<NetworkRequestRecord[]> {
   }
 
   const now = Date.now();
-  if (!canCheckDNRMatches(now)) {
+  const rateResult = checkDNRRateLimit(
+    {
+      dnrQuotaWindowStart: state.dnrQuotaWindowStart,
+      dnrCallCount: state.dnrCallCount,
+      lastDNRCallTime: state.lastDNRCallTime,
+    },
+    now,
+  );
+
+  state.dnrQuotaWindowStart = rateResult.next.dnrQuotaWindowStart;
+  state.dnrCallCount = rateResult.next.dnrCallCount;
+  state.lastDNRCallTime = rateResult.next.lastDNRCallTime;
+
+  if (!rateResult.allowed) {
     return [];
   }
 
@@ -201,7 +143,7 @@ export async function checkMatchedDNRRules(): Promise<NetworkRequestRecord[]> {
 
     state.lastMatchedRulesCheck = now;
     const cutoff = Math.max(checkWindow, now - DNR_QUOTA_INTERVAL_MS);
-    pruneRecentWebRequestHits(cutoff);
+    pruneRecentHits(state.recentWebRequestHits, cutoff);
 
     const records: NetworkRequestRecord[] = [];
     const tabUrlCache = new Map<number, string | null>();
@@ -216,7 +158,14 @@ export async function checkMatchedDNRRules(): Promise<NetworkRequestRecord[]> {
       if (!extensionId) continue;
       if (state.excludedExtensions.has(extensionId)) continue;
 
-      if (isAlreadyCoveredByWebRequest(extensionId, info.tabId, checkWindow)) {
+      if (
+        isAlreadyCoveredByWebRequest(
+          state.recentWebRequestHits,
+          extensionId,
+          info.tabId,
+          checkWindow,
+        )
+      ) {
         continue;
       }
 
@@ -261,16 +210,11 @@ export async function checkMatchedDNRRules(): Promise<NetworkRequestRecord[]> {
   } catch (error) {
     const errorMessage = String(error);
     if (errorMessage.includes("quota") || errorMessage.includes("QUOTA")) {
-      logger.warn({
-        event: "DNR_QUOTA_EXCEEDED_ENTER_BACKOFF",
-      });
+      logger.warn({ event: "DNR_QUOTA_EXCEEDED_ENTER_BACKOFF" });
       state.dnrCallCount = DNR_MAX_CALLS_PER_INTERVAL;
       return [];
     }
-    logger.error({
-      event: "DNR_MATCHED_RULES_CHECK_FAILED",
-      error,
-    });
+    logger.error({ event: "DNR_MATCHED_RULES_CHECK_FAILED", error });
     return [];
   }
 }
@@ -293,21 +237,18 @@ export async function clearDNRRules(): Promise<void> {
 
     state.dnrRulesRegistered = false;
     state.dnrRuleToExtensionMap.clear();
-    logger.debug({
-      event: "DNR_RULES_CLEARED",
-    });
+    logger.debug({ event: "DNR_RULES_CLEARED" });
   } catch (error) {
-    logger.error({
-      event: "DNR_RULES_CLEAR_FAILED",
-      error,
-    });
+    logger.error({ event: "DNR_RULES_CLEAR_FAILED", error });
   }
 }
 
 /**
  * 単一の拡張機能のDNRルールを追加
  */
-export async function addDNRRuleForExtension(extensionId: string): Promise<void> {
+export async function addDNRRuleForExtension(
+  extensionId: string,
+): Promise<void> {
   if (!extensionId || !EXTENSION_ID_PATTERN.test(extensionId)) {
     logger.warn({
       event: "DNR_INVALID_EXTENSION_ID_FORMAT",
@@ -317,11 +258,14 @@ export async function addDNRRuleForExtension(extensionId: string): Promise<void>
   }
 
   try {
-    if (findRuleIdByExtensionId(extensionId) !== null) {
+    if (
+      findRuleIdByExtensionId(state.dnrRuleToExtensionMap, extensionId) !==
+      null
+    ) {
       return;
     }
 
-    const ruleId = nextAvailableRuleId();
+    const ruleId = nextAvailableRuleId(state.dnrRuleToExtensionMap);
     if (ruleId === null) {
       logger.warn({
         event: "DNR_RULE_ADD_SKIPPED_NO_AVAILABLE_RULE_ID",
@@ -331,7 +275,11 @@ export async function addDNRRuleForExtension(extensionId: string): Promise<void>
     }
 
     await chrome.declarativeNetRequest.updateDynamicRules({
-      addRules: [createDNRRule(extensionId, ruleId)],
+      addRules: [
+        toChromeRule(
+          buildDNRRuleSpec(extensionId, ruleId, DNR_RESOURCE_TYPE_STRINGS),
+        ),
+      ],
     });
     state.dnrRuleToExtensionMap.set(ruleId, extensionId);
     logger.info({
@@ -351,10 +299,13 @@ export async function addDNRRuleForExtension(extensionId: string): Promise<void>
  * 拡張機能のDNRルールを削除
  */
 export async function removeDNRRuleForExtension(
-  extensionId: string
+  extensionId: string,
 ): Promise<void> {
   try {
-    const ruleIdToRemove = findRuleIdByExtensionId(extensionId);
+    const ruleIdToRemove = findRuleIdByExtensionId(
+      state.dnrRuleToExtensionMap,
+      extensionId,
+    );
     if (ruleIdToRemove === null) return;
 
     await chrome.declarativeNetRequest.updateDynamicRules({
@@ -381,7 +332,7 @@ export async function restoreDNRMapping(): Promise<boolean> {
   try {
     const existingRules = await chrome.declarativeNetRequest.getDynamicRules();
     const relevantRules = existingRules.filter((rule) =>
-      isMonitorRuleId(rule.id)
+      isMonitorRuleId(rule.id),
     );
 
     state.dnrRuleToExtensionMap.clear();
@@ -417,10 +368,7 @@ export async function restoreDNRMapping(): Promise<boolean> {
     });
     return needsReconciliation;
   } catch (error) {
-    logger.error({
-      event: "DNR_MAPPING_RESTORE_FAILED",
-      error,
-    });
+    logger.error({ event: "DNR_MAPPING_RESTORE_FAILED", error });
     return true;
   }
 }
