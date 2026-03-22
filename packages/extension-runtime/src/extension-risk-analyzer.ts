@@ -502,7 +502,7 @@ export async function analyzeInstalledExtension(
 ): Promise<ExtensionRiskAnalysis | null> {
   try {
     const extensions = await chrome.management.getAll();
-    const extension = extensions.find((e) => e.id === extensionId);
+    const extension = extensions.find((e: chrome.management.ExtensionInfo) => e.id === extensionId);
 
     if (!extension) return null;
 

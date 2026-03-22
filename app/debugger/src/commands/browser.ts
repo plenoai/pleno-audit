@@ -13,8 +13,9 @@ browserCommand
       const response = await client.send("DEBUG_TAB_OPEN", { url });
 
       if (response.success) {
-        console.log(`Opened: ${response.data?.url}`);
-        console.log(`Tab ID: ${response.data?.tabId}`);
+        const data = response.data as { url?: string; tabId?: number } | undefined;
+        console.log(`Opened: ${data?.url}`);
+        console.log(`Tab ID: ${data?.tabId}`);
       } else {
         console.error(`Failed: ${response.error}`);
         process.exit(1);

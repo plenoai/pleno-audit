@@ -13,7 +13,7 @@ export function startCookieMonitor() {
 
   isStarted = true;
 
-  chrome.cookies.onChanged.addListener((changeInfo) => {
+  chrome.cookies.onChanged.addListener((changeInfo: chrome.cookies.CookieChangeInfo) => {
     const { cookie, removed } = changeInfo;
 
     if (!isSessionCookie(cookie.name)) {

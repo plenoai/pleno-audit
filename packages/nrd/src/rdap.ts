@@ -59,7 +59,7 @@ export async function queryRDAP(
       throw new Error(`RDAP query failed: ${response.status}`);
     }
 
-    return await response.json();
+    return (await response.json()) as RDAPResponse;
   } finally {
     clearTimeout(timeoutId);
   }
