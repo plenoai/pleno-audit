@@ -13,6 +13,15 @@ interface ServicesTabProps {
   serviceConnections: Record<string, Record<string, number>>;
 }
 
+function getServiceTags(s: DetectedService): { label: string; variant: "danger" | "warning" | "info" | "success" }[] {
+  const tags: { label: string; variant: "danger" | "warning" | "info" | "success" }[] = [];
+  if (s.nrdResult?.isNRD) tags.push({ label: "NRD", variant: "danger" });
+  if (s.typosquatResult?.isTyposquat) tags.push({ label: "Typosquat", variant: "danger" });
+  if (s.hasLoginPage) tags.push({ label: "ログイン", variant: "warning" });
+  if (s.aiDetected?.hasAIActivity) tags.push({ label: "AI", variant: "info" });
+  return tags;
+}
+
 export function ServicesTab({ services, nrdServices, loginServices, serviceConnections }: ServicesTabProps) {
   const { colors, isDark } = useTheme();
   const { searchQuery, setSearchQuery, filters, setFilter } = useTabFilter({
@@ -76,10 +85,22 @@ export function ServicesTab({ services, nrdServices, loginServices, serviceConne
           render: (s) => <code style={{ fontSize: "12px" }}>{s.domain}</code>,
         },
         {
-          key: "login",
-          header: "ログイン",
-          width: "80px",
-          render: (s) => (s.hasLoginPage ? <Badge variant="warning">検出</Badge> : "-"),
+          key: "tags",
+          header: "タグ",
+          width: "180px",
+          render: (s) => {
+            const tags = getServiceTags(s);
+            if (tags.length === 0) return <span style={{ color: colors.textMuted }}>-</span>;
+            return (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
+                {tags.map((tag) => (
+                  <Badge key={tag.label} variant={tag.variant} size="sm">
+                    {tag.label}
+                  </Badge>
+                ))}
+              </div>
+            );
+          },
         },
         {
           key: "connections",
@@ -186,12 +207,6 @@ export function ServicesTab({ services, nrdServices, loginServices, serviceConne
             ) : (
               "-"
             ),
-        },
-        {
-          key: "nrd",
-          header: "NRD",
-          width: "100px",
-          render: (s) => (s.nrdResult?.isNRD ? <Badge variant="danger">NRD</Badge> : "-"),
         },
         {
           key: "detected",
