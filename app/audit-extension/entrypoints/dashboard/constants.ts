@@ -9,21 +9,21 @@ export const periodOptions: { value: Period; label: string }[] = [
 ];
 
 export const tabs: { id: TabType; label: string }[] = [
-  { id: "ai", label: "AI監視" },
   { id: "services", label: "サービス" },
-  { id: "events", label: "イベント" },
   { id: "extensions", label: "拡張機能" },
+  { id: "ai", label: "AI" },
+  { id: "events", label: "イベント" },
 ];
 
 export const loadingTabs: { id: TabType; label: string }[] = [
-  { id: "ai", label: "AI監視" },
+  { id: "services", label: "サービス" },
 ];
 
 export const validTabs: TabType[] = tabs.map((tab) => tab.id);
 
 export const shortcutTabs: TabType[] = [
-  "ai",
   "services",
-  "events",
   "extensions",
+  "ai",
+  "events",
 ];

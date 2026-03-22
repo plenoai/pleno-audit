@@ -38,5 +38,5 @@ export function resolveTabFromHash(hash: string): TabType | null {
 
 export function getInitialTab(): TabType {
   const hash = window.location.hash.slice(1);
-  return resolveTabFromHash(hash) ?? "ai";
+  return resolveTabFromHash(hash) ?? "services";
 }

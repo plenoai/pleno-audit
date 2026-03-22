@@ -144,32 +144,6 @@ export function ExtensionsTab({ colors }: ExtensionsTabProps) {
     );
   }, [extensions, searchQuery]);
 
-  // 統計情報
-  const stats = useMemo(() => {
-    const riskCounts = { critical: 0, high: 0, medium: 0, low: 0 };
-    const permissionCounts: Record<string, number> = {};
-    let enabledCount = 0;
-
-    for (const ext of extensions) {
-      if (!ext.enabled) continue;
-      enabledCount++;
-
-      const risk = getPermissionRiskLevel(ext.permissions, ext.hostPermissions);
-      riskCounts[risk]++;
-
-      for (const perm of [...ext.permissions, ...ext.hostPermissions]) {
-        permissionCounts[perm] = (permissionCounts[perm] || 0) + 1;
-      }
-    }
-
-    const topPermissions = Object.entries(permissionCounts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 8)
-      .map(([permission, count]) => ({ permission, count }));
-
-    return { riskCounts, topPermissions, enabledCount };
-  }, [extensions]);
-
   if (loading) {
     return (
       <Card title="拡張機能分析">
@@ -180,75 +154,6 @@ export function ExtensionsTab({ colors }: ExtensionsTabProps) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-      {/* リスクサマリー */}
-      <Card title="リスクサマリー">
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px" }}>
-          {(["critical", "high", "medium", "low"] as const).map((level) => (
-            <div
-              key={level}
-              style={{
-                padding: "16px",
-                backgroundColor: colors.bgSecondary,
-                borderRadius: "8px",
-                textAlign: "center",
-              }}
-            >
-              <div style={{ fontSize: "24px", fontWeight: 700, marginBottom: "4px" }}>
-                {stats.riskCounts[level]}
-              </div>
-              <Badge variant={getRiskBadgeVariant(level)}>{getRiskLabel(level)}リスク</Badge>
-            </div>
-          ))}
-        </div>
-      </Card>
-
-      {/* 権限別利用状況 */}
-      <Card title="よく使われている権限 (TOP 8)">
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          {stats.topPermissions.length === 0 ? (
-            <p style={{ color: colors.textSecondary, textAlign: "center" }}>データなし</p>
-          ) : (
-            stats.topPermissions.map((item) => {
-              const isHighRisk = ["<all_urls>", "*://*/*", "cookies", "tabs", "history", "webRequest"].includes(item.permission);
-              return (
-                <div key={item.permission} style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                  <code
-                    style={{
-                      fontSize: "12px",
-                      minWidth: "180px",
-                      color: isHighRisk ? "#f97316" : colors.textPrimary,
-                    }}
-                  >
-                    {item.permission}
-                  </code>
-                  <div
-                    style={{
-                      flex: 1,
-                      height: "8px",
-                      backgroundColor: colors.bgSecondary,
-                      borderRadius: "4px",
-                      overflow: "hidden",
-                    }}
-                  >
-                    <div
-                      style={{
-                        height: "100%",
-                        width: `${stats.enabledCount > 0 ? (item.count / stats.enabledCount) * 100 : 0}%`,
-                        backgroundColor: isHighRisk ? "#f97316" : colors.interactive,
-                        borderRadius: "4px",
-                      }}
-                    />
-                  </div>
-                  <span style={{ fontSize: "12px", minWidth: "40px", textAlign: "right" }}>
-                    {item.count}件
-                  </span>
-                </div>
-              );
-            })
-          )}
-        </div>
-      </Card>
-
       {/* 拡張機能リスト */}
       <Card title={`インストール済み拡張機能 (${extensions.length}件)`}>
         <div style={{ marginBottom: "16px" }}>

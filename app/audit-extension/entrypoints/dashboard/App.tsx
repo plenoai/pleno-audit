@@ -45,7 +45,7 @@ function DashboardContent() {
   if (dashboard.loading) {
     return (
       <div style={styles.wrapper}>
-        <Sidebar tabs={loadingTabs} activeTab="ai" onChange={() => {}} />
+        <Sidebar tabs={loadingTabs} activeTab="services" onChange={() => {}} />
         <div style={styles.container}>
           <SkeletonDashboard />
         </div>
