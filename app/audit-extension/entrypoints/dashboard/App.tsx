@@ -11,7 +11,7 @@ import { createDashboardStyles } from "./styles";
 import type { Period, TabType } from "./types";
 import { getInitialTab } from "./utils";
 import { ExtensionsTab } from "./views/ExtensionsTab";
-import { AITab, DomainsTab, EventsTab, NetworkTab, OverviewTab, ServicesTab, TimelineTab, ViolationsTab } from "./views";
+import { AITab, ConnectionsTab, DomainsTab, EventsTab, NetworkTab, OverviewTab, ServicesTab, TimelineTab, ViolationsTab } from "./views";
 
 function DashboardContent() {
   const { colors, isDark } = useTheme();
@@ -125,6 +125,14 @@ function DashboardContent() {
             services={dashboard.services}
             nrdServices={dashboard.nrdServices}
             loginServices={dashboard.loginServices}
+            serviceConnections={dashboard.serviceConnections}
+          />
+        )}
+
+        {activeTab === "connections" && (
+          <ConnectionsTab
+            services={dashboard.services}
+            serviceConnections={dashboard.serviceConnections}
           />
         )}
 

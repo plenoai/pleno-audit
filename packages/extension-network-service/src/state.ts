@@ -4,5 +4,6 @@ export function createExtensionNetworkState(): ExtensionNetworkState {
   return {
     extensionMonitor: null,
     cooldownManager: null,
+    requestBuffer: [],
   };
 }

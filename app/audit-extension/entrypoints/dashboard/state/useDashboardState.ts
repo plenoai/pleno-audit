@@ -33,6 +33,7 @@ export function useDashboardState({
   const [connectionMode, setConnectionMode] = useState<"local" | "remote">("local");
   const [aiPrompts, setAIPrompts] = useState<CapturedAIPrompt[]>([]);
   const [services, setServices] = useState<DetectedService[]>([]);
+  const [serviceConnections, setServiceConnections] = useState<Record<string, Record<string, number>>>({});
   const [events, setEvents] = useState<EventLog[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastNotifiedEventId, setLastNotifiedEventId] = useState<string | null>(null);
@@ -74,9 +75,9 @@ export function useDashboardState({
         ),
         safeMessage({ type: "GET_CONNECTION_CONFIG" }, { mode: "local" }),
         safeMessage({ type: "GET_AI_PROMPTS" }, []),
-        chrome.storage.local.get(["services"]).catch((error) => {
+        chrome.storage.local.get(["services", "serviceConnections"]).catch((error) => {
           logger.warn("[dashboard] Failed to load services from chrome.storage.", error);
-          return { services: {} };
+          return { services: {}, serviceConnections: {} };
         }),
         safeMessage({ type: "GET_EVENTS", data: { since: sinceTs, limit: 500 } }, { events: [], total: 0 }),
         safeMessage({ type: "GET_EVENTS_COUNT", data: { since: sinceTs } }, { count: 0 }),
@@ -106,6 +107,9 @@ export function useDashboardState({
       if (configResult) setConnectionMode(configResult.mode as "local" | "remote");
       if (Array.isArray(aiPromptsResult)) setAIPrompts(aiPromptsResult);
       if (storageResult.services) setServices(Object.values(storageResult.services));
+      if (storageResult.serviceConnections) {
+        setServiceConnections(storageResult.serviceConnections as Record<string, Record<string, number>>);
+      }
       if (eventsResult && Array.isArray(eventsResult.events)) setEvents(eventsResult.events);
       if (eventsCountResult) {
         setTotalCounts((prev) => ({ ...prev, events: eventsCountResult.count ?? 0 }));
@@ -232,6 +236,7 @@ export function useDashboardState({
     connectionMode,
     aiPrompts,
     services,
+    serviceConnections,
     events,
     isRefreshing,
     loadData,

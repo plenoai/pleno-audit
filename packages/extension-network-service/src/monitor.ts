@@ -6,6 +6,9 @@ import {
 import { createNetworkMonitor } from "./network-monitor/index.js";
 import type { ExtensionNetworkContext } from "./types.js";
 
+/** バッファの最大サイズ */
+const MAX_REQUEST_BUFFER_SIZE = 5000;
+
 export async function getNetworkMonitorConfig(
   context: ExtensionNetworkContext
 ): Promise<NetworkMonitorConfig> {
@@ -33,6 +36,15 @@ export async function initExtensionMonitor(context: ExtensionNetworkContext): Pr
 
   context.state.extensionMonitor.onRequest((record) => {
     const networkRecord = record as NetworkRequestRecord;
+
+    // インメモリバッファに保持（リングバッファ方式）
+    context.state.requestBuffer.push(networkRecord);
+    if (context.state.requestBuffer.length > MAX_REQUEST_BUFFER_SIZE) {
+      context.state.requestBuffer = context.state.requestBuffer.slice(-MAX_REQUEST_BUFFER_SIZE);
+    }
+
+    // 通信先集約等の外部コールバック
+    context.deps.onNetworkRequest?.(networkRecord);
 
     void context.deps
       .addEvent({

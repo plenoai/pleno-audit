@@ -136,6 +136,86 @@ async function getDoHRequests(options?: { limit?: number; offset?: number }): Pr
   return { requests, total };
 }
 
+// ============================================================================
+// Service Connection Tracking (通信先集約)
+// ============================================================================
+
+/** 通信先の集約バッファ（バッチ書き込み用） */
+let pendingConnections = new Map<string, Map<string, number>>();
+let connectionFlushTimeout: ReturnType<typeof setTimeout> | null = null;
+/** 書き込みチェーン — read-modify-write の競合を防止 */
+let connectionWriteChain: Promise<void> = Promise.resolve();
+
+/** URLからドメインを安全に抽出 */
+function extractDomainFromUrl(url: string): string | null {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return null;
+  }
+}
+
+/** バッファをchrome.storage.localにフラッシュ（チェーン内で実行） */
+async function flushServiceConnectionsBatch(
+  batch: Map<string, Map<string, number>>,
+): Promise<void> {
+  const storage = await chrome.storage.local.get(["serviceConnections", "services"]);
+  const services: Record<string, unknown> = (storage.services as Record<string, unknown>) || {};
+  const connections: Record<string, Record<string, number>> =
+    (storage.serviceConnections as Record<string, Record<string, number>>) || {};
+
+  for (const [source, destMap] of batch) {
+    if (!(source in services)) continue;
+    if (!connections[source]) connections[source] = {};
+    for (const [dest, count] of destMap) {
+      connections[source][dest] = (connections[source][dest] || 0) + count;
+    }
+  }
+
+  await chrome.storage.local.set({ serviceConnections: connections });
+}
+
+/** バッファをスワップしてチェーンに投入 */
+function flushServiceConnections(): void {
+  connectionFlushTimeout = null;
+  if (pendingConnections.size === 0) return;
+
+  const batch = pendingConnections;
+  pendingConnections = new Map();
+
+  connectionWriteChain = connectionWriteChain
+    .then(() => flushServiceConnectionsBatch(batch))
+    .catch((error) => {
+      logger.error("Failed to flush service connections:", error);
+    });
+}
+
+/** ネットワークリクエストから通信先を集約 */
+function trackServiceConnection(record: {
+  initiator: string | null;
+  initiatorType: string;
+  domain: string;
+}): void {
+  if (record.initiatorType !== "page") return;
+  if (!record.initiator) return;
+
+  const sourceDomain = extractDomainFromUrl(record.initiator);
+  if (!sourceDomain || sourceDomain === record.domain) return;
+
+  let destMap = pendingConnections.get(sourceDomain);
+  if (!destMap) {
+    destMap = new Map();
+    pendingConnections.set(sourceDomain, destMap);
+  }
+  destMap.set(record.domain, (destMap.get(record.domain) ?? 0) + 1);
+
+  if (!connectionFlushTimeout) {
+    connectionFlushTimeout = setTimeout(() => {
+      flushServiceConnections();
+    }, 5000);
+  }
+}
+
 const extensionNetworkService = createExtensionNetworkService({
   logger,
   getStorage,
@@ -143,6 +223,7 @@ const extensionNetworkService = createExtensionNetworkService({
   addEvent: (event) => persistEvent(event as NewEvent),
   getAlertManager: backgroundAlerts.getAlertManager,
   getRuntimeId: () => chrome.runtime.id,
+  onNetworkRequest: trackServiceConnection,
 });
 
 // ============================================================================

@@ -35,6 +35,8 @@ export interface ExtensionNetworkServiceDeps {
   }) => Promise<unknown>;
   getAlertManager: () => AlertManager;
   getRuntimeId: () => string;
+  /** 全ネットワークリクエストの通知コールバック（通信先集約等に使用） */
+  onNetworkRequest?: (record: NetworkRequestRecord) => void;
 }
 
 export interface ExtensionNetworkService {
@@ -62,6 +64,8 @@ export interface ExtensionNetworkService {
 export interface ExtensionNetworkState {
   extensionMonitor: NetworkMonitor | null;
   cooldownManager: CooldownManager | null;
+  /** インメモリのネットワークリクエストバッファ */
+  requestBuffer: NetworkRequestRecord[];
 }
 
 export interface LoggerLike {

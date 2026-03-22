@@ -1,4 +1,4 @@
-import { useMemo } from "preact/hooks";
+import { useMemo, useState } from "preact/hooks";
 import type { DetectedService } from "@pleno-audit/casb-types";
 import { Badge, Button, SearchInput } from "../../../components";
 import { FilteredTab } from "../components/FilteredTab";
@@ -10,14 +10,16 @@ interface ServicesTabProps {
   services: DetectedService[];
   nrdServices: DetectedService[];
   loginServices: DetectedService[];
+  serviceConnections: Record<string, Record<string, number>>;
 }
 
-export function ServicesTab({ services, nrdServices, loginServices }: ServicesTabProps) {
+export function ServicesTab({ services, nrdServices, loginServices, serviceConnections }: ServicesTabProps) {
   const { colors, isDark } = useTheme();
   const { searchQuery, setSearchQuery, filters, setFilter } = useTabFilter({
     nrd: false,
     login: false,
   });
+  const [expandedDomains, setExpandedDomains] = useState<Set<string>>(new Set());
 
   const filtered = useMemo(() => {
     let result = services;
@@ -29,6 +31,18 @@ export function ServicesTab({ services, nrdServices, loginServices }: ServicesTa
     }
     return result;
   }, [services, searchQuery, filters.nrd, filters.login]);
+
+  const toggleExpand = (domain: string) => {
+    setExpandedDomains((prev) => {
+      const next = new Set(prev);
+      if (next.has(domain)) {
+        next.delete(domain);
+      } else {
+        next.add(domain);
+      }
+      return next;
+    });
+  };
 
   return (
     <FilteredTab
@@ -66,6 +80,76 @@ export function ServicesTab({ services, nrdServices, loginServices }: ServicesTa
           header: "ログイン",
           width: "80px",
           render: (s) => (s.hasLoginPage ? <Badge variant="warning">検出</Badge> : "-"),
+        },
+        {
+          key: "connections",
+          header: "通信先",
+          width: "120px",
+          render: (s) => {
+            const destMap = serviceConnections[s.domain];
+            if (!destMap || Object.keys(destMap).length === 0) {
+              return <span style={{ color: colors.textMuted }}>-</span>;
+            }
+            const destinations = Object.entries(destMap)
+              .map(([domain, count]) => ({ domain, count }))
+              .sort((a, b) => b.count - a.count);
+            const isExpanded = expandedDomains.has(s.domain);
+            return (
+              <div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleExpand(s.domain);
+                  }}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    padding: "2px 6px",
+                    borderRadius: "4px",
+                    fontSize: "12px",
+                    color: isDark ? "#60a5fa" : "#0070f3",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "4px",
+                  }}
+                >
+                  <span style={{ fontSize: "10px" }}>{isExpanded ? "\u25BC" : "\u25B6"}</span>
+                  <Badge variant="info">{destinations.length}</Badge>
+                </button>
+                {isExpanded && (
+                  <div
+                    style={{
+                      marginTop: "8px",
+                      padding: "8px",
+                      background: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)",
+                      borderRadius: "6px",
+                      fontSize: "11px",
+                      maxHeight: "200px",
+                      overflowY: "auto",
+                    }}
+                  >
+                    {destinations.map((d) => (
+                      <div
+                        key={d.domain}
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          padding: "3px 0",
+                          borderBottom: `1px solid ${colors.borderLight}`,
+                        }}
+                      >
+                        <code style={{ fontSize: "11px", color: colors.textPrimary }}>{d.domain}</code>
+                        <span style={{ color: colors.textMuted, marginLeft: "8px", whiteSpace: "nowrap" }}>
+                          {d.count}件
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          },
         },
         {
           key: "privacy",

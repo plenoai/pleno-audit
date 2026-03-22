@@ -16,4 +16,5 @@ export type TabType =
   | "ai"
   | "services"
   | "events"
+  | "connections"
   | "extensions";
