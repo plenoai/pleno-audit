@@ -178,7 +178,6 @@ export function SkeletonDashboard() {
           }
         `}
       </style>
-      <SkeletonStatsGrid />
       <SkeletonChart height={250} />
       <SkeletonTable rows={5} />
     </div>

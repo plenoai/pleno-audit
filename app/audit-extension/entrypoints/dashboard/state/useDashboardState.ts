@@ -4,7 +4,14 @@ import type { DetectedService, EventLog } from "@pleno-audit/casb-types";
 import type { CapturedAIPrompt } from "@pleno-audit/ai-detector";
 import { createLogger } from "@pleno-audit/extension-runtime";
 import type { Notification } from "../../../components/NotificationBanner";
-import type { Period, TabType, TotalCounts } from "../types";
+import type { Period, TabType } from "../types";
+
+interface TotalCounts {
+  violations: number;
+  networkRequests: number;
+  events: number;
+  aiPrompts: number;
+}
 import { getThreatNotification, isThreatEventType } from "../domain/events";
 import { getPeriodMs, getStatusBadge } from "../utils";
 

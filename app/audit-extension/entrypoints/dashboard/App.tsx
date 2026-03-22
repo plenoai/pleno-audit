@@ -11,7 +11,7 @@ import { createDashboardStyles } from "./styles";
 import type { Period, TabType } from "./types";
 import { getInitialTab } from "./utils";
 import { ExtensionsTab } from "./views/ExtensionsTab";
-import { AITab, ConnectionsTab, DomainsTab, EventsTab, NetworkTab, OverviewTab, ServicesTab, TimelineTab, ViolationsTab } from "./views";
+import { AITab, EventsTab, ServicesTab } from "./views";
 
 function DashboardContent() {
   const { colors, isDark } = useTheme();
@@ -45,7 +45,7 @@ function DashboardContent() {
   if (dashboard.loading) {
     return (
       <div style={styles.wrapper}>
-        <Sidebar tabs={loadingTabs} activeTab="overview" onChange={() => {}} />
+        <Sidebar tabs={loadingTabs} activeTab="ai" onChange={() => {}} />
         <div style={styles.container}>
           <SkeletonDashboard />
         </div>
@@ -69,52 +69,7 @@ function DashboardContent() {
           onRefresh={dashboard.loadData}
           onClearData={handleClearData}
           onExport={handleExportJSON}
-          totalCounts={dashboard.totalCounts}
-          nrdServices={dashboard.nrdServices}
-          services={dashboard.services}
-          loginServices={dashboard.loginServices}
-          setActiveTab={setActiveTab}
         />
-
-        {activeTab === "overview" && (
-          <OverviewTab
-            styles={styles}
-            colors={colors}
-            violations={dashboard.violations}
-            aiPrompts={dashboard.aiPrompts}
-            services={dashboard.services}
-            events={dashboard.events}
-            nrdServices={dashboard.nrdServices}
-            typosquatServices={dashboard.typosquatServices}
-            directiveStats={dashboard.directiveStats}
-            domainStats={dashboard.domainStats}
-          />
-        )}
-
-        {activeTab === "timeline" && (
-          <div style={styles.section}>
-            <TimelineTab />
-          </div>
-        )}
-
-        {activeTab === "violations" && (
-          <ViolationsTab
-            violations={dashboard.violations}
-            directives={dashboard.directives}
-          />
-        )}
-
-        {activeTab === "network" && (
-          <NetworkTab requests={dashboard.networkRequests} />
-        )}
-
-        {activeTab === "domains" && (
-          <DomainsTab
-            domainStats={dashboard.domainStats}
-            domainViolationMeta={dashboard.domainViolationMeta}
-            networkRequests={dashboard.networkRequests}
-          />
-        )}
 
         {activeTab === "ai" && (
           <AITab prompts={dashboard.aiPrompts} />
@@ -126,14 +81,6 @@ function DashboardContent() {
             nrdServices={dashboard.nrdServices}
             loginServices={dashboard.loginServices}
             serviceConnections={dashboard.serviceConnections}
-          />
-        )}
-
-        {activeTab === "connections" && (
-          <ConnectionsTab
-            serviceConnections={dashboard.serviceConnections}
-            extensionConnections={dashboard.extensionConnections}
-            knownExtensions={dashboard.knownExtensions}
           />
         )}
 
