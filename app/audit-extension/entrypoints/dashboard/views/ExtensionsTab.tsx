@@ -158,18 +158,24 @@ export function ExtensionsTab() {
           ),
         },
         {
-          key: "version",
-          header: "バージョン",
-          width: "80px",
-          render: (ext) => <code style={{ fontSize: "11px" }}>{ext.version}</code>,
-        },
-        {
-          key: "risk",
-          header: "リスク",
-          width: "80px",
+          key: "tags",
+          header: "タグ",
+          width: "160px",
           render: (ext) => {
             const level = getPermissionRiskLevel(ext.permissions, ext.hostPermissions);
-            return <Badge variant={riskBadgeVariant[level] as "danger" | "warning" | "info" | "success"}>{riskLabel[level]}</Badge>;
+            const tags: { label: string; variant: "danger" | "warning" | "info" | "success" }[] = [];
+            if (level === "critical") tags.push({ label: "重大", variant: "danger" });
+            else if (level === "high") tags.push({ label: "高リスク", variant: "warning" });
+            if (!ext.enabled) tags.push({ label: "無効", variant: "info" });
+            if (ext.installType === "admin") tags.push({ label: "管理者", variant: "warning" });
+            if (tags.length === 0) return <span style={{ color: colors.textMuted }}>-</span>;
+            return (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
+                {tags.map((tag) => (
+                  <Badge key={tag.label} variant={tag.variant} size="sm">{tag.label}</Badge>
+                ))}
+              </div>
+            );
           },
         },
         {
@@ -230,24 +236,10 @@ export function ExtensionsTab() {
           },
         },
         {
-          key: "status",
-          header: "状態",
+          key: "version",
+          header: "バージョン",
           width: "80px",
-          render: (ext) => (
-            <Badge variant={ext.enabled ? "success" : "default"}>
-              {ext.enabled ? "有効" : "無効"}
-            </Badge>
-          ),
-        },
-        {
-          key: "installType",
-          header: "インストール",
-          width: "100px",
-          render: (ext) => (
-            <Badge variant={ext.installType === "admin" ? "warning" : "default"}>
-              {ext.installType}
-            </Badge>
-          ),
+          render: (ext) => <code style={{ fontSize: "11px" }}>{ext.version}</code>,
         },
       ]}
     />
