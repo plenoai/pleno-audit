@@ -70,6 +70,15 @@ export {
   type PolicyCheckResult,
 } from "./policy-manager.js";
 
+// Security Posture
+export {
+  calculateSecurityPosture,
+  type PostureInput,
+  type PosturePenalty,
+  type PostureStatus,
+  type SecurityPosture,
+} from "./security-posture.js";
+
 // Scoring Utilities
 export {
   scoreToRiskLevel5,

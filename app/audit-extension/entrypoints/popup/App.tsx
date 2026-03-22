@@ -2,6 +2,7 @@ import { useState, useEffect } from "preact/hooks";
 import type { DetectedService } from "@pleno-audit/casb-types";
 import type { CapturedAIPrompt } from "@pleno-audit/ai-detector";
 import type { CSPViolation } from "@pleno-audit/csp";
+import { calculateSecurityPosture, type PostureStatus } from "@pleno-audit/alerts";
 import {
   createLogger,
   type StorageData,
@@ -27,18 +28,21 @@ const TABS: { key: Tab; label: string }[] = [
   { key: "policy", label: "Policy" },
 ];
 
-interface StatusData {
-  services: DetectedService[];
-  violations: CSPViolation[];
-  aiPrompts: CapturedAIPrompt[];
-}
+const STATUS_MAP: Record<PostureStatus, { variant: "danger" | "warning" | "info" | "success"; label: string; dot: boolean }> = {
+  danger:     { variant: "danger",  label: "警告", dot: false },
+  warning:    { variant: "warning", label: "注意", dot: false },
+  monitoring: { variant: "info",    label: "監視", dot: false },
+  normal:     { variant: "success", label: "正常", dot: true },
+};
 
-function getStatus(data: StatusData) {
-  const nrdCount = data.services.filter(s => s.nrdResult?.isNRD).length;
-  if (nrdCount > 0) return { variant: "danger" as const, label: "警告", dot: false };
-  if (data.violations.length > 10) return { variant: "warning" as const, label: "注意", dot: false };
-  if (data.aiPrompts.length > 0) return { variant: "info" as const, label: "監視", dot: false };
-  return { variant: "success" as const, label: "正常", dot: true };
+function getStatus(services: DetectedService[], violations: CSPViolation[], aiPrompts: CapturedAIPrompt[]) {
+  const posture = calculateSecurityPosture({
+    nrdCount: services.filter(s => s.nrdResult?.isNRD).length,
+    typosquatCount: services.filter(s => s.typosquatResult?.isTyposquat).length,
+    cspViolationCount: violations.length,
+    aiPromptCount: aiPrompts.length,
+  });
+  return STATUS_MAP[posture.status];
 }
 
 function PopupContent() {
@@ -155,7 +159,7 @@ function PopupContent() {
 
   const services = Object.values(data.services) as DetectedService[];
 
-  const status = getStatus({ services, violations, aiPrompts });
+  const status = getStatus(services, violations, aiPrompts);
 
   const tabCounts: Record<Tab, number | undefined> = {
     service: unifiedServices.length,

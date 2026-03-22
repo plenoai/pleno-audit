@@ -2,6 +2,7 @@ import { useMemo } from "preact/hooks";
 import type { DetectedService, EventLog } from "@pleno-audit/casb-types";
 import type { CapturedAIPrompt } from "@pleno-audit/ai-detector";
 import type { CSPViolation } from "@pleno-audit/csp";
+import { calculateSecurityPosture } from "@pleno-audit/alerts";
 import type { ThemeColors } from "../../../lib/theme";
 import { Badge, Card } from "../../../components";
 import type { DashboardStyles } from "../styles";
@@ -56,13 +57,12 @@ export function OverviewTab({
     return { dayData, maxCount };
   }, [events]);
 
-  const securityScore = Math.max(
-    0,
-    100 -
-      nrdServices.length * 20 -
-      Math.floor(violations.length / 10) * 5 -
-      typosquatServices.length * 30
-  );
+  const posture = calculateSecurityPosture({
+    nrdCount: nrdServices.length,
+    typosquatCount: typosquatServices.length,
+    cspViolationCount: violations.length,
+    aiPromptCount: aiPrompts.length,
+  });
   const privacyPolicyMissingCount = services.filter((s) => !s.privacyPolicyUrl).length;
 
   return (
@@ -75,14 +75,14 @@ export function OverviewTab({
                 fontSize: "48px",
                 fontWeight: 700,
                 color:
-                  nrdServices.length === 0 && violations.length < 10
+                  posture.status === "normal"
                     ? "#22c55e"
-                    : nrdServices.length > 0
+                    : posture.status === "danger"
                       ? "#dc2626"
                       : "#f97316",
               }}
             >
-              {securityScore}
+              {posture.score}
             </div>
             <div style={{ fontSize: "12px", color: colors.textSecondary }}>/ 100</div>
           </div>
@@ -99,7 +99,7 @@ export function OverviewTab({
               <span style={{ fontSize: "13px" }}>NRD検出: {nrdServices.length}件</span>
               {nrdServices.length > 0 && (
                 <Badge variant="danger" size="sm">
-                  -{nrdServices.length * 20}pt
+                  -{posture.breakdown.find(b => b.category === "nrd")?.penalty}pt
                 </Badge>
               )}
             </div>
@@ -115,7 +115,7 @@ export function OverviewTab({
               <span style={{ fontSize: "13px" }}>Typosquat: {typosquatServices.length}件</span>
               {typosquatServices.length > 0 && (
                 <Badge variant="danger" size="sm">
-                  -{typosquatServices.length * 30}pt
+                  -{posture.breakdown.find(b => b.category === "typosquat")?.penalty}pt
                 </Badge>
               )}
             </div>
@@ -131,7 +131,7 @@ export function OverviewTab({
               <span style={{ fontSize: "13px" }}>CSP違反: {violations.length}件</span>
               {violations.length >= 10 && (
                 <Badge variant="warning" size="sm">
-                  -{Math.floor(violations.length / 10) * 5}pt
+                  -{posture.breakdown.find(b => b.category === "csp_violation")?.penalty}pt
                 </Badge>
               )}
             </div>
