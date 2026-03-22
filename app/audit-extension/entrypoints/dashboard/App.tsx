@@ -133,6 +133,8 @@ function DashboardContent() {
           <ConnectionsTab
             services={dashboard.services}
             serviceConnections={dashboard.serviceConnections}
+            extensionConnections={dashboard.extensionConnections}
+            knownExtensions={dashboard.knownExtensions}
           />
         )}
 

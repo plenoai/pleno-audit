@@ -142,6 +142,7 @@ async function getDoHRequests(options?: { limit?: number; offset?: number }): Pr
 
 /** 通信先の集約バッファ（バッチ書き込み用） */
 let pendingConnections = new Map<string, Map<string, number>>();
+let pendingExtensionConnections = new Map<string, Map<string, number>>();
 let connectionFlushTimeout: ReturnType<typeof setTimeout> | null = null;
 /** 書き込みチェーン — read-modify-write の競合を防止 */
 let connectionWriteChain: Promise<void> = Promise.resolve();
@@ -156,15 +157,18 @@ function extractDomainFromUrl(url: string): string | null {
 }
 
 /** バッファをchrome.storage.localにフラッシュ（チェーン内で実行） */
-async function flushServiceConnectionsBatch(
-  batch: Map<string, Map<string, number>>,
+async function flushConnectionsBatch(
+  serviceBatch: Map<string, Map<string, number>>,
+  extensionBatch: Map<string, Map<string, number>>,
 ): Promise<void> {
-  const storage = await chrome.storage.local.get(["serviceConnections", "services"]);
+  const storage = await chrome.storage.local.get(["serviceConnections", "extensionConnections", "services"]);
   const services: Record<string, unknown> = (storage.services as Record<string, unknown>) || {};
   const connections: Record<string, Record<string, number>> =
     (storage.serviceConnections as Record<string, Record<string, number>>) || {};
+  const extConnections: Record<string, Record<string, number>> =
+    (storage.extensionConnections as Record<string, Record<string, number>>) || {};
 
-  for (const [source, destMap] of batch) {
+  for (const [source, destMap] of serviceBatch) {
     if (!(source in services)) continue;
     if (!connections[source]) connections[source] = {};
     for (const [dest, count] of destMap) {
@@ -172,21 +176,30 @@ async function flushServiceConnectionsBatch(
     }
   }
 
-  await chrome.storage.local.set({ serviceConnections: connections });
+  for (const [extKey, destMap] of extensionBatch) {
+    if (!extConnections[extKey]) extConnections[extKey] = {};
+    for (const [dest, count] of destMap) {
+      extConnections[extKey][dest] = (extConnections[extKey][dest] || 0) + count;
+    }
+  }
+
+  await chrome.storage.local.set({ serviceConnections: connections, extensionConnections: extConnections });
 }
 
 /** バッファをスワップしてチェーンに投入 */
 function flushServiceConnections(): void {
   connectionFlushTimeout = null;
-  if (pendingConnections.size === 0) return;
+  if (pendingConnections.size === 0 && pendingExtensionConnections.size === 0) return;
 
-  const batch = pendingConnections;
+  const serviceBatch = pendingConnections;
+  const extensionBatch = pendingExtensionConnections;
   pendingConnections = new Map();
+  pendingExtensionConnections = new Map();
 
   connectionWriteChain = connectionWriteChain
-    .then(() => flushServiceConnectionsBatch(batch))
+    .then(() => flushConnectionsBatch(serviceBatch, extensionBatch))
     .catch((error) => {
-      logger.error("Failed to flush service connections:", error);
+      logger.error("Failed to flush connections:", error);
     });
 }
 
@@ -195,19 +208,33 @@ function trackServiceConnection(record: {
   initiator: string | null;
   initiatorType: string;
   domain: string;
+  extensionId?: string;
+  extensionName?: string;
 }): void {
-  if (record.initiatorType !== "page") return;
   if (!record.initiator) return;
 
-  const sourceDomain = extractDomainFromUrl(record.initiator);
-  if (!sourceDomain || sourceDomain === record.domain) return;
+  if (record.initiatorType === "page") {
+    const sourceDomain = extractDomainFromUrl(record.initiator);
+    if (!sourceDomain || sourceDomain === record.domain) return;
 
-  let destMap = pendingConnections.get(sourceDomain);
-  if (!destMap) {
-    destMap = new Map();
-    pendingConnections.set(sourceDomain, destMap);
+    let destMap = pendingConnections.get(sourceDomain);
+    if (!destMap) {
+      destMap = new Map();
+      pendingConnections.set(sourceDomain, destMap);
+    }
+    destMap.set(record.domain, (destMap.get(record.domain) ?? 0) + 1);
+  } else if (record.initiatorType === "extension" && record.extensionId) {
+    const extKey = record.extensionId;
+
+    let destMap = pendingExtensionConnections.get(extKey);
+    if (!destMap) {
+      destMap = new Map();
+      pendingExtensionConnections.set(extKey, destMap);
+    }
+    destMap.set(record.domain, (destMap.get(record.domain) ?? 0) + 1);
+  } else {
+    return;
   }
-  destMap.set(record.domain, (destMap.get(record.domain) ?? 0) + 1);
 
   if (!connectionFlushTimeout) {
     connectionFlushTimeout = setTimeout(() => {
@@ -575,6 +602,10 @@ handleNetworkInspection: (data, sender) => networkSecurityInspector.handleNetwor
     getServiceConnections: async () => {
       const storage = await chrome.storage.local.get("serviceConnections");
       return (storage.serviceConnections as Record<string, Record<string, number>>) || {};
+    },
+    getExtensionConnections: async () => {
+      const storage = await chrome.storage.local.get("extensionConnections");
+      return (storage.extensionConnections as Record<string, Record<string, number>>) || {};
     },
     getDataRetentionConfig: backgroundConfig.getDataRetentionConfig,
     setDataRetentionConfig: backgroundConfig.setDataRetentionConfig,

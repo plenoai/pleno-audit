@@ -199,11 +199,11 @@ export function createComputationHandlers(
       "GET_AGGREGATED_SERVICES",
       {
         execute: async () => {
-          const [services, serviceConnections, extensionStats, knownExtensions] =
+          const [services, serviceConnections, extensionConnections, knownExtensions] =
             await Promise.all([
               deps.getServices(),
               deps.getServiceConnections(),
-              deps.getExtensionStats(),
+              deps.getExtensionConnections(),
               Promise.resolve(deps.getKnownExtensions()),
             ]);
 
@@ -226,38 +226,24 @@ export function createComputationHandlers(
             });
           }
 
-          // Add extensions
-          const stats = extensionStats as { byExtension: Record<string, { name: string; count: number; domains: string[]; lastActivityTime?: number }>; byDomain: Record<string, { count: number; extensions: string[] }>; total: number } | null;
+          // Add extensions from pre-aggregated extensionConnections
           const extMap = knownExtensions as Record<string, { id: string; name: string; version: string; enabled: boolean; icons?: { size: number; url: string }[] }>;
 
-          if (stats && extMap) {
-            const domainCounts: Record<string, Record<string, number>> = {};
-            for (const [extId, extData] of Object.entries(stats.byExtension)) {
-              domainCounts[extId] = {};
-              for (const domain of extData.domains) {
-                const domainInfo = stats.byDomain[domain];
-                if (domainInfo) {
-                  domainCounts[extId][domain] = Math.ceil(domainInfo.count / domainInfo.extensions.length);
-                } else {
-                  domainCounts[extId][domain] = 1;
-                }
-              }
-            }
-
-            for (const [id, ext] of Object.entries(extMap)) {
-              const statData = stats.byExtension[id];
-              const icon = ext.icons?.find((ic) => ic.size >= 16)?.url || ext.icons?.[0]?.url;
-              const connections = (statData?.domains || [])
-                .map((domain) => ({ domain, requestCount: domainCounts[id]?.[domain] || 1 }))
-                .sort((a, b) => b.requestCount - a.requestCount);
-              result.push({
-                id: `extension:${id}`,
-                source: { type: "extension", extensionId: id, extensionName: ext.name, icon },
-                connections,
-                tags: [],
-                lastActivity: statData?.lastActivityTime ?? 0,
-              });
-            }
+          for (const [id, ext] of Object.entries(extMap)) {
+            const icon = ext.icons?.find((ic) => ic.size >= 16)?.url || ext.icons?.[0]?.url;
+            const destMap = extensionConnections[id];
+            const connections: ConnectionInfo[] = destMap
+              ? Object.entries(destMap)
+                  .map(([domain, requestCount]) => ({ domain, requestCount }))
+                  .sort((a, b) => b.requestCount - a.requestCount)
+              : [];
+            result.push({
+              id: `extension:${id}`,
+              source: { type: "extension", extensionId: id, extensionName: ext.name, icon },
+              connections,
+              tags: [],
+              lastActivity: 0,
+            });
           }
 
           return result;

@@ -195,6 +195,7 @@ handleNetworkInspection: (data: unknown, sender: chrome.runtime.MessageSender) =
   }) => Promise<unknown>;
 
   getServiceConnections: () => Promise<Record<string, Record<string, number>>>;
+  getExtensionConnections: () => Promise<Record<string, Record<string, number>>>;
 
   getEvents: (options?: {
     limit?: number;

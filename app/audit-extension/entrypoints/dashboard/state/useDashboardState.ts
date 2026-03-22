@@ -34,6 +34,8 @@ export function useDashboardState({
   const [aiPrompts, setAIPrompts] = useState<CapturedAIPrompt[]>([]);
   const [services, setServices] = useState<DetectedService[]>([]);
   const [serviceConnections, setServiceConnections] = useState<Record<string, Record<string, number>>>({});
+  const [extensionConnections, setExtensionConnections] = useState<Record<string, Record<string, number>>>({});
+  const [knownExtensions, setKnownExtensions] = useState<Record<string, { name: string }>>({});
   const [events, setEvents] = useState<EventLog[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastNotifiedEventId, setLastNotifiedEventId] = useState<string | null>(null);
@@ -75,9 +77,9 @@ export function useDashboardState({
         ),
         safeMessage({ type: "GET_CONNECTION_CONFIG" }, { mode: "local" }),
         safeMessage({ type: "GET_AI_PROMPTS" }, []),
-        chrome.storage.local.get(["services", "serviceConnections"]).catch((error) => {
+        chrome.storage.local.get(["services", "serviceConnections", "extensionConnections"]).catch((error) => {
           logger.warn("[dashboard] Failed to load services from chrome.storage.", error);
-          return { services: {}, serviceConnections: {} };
+          return { services: {}, serviceConnections: {}, extensionConnections: {} };
         }),
         safeMessage({ type: "GET_EVENTS", data: { since: sinceTs, limit: 500 } }, { events: [], total: 0 }),
         safeMessage({ type: "GET_EVENTS_COUNT", data: { since: sinceTs } }, { count: 0 }),
@@ -109,6 +111,23 @@ export function useDashboardState({
       if (storageResult.services) setServices(Object.values(storageResult.services));
       if (storageResult.serviceConnections) {
         setServiceConnections(storageResult.serviceConnections as Record<string, Record<string, number>>);
+      }
+      if (storageResult.extensionConnections) {
+        setExtensionConnections(storageResult.extensionConnections as Record<string, Record<string, number>>);
+      }
+
+      // Build knownExtensions map from chrome.management API
+      try {
+        const allExtensions = await chrome.management.getAll();
+        const extMap: Record<string, { name: string }> = {};
+        for (const ext of allExtensions) {
+          if (ext.id !== chrome.runtime.id) {
+            extMap[ext.id] = { name: ext.name };
+          }
+        }
+        setKnownExtensions(extMap);
+      } catch (error) {
+        logger.warn("[dashboard] Failed to load extensions from management API.", error);
       }
       if (eventsResult && Array.isArray(eventsResult.events)) setEvents(eventsResult.events);
       if (eventsCountResult) {
@@ -237,6 +256,8 @@ export function useDashboardState({
     aiPrompts,
     services,
     serviceConnections,
+    extensionConnections,
+    knownExtensions,
     events,
     isRefreshing,
     loadData,

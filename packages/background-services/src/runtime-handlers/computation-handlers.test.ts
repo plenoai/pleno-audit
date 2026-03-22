@@ -63,6 +63,7 @@ function createMockDeps(): Pick<
   | "getExtensionStats"
   | "getKnownExtensions"
   | "getServiceConnections"
+  | "getExtensionConnections"
 > {
   return {
     logger: { debug: vi.fn(), warn: vi.fn(), error: vi.fn() },
@@ -74,6 +75,7 @@ function createMockDeps(): Pick<
     getExtensionStats: vi.fn().mockResolvedValue(null),
     getKnownExtensions: vi.fn().mockReturnValue({}),
     getServiceConnections: vi.fn().mockResolvedValue({}),
+    getExtensionConnections: vi.fn().mockResolvedValue({}),
   };
 }
 
@@ -793,15 +795,9 @@ describe("GET_AGGREGATED_SERVICES", () => {
   // -------------------------------------------------------------------------
 
   describe("拡張機能サービスの変換", () => {
-    it("拡張機能をUnifiedService形式で返す", async () => {
-      (deps.getExtensionStats as ReturnType<typeof vi.fn>).mockResolvedValue({
-        byExtension: {
-          "ext-abc": { name: "Ad Blocker", count: 10, domains: ["example.com"], lastActivityTime: 1700000070000 },
-        },
-        byDomain: {
-          "example.com": { count: 10, extensions: ["ext-abc"] },
-        },
-        total: 10,
+    it("extensionConnectionsから拡張機能をUnifiedService形式で返す", async () => {
+      (deps.getExtensionConnections as ReturnType<typeof vi.fn>).mockResolvedValue({
+        "ext-abc": { "example.com": 10 },
       });
       (deps.getKnownExtensions as ReturnType<typeof vi.fn>).mockReturnValue({
         "ext-abc": {
@@ -832,48 +828,27 @@ describe("GET_AGGREGATED_SERVICES", () => {
           icon: "chrome-extension://ext-abc/icon32.png",
         },
         tags: [],
-        lastActivity: 1700000070000,
+        lastActivity: 0,
       });
       expect(extService!.connections).toContainEqual({ domain: "example.com", requestCount: 10 });
     });
 
-    it("拡張機能statsがnullの場合は拡張機能を含めない", async () => {
-      (deps.getServices as ReturnType<typeof vi.fn>).mockResolvedValue([]);
-      (deps.getExtensionStats as ReturnType<typeof vi.fn>).mockResolvedValue(null);
+    it("extensionConnectionsが空でも既知の拡張機能は空の接続で返す", async () => {
+      (deps.getExtensionConnections as ReturnType<typeof vi.fn>).mockResolvedValue({});
       (deps.getKnownExtensions as ReturnType<typeof vi.fn>).mockReturnValue({
         "ext-xyz": { id: "ext-xyz", name: "Some Ext", version: "1.0", enabled: true },
       });
 
-      const result = (await execute()) as Array<{ id: string }>;
+      const result = (await execute()) as Array<{ id: string; connections: unknown[] }>;
 
-      expect(result.find((s) => s.id.startsWith("extension:"))).toBeUndefined();
-    });
-
-    it("lastActivityTimeがないときは0を使用する", async () => {
-      (deps.getExtensionStats as ReturnType<typeof vi.fn>).mockResolvedValue({
-        byExtension: {
-          "ext-no-activity": { name: "Silent Ext", count: 0, domains: [] },
-        },
-        byDomain: {},
-        total: 0,
-      });
-      (deps.getKnownExtensions as ReturnType<typeof vi.fn>).mockReturnValue({
-        "ext-no-activity": { id: "ext-no-activity", name: "Silent Ext", version: "1.0", enabled: true },
-      });
-
-      const result = (await execute()) as Array<{ id: string; lastActivity: number }>;
-
-      const ext = result.find((s) => s.id === "extension:ext-no-activity");
-      expect(ext?.lastActivity).toBe(0);
+      const ext = result.find((s) => s.id === "extension:ext-xyz");
+      expect(ext).toBeDefined();
+      expect(ext!.connections).toHaveLength(0);
     });
 
     it("アイコンがない拡張機能ではiconがundefinedになる", async () => {
-      (deps.getExtensionStats as ReturnType<typeof vi.fn>).mockResolvedValue({
-        byExtension: {
-          "ext-no-icon": { name: "No Icon", count: 1, domains: ["test.com"] },
-        },
-        byDomain: { "test.com": { count: 1, extensions: ["ext-no-icon"] } },
-        total: 1,
+      (deps.getExtensionConnections as ReturnType<typeof vi.fn>).mockResolvedValue({
+        "ext-no-icon": { "test.com": 1 },
       });
       (deps.getKnownExtensions as ReturnType<typeof vi.fn>).mockReturnValue({
         "ext-no-icon": { id: "ext-no-icon", name: "No Icon", version: "1.0", enabled: true },
@@ -888,16 +863,10 @@ describe("GET_AGGREGATED_SERVICES", () => {
       expect(ext?.source.icon).toBeUndefined();
     });
 
-    it("複数拡張機能が同一ドメインにアクセスする場合リクエストカウントを按分する", async () => {
-      (deps.getExtensionStats as ReturnType<typeof vi.fn>).mockResolvedValue({
-        byExtension: {
-          "ext-a": { name: "Ext A", count: 6, domains: ["shared.com"], lastActivityTime: 1700000080000 },
-          "ext-b": { name: "Ext B", count: 4, domains: ["shared.com"], lastActivityTime: 1700000081000 },
-        },
-        byDomain: {
-          "shared.com": { count: 10, extensions: ["ext-a", "ext-b"] },
-        },
-        total: 10,
+    it("複数拡張機能の接続先をそれぞれ正確に返す", async () => {
+      (deps.getExtensionConnections as ReturnType<typeof vi.fn>).mockResolvedValue({
+        "ext-a": { "shared.com": 6 },
+        "ext-b": { "shared.com": 4 },
       });
       (deps.getKnownExtensions as ReturnType<typeof vi.fn>).mockReturnValue({
         "ext-a": { id: "ext-a", name: "Ext A", version: "1.0", enabled: true },
@@ -912,21 +881,16 @@ describe("GET_AGGREGATED_SERVICES", () => {
       const extA = result.find((s) => s.id === "extension:ext-a");
       const extB = result.find((s) => s.id === "extension:ext-b");
 
-      // 10 / 2 extensions = 5 per extension (Math.ceil)
-      expect(extA?.connections[0].requestCount).toBe(5);
-      expect(extB?.connections[0].requestCount).toBe(5);
+      expect(extA?.connections[0].requestCount).toBe(6);
+      expect(extB?.connections[0].requestCount).toBe(4);
     });
 
     it("ドメインサービスと拡張機能サービスを両方返す", async () => {
       (deps.getServices as ReturnType<typeof vi.fn>).mockResolvedValue([
         createService({ domain: "example.com" }),
       ]);
-      (deps.getExtensionStats as ReturnType<typeof vi.fn>).mockResolvedValue({
-        byExtension: {
-          "ext-1": { name: "Test Ext", count: 5, domains: ["example.com"], lastActivityTime: 1700000090000 },
-        },
-        byDomain: { "example.com": { count: 5, extensions: ["ext-1"] } },
-        total: 5,
+      (deps.getExtensionConnections as ReturnType<typeof vi.fn>).mockResolvedValue({
+        "ext-1": { "example.com": 5 },
       });
       (deps.getKnownExtensions as ReturnType<typeof vi.fn>).mockReturnValue({
         "ext-1": { id: "ext-1", name: "Test Ext", version: "2.0", enabled: true },
