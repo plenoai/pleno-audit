@@ -143,6 +143,8 @@ async function getDoHRequests(options?: { limit?: number; offset?: number }): Pr
 /** 通信先の集約バッファ（バッチ書き込み用） */
 let pendingConnections = new Map<string, Map<string, number>>();
 let connectionFlushTimeout: ReturnType<typeof setTimeout> | null = null;
+/** 書き込みチェーン — read-modify-write の競合を防止 */
+let connectionWriteChain: Promise<void> = Promise.resolve();
 
 /** URLからドメインを安全に抽出 */
 function extractDomainFromUrl(url: string): string | null {
@@ -153,14 +155,10 @@ function extractDomainFromUrl(url: string): string | null {
   }
 }
 
-/** バッファをchrome.storage.localにフラッシュ */
-async function flushServiceConnections(): Promise<void> {
-  connectionFlushTimeout = null;
-  if (pendingConnections.size === 0) return;
-
-  const batch = pendingConnections;
-  pendingConnections = new Map();
-
+/** バッファをchrome.storage.localにフラッシュ（チェーン内で実行） */
+async function flushServiceConnectionsBatch(
+  batch: Map<string, Map<string, number>>,
+): Promise<void> {
   const storage = await chrome.storage.local.get(["serviceConnections", "services"]);
   const services: Record<string, unknown> = (storage.services as Record<string, unknown>) || {};
   const connections: Record<string, Record<string, number>> =
@@ -175,6 +173,21 @@ async function flushServiceConnections(): Promise<void> {
   }
 
   await chrome.storage.local.set({ serviceConnections: connections });
+}
+
+/** バッファをスワップしてチェーンに投入 */
+function flushServiceConnections(): void {
+  connectionFlushTimeout = null;
+  if (pendingConnections.size === 0) return;
+
+  const batch = pendingConnections;
+  pendingConnections = new Map();
+
+  connectionWriteChain = connectionWriteChain
+    .then(() => flushServiceConnectionsBatch(batch))
+    .catch((error) => {
+      logger.error("Failed to flush service connections:", error);
+    });
 }
 
 /** ネットワークリクエストから通信先を集約 */
@@ -198,9 +211,7 @@ function trackServiceConnection(record: {
 
   if (!connectionFlushTimeout) {
     connectionFlushTimeout = setTimeout(() => {
-      flushServiceConnections().catch((error) => {
-        logger.error("Failed to flush service connections:", error);
-      });
+      flushServiceConnections();
     }, 5000);
   }
 }
