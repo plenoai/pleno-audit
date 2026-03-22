@@ -3,6 +3,11 @@
  *
  * Chrome API型に依存しないDNRルール操作。
  * chrome.declarativeNetRequest への型キャストは呼び出し側が担当する。
+ *
+ * 検出戦略:
+ * modifyHeaders アクションで無害なレスポンスヘッダーを追加し、
+ * getMatchedRules() でマッチを取得する。
+ * allow アクションは getMatchedRules() にレポートされないため使用不可。
  */
 
 import { DNR_RULE_ID_BASE, DNR_RULE_ID_MAX } from "./constants.js";
@@ -13,7 +18,14 @@ import { DNR_RULE_ID_BASE, DNR_RULE_ID_MAX } from "./constants.js";
 export interface DNRRuleSpec {
   id: number;
   priority: number;
-  action: { type: "allow" };
+  action: {
+    type: "modifyHeaders";
+    responseHeaders: Array<{
+      header: string;
+      operation: "append";
+      value: string;
+    }>;
+  };
   condition: {
     initiatorDomains: string[];
     resourceTypes: string[];
@@ -30,8 +42,8 @@ export function isMonitorRuleId(ruleId: number): boolean {
 /**
  * Chrome API型に依存しないDNRルール仕様を構築
  *
- * 返却値は plain object であり、chrome.declarativeNetRequest.Rule への
- * キャストは呼び出し側が行う。
+ * modifyHeaders で無害なヘッダーを追加することで
+ * getMatchedRules() による検出を可能にする。
  */
 export function buildDNRRuleSpec(
   extensionId: string,
@@ -41,7 +53,16 @@ export function buildDNRRuleSpec(
   return {
     id: ruleId,
     priority: 1,
-    action: { type: "allow" },
+    action: {
+      type: "modifyHeaders",
+      responseHeaders: [
+        {
+          header: "x-pleno-observed",
+          operation: "append",
+          value: "1",
+        },
+      ],
+    },
     condition: {
       initiatorDomains: [extensionId],
       resourceTypes,

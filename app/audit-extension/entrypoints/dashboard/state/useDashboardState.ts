@@ -121,7 +121,7 @@ export function useDashboardState({
         const allExtensions = await chrome.management.getAll();
         const extMap: Record<string, { name: string }> = {};
         for (const ext of allExtensions) {
-          if (ext.id !== chrome.runtime.id) {
+          if (ext.id !== chrome.runtime.id && ext.type === "extension" && ext.enabled) {
             extMap[ext.id] = { name: ext.name };
           }
         }

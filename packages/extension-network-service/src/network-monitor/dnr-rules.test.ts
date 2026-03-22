@@ -41,7 +41,12 @@ describe("buildDNRRuleSpec", () => {
     expect(spec).toStrictEqual({
       id: 10000,
       priority: 1,
-      action: { type: "allow" },
+      action: {
+        type: "modifyHeaders",
+        responseHeaders: [
+          { header: "x-pleno-observed", operation: "append", value: "1" },
+        ],
+      },
       condition: {
         initiatorDomains: ["abcdefghijklmnopqrstuvwxyzabcdef"],
         resourceTypes: ["xmlhttprequest", "script"],

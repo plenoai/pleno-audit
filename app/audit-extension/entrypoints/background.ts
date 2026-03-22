@@ -143,7 +143,6 @@ async function getDoHRequests(options?: { limit?: number; offset?: number }): Pr
 /** 通信先の集約バッファ（バッチ書き込み用） */
 let pendingConnections = new Map<string, Map<string, number>>();
 let pendingExtensionConnections = new Map<string, Map<string, number>>();
-let connectionFlushTimeout: ReturnType<typeof setTimeout> | null = null;
 /** 書き込みチェーン — read-modify-write の競合を防止 */
 let connectionWriteChain: Promise<void> = Promise.resolve();
 
@@ -161,15 +160,13 @@ async function flushConnectionsBatch(
   serviceBatch: Map<string, Map<string, number>>,
   extensionBatch: Map<string, Map<string, number>>,
 ): Promise<void> {
-  const storage = await chrome.storage.local.get(["serviceConnections", "extensionConnections", "services"]);
-  const services: Record<string, unknown> = (storage.services as Record<string, unknown>) || {};
+  const storage = await chrome.storage.local.get(["serviceConnections", "extensionConnections"]);
   const connections: Record<string, Record<string, number>> =
     (storage.serviceConnections as Record<string, Record<string, number>>) || {};
   const extConnections: Record<string, Record<string, number>> =
     (storage.extensionConnections as Record<string, Record<string, number>>) || {};
 
   for (const [source, destMap] of serviceBatch) {
-    if (!(source in services)) continue;
     if (!connections[source]) connections[source] = {};
     for (const [dest, count] of destMap) {
       connections[source][dest] = (connections[source][dest] || 0) + count;
@@ -188,7 +185,6 @@ async function flushConnectionsBatch(
 
 /** バッファをスワップしてチェーンに投入 */
 function flushServiceConnections(): void {
-  connectionFlushTimeout = null;
   if (pendingConnections.size === 0 && pendingExtensionConnections.size === 0) return;
 
   const serviceBatch = pendingConnections;
@@ -234,12 +230,6 @@ function trackServiceConnection(record: {
     destMap.set(record.domain, (destMap.get(record.domain) ?? 0) + 1);
   } else {
     return;
-  }
-
-  if (!connectionFlushTimeout) {
-    connectionFlushTimeout = setTimeout(() => {
-      flushServiceConnections();
-    }, 5000);
   }
 }
 
@@ -685,6 +675,9 @@ export default defineBackground(() => {
   });
 
   chrome.alarms.onAlarm.addListener((alarm) => {
+    // アラーム処理のたびに通信先バッファをフラッシュ（MV3 SW停止前に確実に永続化）
+    flushServiceConnections();
+
     if (alarm.name === "processEventQueue") {
       processEventQueue().catch((error) =>
         logger.error("Event queue processing failed:", error),

@@ -99,7 +99,10 @@ export async function setNetworkMonitorConfig(
 
 
 export async function checkDNRMatchesHandler(context: ExtensionNetworkContext): Promise<void> {
-  if (!context.state.extensionMonitor) return;
+  if (!context.state.extensionMonitor) {
+    context.deps.logger.debug("DNR check skipped: monitor not initialized yet");
+    return;
+  }
   try {
     await context.state.extensionMonitor.checkDNRMatches();
   } catch (error) {

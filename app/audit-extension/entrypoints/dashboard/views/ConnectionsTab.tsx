@@ -1,12 +1,10 @@
 import { useMemo } from "preact/hooks";
-import type { DetectedService } from "@pleno-audit/casb-types";
 import { Badge, SearchInput } from "../../../components";
 import { FilteredTab } from "../components/FilteredTab";
 import { useTabFilter } from "../hooks/useTabFilter";
 import { useTheme } from "../../../lib/theme";
 
 interface ConnectionsTabProps {
-  services: DetectedService[];
   serviceConnections: Record<string, Record<string, number>>;
   extensionConnections: Record<string, Record<string, number>>;
   knownExtensions: Record<string, { name: string }>;
@@ -19,16 +17,14 @@ interface ConnectionRow {
   count: number;
 }
 
-export function ConnectionsTab({ services, serviceConnections, extensionConnections, knownExtensions }: ConnectionsTabProps) {
+export function ConnectionsTab({ serviceConnections, extensionConnections, knownExtensions }: ConnectionsTabProps) {
   const { colors } = useTheme();
   const { searchQuery, setSearchQuery } = useTabFilter();
 
   const rows = useMemo(() => {
-    const serviceDomains = new Set(services.map((s) => s.domain));
     const result: ConnectionRow[] = [];
 
     for (const [source, destMap] of Object.entries(serviceConnections)) {
-      if (!serviceDomains.has(source)) continue;
       for (const [destination, count] of Object.entries(destMap)) {
         result.push({ source, sourceType: "service", destination, count });
       }
@@ -42,7 +38,7 @@ export function ConnectionsTab({ services, serviceConnections, extensionConnecti
     }
 
     return result.sort((a, b) => b.count - a.count);
-  }, [services, serviceConnections, extensionConnections, knownExtensions]);
+  }, [serviceConnections, extensionConnections, knownExtensions]);
 
   const filtered = useMemo(() => {
     if (!searchQuery) return rows;
