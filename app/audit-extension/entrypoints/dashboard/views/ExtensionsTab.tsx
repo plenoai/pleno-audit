@@ -11,6 +11,7 @@ const logger = createLogger("extensions-tab");
 interface ExtensionInfo {
   id: string;
   name: string;
+  description: string;
   version: string;
   enabled: boolean;
   permissions: string[];
@@ -19,6 +20,7 @@ interface ExtensionInfo {
   type: string;
   mayDisable: boolean;
   homepageUrl?: string;
+  updateUrl?: string;
   icons?: { size: number; url: string }[];
 }
 
@@ -62,6 +64,7 @@ export function ExtensionsTab() {
             .map((ext) => ({
               id: ext.id,
               name: ext.name,
+              description: ext.description,
               version: ext.version,
               enabled: ext.enabled,
               permissions: ext.permissions || [],
@@ -70,6 +73,7 @@ export function ExtensionsTab() {
               type: ext.type,
               mayDisable: ext.mayDisable,
               homepageUrl: ext.homepageUrl,
+              updateUrl: ext.updateUrl,
               icons: ext.icons,
             }))
         );
@@ -102,6 +106,7 @@ export function ExtensionsTab() {
       result = result.filter(
         (ext) =>
           ext.name.toLowerCase().includes(q) ||
+          ext.description.toLowerCase().includes(q) ||
           ext.permissions.some((p) => p.toLowerCase().includes(q)) ||
           ext.hostPermissions.some((p) => p.toLowerCase().includes(q))
       );
@@ -174,6 +179,10 @@ export function ExtensionsTab() {
               (p) => p === "<all_urls>" || p === "*://*/*" || p === "http://*/*" || p === "https://*/*"
             );
             if (hasAllUrls) tags.push({ label: "<all_urls>", variant: "danger" });
+            if (ext.updateUrl && !ext.updateUrl.includes("google.com")) {
+              tags.push({ label: "外部更新", variant: "danger" });
+            }
+            if (!ext.mayDisable) tags.push({ label: "削除不可", variant: "warning" });
             if (!ext.enabled) tags.push({ label: "無効", variant: "info" });
             if (ext.installType === "admin") tags.push({ label: "管理者", variant: "warning" });
             if (tags.length === 0) return <span style={{ color: colors.textMuted }}>-</span>;
