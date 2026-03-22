@@ -136,6 +136,75 @@ async function getDoHRequests(options?: { limit?: number; offset?: number }): Pr
   return { requests, total };
 }
 
+// ============================================================================
+// Service Connection Tracking (通信先集約)
+// ============================================================================
+
+/** 通信先の集約バッファ（バッチ書き込み用） */
+let pendingConnections = new Map<string, Map<string, number>>();
+let connectionFlushTimeout: ReturnType<typeof setTimeout> | null = null;
+
+/** URLからドメインを安全に抽出 */
+function extractDomainFromUrl(url: string): string | null {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return null;
+  }
+}
+
+/** バッファをchrome.storage.localにフラッシュ */
+async function flushServiceConnections(): Promise<void> {
+  connectionFlushTimeout = null;
+  if (pendingConnections.size === 0) return;
+
+  const batch = pendingConnections;
+  pendingConnections = new Map();
+
+  const storage = await chrome.storage.local.get(["serviceConnections", "services"]);
+  const services: Record<string, unknown> = (storage.services as Record<string, unknown>) || {};
+  const connections: Record<string, Record<string, number>> =
+    (storage.serviceConnections as Record<string, Record<string, number>>) || {};
+
+  for (const [source, destMap] of batch) {
+    if (!(source in services)) continue;
+    if (!connections[source]) connections[source] = {};
+    for (const [dest, count] of destMap) {
+      connections[source][dest] = (connections[source][dest] || 0) + count;
+    }
+  }
+
+  await chrome.storage.local.set({ serviceConnections: connections });
+}
+
+/** ネットワークリクエストから通信先を集約 */
+function trackServiceConnection(record: {
+  initiator: string | null;
+  initiatorType: string;
+  domain: string;
+}): void {
+  if (record.initiatorType !== "page") return;
+  if (!record.initiator) return;
+
+  const sourceDomain = extractDomainFromUrl(record.initiator);
+  if (!sourceDomain || sourceDomain === record.domain) return;
+
+  let destMap = pendingConnections.get(sourceDomain);
+  if (!destMap) {
+    destMap = new Map();
+    pendingConnections.set(sourceDomain, destMap);
+  }
+  destMap.set(record.domain, (destMap.get(record.domain) ?? 0) + 1);
+
+  if (!connectionFlushTimeout) {
+    connectionFlushTimeout = setTimeout(() => {
+      flushServiceConnections().catch((error) => {
+        logger.error("Failed to flush service connections:", error);
+      });
+    }, 5000);
+  }
+}
+
 const extensionNetworkService = createExtensionNetworkService({
   logger,
   getStorage,
@@ -143,6 +212,7 @@ const extensionNetworkService = createExtensionNetworkService({
   addEvent: (event) => persistEvent(event as NewEvent),
   getAlertManager: backgroundAlerts.getAlertManager,
   getRuntimeId: () => chrome.runtime.id,
+  onNetworkRequest: trackServiceConnection,
 });
 
 // ============================================================================

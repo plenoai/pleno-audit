@@ -1,4 +1,5 @@
 export { AITab } from "./AITab";
+export { ConnectionsTab } from "./ConnectionsTab";
 export { DomainsTab } from "./DomainsTab";
 export { EventsTab } from "./EventsTab";
 export { NetworkTab } from "./NetworkTab";

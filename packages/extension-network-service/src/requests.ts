@@ -8,13 +8,13 @@ import type { ExtensionNetworkContext } from "./types.js";
 
 /**
  * ネットワークリクエストを取得する。
- * parquet-storage廃止後、リアルタイム監視のみ。保存済みデータの問い合わせは空を返す。
+ * インメモリバッファから読み取る。
  */
 export async function getNetworkRequests(
-  _context: ExtensionNetworkContext,
+  context: ExtensionNetworkContext,
   options?: NetworkRequestQueryOptions
 ): Promise<{ requests: NetworkRequestRecord[]; total: number }> {
-  return queryNetworkRequests([], options);
+  return queryNetworkRequests(context.state.requestBuffer, options);
 }
 
 export async function getExtensionRequests(
