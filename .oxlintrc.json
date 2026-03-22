@@ -29,11 +29,6 @@
       "files": ["app/debugger/src/**/*"],
       "rules": { "no-console": "off" }
     },
-    // Server - console is intentional for startup message
-    {
-      "files": ["app/server/src/**/*"],
-      "rules": { "no-console": "off" }
-    },
     // Logger package - console is the output mechanism
     {
       "files": ["packages/extension-runtime/src/logger.ts"],

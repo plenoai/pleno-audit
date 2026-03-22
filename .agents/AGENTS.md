@@ -2,14 +2,32 @@ CASB/Browser Security
 
 ## 構造
 
+### パッケージ
+
 - `packages/detectors/` - CASBドメイン（サービス検出、認証検出）
 - `packages/csp/` - CSP監査（違反検出、ポリシー生成、レポーター）
 - `packages/nrd/` - NRDアルゴリズム
-- `packages/typosquat` - typosquattingアルゴリズム
-- `packages/ai-detector` - AI検出アルゴリズム
-- `packages/api/` - REST API（Hono + parquet-storage）
-- `packages/extension-runtime/` - 拡張機能ランタイム（ストレージ、API クライアント、同期）
+- `packages/typosquat/` - typosquattingアルゴリズム
+- `packages/ai-detector/` - AI検出アルゴリズム
+- `packages/alerts/` - リアルタイムセキュリティアラート基盤
+- `packages/battacker/` - ブラウザ防御耐性テスト用コアライブラリ
+- `packages/data-export/` - セキュリティデータエクスポート（JSON/CSV/Markdown/HTML）
+- `packages/storage/` - イベントストア基盤
+- `packages/extension-runtime/` - 拡張機能ランタイム（ストレージ、APIクライアント、同期）
+- `packages/background-services/` - 拡張機能バックグラウンドサービスのファサード
+- `packages/debug-bridge/` - デバッグサーバーとの通信ブリッジ
+- `packages/extension-network-service/` - ネットワーク監視・DNR管理
+- `packages/event-queue/` - 非同期イベント処理キュー
+
+### アプリケーション
+
 - `app/audit-extension/` - Chrome拡張（WXT + Preact）
+- `app/battacker-extension/` - Battacker Chrome/Firefox拡張
+- `app/battacker-web/` - Battackerスコア可視化Webアプリ
+- `app/battacker-e2e/` - Battacker E2Eテスト（Playwright）
+- `app/web-dashboard/` - CSP違反・ポリシーダッシュボード
+- `app/website/` - プロダクトWebサイト
+- `app/debugger/` - 拡張機能デバッガーCLI
 
 詳細は各パッケージの`index.ts`を参照。
 

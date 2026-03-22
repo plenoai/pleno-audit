@@ -9,8 +9,6 @@
     "dev:stop": "pnpm --filter @pleno-audit/debugger start dev stop",
     "dev:ext": "pnpm -C app/audit-extension dev",
     "build": "pnpm -C app/audit-extension build",
-    "server": "pnpm -C app/server start",
-    "server:dev": "pnpm -C app/server dev",
     "website": "pnpm -C app/website dev",
     "website:build": "pnpm -C app/website build",
     "battacker-web": "pnpm -C app/battacker-web dev",
