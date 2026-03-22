@@ -127,6 +127,12 @@ export interface CSPViolationDetails {
   directive: string;
   blockedURL: string;
   disposition: "enforce" | "report";
+  pageUrl?: string;
+  originalPolicy?: string;
+  sourceFile?: string;
+  lineNumber?: number;
+  columnNumber?: number;
+  statusCode?: number;
 }
 
 /** ネットワークリクエストイベント詳細（EventLog用） */
@@ -134,4 +140,6 @@ export interface NetworkRequestDetails {
   url: string;
   method: string;
   initiator: string;
+  pageUrl?: string;
+  resourceType?: string;
 }

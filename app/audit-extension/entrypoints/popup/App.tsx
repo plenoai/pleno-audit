@@ -67,7 +67,7 @@ function PopupContent() {
         loadData();
         loadUnifiedServices();
       }
-      if (changes.cspReports) {
+      if (changes.generatedCSPPolicy) {
         loadCSPData();
         loadPopupEvents();
         loadUnifiedServices();

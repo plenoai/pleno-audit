@@ -15,7 +15,6 @@ function createMockDeps(overrides?: Partial<PageAnalysisDependencies>): PageAnal
     getAlertManager: () => alertManager,
     initStorage: vi.fn<() => Promise<StorageData>>().mockResolvedValue({
       services: {},
-      cspReports: [],
       cspConfig: {} as StorageData["cspConfig"],
       detectionConfig: DEFAULT_DETECTION_CONFIG,
       notificationConfig: {} as StorageData["notificationConfig"],
@@ -238,8 +237,7 @@ describe("createPageAnalysisHandler", () => {
     const deps = createMockDeps({
       initStorage: vi.fn<() => Promise<StorageData>>().mockResolvedValue({
         services: { "example.com": {} as StorageData["services"][string] },
-        cspReports: [],
-        cspConfig: {} as StorageData["cspConfig"],
+          cspConfig: {} as StorageData["cspConfig"],
         detectionConfig: DEFAULT_DETECTION_CONFIG,
         notificationConfig: {} as StorageData["notificationConfig"],
         policyConfig: {} as StorageData["policyConfig"],
@@ -273,8 +271,7 @@ describe("createPageAnalysisHandler", () => {
     const deps = createMockDeps({
       initStorage: vi.fn<() => Promise<StorageData>>().mockResolvedValue({
         services: {},
-        cspReports: [],
-        cspConfig: {} as StorageData["cspConfig"],
+          cspConfig: {} as StorageData["cspConfig"],
         detectionConfig: { ...DEFAULT_DETECTION_CONFIG, enableLogin: false, enablePrivacy: false },
         notificationConfig: {} as StorageData["notificationConfig"],
         policyConfig: {} as StorageData["policyConfig"],

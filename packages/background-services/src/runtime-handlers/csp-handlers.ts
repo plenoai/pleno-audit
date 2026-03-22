@@ -58,5 +58,29 @@ export function createCspHandlers(
       execute: () => deps.clearAllData(),
       fallback: () => ({ success: false }),
     }],
+    ["GET_EVENTS", {
+      execute: (message) => {
+        const data = message.data as {
+          limit?: number;
+          offset?: number;
+          since?: number;
+          until?: number;
+          type?: string[];
+        } | undefined;
+        return deps.getEvents(data);
+      },
+      fallback: () => ({ events: [], total: 0 }),
+    }],
+    ["GET_EVENTS_COUNT", {
+      execute: (message) => {
+        const data = message.data as {
+          since?: number;
+          until?: number;
+          type?: string[];
+        } | undefined;
+        return deps.getEventsCount(data).then((count) => ({ count }));
+      },
+      fallback: () => ({ count: 0 }),
+    }],
   ];
 }

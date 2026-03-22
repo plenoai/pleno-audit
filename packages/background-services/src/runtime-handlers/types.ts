@@ -197,5 +197,18 @@ handleNetworkInspection: (data: unknown, sender: chrome.runtime.MessageSender) =
     limit?: number;
     offset?: number;
   }) => Promise<unknown>;
+
+  getEvents: (options?: {
+    limit?: number;
+    offset?: number;
+    since?: number;
+    until?: number;
+    type?: string[];
+  }) => Promise<unknown>;
+  getEventsCount: (options?: {
+    since?: number;
+    until?: number;
+    type?: string[];
+  }) => Promise<number>;
 }
 

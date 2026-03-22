@@ -22,7 +22,6 @@ export function queueStorageOperation<T>(
 export async function initStorage(): Promise<StorageData> {
   const result = await chrome.storage.local.get([
     "services",
-    "cspReports",
     "cspConfig",
     "detectionConfig",
     "notificationConfig",
@@ -30,7 +29,6 @@ export async function initStorage(): Promise<StorageData> {
   ]) as Partial<StorageData>;
   return {
     services: result.services || ({} as Record<string, DetectedService>),
-    cspReports: result.cspReports || [],
     cspConfig: result.cspConfig || DEFAULT_CSP_CONFIG,
     detectionConfig: result.detectionConfig || DEFAULT_DETECTION_CONFIG,
     notificationConfig: result.notificationConfig || DEFAULT_NOTIFICATION_CONFIG,

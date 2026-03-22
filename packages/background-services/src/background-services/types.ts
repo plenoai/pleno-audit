@@ -15,13 +15,12 @@ import type {
   AIResponseReceivedDetails,
   TyposquatDetectedDetails,
 } from "@pleno-audit/detectors";
-import type { CSPConfig, CSPReport, CSPViolationDetails, NetworkRequestDetails } from "@pleno-audit/csp";
+import type { CSPConfig, CSPViolationDetails, NetworkRequestDetails } from "@pleno-audit/csp";
 import type { DetectionConfig, NotificationConfig } from "@pleno-audit/extension-runtime";
 import type { PolicyConfig } from "@pleno-audit/alerts";
 
 export interface StorageData {
   services: Record<string, DetectedService>;
-  cspReports: CSPReport[];
   cspConfig: CSPConfig;
   detectionConfig: DetectionConfig;
   notificationConfig: NotificationConfig;

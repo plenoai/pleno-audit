@@ -3,11 +3,12 @@ import type {
   CSPGenerationOptions,
   CSPReport,
   CSPViolation,
+  CSPViolationDetails,
   GeneratedCSPPolicy,
   NetworkRequest,
+  NetworkRequestDetails,
 } from "@pleno-audit/csp";
 import { CSPAnalyzer, CSPReporter, DEFAULT_CSP_CONFIG, type GeneratedCSPByDomain } from "@pleno-audit/csp";
-import type { QueryOptions } from "@pleno-audit/extension-runtime";
 import { resolveEventTimestamp } from "./event-timestamp.js";
 
 interface MessageSenderLike {
@@ -23,50 +24,74 @@ interface CSPServiceLogger {
   warn?: (message: string, ...args: unknown[]) => void;
 }
 
-interface ReportsClient {
-  postReports: (reports: CSPReport[]) => Promise<void>;
-  clearReports: () => Promise<void>;
-  getViolations: (options?: QueryOptions) => Promise<{ violations: CSPViolation[]; total: number; hasMore: boolean }>;
-  getNetworkRequests: (options?: QueryOptions) => Promise<{ requests: NetworkRequest[]; total: number; hasMore: boolean }>;
-  getReports: (options?: QueryOptions) => Promise<{ reports: CSPReport[]; total: number; hasMore: boolean }>;
+interface CSPEventRecord {
+  type: string;
+  domain: string;
+  timestamp: number;
+  details: CSPViolationDetails | NetworkRequestDetails;
+}
+
+interface CSPEventQueryResult {
+  events: CSPEventRecord[];
+  total: number;
+  hasMore: boolean;
 }
 
 interface CreateCSPReportingServiceParams {
   logger: CSPServiceLogger;
-  ensureApiClient: () => Promise<ReportsClient>;
   initStorage: () => Promise<{ cspConfig?: CSPConfig }>;
   saveStorage: (data: { cspConfig: CSPConfig }) => Promise<void>;
   addEvent: (event: {
-    type: "csp_violation";
+    type: "csp_violation" | "network_request";
     domain: string;
     timestamp: number;
-    details: {
-      directive?: string;
-      blockedURL?: string;
-      disposition?: string;
-    };
+    details: CSPViolationDetails | NetworkRequestDetails;
   }) => Promise<unknown>;
+  getCSPEvents: (options?: {
+    type?: ("csp_violation" | "network_request")[];
+    limit?: number;
+    offset?: number;
+    since?: number;
+    until?: number;
+  }) => Promise<CSPEventQueryResult>;
+  clearCSPEvents: () => Promise<void>;
   devReportEndpoint: string;
 }
 
-function extractReportsArray(
-  result: CSPReport[] | { reports: CSPReport[]; total: number; hasMore: boolean },
-): CSPReport[] {
-  return Array.isArray(result) ? result : result.reports;
-}
-
-function buildCSPReportsResponse(
-  reports: CSPReport[],
-  options: { total?: number; hasMore?: boolean; withPagination: boolean },
-): CSPReport[] | { reports: CSPReport[]; total: number; hasMore: boolean } {
-  if (!options.withPagination) {
-    return reports;
+function eventToCSPReport(event: CSPEventRecord): CSPReport | null {
+  if (event.type === "csp_violation") {
+    const details = event.details as CSPViolationDetails;
+    return {
+      type: "csp-violation",
+      timestamp: new Date(event.timestamp).toISOString(),
+      pageUrl: details.pageUrl || "",
+      directive: details.directive,
+      blockedURL: details.blockedURL,
+      domain: event.domain,
+      disposition: details.disposition,
+      originalPolicy: details.originalPolicy,
+      sourceFile: details.sourceFile,
+      lineNumber: details.lineNumber,
+      columnNumber: details.columnNumber,
+      statusCode: details.statusCode,
+    };
   }
-  return {
-    reports,
-    total: options.total ?? 0,
-    hasMore: options.hasMore ?? false,
-  };
+
+  if (event.type === "network_request") {
+    const details = event.details as NetworkRequestDetails;
+    return {
+      type: "network-request",
+      timestamp: new Date(event.timestamp).toISOString(),
+      pageUrl: details.pageUrl || "",
+      url: details.url,
+      method: details.method,
+      initiator: details.initiator as NetworkRequest["initiator"],
+      domain: event.domain,
+      resourceType: details.resourceType,
+    };
+  }
+
+  return null;
 }
 
 export function createCSPReportingService(params: CreateCSPReportingServiceParams) {
@@ -91,14 +116,25 @@ export function createCSPReportingService(params: CreateCSPReportingServiceParam
     until?: string;
   }): Promise<CSPReport[] | { reports: CSPReport[]; total: number; hasMore: boolean }> {
     try {
-      const client = await params.ensureApiClient();
+      const eventTypes: ("csp_violation" | "network_request")[] = [];
+      if (!options?.type || options.type === "csp-violation") {
+        eventTypes.push("csp_violation");
+      }
+      if (!options?.type || options.type === "network-request") {
+        eventTypes.push("network_request");
+      }
 
-      const queryOptions: QueryOptions = {
+      const result = await params.getCSPEvents({
+        type: eventTypes,
         limit: options?.limit,
         offset: options?.offset,
-        since: options?.since,
-        until: options?.until,
-      };
+        since: options?.since ? new Date(options.since).getTime() : undefined,
+        until: options?.until ? new Date(options.until).getTime() : undefined,
+      });
+
+      const reports = result.events
+        .map(eventToCSPReport)
+        .filter((r): r is CSPReport => r !== null);
 
       const hasPaginationParams = Boolean(
         options?.limit !== undefined
@@ -107,41 +143,30 @@ export function createCSPReportingService(params: CreateCSPReportingServiceParam
         || options?.until !== undefined,
       );
 
-      if (options?.type === "csp-violation") {
-        const result = await client.getViolations(queryOptions);
-        return buildCSPReportsResponse(result.violations, {
-          total: result.total,
-          hasMore: result.hasMore,
-          withPagination: hasPaginationParams,
-        });
+      if (!hasPaginationParams) {
+        return reports;
       }
 
-      if (options?.type === "network-request") {
-        const result = await client.getNetworkRequests(queryOptions);
-        return buildCSPReportsResponse(result.requests, {
-          total: result.total,
-          hasMore: result.hasMore,
-          withPagination: hasPaginationParams,
-        });
-      }
-
-      const result = await client.getReports(queryOptions);
-      return buildCSPReportsResponse(result.reports, {
+      return {
+        reports,
         total: result.total,
         hasMore: result.hasMore,
-        withPagination: hasPaginationParams,
-      });
+      };
     } catch (error) {
       params.logger.error("Error getting CSP reports:", error);
       return [];
     }
   }
 
+  async function getAllCSPReports(): Promise<CSPReport[]> {
+    const result = await getCSPReports();
+    return Array.isArray(result) ? result : result.reports;
+  }
+
   async function generateCSPPolicy(
     options?: Partial<CSPGenerationOptions>
   ): Promise<GeneratedCSPPolicy> {
-    const result = await getCSPReports();
-    const cspReports = extractReportsArray(result);
+    const cspReports = await getAllCSPReports();
     const analyzer = new CSPAnalyzer(cspReports);
     return analyzer.generatePolicy({
       strictMode: options?.strictMode ?? false,
@@ -155,8 +180,7 @@ export function createCSPReportingService(params: CreateCSPReportingServiceParam
   async function generateCSPPolicyByDomain(
     options?: Partial<CSPGenerationOptions>
   ): Promise<GeneratedCSPByDomain> {
-    const result = await getCSPReports();
-    const cspReports = extractReportsArray(result);
+    const cspReports = await getAllCSPReports();
     const analyzer = new CSPAnalyzer(cspReports);
     return analyzer.generatePolicyByDomain({
       strictMode: options?.strictMode ?? false,
@@ -186,16 +210,6 @@ export function createCSPReportingService(params: CreateCSPReportingServiceParam
     }, 500);
   }
 
-  async function storeCSPReport(report: CSPReport) {
-    try {
-      const client = await params.ensureApiClient();
-      await client.postReports([report]);
-      scheduleCSPPolicyGeneration();
-    } catch (error) {
-      params.logger.error("Error storing report:", error);
-    }
-  }
-
   async function handleCSPViolation(
     data: Omit<CSPViolation, "type"> & { type?: string },
     sender: MessageSenderLike
@@ -206,10 +220,34 @@ export function createCSPReportingService(params: CreateCSPReportingServiceParam
       return { success: false, reason: "Disabled" };
     }
 
-    const violation: CSPViolation = {
+    const pageUrl = sender.tab?.url || data.pageUrl;
+    const timestamp = resolveEventTimestamp(data.timestamp, {
+      logger: params.logger,
+      context: "csp_violation",
+    });
+
+    await params.addEvent({
+      type: "csp_violation",
+      domain: data.domain,
+      timestamp,
+      details: {
+        directive: data.directive,
+        blockedURL: data.blockedURL,
+        disposition: data.disposition,
+        pageUrl,
+        originalPolicy: data.originalPolicy,
+        sourceFile: data.sourceFile,
+        lineNumber: data.lineNumber,
+        columnNumber: data.columnNumber,
+        statusCode: data.statusCode,
+      },
+    });
+
+    // Queue for external reporter if configured
+    reportQueue.push({
       type: "csp-violation",
       timestamp: data.timestamp || new Date().toISOString(),
-      pageUrl: sender.tab?.url || data.pageUrl,
+      pageUrl: pageUrl || "",
       directive: data.directive,
       blockedURL: data.blockedURL,
       domain: data.domain,
@@ -219,24 +257,9 @@ export function createCSPReportingService(params: CreateCSPReportingServiceParam
       lineNumber: data.lineNumber,
       columnNumber: data.columnNumber,
       statusCode: data.statusCode,
-    };
-
-    await storeCSPReport(violation);
-    reportQueue.push(violation);
-
-    await params.addEvent({
-      type: "csp_violation",
-      domain: violation.domain,
-      timestamp: resolveEventTimestamp(violation.timestamp, {
-        logger: params.logger,
-        context: "csp_violation",
-      }),
-      details: {
-        directive: violation.directive,
-        blockedURL: violation.blockedURL,
-        disposition: violation.disposition,
-      },
     });
+
+    scheduleCSPPolicyGeneration();
 
     return { success: true };
   }
@@ -251,19 +274,36 @@ export function createCSPReportingService(params: CreateCSPReportingServiceParam
       return { success: false, reason: "Disabled" };
     }
 
-    const request: NetworkRequest = {
+    const pageUrl = sender.tab?.url || data.pageUrl;
+    const timestamp = resolveEventTimestamp(data.timestamp, {
+      logger: params.logger,
+      context: "network_request",
+    });
+
+    await params.addEvent({
+      type: "network_request",
+      domain: data.domain,
+      timestamp,
+      details: {
+        url: data.url,
+        method: data.method,
+        initiator: data.initiator,
+        pageUrl,
+        resourceType: data.resourceType,
+      },
+    });
+
+    // Queue for external reporter if configured
+    reportQueue.push({
       type: "network-request",
       timestamp: data.timestamp || new Date().toISOString(),
-      pageUrl: sender.tab?.url || data.pageUrl,
+      pageUrl: pageUrl || "",
       url: data.url,
       method: data.method,
       initiator: data.initiator,
       domain: data.domain,
       resourceType: data.resourceType,
-    };
-
-    await storeCSPReport(request);
-    reportQueue.push(request);
+    });
 
     return { success: true };
   }
@@ -299,8 +339,7 @@ export function createCSPReportingService(params: CreateCSPReportingServiceParam
 
   async function clearCSPData(): Promise<{ success: boolean }> {
     try {
-      const client = await params.ensureApiClient();
-      await client.clearReports();
+      await params.clearCSPEvents();
       reportQueue = [];
       return { success: true };
     } catch (error) {

@@ -6,6 +6,7 @@ import {
 } from "@pleno-audit/detectors";
 import type { CSPViolation } from "@pleno-audit/csp";
 import { DEFAULT_CSP_CONFIG } from "@pleno-audit/csp";
+import { EventStore } from "@pleno-audit/storage";
 import {
   startCookieMonitor,
   onCookieChange,
@@ -77,6 +78,8 @@ import { createConsumer, type QueueAdapter, type QueueItem } from "@pleno-audit/
 
 const DEV_REPORT_ENDPOINT = "http://localhost:3001/api/v1/reports";
 
+const eventStore = new EventStore();
+
 const backgroundServices = createBackgroundServices(logger);
 const {
   api: backgroundApi,
@@ -90,6 +93,13 @@ const {
 } = backgroundServices;
 
 let doHMonitor: DoHMonitor | null = null;
+
+/** addEvent + EventStore永続化を一元化 */
+async function persistEvent(event: NewEvent) {
+  const eventLog = await backgroundEvents.addEvent(event);
+  await eventStore.add(eventLog);
+  return eventLog;
+}
 
 backgroundAlerts.registerNotificationClickHandler();
 
@@ -132,7 +142,7 @@ const extensionNetworkService = createExtensionNetworkService({
   logger,
   getStorage,
   setStorage,
-  addEvent: (event) => backgroundEvents.addEvent(event as NewEvent),
+  addEvent: (event) => persistEvent(event as NewEvent),
   getAlertManager: backgroundAlerts.getAlertManager,
   getRuntimeId: () => chrome.runtime.id,
 });
@@ -198,7 +208,7 @@ async function getExtensionStats(): Promise<ExtensionStats> {
 }
 
 const securityEventHandlers = createSecurityEventHandlers({
-  addEvent: (event) => backgroundEvents.addEvent(event as NewEvent),
+  addEvent: (event) => persistEvent(event as NewEvent),
   getAlertManager: backgroundAlerts.getAlertManager,
   extractDomainFromUrl: backgroundUtils.extractDomainFromUrl,
   checkDataTransferPolicy: backgroundAlerts.checkDataTransferPolicy,
@@ -215,10 +225,25 @@ const networkSecurityInspector = createNetworkSecurityInspector({
 
 const cspReportingService = createCSPReportingService({
   logger,
-  ensureApiClient: backgroundApi.ensureApiClient,
   initStorage: backgroundStorage.initStorage,
   saveStorage: async (data) => backgroundStorage.saveStorage(data),
-  addEvent: async (event) => backgroundEvents.addEvent(event as NewEvent),
+  addEvent: async (event) => persistEvent(event as NewEvent),
+  getCSPEvents: async (options) => {
+    return eventStore.query({
+      type: options?.type,
+      limit: options?.limit,
+      offset: options?.offset,
+      since: options?.since,
+      until: options?.until,
+    });
+  },
+  clearCSPEvents: async () => {
+    // Clear only CSP-related events by querying and deleting
+    const violations = await eventStore.queryAll({ type: ["csp_violation", "network_request"] });
+    for (const event of violations) {
+      await eventStore.delete(event.id);
+    }
+  },
   devReportEndpoint: DEV_REPORT_ENDPOINT,
 });
 
@@ -228,7 +253,7 @@ const aiPromptMonitorService = createAIPromptMonitorService({
   setStorage,
   clearAIPrompts,
   queueStorageOperation: backgroundStorage.queueStorageOperation,
-  addEvent: async (event) => backgroundEvents.addEvent(event as NewEvent),
+  addEvent: async (event) => persistEvent(event as NewEvent),
   updateService: backgroundStorage.updateService,
   checkAIServicePolicy: backgroundAlerts.checkAIServicePolicy,
   getAlertManager: backgroundAlerts.getAlertManager,
@@ -239,7 +264,7 @@ const domainRiskService = createDomainRiskService({
   getStorage,
   setStorage: async (data) => setStorage(data),
   updateService: backgroundStorage.updateService,
-  addEvent: async (event) => backgroundEvents.addEvent(event as NewEvent),
+  addEvent: async (event) => persistEvent(event as NewEvent),
   getAlertManager: backgroundAlerts.getAlertManager,
 });
 
@@ -478,6 +503,18 @@ handleNetworkInspection: (data, sender) => networkSecurityInspector.handleNetwor
     getDoHMonitorConfig,
     setDoHMonitorConfig,
     getDoHRequests,
+    getEvents: async (options) => eventStore.query({
+      limit: options?.limit,
+      offset: options?.offset,
+      since: options?.since,
+      until: options?.until,
+      type: options?.type as import("@pleno-audit/detectors").EventLogType[],
+    }),
+    getEventsCount: async (options) => eventStore.count({
+      since: options?.since,
+      until: options?.until,
+      type: options?.type as import("@pleno-audit/detectors").EventLogType[],
+    }),
   };
 }
 
@@ -644,7 +681,7 @@ export default defineBackground(() => {
     backgroundStorage
       .addCookieToService(domain, cookie)
       .catch((err) => logger.debug("Add cookie to service failed:", err));
-    backgroundEvents.addEvent({
+    persistEvent({
       type: "cookie_set",
       domain,
       timestamp: cookie.detectedAt,
