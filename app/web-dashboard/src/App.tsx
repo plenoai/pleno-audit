@@ -177,7 +177,7 @@ function DashboardContent() {
       });
       setLastUpdated(new Date().toISOString());
     } catch (error) {
-      console.warn("[web-dashboard] report load failed", error);
+      // API fetch failure is non-fatal; previous data remains displayed
     } finally {
       setLoading(false);
       setIsRefreshing(false);

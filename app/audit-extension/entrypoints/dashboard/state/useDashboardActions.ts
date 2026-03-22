@@ -2,6 +2,7 @@ import { useCallback } from "preact/hooks";
 import type { CSPReport } from "@pleno-audit/csp";
 import type { DetectedService, EventLog } from "@pleno-audit/casb-types";
 import type { CapturedAIPrompt } from "@pleno-audit/ai-detector";
+import { createLogger } from "@pleno-audit/extension-runtime";
 
 interface UseDashboardActionsOptions {
   reports: CSPReport[];
@@ -10,6 +11,8 @@ interface UseDashboardActionsOptions {
   aiPrompts: CapturedAIPrompt[];
   loadData: () => Promise<void> | void;
 }
+
+const logger = createLogger("dashboard-actions");
 
 export function useDashboardActions({
   reports,
@@ -23,7 +26,7 @@ export function useDashboardActions({
       await chrome.runtime.sendMessage({ type: "CLEAR_CSP_DATA" });
       await loadData();
     } catch (error) {
-      console.warn("[dashboard] Failed to clear data.", error);
+      logger.warn("Failed to clear data.", error);
     }
   }, [loadData]);
 

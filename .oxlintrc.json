@@ -2,7 +2,7 @@
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "rules": {
     "no-console": [
-      "warn",
+      "error",
       {
         "allow": []
       }
@@ -69,10 +69,10 @@
       "files": ["app/battacker-extension/**/*"],
       "rules": { "no-console": "off", "no-restricted-globals": "off" }
     },
-    // Battacker package - attack simulations require network access
+    // Battacker package - attack simulations require network access and console for payload simulation
     {
       "files": ["packages/battacker/**/*"],
-      "rules": { "no-restricted-globals": "off" }
+      "rules": { "no-console": "off", "no-restricted-globals": "off" }
     },
     // SSO Manager - requires OAuth token exchange (enterprise feature, default: OFF)
     {
@@ -89,20 +89,25 @@
       "files": ["app/audit-extension/entrypoints/dashboard/IntegrationsTab.tsx"],
       "rules": { "no-restricted-globals": "off" }
     },
-    // Test files - allow mocking fetch/WebSocket
+    // Test files - allow mocking fetch/WebSocket and console for test output
     {
       "files": ["*.test.ts", "*.spec.ts"],
-      "rules": { "no-restricted-globals": "off" }
+      "rules": { "no-console": "off", "no-restricted-globals": "off" }
     },
     // Packages test files
     {
       "files": ["packages/**/*.test.ts"],
-      "rules": { "no-restricted-globals": "off" }
+      "rules": { "no-console": "off", "no-restricted-globals": "off" }
     },
     // App test files
     {
       "files": ["app/**/*.test.ts"],
-      "rules": { "no-restricted-globals": "off" }
+      "rules": { "no-console": "off", "no-restricted-globals": "off" }
+    },
+    // Battacker E2E - test runner output
+    {
+      "files": ["app/battacker-e2e/src/**/*"],
+      "rules": { "no-console": "off", "no-restricted-globals": "off" }
     },
     // Web dashboard - API calls to own server (same origin)
     {

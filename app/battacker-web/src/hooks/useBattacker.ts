@@ -36,8 +36,8 @@ export function useBattacker(): UseBattackerReturn {
         ]);
         setScore(lastResult);
         setHistory(historyData);
-      } catch (error) {
-        console.error("Failed to load data:", error);
+      } catch {
+        // Storage load failure is non-fatal; UI shows empty state
       } finally {
         setLoading(false);
       }
@@ -53,22 +53,8 @@ export function useBattacker(): UseBattackerReturn {
 
     try {
       const resultPromise = (async () => {
-        console.log("Starting tests with", allAttacks.length, "attacks");
-        console.log("Attacks:", allAttacks.map(a => a.name));
-        const testResults = await runAllTests(
-          allAttacks,
-          (completed, total, current) => {
-            console.log(`Testing: ${current.name} (${completed}/${total})`);
-          }
-        );
-        console.log("Test results:", testResults.map(r => ({
-          name: r.test.name,
-          blocked: r.result.blocked,
-          details: r.result.details,
-        })));
-        const score = calculateDefenseScore(testResults);
-        console.log("Final score:", score.totalScore, "Grade:", score.grade);
-        return score;
+        const testResults = await runAllTests(allAttacks);
+        return calculateDefenseScore(testResults);
       })();
 
       setScanPhase("INITIALIZING");
@@ -113,8 +99,8 @@ export function useBattacker(): UseBattackerReturn {
       await storage.saveResult(result);
       setScore(result);
       setHistory((prev) => [result, ...prev]);
-    } catch (error) {
-      console.error("Failed to run tests:", error);
+    } catch {
+      // Test failure is reflected in UI via null score
     } finally {
       setRunning(false);
       setScanProgress(0);
