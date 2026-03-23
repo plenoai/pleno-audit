@@ -105,7 +105,6 @@ export interface CSPConfig {
   enabled: boolean;
   collectNetworkRequests: boolean;
   collectCSPViolations: boolean;
-  reportEndpoint: string | null;
   maxStoredReports: number;
 }
 

@@ -73,12 +73,5 @@ export const DEFAULT_CSP_CONFIG: CSPConfig = {
   enabled: true,
   collectNetworkRequests: true,
   collectCSPViolations: true,
-  reportEndpoint: null,
   maxStoredReports: 1000,
 };
-
-/** バッチ送信間隔（ミリ秒） */
-export const DEFAULT_BATCH_INTERVAL_MS = 30000;
-
-/** バッチサイズ上限 */
-export const DEFAULT_BATCH_SIZE = 100;

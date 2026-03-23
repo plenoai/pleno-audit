@@ -27,13 +27,11 @@ export function CSPSettings() {
   const { colors } = useTheme();
   const [viewState, setViewState] = useState<ViewState>({ kind: "loading" });
   const [expanded, setExpanded] = useState(false);
-  const [endpointDraft, setEndpointDraft] = useState("");
 
   useEffect(() => {
     sendMessage<CSPConfig>({ type: "GET_CSP_CONFIG" })
       .then((cfg) => {
         setViewState({ kind: "ready", config: cfg });
-        setEndpointDraft(cfg.reportEndpoint ?? "");
       })
       .catch((error) => {
         logger.warn({
@@ -41,7 +39,6 @@ export function CSPSettings() {
           error,
         });
         setViewState({ kind: "ready", config: DEFAULT_CSP_CONFIG });
-        setEndpointDraft(DEFAULT_CSP_CONFIG.reportEndpoint ?? "");
       });
   }, []);
 
@@ -59,24 +56,6 @@ export function CSPSettings() {
         error,
       });
       setViewState({ kind: "ready", config: previousConfig });
-    });
-  }
-
-  function handleEndpointCommit(value: string) {
-    if (viewState.kind !== "ready") return;
-    const previousConfig = viewState.config;
-    const newConfig = { ...previousConfig, reportEndpoint: value || null };
-    setViewState({ kind: "ready", config: newConfig });
-    sendMessage({
-      type: "SET_CSP_CONFIG",
-      data: newConfig,
-    }).catch((error) => {
-      logger.warn({
-        event: "POPUP_SET_CSP_CONFIG_ENDPOINT_FAILED",
-        error,
-      });
-      setViewState({ kind: "ready", config: previousConfig });
-      setEndpointDraft(previousConfig.reportEndpoint ?? "");
     });
   }
 
@@ -139,26 +118,6 @@ export function CSPSettings() {
       fontSize: "9px",
       color: colors.textMuted,
     },
-    endpointSection: {
-      marginTop: "8px",
-      display: "flex",
-      flexDirection: "column" as const,
-      gap: "4px",
-    },
-    endpointLabel: {
-      fontSize: "10px",
-      color: colors.textSecondary,
-    },
-    endpointInput: {
-      width: "100%",
-      padding: "6px 8px",
-      fontSize: "11px",
-      border: `1px solid ${colors.border}`,
-      borderRadius: "4px",
-      background: colors.bgSecondary,
-      color: colors.textPrimary,
-      outline: "none",
-    },
   };
 
   if (viewState.kind === "loading") return null;
@@ -201,17 +160,6 @@ export function CSPSettings() {
                 </div>
               </label>
             ))}
-          </div>
-          <div style={styles.endpointSection}>
-            <label style={styles.endpointLabel}>レポートURL (オプション)</label>
-            <input
-              type="url"
-              style={styles.endpointInput}
-              value={endpointDraft}
-              onChange={(e) => setEndpointDraft((e.target as HTMLInputElement).value)}
-              onBlur={() => handleEndpointCommit(endpointDraft)}
-              placeholder="https://example.com/csp-report"
-            />
           </div>
         </>
       )}

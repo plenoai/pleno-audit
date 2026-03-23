@@ -108,11 +108,6 @@
     {
       "files": ["app/battacker-e2e/src/**/*"],
       "rules": { "no-console": "off", "no-restricted-globals": "off" }
-    },
-    // Web dashboard - API calls to own server (same origin)
-    {
-      "files": ["app/web-dashboard/**/*"],
-      "rules": { "no-restricted-globals": "off" }
     }
   ]
 }

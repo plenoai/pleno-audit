@@ -18,8 +18,6 @@ export {
   STRICT_DIRECTIVES,
   REQUIRED_DIRECTIVES,
   DEFAULT_CSP_CONFIG,
-  DEFAULT_BATCH_INTERVAL_MS,
-  DEFAULT_BATCH_SIZE,
 } from "./constants.js";
 
 // Analyzer
@@ -28,6 +26,3 @@ export {
   type DomainCSPPolicy,
   type GeneratedCSPByDomain,
 } from "./analyzer.js";
-
-// Reporter
-export { CSPReporter, type ReportPayload } from "./reporter.js";

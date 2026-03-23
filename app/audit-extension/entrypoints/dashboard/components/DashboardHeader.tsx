@@ -8,7 +8,6 @@ interface DashboardHeaderProps {
   styles: DashboardStyles;
   status: { variant: "danger" | "warning" | "info" | "success"; label: string; dot: boolean };
   lastUpdated: string;
-  connectionMode: "local" | "remote";
   period: Period;
   onPeriodChange: (period: Period) => void;
   isRefreshing: boolean;
@@ -21,7 +20,6 @@ export function DashboardHeader({
   styles,
   status,
   lastUpdated,
-  connectionMode,
   period,
   onPeriodChange,
   isRefreshing,
@@ -41,7 +39,7 @@ export function DashboardHeader({
             </Badge>
           </h1>
           <p style={styles.subtitle}>
-            更新: {new Date(lastUpdated).toLocaleString("ja-JP")} | 接続: {connectionMode}
+            更新: {new Date(lastUpdated).toLocaleString("ja-JP")}
           </p>
         </div>
         <div style={styles.controls}>

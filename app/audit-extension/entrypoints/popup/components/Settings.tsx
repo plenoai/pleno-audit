@@ -26,7 +26,6 @@ export function Settings() {
   const [config, setConfig] = useState<CSPConfig | null>(null);
   const [nrdConfig, setNRDConfig] = useState<NRDConfig | null>(null);
   const [retentionDays, setRetentionDays] = useState<number | null>(null);
-  const [endpoint, setEndpoint] = useState("");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [enterpriseStatus, setEnterpriseStatus] = useState<EnterpriseStatus>(DEFAULT_ENTERPRISE_STATUS);
@@ -55,14 +54,12 @@ export function Settings() {
 
     if (cspResult.status === "fulfilled") {
       setConfig(cspResult.value);
-      setEndpoint(cspResult.value?.reportEndpoint ?? "");
     } else {
       logger.warn({
         event: "POPUP_CSP_CONFIG_LOAD_FAILED",
         data: { reason: String(cspResult.reason) },
       });
       setConfig(DEFAULT_CSP_CONFIG);
-      setEndpoint(DEFAULT_CSP_CONFIG.reportEndpoint ?? "");
     }
 
     if (nrdResult.status === "fulfilled") {
@@ -119,10 +116,7 @@ export function Settings() {
     try {
       await sendMessage({
         type: "SET_CSP_CONFIG",
-        data: {
-          ...config,
-          reportEndpoint: endpoint || null,
-        },
+        data: config,
       });
 
       await sendMessage({
@@ -220,16 +214,6 @@ export function Settings() {
             <span style={{ color: colors.textPrimary }}>Collect Network Requests</span>
           </label>
 
-          <div style={{ marginBottom: "16px" }}>
-            <label style={styles.label}>Report Endpoint (optional)</label>
-            <input
-              type="url"
-              style={styles.input}
-              value={endpoint}
-              onChange={(e) => setEndpoint((e.target as HTMLInputElement).value)}
-              placeholder="https://your-server.com/api/reports"
-            />
-          </div>
         </>
       )}
 

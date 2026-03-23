@@ -62,7 +62,6 @@ function DashboardContent() {
           styles={styles}
           status={dashboard.status}
           lastUpdated={dashboard.lastUpdated}
-          connectionMode={dashboard.connectionMode}
           period={period}
           onPeriodChange={setPeriod}
           isRefreshing={dashboard.isRefreshing}
@@ -80,6 +79,8 @@ function DashboardContent() {
             services={dashboard.services}
             nrdServices={dashboard.nrdServices}
             loginServices={dashboard.loginServices}
+            typosquatServices={dashboard.typosquatServices}
+            aiServices={dashboard.aiServices}
             serviceConnections={dashboard.serviceConnections}
           />
         )}

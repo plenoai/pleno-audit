@@ -37,7 +37,6 @@ export function useDashboardState({
   });
   const [lastUpdated, setLastUpdated] = useState<string>("");
   const [loading, setLoading] = useState(true);
-  const [connectionMode, setConnectionMode] = useState<"local" | "remote">("local");
   const [aiPrompts, setAIPrompts] = useState<CapturedAIPrompt[]>([]);
   const [services, setServices] = useState<DetectedService[]>([]);
   const [serviceConnections, setServiceConnections] = useState<Record<string, Record<string, number>>>({});
@@ -67,7 +66,6 @@ export function useDashboardState({
       const [
         violationsResult,
         networkResult,
-        configResult,
         aiPromptsResult,
         storageResult,
         eventsResult,
@@ -82,7 +80,6 @@ export function useDashboardState({
           { type: "GET_NETWORK_REQUESTS", data: { since: sinceTs, limit: 500 } },
           { requests: [], total: 0 }
         ),
-        safeMessage({ type: "GET_CONNECTION_CONFIG" }, { mode: "local" }),
         safeMessage({ type: "GET_AI_PROMPTS" }, []),
         chrome.storage.local.get(["services", "serviceConnections", "extensionConnections"]).catch((error) => {
           logger.warn("[dashboard] Failed to load services from chrome.storage.", error);
@@ -113,7 +110,6 @@ export function useDashboardState({
         networkRequests: networkTotal,
       }));
 
-      if (configResult) setConnectionMode(configResult.mode as "local" | "remote");
       if (Array.isArray(aiPromptsResult)) setAIPrompts(aiPromptsResult);
       if (storageResult.services) setServices(Object.values(storageResult.services));
       if (storageResult.serviceConnections) {
@@ -248,6 +244,10 @@ export function useDashboardState({
     () => services.filter((s) => s.typosquatResult?.isTyposquat),
     [services]
   );
+  const aiServices = useMemo(
+    () => services.filter((s) => s.aiDetected?.hasAIActivity),
+    [services]
+  );
 
   const status = useMemo(
     () => getStatusBadge(nrdServices.length, violations.length, aiPrompts.length),
@@ -259,7 +259,6 @@ export function useDashboardState({
     totalCounts,
     lastUpdated,
     loading,
-    connectionMode,
     aiPrompts,
     services,
     serviceConnections,
@@ -277,6 +276,7 @@ export function useDashboardState({
     nrdServices,
     loginServices,
     typosquatServices,
+    aiServices,
     status,
   };
 }

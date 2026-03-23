@@ -16,17 +16,3 @@ export {
   createEnterpriseManager,
   EnterpriseManager,
 } from "./enterprise-manager.js";
-
-// API Client
-export {
-  ApiClient,
-  getApiClient,
-  updateApiClientConfig,
-  type ConnectionMode,
-  type ApiClientConfig,
-  type QueryOptions,
-  type PaginatedResult,
-} from "./api-client.js";
-
-// Sync Manager
-export { SyncManager, getSyncManager } from "./sync-manager.js";

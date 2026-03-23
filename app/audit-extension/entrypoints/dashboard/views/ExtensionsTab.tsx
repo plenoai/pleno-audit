@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "preact/hooks";
-import { Badge, Button, SearchInput } from "../../../components";
+import { Badge, Button, SearchInput, Select } from "../../../components";
 import { FilteredTab } from "../components/FilteredTab";
 import { useTabFilter } from "../hooks/useTabFilter";
 import { useTheme } from "../../../lib/theme";
@@ -49,6 +49,7 @@ export function ExtensionsTab() {
   const { searchQuery, setSearchQuery, filters, setFilter } = useTabFilter({
     critical: false,
     high: false,
+    tag: "",
   });
   const [extensions, setExtensions] = useState<ExtensionInfo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -101,6 +102,16 @@ export function ExtensionsTab() {
       const level = getPermissionRiskLevel(e.permissions, e.hostPermissions);
       return level === "high" || level === "critical";
     });
+    if (filters.tag) {
+      result = result.filter((ext) => {
+        if (filters.tag === "external_update") return ext.updateUrl != null && !ext.updateUrl.includes("google.com");
+        if (filters.tag === "not_removable") return !ext.mayDisable;
+        if (filters.tag === "disabled") return !ext.enabled;
+        if (filters.tag === "admin") return ext.installType === "admin";
+        if (filters.tag === "all_urls") return ext.hostPermissions.some((p) => p === "<all_urls>" || p === "*://*/*" || p === "http://*/*" || p === "https://*/*");
+        return true;
+      });
+    }
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       result = result.filter(
@@ -112,7 +123,7 @@ export function ExtensionsTab() {
       );
     }
     return result;
-  }, [extensions, searchQuery, filters.critical, filters.high]);
+  }, [extensions, searchQuery, filters.critical, filters.high, filters.tag]);
 
   const toggleExpand = (id: string) => {
     setExpandedIds((prev) => {
@@ -150,6 +161,18 @@ export function ExtensionsTab() {
           >
             高リスク ({highCount})
           </Button>
+          <Select
+            value={filters.tag}
+            onChange={(v) => setFilter("tag", v)}
+            options={[
+              { value: "external_update", label: "外部更新" },
+              { value: "not_removable", label: "削除不可" },
+              { value: "disabled", label: "無効" },
+              { value: "admin", label: "管理者" },
+              { value: "all_urls", label: "<all_urls>" },
+            ]}
+            placeholder="タグ"
+          />
         </>
       }
       columns={[

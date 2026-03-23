@@ -8,7 +8,7 @@ import type {
   NetworkRequest,
   NetworkRequestDetails,
 } from "@pleno-audit/csp";
-import { CSPAnalyzer, CSPReporter, DEFAULT_CSP_CONFIG, type GeneratedCSPByDomain } from "@pleno-audit/csp";
+import { CSPAnalyzer, DEFAULT_CSP_CONFIG, type GeneratedCSPByDomain } from "@pleno-audit/csp";
 import { resolveEventTimestamp } from "./event-timestamp.js";
 
 interface MessageSenderLike {
@@ -55,7 +55,6 @@ interface CreateCSPReportingServiceParams {
     until?: number;
   }) => Promise<CSPEventQueryResult>;
   clearCSPEvents: () => Promise<void>;
-  devReportEndpoint: string;
 }
 
 function eventToCSPReport(event: CSPEventRecord): CSPReport | null {
@@ -95,8 +94,6 @@ function eventToCSPReport(event: CSPEventRecord): CSPReport | null {
 }
 
 export function createCSPReportingService(params: CreateCSPReportingServiceParams) {
-  let cspReporter: CSPReporter | null = null;
-  let reportQueue: CSPReport[] = [];
   let cspGenerationTimer: ReturnType<typeof setTimeout> | null = null;
 
   async function getCSPConfig(): Promise<CSPConfig> {
@@ -243,22 +240,6 @@ export function createCSPReportingService(params: CreateCSPReportingServiceParam
       },
     });
 
-    // Queue for external reporter if configured
-    reportQueue.push({
-      type: "csp-violation",
-      timestamp: data.timestamp || new Date().toISOString(),
-      pageUrl: pageUrl || "",
-      directive: data.directive,
-      blockedURL: data.blockedURL,
-      domain: data.domain,
-      disposition: data.disposition,
-      originalPolicy: data.originalPolicy,
-      sourceFile: data.sourceFile,
-      lineNumber: data.lineNumber,
-      columnNumber: data.columnNumber,
-      statusCode: data.statusCode,
-    });
-
     scheduleCSPPolicyGeneration();
 
     return { success: true };
@@ -293,32 +274,7 @@ export function createCSPReportingService(params: CreateCSPReportingServiceParam
       },
     });
 
-    // Queue for external reporter if configured
-    reportQueue.push({
-      type: "network-request",
-      timestamp: data.timestamp || new Date().toISOString(),
-      pageUrl: pageUrl || "",
-      url: data.url,
-      method: data.method,
-      initiator: data.initiator,
-      domain: data.domain,
-      resourceType: data.resourceType,
-    });
-
     return { success: true };
-  }
-
-  async function flushReportQueue() {
-    if (!cspReporter || reportQueue.length === 0) {
-      return;
-    }
-
-    const batch = reportQueue.splice(0, 100);
-    const success = await cspReporter.send(batch);
-
-    if (!success) {
-      reportQueue.unshift(...batch);
-    }
   }
 
   async function setCSPConfig(
@@ -327,20 +283,12 @@ export function createCSPReportingService(params: CreateCSPReportingServiceParam
     const current = await getCSPConfig();
     const updated = { ...current, ...newConfig };
     await params.saveStorage({ cspConfig: updated });
-
-    if (cspReporter) {
-      const endpoint =
-        updated.reportEndpoint ?? (import.meta.env.DEV ? params.devReportEndpoint : null);
-      cspReporter.setEndpoint(endpoint);
-    }
-
     return { success: true };
   }
 
   async function clearCSPData(): Promise<{ success: boolean }> {
     try {
       await params.clearCSPEvents();
-      reportQueue = [];
       return { success: true };
     } catch (error) {
       params.logger.error("Error clearing data:", error);
@@ -348,20 +296,9 @@ export function createCSPReportingService(params: CreateCSPReportingServiceParam
     }
   }
 
-  async function initializeReporter(): Promise<void> {
-    const config = await getCSPConfig();
-    const endpoint = config.reportEndpoint ?? (import.meta.env.DEV ? params.devReportEndpoint : null);
-    cspReporter = new CSPReporter(endpoint);
-  }
-
-  function clearReportQueue(): void {
-    reportQueue = [];
-  }
-
   return {
     handleCSPViolation,
     handleNetworkRequest,
-    flushReportQueue,
     getCSPReports,
     generateCSPPolicy,
     generateCSPPolicyByDomain,
@@ -369,7 +306,5 @@ export function createCSPReportingService(params: CreateCSPReportingServiceParam
     getCSPConfig,
     setCSPConfig,
     clearCSPData,
-    initializeReporter,
-    clearReportQueue,
   };
 }

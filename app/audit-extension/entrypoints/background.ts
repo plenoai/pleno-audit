@@ -74,14 +74,11 @@ import {
 } from "@pleno-audit/extension-network-service";
 import { createConsumer, type QueueAdapter, type QueueItem } from "@pleno-audit/event-queue";
 
-const DEV_REPORT_ENDPOINT = "http://localhost:3001/api/v1/reports";
 
 const eventStore = new EventStore();
 
 const backgroundServices = createBackgroundServices(logger);
 const {
-  api: backgroundApi,
-  sync: backgroundSync,
   events: backgroundEvents,
   alerts: backgroundAlerts,
   storage: backgroundStorage,
@@ -340,7 +337,6 @@ const cspReportingService = createCSPReportingService({
       await eventStore.delete(event.id);
     }
   },
-  devReportEndpoint: DEV_REPORT_ENDPOINT,
 });
 
 const aiPromptMonitorService = createAIPromptMonitorService({
@@ -391,10 +387,7 @@ async function clearAllData(): Promise<{ success: boolean }> {
       await extensionNetworkService.stopExtensionMonitor();
       monitorStopped = true;
 
-      // 2. Clear in-memory queue
-      cspReportingService.clearReportQueue();
-
-      // 3. Clear chrome.storage.local and reset to defaults (preserve theme)
+      // 2. Clear chrome.storage.local and reset to defaults (preserve theme)
       await clearAllStorage({ preserveTheme: true });
 
       logger.info("All data cleared successfully");
@@ -472,15 +465,10 @@ async function initializeEnterpriseManagedFlow(): Promise<void> {
   await chrome.tabs.create({ url: dashboardUrl, active: true });
 }
 
-async function initializeCSPReporter(): Promise<void> {
-  await cspReportingService.initializeReporter();
-}
-
 function initializeBackgroundServices(): void {
   initializeDebugBridge();
 
   void initializeEnterpriseManagedFlow().catch((error) => logger.error("Enterprise manager init failed:", error));
-  void initializeCSPReporter().catch((error) => logger.error("CSP reporter init failed:", error));
   void initExtensionMonitor()
     .then(() => logger.debug("Extension monitor initialization completed"))
     .catch((error) => logger.error("Extension monitor init failed:", error));
@@ -495,7 +483,6 @@ const queueQueueAdapter: QueueAdapter = {
 function registerRecurringAlarms(): void {
   // Event queue processing（30秒ごとにキューを処理）
   chrome.alarms.create("processEventQueue", { periodInMinutes: 0.5 });
-  chrome.alarms.create("flushCSPReports", { periodInMinutes: 0.5 });
   // DNR API rate limit対応: 36秒間隔（Chrome制限: 10分間に最大20回、30秒以上の間隔）
   chrome.alarms.create("checkDNRMatches", { periodInMinutes: 0.6 });
   // Extension risk analysis (runs every 5 minutes)
@@ -559,12 +546,6 @@ handleNetworkInspection: (data, sender) => networkSecurityInspector.handleNetwor
     setCSPConfig: cspReportingService.setCSPConfig,
     clearCSPData: cspReportingService.clearCSPData,
     clearAllData,
-    getStats: async () => ({ violations: 0, requests: 0, uniqueDomains: 0 }),
-    getConnectionConfig: backgroundConfig.getConnectionConfig,
-    setConnectionConfig: backgroundConfig.setConnectionConfig,
-    getSyncConfig: backgroundSync.getSyncConfig,
-    setSyncConfig: backgroundSync.setSyncConfig,
-    triggerSync: backgroundSync.triggerSync,
     getSSOManager,
     getEnterpriseManager,
     getDetectionConfig: backgroundConfig.getDetectionConfig,
@@ -668,7 +649,6 @@ export default defineBackground(() => {
 
   const alarmHandlers = createAlarmHandlersModule({
     logger,
-    flushReportQueue: () => cspReportingService.flushReportQueue(),
     checkDNRMatchesHandler,
     analyzeExtensionRisks,
     cleanupOldData: backgroundConfig.cleanupOldData,

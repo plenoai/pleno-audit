@@ -17,6 +17,7 @@ import type {
   CreateAlertInput,
   NRDAlertParams,
   TyposquatAlertParams,
+  CSPViolationAlertParams,
   AISensitiveAlertParams,
   ShadowAIAlertParams,
   ExtensionAlertParams,
@@ -38,6 +39,7 @@ import type {
 import {
   buildNRDAlert,
   buildTyposquatAlert,
+  buildCSPViolationAlert,
   buildAISensitiveAlert,
   buildShadowAIAlert,
   buildExtensionAlert,
@@ -256,6 +258,12 @@ export function createAlertManager(
     return createOptionalAlert(buildTyposquatAlert(params));
   }
 
+  async function alertCSPViolation(
+    params: CSPViolationAlertParams
+  ): Promise<SecurityAlert | null> {
+    return createOptionalAlert(buildCSPViolationAlert(params));
+  }
+
   async function alertAISensitive(
     params: AISensitiveAlertParams
   ): Promise<SecurityAlert | null> {
@@ -403,6 +411,7 @@ export function createAlertManager(
     createAlert,
     alertNRD,
     alertTyposquat,
+    alertCSPViolation,
     alertAISensitive,
     alertShadowAI,
     alertExtension,
