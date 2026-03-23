@@ -5,31 +5,8 @@
  * Shadow AI検出強化の一環として、より多くのプロバイダーをサポート。
  */
 
-import type { InferredProvider } from "./types.js";
-
-// ============================================================================
-// Extended Provider Type
-// ============================================================================
-
-/**
- * 拡張AIプロバイダー（既存+新規）
- */
-export type ExtendedProvider =
-  | InferredProvider
-  | "azure" // Azure OpenAI
-  | "cohere" // Cohere
-  | "mistral" // Mistral AI
-  | "meta" // Meta Llama
-  | "together" // Together.ai
-  | "replicate" // Replicate
-  | "huggingface" // Hugging Face
-  | "perplexity" // Perplexity
-  | "groq" // Groq
-  | "deepseek" // DeepSeek
-  | "moonshot" // Moonshot AI
-  | "zhipu" // Zhipu AI (智谱)
-  | "baidu" // Baidu ERNIE
-  | "alibaba"; // Alibaba Qwen
+import type { InferredProvider, ExtendedProvider } from "@libztbs/types";
+export type { ExtendedProvider } from "@libztbs/types";
 
 /**
  * プロバイダー分類結果

@@ -1,14 +1,38 @@
 /**
- * @fileoverview CASB Domain Types
+ * @fileoverview Zero Trust Browser Security — Core Types
  *
- * Cloud Access Security Broker (CASB) ドメインの型定義。
- * SaaSサービスの可視化とリスク評価を担う。
+ * libztbsの基盤型定義。全パッケージはこのパッケージの型に依存可能。
+ * このパッケージ自体はゼロ依存。
  */
 
-import type {
-  InferredProvider,
-  ExtendedProvider,
-} from "@libztbs/ai-detector";
+// ============================================================================
+// AI Provider Types
+// ============================================================================
+
+/** 推定されたAIプロバイダー */
+export type InferredProvider =
+  | "openai" // ChatGPT, API
+  | "anthropic" // Claude
+  | "google" // Gemini
+  | "unknown"; // 汎用検出
+
+/** 拡張AIプロバイダー（既存+新規） */
+export type ExtendedProvider =
+  | InferredProvider
+  | "azure" // Azure OpenAI
+  | "cohere" // Cohere
+  | "mistral" // Mistral AI
+  | "meta" // Meta Llama
+  | "together" // Together.ai
+  | "replicate" // Replicate
+  | "huggingface" // Hugging Face
+  | "perplexity" // Perplexity
+  | "groq" // Groq
+  | "deepseek" // DeepSeek
+  | "moonshot" // Moonshot AI
+  | "zhipu" // Zhipu AI (智谱)
+  | "baidu" // Baidu ERNIE
+  | "alibaba"; // Alibaba Qwen
 
 // ============================================================================
 // SaaS Visibility (サービス可視性)
