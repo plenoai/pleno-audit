@@ -8,6 +8,7 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@libztbs/alerts": "workspace:*"
+    "@libztbs/alerts": "workspace:*",
+    "@libztbs/types": "workspace:*"
   }
 }

@@ -238,6 +238,9 @@ importers:
       '@libztbs/alerts':
         specifier: workspace:*
         version: link:../alerts
+      '@libztbs/types':
+        specifier: workspace:*
+        version: link:../types
 
   lib/alerts: {}
 
@@ -324,17 +327,7 @@ importers:
 
   lib/nrd: {}
 
-  lib/types:
-    dependencies:
-      '@libztbs/ai-detector':
-        specifier: workspace:*
-        version: link:../ai-detector
-      '@libztbs/csp':
-        specifier: workspace:*
-        version: link:../csp
-      '@libztbs/typosquat':
-        specifier: workspace:*
-        version: link:../typosquat
+  lib/types: {}
 
   lib/typosquat: {}
 

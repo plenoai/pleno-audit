@@ -6,12 +6,8 @@
 // AI Service Detection（AIサービス検出）
 // ============================================================================
 
-/** 推定されたAIプロバイダー */
-export type InferredProvider =
-  | "openai" // ChatGPT, API
-  | "anthropic" // Claude
-  | "google" // Gemini
-  | "unknown"; // 汎用検出
+import type { InferredProvider } from "@libztbs/types";
+export type { InferredProvider } from "@libztbs/types";
 
 /** AI検出方法 */
 export type AIDetectionMethod =

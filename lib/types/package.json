@@ -7,9 +7,5 @@
   "exports": {
     ".": "./src/index.ts"
   },
-  "dependencies": {
-    "@libztbs/ai-detector": "workspace:*",
-    "@libztbs/csp": "workspace:*",
-    "@libztbs/typosquat": "workspace:*"
-  }
+  "dependencies": {}
 }
