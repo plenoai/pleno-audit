@@ -10,6 +10,8 @@ interface ServicesTabProps {
   services: DetectedService[];
   nrdServices: DetectedService[];
   loginServices: DetectedService[];
+  typosquatServices: DetectedService[];
+  aiServices: DetectedService[];
   serviceConnections: Record<string, Record<string, number>>;
 }
 
@@ -22,11 +24,13 @@ function getServiceTags(s: DetectedService): { label: string; variant: "danger" 
   return tags;
 }
 
-export function ServicesTab({ services, nrdServices, loginServices, serviceConnections }: ServicesTabProps) {
+export function ServicesTab({ services, nrdServices, loginServices, typosquatServices, aiServices, serviceConnections }: ServicesTabProps) {
   const { colors, isDark } = useTheme();
   const { searchQuery, setSearchQuery, filters, setFilter } = useTabFilter({
     nrd: false,
     login: false,
+    typosquat: false,
+    ai: false,
   });
   const [expandedDomains, setExpandedDomains] = useState<Set<string>>(new Set());
 
@@ -34,12 +38,14 @@ export function ServicesTab({ services, nrdServices, loginServices, serviceConne
     let result = services;
     if (filters.nrd) result = result.filter((s) => s.nrdResult?.isNRD);
     if (filters.login) result = result.filter((s) => s.hasLoginPage);
+    if (filters.typosquat) result = result.filter((s) => s.typosquatResult?.isTyposquat);
+    if (filters.ai) result = result.filter((s) => s.aiDetected?.hasAIActivity);
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       result = result.filter((s) => s.domain.toLowerCase().includes(q));
     }
     return result;
-  }, [services, searchQuery, filters.nrd, filters.login]);
+  }, [services, searchQuery, filters.nrd, filters.login, filters.typosquat, filters.ai]);
 
   const toggleExpand = (domain: string) => {
     setExpandedDomains((prev) => {
@@ -76,13 +82,40 @@ export function ServicesTab({ services, nrdServices, loginServices, serviceConne
           >
             ログイン ({loginServices.length})
           </Button>
+          <Button
+            variant={filters.typosquat ? "primary" : "secondary"}
+            size="sm"
+            onClick={() => setFilter("typosquat", !filters.typosquat)}
+          >
+            Typosquat ({typosquatServices.length})
+          </Button>
+          <Button
+            variant={filters.ai ? "primary" : "secondary"}
+            size="sm"
+            onClick={() => setFilter("ai", !filters.ai)}
+          >
+            AI ({aiServices.length})
+          </Button>
         </>
       }
       columns={[
         {
           key: "domain",
           header: "ドメイン",
-          render: (s) => <code style={{ fontSize: "12px" }}>{s.domain}</code>,
+          render: (s) => (
+            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              {s.faviconUrl ? (
+                <img
+                  src={s.faviconUrl}
+                  alt=""
+                  style={{ width: "16px", height: "16px", borderRadius: "2px", flexShrink: 0 }}
+                />
+              ) : (
+                <span style={{ width: "16px", height: "16px", flexShrink: 0, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "12px", color: colors.textMuted }}>🌐</span>
+              )}
+              <code style={{ fontSize: "12px" }}>{s.domain}</code>
+            </div>
+          ),
         },
         {
           key: "tags",
