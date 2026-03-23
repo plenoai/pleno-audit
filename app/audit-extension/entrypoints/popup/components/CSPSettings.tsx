@@ -1,7 +1,7 @@
 import { useState, useEffect } from "preact/hooks";
-import type { CSPConfig } from "@pleno-audit/csp";
-import { DEFAULT_CSP_CONFIG } from "@pleno-audit/csp";
-import { createLogger } from "@pleno-audit/extension-runtime";
+import type { CSPConfig } from "@libztbs/csp";
+import { DEFAULT_CSP_CONFIG } from "@libztbs/csp";
+import { createLogger } from "@libztbs/extension-runtime";
 import { useTheme } from "../../../lib/theme";
 import { sendMessage } from "../utils/messaging";
 

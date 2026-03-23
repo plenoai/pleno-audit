@@ -1,4 +1,4 @@
-import type { DetectedService } from "@pleno-audit/casb-types";
+import type { DetectedService } from "@libztbs/types";
 
 export type ServiceTag =
   | { type: "nrd"; domainAge: number | null; confidence: string }

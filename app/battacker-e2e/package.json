@@ -1,5 +1,5 @@
 {
-  "name": "@pleno-audit/battacker-e2e",
+  "name": "@libztbs/battacker-e2e",
   "version": "0.0.1",
   "description": "BrowserTotal E2E Testing for Battacker Comparison",
   "type": "module",

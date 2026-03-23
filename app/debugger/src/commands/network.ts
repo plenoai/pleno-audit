@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { getExtensionClient } from "../extension-client.js";
-import type { NetworkMonitorConfig } from "@pleno-audit/extension-runtime";
+import type { NetworkMonitorConfig } from "@libztbs/extension-runtime";
 
 export const networkCommand = new Command("network").description(
   "Network Monitor operations"

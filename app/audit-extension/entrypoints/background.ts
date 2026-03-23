@@ -1,10 +1,10 @@
-import type { DetectedService } from "@pleno-audit/casb-types";
-import type { CapturedAIPrompt } from "@pleno-audit/ai-detector";
-import { DEFAULT_AI_MONITOR_CONFIG } from "@pleno-audit/ai-detector";
-import { DEFAULT_NRD_CONFIG } from "@pleno-audit/nrd";
-import { DEFAULT_TYPOSQUAT_CONFIG } from "@pleno-audit/typosquat";
-import type { CSPViolation } from "@pleno-audit/csp";
-import { DEFAULT_CSP_CONFIG } from "@pleno-audit/csp";
+import type { DetectedService } from "@libztbs/types";
+import type { CapturedAIPrompt } from "@libztbs/ai-detector";
+import { DEFAULT_AI_MONITOR_CONFIG } from "@libztbs/ai-detector";
+import { DEFAULT_NRD_CONFIG } from "@libztbs/nrd";
+import { DEFAULT_TYPOSQUAT_CONFIG } from "@libztbs/typosquat";
+import type { CSPViolation } from "@libztbs/csp";
+import { DEFAULT_CSP_CONFIG } from "@libztbs/csp";
 import {
   startCookieMonitor,
   onCookieChange,
@@ -24,8 +24,8 @@ import {
   type DoHMonitor,
   type DoHMonitorConfig,
   type DoHRequestRecord,
-} from "@pleno-audit/extension-runtime";
-import { getSSOManager, getEnterpriseManager } from "@pleno-audit/extension-enterprise";
+} from "@libztbs/extension-runtime";
+import { getSSOManager, getEnterpriseManager } from "@libztbs/extension-enterprise";
 
 const logger = createLogger("background");
 import {
@@ -63,12 +63,12 @@ import {
   type CanvasFingerprintData,
   type WebGLFingerprintData,
   type AudioFingerprintData,
-} from "@pleno-audit/background-services";
+} from "@libztbs/background-services";
 import {
   createExtensionNetworkService,
   registerNetworkMonitorListener,
   type ExtensionStats,
-} from "@pleno-audit/extension-network-service";
+} from "@libztbs/extension-network-service";
 
 
 const backgroundServices = createBackgroundServices(logger);
@@ -368,7 +368,7 @@ function initializeDebugBridge(): void {
   if (!import.meta.env.DEV) {
     return;
   }
-  void import("@pleno-audit/debug-bridge").then(({ initDebugBridge }) => {
+  void import("@libztbs/debug-bridge").then(({ initDebugBridge }) => {
     initDebugBridge({
       getNetworkRequests,
       getNetworkMonitorConfig,

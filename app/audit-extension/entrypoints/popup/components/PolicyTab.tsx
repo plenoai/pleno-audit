@@ -1,4 +1,4 @@
-import type { CSPViolation } from "@pleno-audit/csp";
+import type { CSPViolation } from "@libztbs/csp";
 import { PolicyGenerator } from "./PolicyGenerator";
 import { DetectionSettings } from "./DetectionSettings";
 import { CSPSettings } from "./CSPSettings";

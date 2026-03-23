@@ -1,0 +1,25 @@
+{
+  "name": "@libztbs/battacker",
+  "version": "0.0.1",
+  "description": "Browser Defense Resistance Testing Core Library",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  },
+  "files": [
+    "dist"
+  ],
+  "license": "AGPL-3.0-or-later"
+}

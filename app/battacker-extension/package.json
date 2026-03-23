@@ -1,5 +1,5 @@
 {
-  "name": "@pleno-audit/battacker-extension",
+  "name": "@libztbs/battacker-extension",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -11,8 +11,8 @@
     "build:all": "wxt build && wxt build -b firefox"
   },
   "dependencies": {
-    "@pleno-audit/battacker": "workspace:*",
-    "@pleno-audit/extension-runtime": "workspace:*",
+    "@libztbs/battacker": "workspace:*",
+    "@libztbs/extension-runtime": "workspace:*",
     "motion": "^12.38.0",
     "preact": "^10.29.0"
   },

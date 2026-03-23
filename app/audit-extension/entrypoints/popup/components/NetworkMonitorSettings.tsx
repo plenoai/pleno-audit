@@ -3,7 +3,7 @@ import {
   createLogger,
   DEFAULT_NETWORK_MONITOR_CONFIG,
   type NetworkMonitorConfig,
-} from "@pleno-audit/extension-runtime";
+} from "@libztbs/extension-runtime";
 import { useTheme } from "../../../lib/theme";
 import { sendMessage } from "../utils/messaging";
 

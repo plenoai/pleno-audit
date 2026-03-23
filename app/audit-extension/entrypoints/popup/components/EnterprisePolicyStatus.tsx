@@ -1,5 +1,5 @@
 import { useState, useEffect } from "preact/hooks";
-import type { EnterpriseStatus } from "@pleno-audit/extension-runtime";
+import type { EnterpriseStatus } from "@libztbs/extension-runtime";
 import { useTheme } from "../../../lib/theme";
 import { Badge } from "../../../components";
 import { sendMessage } from "../utils/messaging";

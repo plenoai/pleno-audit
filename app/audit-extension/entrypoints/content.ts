@@ -9,8 +9,8 @@ import {
   type TosResult,
   type CookiePolicyResult,
   type CookieBannerResult,
-} from "@pleno-audit/detectors";
-import { browserAdapter, createLogger, fireMessage } from "@pleno-audit/extension-runtime";
+} from "@libztbs/detectors";
+import { browserAdapter, createLogger, fireMessage } from "@libztbs/extension-runtime";
 
 const logger = createLogger("content");
 

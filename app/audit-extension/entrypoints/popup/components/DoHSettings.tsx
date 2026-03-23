@@ -4,7 +4,7 @@ import {
   DEFAULT_DOH_MONITOR_CONFIG,
   type DoHMonitorConfig,
   type DoHAction,
-} from "@pleno-audit/extension-runtime";
+} from "@libztbs/extension-runtime";
 import { useTheme } from "../../../lib/theme";
 import { sendMessage } from "../utils/messaging";
 

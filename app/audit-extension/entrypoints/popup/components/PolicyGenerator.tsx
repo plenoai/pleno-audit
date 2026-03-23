@@ -1,6 +1,6 @@
 import { useEffect, useState } from "preact/hooks";
-import type { GeneratedCSPPolicy } from "@pleno-audit/csp";
-import { createLogger } from "@pleno-audit/extension-runtime";
+import type { GeneratedCSPPolicy } from "@libztbs/csp";
+import { createLogger } from "@libztbs/extension-runtime";
 import { Badge, Button } from "../../../components";
 import { usePopupStyles } from "../styles";
 import { useTheme } from "../../../lib/theme";

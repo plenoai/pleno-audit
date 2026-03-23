@@ -133,9 +133,9 @@ export default defineConfig({
     },
     optimizeDeps: {
       include: [
-        "@pleno-audit/csp",
-        "@pleno-audit/detectors",
-        "@pleno-audit/extension-runtime",
+        "@libztbs/csp",
+        "@libztbs/detectors",
+        "@libztbs/extension-runtime",
       ],
     },
   }),

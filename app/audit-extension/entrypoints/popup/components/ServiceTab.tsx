@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "preact/hooks";
-import { createLogger } from "@pleno-audit/extension-runtime";
+import { createLogger } from "@libztbs/extension-runtime";
 import { useTheme } from "../../../lib/theme";
 import { Badge, Button } from "../../../components";
 import {

@@ -2,7 +2,7 @@
  * BrowserTotal E2E Scan Script
  *
  * Usage:
- *   pnpm --filter @pleno-audit/battacker-e2e browsertotal
+ *   pnpm --filter @libztbs/battacker-e2e browsertotal
  *
  * Or run directly:
  *   npx tsx app/battacker-e2e/src/browsertotal-scan.ts

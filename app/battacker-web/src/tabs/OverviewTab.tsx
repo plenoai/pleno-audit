@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import type { DefenseScore } from "@pleno-audit/battacker";
+import type { DefenseScore } from "@libztbs/battacker";
 import { CyberGauge } from "../components/CyberGauge";
 import { CategoryBarWithSkeleton } from "../components/overview/CategoryBar";
 import { ScanDataStream } from "../components/overview/ScanDataStream";

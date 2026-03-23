@@ -5,6 +5,6 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "types": ["chrome"]
   },
-  "include": ["packages/env.d.ts", "packages/*/src/**/*.ts"],
+  "include": ["lib/env.d.ts", "lib/*/src/**/*.ts"],
   "exclude": ["**/*.test.ts", "**/*.spec.ts", "**/*.property.ts", "**/dist/**"]
 }

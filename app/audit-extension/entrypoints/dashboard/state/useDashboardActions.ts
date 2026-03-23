@@ -1,7 +1,7 @@
 import { useCallback } from "preact/hooks";
-import type { CSPReport } from "@pleno-audit/csp";
-import type { DetectedService } from "@pleno-audit/casb-types";
-import { createLogger } from "@pleno-audit/extension-runtime";
+import type { CSPReport } from "@libztbs/csp";
+import type { DetectedService } from "@libztbs/types";
+import { createLogger } from "@libztbs/extension-runtime";
 
 interface UseDashboardActionsOptions {
   reports: CSPReport[];

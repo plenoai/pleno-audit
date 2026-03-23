@@ -4,7 +4,7 @@ import { FilteredTab } from "../components/FilteredTab";
 import { useTabFilter } from "../hooks/useTabFilter";
 import { useTheme } from "../../../lib/theme";
 import { truncate } from "../utils";
-import { createLogger } from "@pleno-audit/extension-runtime";
+import { createLogger } from "@libztbs/extension-runtime";
 
 const logger = createLogger("extensions-tab");
 

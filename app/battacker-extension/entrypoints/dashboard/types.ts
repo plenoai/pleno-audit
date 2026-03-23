@@ -1,4 +1,4 @@
-import type { AttackCategory } from "@pleno-audit/battacker";
+import type { AttackCategory } from "@libztbs/battacker";
 
 export type TabType = "overview" | "results" | "history";
 

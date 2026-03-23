@@ -1,5 +1,5 @@
 import { motion } from "motion/react";
-import type { DefenseScore } from "@pleno-audit/battacker";
+import type { DefenseScore } from "@libztbs/battacker";
 import type { ScanState } from "../types";
 import { CyberGauge } from "../components/CyberGauge";
 import { CategoryBarWithSkeleton } from "../components/CategoryBars";

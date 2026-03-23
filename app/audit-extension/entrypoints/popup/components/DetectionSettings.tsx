@@ -4,7 +4,7 @@ import {
   DEFAULT_DETECTION_CONFIG,
   type DetectionConfig,
   type EnterpriseStatus,
-} from "@pleno-audit/extension-runtime";
+} from "@libztbs/extension-runtime";
 import { useTheme } from "../../../lib/theme";
 import { LockedBanner } from "./LockedBanner";
 import { sendMessage } from "../utils/messaging";

@@ -7,7 +7,7 @@ import {
   DEFAULT_NOTIFICATION_CONFIG,
   type BlockingConfig,
   type NotificationConfig,
-} from "@pleno-audit/extension-runtime";
+} from "@libztbs/extension-runtime";
 
 interface Props {
   onClearData: () => void;

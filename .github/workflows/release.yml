@@ -36,7 +36,7 @@ jobs:
 
       - name: Build extensions
         run: |
-          pnpm --filter @pleno-audit/battacker build
+          pnpm --filter @libztbs/battacker build
           pnpm build
           pnpm -C app/audit-extension build:firefox
           pnpm -C app/battacker-extension build

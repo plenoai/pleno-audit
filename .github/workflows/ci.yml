@@ -83,7 +83,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build battacker package
-        run: pnpm --filter @pleno-audit/battacker build
+        run: pnpm --filter @libztbs/battacker build
 
       - name: Prepare WXT types
         run: pnpm --filter @pleno-audit/audit-extension exec wxt prepare
@@ -161,4 +161,4 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Run property-based tests
-        run: pnpm vitest run packages/nrd/src/suspicious.property.ts packages/typosquat/src/heuristics.property.ts packages/ai-detector/src/sensitive-data-detector.property.ts packages/ai-detector/src/provider-classifier.property.ts
+        run: pnpm vitest run lib/nrd/src/suspicious.property.ts lib/typosquat/src/heuristics.property.ts lib/ai-detector/src/sensitive-data-detector.property.ts lib/ai-detector/src/provider-classifier.property.ts

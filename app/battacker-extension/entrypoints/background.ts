@@ -1,5 +1,5 @@
-import { createLogger, isManifestV3, getBrowserAPI } from "@pleno-audit/extension-runtime";
-import type { DefenseScore, ScanProgressEvent } from "@pleno-audit/battacker";
+import { createLogger, isManifestV3, getBrowserAPI } from "@libztbs/extension-runtime";
+import type { DefenseScore, ScanProgressEvent } from "@libztbs/battacker";
 
 const logger = createLogger("battacker");
 
