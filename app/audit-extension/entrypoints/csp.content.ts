@@ -5,6 +5,7 @@
  */
 
 import type { CSPViolation } from "@pleno-audit/csp";
+import { fireMessage } from "@pleno-audit/extension-runtime";
 
 function extractDomain(url: string): string {
   try {
@@ -37,9 +38,8 @@ export default defineContentScript({
           statusCode: event.statusCode,
         };
 
-        // Avoid doing heavy work in the same browser event tick.
         queueMicrotask(() => {
-          void chrome.runtime.sendMessage({ type: "CSP_VIOLATION", data: violation });
+          fireMessage({ type: "CSP_VIOLATION", data: violation });
         });
       },
       true

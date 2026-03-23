@@ -3,7 +3,7 @@
  * Main worldからの検知イベントをキュー制御し、負荷に応じてバッチでbackgroundへ送信する。
  */
 
-import { createLogger } from "@pleno-audit/extension-runtime";
+import { createLogger, isRuntimeAvailable, fireMessage } from "@pleno-audit/extension-runtime";
 
 const logger = createLogger("security-bridge");
 
@@ -22,6 +22,7 @@ export default defineContentScript({
     let flushScheduled = false;
     let longTaskDetectedAt = 0;
     let fallbackTimer: number | null = null;
+    const abortController = new AbortController();
 
     const LOW_PRIORITY_TYPES = new Set([
       "COOKIE_ACCESS_DETECTED",
@@ -57,7 +58,18 @@ export default defineContentScript({
       return HIGH_PRIORITY_TYPES.has(type);
     }
 
+    function teardown(): void {
+      queue.length = 0;
+      abortController.abort();
+      if (fallbackTimer !== null) {
+        window.clearTimeout(fallbackTimer);
+        fallbackTimer = null;
+      }
+      logger.warn("Extension context invalidated — bridge stopped");
+    }
+
     function pushEvent(type: string, detail: unknown): void {
+      if (!isRuntimeAvailable()) return;
       const now = Date.now();
       if (throttleLowPriority(type, now)) return;
 
@@ -83,7 +95,7 @@ export default defineContentScript({
     }
 
     function scheduleFlush(): void {
-      if (flushScheduled) return;
+      if (flushScheduled || !isRuntimeAvailable()) return;
       flushScheduled = true;
 
       const now = Date.now();
@@ -110,6 +122,11 @@ export default defineContentScript({
       flushScheduled = false;
       if (queue.length === 0) return;
 
+      if (!isRuntimeAvailable()) {
+        teardown();
+        return;
+      }
+
       const now = Date.now();
       const highLoad = isHighLoad(now);
       const batchSize = highLoad ? 12 : 40;
@@ -131,11 +148,10 @@ export default defineContentScript({
               chrome.runtime.sendMessage({ type: e.type, data: e.data }),
             ),
           );
-        } catch (error) {
-          logger.warn("Message send failed, re-queuing events", error);
-          for (let i = batch.length - 1; i >= 0; i--) {
-            queue.unshift(batch[i]);
-          }
+        } catch {
+          // isRuntimeAvailable() で事前チェック済みのため、
+          // ここに到達するのはレースコンディションのみ — teardown して終了
+          teardown();
           return;
         }
       }
@@ -185,11 +201,12 @@ export default defineContentScript({
       "__WEBRTC_CONNECTION_DETECTED__",
     ];
 
+    const signal = abortController.signal;
     for (const eventType of securityEvents) {
       window.addEventListener(eventType, ((event: CustomEvent) => {
         const type = eventType.replace(/^__|__$/g, "");
         queueMicrotask(() => pushEvent(type, event.detail));
-      }) as EventListener);
+      }) as EventListener, { signal });
     }
 
     window.addEventListener("beforeunload", () => {
@@ -197,13 +214,11 @@ export default defineContentScript({
         window.clearTimeout(fallbackTimer);
         fallbackTimer = null;
       }
-      if (queue.length > 0) {
-        const batch = queue.splice(0, MAX_UNLOAD_BATCH);
-        // Fire-and-forget: messages may complete even after unload
-        for (const e of batch) {
-          void chrome.runtime.sendMessage({ type: e.type, data: e.data });
-        }
+      if (!isRuntimeAvailable() || queue.length === 0) return;
+      const batch = queue.splice(0, MAX_UNLOAD_BATCH);
+      for (const e of batch) {
+        fireMessage({ type: e.type, data: e.data });
       }
-    });
+    }, { signal });
   },
 });

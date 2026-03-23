@@ -10,7 +10,7 @@ import {
   type CookiePolicyResult,
   type CookieBannerResult,
 } from "@pleno-audit/detectors";
-import { browserAdapter, createLogger } from "@pleno-audit/extension-runtime";
+import { browserAdapter, createLogger, fireMessage } from "@pleno-audit/extension-runtime";
 
 const logger = createLogger("content");
 
@@ -76,7 +76,6 @@ async function runAnalysis() {
   const analysis = await analyzePage();
   const { login, privacy, tos, cookiePolicy, cookieBanner, domain, faviconUrl } = analysis;
 
-  // Send to background if any info found (including favicon and cookie detection)
   if (
     login.hasPasswordInput ||
     login.isLoginUrl ||
@@ -86,14 +85,11 @@ async function runAnalysis() {
     cookieBanner.found ||
     faviconUrl
   ) {
-    await chrome.runtime.sendMessage({ type: "PAGE_ANALYZED", payload: analysis });
+    fireMessage({ type: "PAGE_ANALYZED", payload: analysis });
   }
 
-  // Check NRD in background (non-blocking)
-  chrome.runtime.sendMessage({ type: "CHECK_NRD", data: { domain } });
-
-  // Check Typosquatting in background (non-blocking)
-  chrome.runtime.sendMessage({ type: "CHECK_TYPOSQUAT", data: { domain } });
+  fireMessage({ type: "CHECK_NRD", data: { domain } });
+  fireMessage({ type: "CHECK_TYPOSQUAT", data: { domain } });
 }
 
 export default defineContentScript({

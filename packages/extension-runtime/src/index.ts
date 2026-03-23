@@ -112,6 +112,13 @@ export {
   type BlockingEngine,
 } from "./blocking-engine.js";
 
+// Messaging (content script → background)
+export {
+  isRuntimeAvailable,
+  sendRuntimeMessage,
+  fireMessage,
+} from "./messaging.js";
+
 // Logger
 export {
   createLogger,

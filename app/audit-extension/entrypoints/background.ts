@@ -416,9 +416,29 @@ async function initializeEnterpriseManagedFlow(): Promise<void> {
   await chrome.tabs.create({ url: dashboardUrl, active: true });
 }
 
+async function reinjectContentScripts(): Promise<void> {
+  let tabs: chrome.tabs.Tab[];
+  try {
+    tabs = await chrome.tabs.query({ status: "complete" });
+  } catch {
+    return;
+  }
+  for (const tab of tabs) {
+    if (!tab.id || !tab.url || tab.url.startsWith("chrome://") || tab.url.startsWith("chrome-extension://")) continue;
+    chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      files: ["content-scripts/content.js", "content-scripts/security-bridge.js", "content-scripts/csp.js"],
+    }).catch(() => {
+      // Tab may be restricted (e.g. chrome web store) — ignore
+    });
+  }
+  logger.debug("Content scripts re-injected into existing tabs");
+}
+
 function initializeBackgroundServices(): void {
   initializeDebugBridge();
 
+  void reinjectContentScripts();
   void initializeEnterpriseManagedFlow().catch((error) => logger.error("Enterprise manager init failed:", error));
   void initExtensionMonitor()
     .then(() => logger.debug("Extension monitor initialization completed"))
