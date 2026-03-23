@@ -14,7 +14,6 @@ export type ExportFormat = "json" | "csv" | "markdown" | "html";
  */
 export type ExportDataType =
   | "services"
-  | "events"
   | "violations"
   | "alerts"
   | "compliance"
@@ -181,17 +180,6 @@ export interface ComplianceControlExport {
 // ============================================================================
 
 /**
- * Event log export structure
- */
-export interface EventLogExport {
-  id: string;
-  timestamp: number;
-  type: string;
-  domain: string;
-  details: string; // JSON stringified details
-}
-
-/**
  * AI prompt export structure (privacy-safe)
  */
 export interface AIPromptExport {
@@ -238,6 +226,6 @@ export interface AuditLogExportOptions {
     start: number;
     end: number;
   };
-  eventTypes?: string[];
+  dataTypes?: string[];
   includeDetails?: boolean;
 }

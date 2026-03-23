@@ -15,7 +15,6 @@
     "@pleno-audit/detectors": "workspace:*",
     "@pleno-audit/extension-runtime": "workspace:*",
     "@pleno-audit/nrd": "workspace:*",
-    "@pleno-audit/storage": "workspace:*",
     "@pleno-audit/typosquat": "workspace:*"
   }
 }

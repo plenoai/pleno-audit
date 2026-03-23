@@ -1,7 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import {
-  exportEventsToCSV,
-  exportEventsToJSON,
   exportAIPromptsToCSV,
   exportAIPromptsToJSON,
   exportDetectedServicesToCSV,
@@ -12,149 +10,9 @@ import {
   type AuditLogData,
 } from "./audit-exporter.js";
 import type {
-  EventLogExport,
   AIPromptExport,
   DetectedServiceExport,
 } from "./types.js";
-
-describe("exportEventsToCSV", () => {
-  const mockEvents: EventLogExport[] = [
-    {
-      id: "event1",
-      timestamp: 1700000000000,
-      type: "login_detected",
-      domain: "example.com",
-      details: JSON.stringify({ hasPassword: true }),
-    },
-    {
-      id: "event2",
-      timestamp: 1700000001000,
-      type: "ai_prompt_sent",
-      domain: "openai.com",
-      details: JSON.stringify({ provider: "openai" }),
-    },
-  ];
-
-  it("exports events to CSV with headers", () => {
-    const csv = exportEventsToCSV(mockEvents);
-    const lines = csv.split("\n");
-
-    expect(lines[0]).toBe("id,timestamp,type,domain,details");
-    expect(lines.length).toBe(3);
-  });
-
-  it("includes all event fields in CSV", () => {
-    const csv = exportEventsToCSV(mockEvents);
-    const lines = csv.split("\n");
-
-    expect(lines[1]).toContain("event1");
-    expect(lines[1]).toContain("login_detected");
-    expect(lines[1]).toContain("example.com");
-  });
-
-  it("formats timestamp as ISO string", () => {
-    const csv = exportEventsToCSV(mockEvents);
-
-    expect(csv).toContain("2023-11-14T22:13:20.000Z");
-  });
-
-  it("excludes details when includeDetails is false", () => {
-    const csv = exportEventsToCSV(mockEvents, { includeDetails: false });
-    const lines = csv.split("\n");
-
-    expect(lines[0]).toBe("id,timestamp,type,domain");
-    expect(lines[1].split(",").length).toBe(4);
-  });
-
-  it("escapes CSV special characters", () => {
-    const eventsWithSpecialChars: EventLogExport[] = [
-      {
-        id: "event1",
-        timestamp: 1700000000000,
-        type: "test",
-        domain: "test.com",
-        details: JSON.stringify({ message: 'Hello, "world"' }),
-      },
-    ];
-
-    const csv = exportEventsToCSV(eventsWithSpecialChars);
-
-    // JSON.stringify produces: {"message":"Hello, \"world\""}
-    // Then CSV escaping wraps in quotes and doubles any quotes
-    // So the details field should be quoted due to containing comma
-    expect(csv).toContain('"');
-    expect(csv).toContain("message");
-    expect(csv).toContain("world");
-  });
-
-  it("handles empty events array", () => {
-    const csv = exportEventsToCSV([]);
-    const lines = csv.split("\n");
-
-    expect(lines.length).toBe(1);
-    expect(lines[0]).toBe("id,timestamp,type,domain,details");
-  });
-});
-
-describe("exportEventsToJSON", () => {
-  const mockEvents: EventLogExport[] = [
-    {
-      id: "event1",
-      timestamp: 1700000000000,
-      type: "login_detected",
-      domain: "example.com",
-      details: JSON.stringify({ hasPassword: true }),
-    },
-  ];
-
-  beforeEach(() => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date("2023-11-15T00:00:00.000Z"));
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
-  it("exports events to JSON with metadata", () => {
-    const json = exportEventsToJSON(mockEvents);
-    const data = JSON.parse(json);
-
-    expect(data.exportedAt).toBe("2023-11-15T00:00:00.000Z");
-    expect(data.recordCount).toBe(1);
-    expect(data.events).toHaveLength(1);
-  });
-
-  it("parses event details as JSON", () => {
-    const json = exportEventsToJSON(mockEvents);
-    const data = JSON.parse(json);
-
-    expect(data.events[0].details).toEqual({ hasPassword: true });
-  });
-
-  it("formats timestamp in events", () => {
-    const json = exportEventsToJSON(mockEvents);
-    const data = JSON.parse(json);
-
-    expect(data.events[0].timestamp).toBe("2023-11-14T22:13:20.000Z");
-  });
-
-  it("pretty prints when option is set", () => {
-    const jsonCompact = exportEventsToJSON(mockEvents);
-    const jsonPretty = exportEventsToJSON(mockEvents, { pretty: true });
-
-    expect(jsonPretty.length).toBeGreaterThan(jsonCompact.length);
-    expect(jsonPretty).toContain("\n");
-  });
-
-  it("handles empty events array", () => {
-    const json = exportEventsToJSON([]);
-    const data = JSON.parse(json);
-
-    expect(data.recordCount).toBe(0);
-    expect(data.events).toHaveLength(0);
-  });
-});
 
 describe("exportAIPromptsToCSV", () => {
   const mockPrompts: AIPromptExport[] = [
@@ -397,27 +255,6 @@ describe("exportDetectedServicesToJSON", () => {
 
 describe("exportAuditLogToJSON", () => {
   const mockData: AuditLogData = {
-    events: [
-      {
-        id: "event1",
-        timestamp: 1700000000000,
-        type: "login_detected",
-        domain: "example.com",
-        details: JSON.stringify({ hasPassword: true }),
-      },
-    ],
-    aiPrompts: [
-      {
-        id: "prompt1",
-        timestamp: 1700000000000,
-        pageUrl: "https://example.com",
-        provider: "openai",
-        contentSize: 1024,
-        hasSensitiveData: false,
-        sensitiveDataTypes: [],
-        riskLevel: "low",
-      },
-    ],
     services: [
       {
         domain: "example.com",
@@ -446,8 +283,6 @@ describe("exportAuditLogToJSON", () => {
     const json = exportAuditLogToJSON(mockData);
     const data = JSON.parse(json);
 
-    expect(data.summary.eventCount).toBe(1);
-    expect(data.summary.aiPromptCount).toBe(1);
     expect(data.summary.serviceCount).toBe(1);
   });
 
@@ -455,24 +290,13 @@ describe("exportAuditLogToJSON", () => {
     const json = exportAuditLogToJSON(mockData);
     const data = JSON.parse(json);
 
-    expect(data.events).toHaveLength(1);
-    expect(data.aiPrompts).toHaveLength(1);
     expect(data.services).toHaveLength(1);
-  });
-
-  it("parses event details", () => {
-    const json = exportAuditLogToJSON(mockData);
-    const data = JSON.parse(json);
-
-    expect(data.events[0].details).toEqual({ hasPassword: true });
   });
 
   it("formats all timestamps", () => {
     const json = exportAuditLogToJSON(mockData);
     const data = JSON.parse(json);
 
-    expect(data.events[0].timestamp).toBe("2023-11-14T22:13:20.000Z");
-    expect(data.aiPrompts[0].timestamp).toBe("2023-11-14T22:13:20.000Z");
     expect(data.services[0].detectedAt).toBe("2023-11-14T22:13:20.000Z");
   });
 
@@ -484,16 +308,12 @@ describe("exportAuditLogToJSON", () => {
 
   it("handles empty audit log", () => {
     const emptyData: AuditLogData = {
-      events: [],
-      aiPrompts: [],
       services: [],
     };
 
     const json = exportAuditLogToJSON(emptyData);
     const data = JSON.parse(json);
 
-    expect(data.summary.eventCount).toBe(0);
-    expect(data.summary.aiPromptCount).toBe(0);
     expect(data.summary.serviceCount).toBe(0);
   });
 });
@@ -531,12 +351,6 @@ describe("generateExportFilename", () => {
     vi.useRealTimers();
   });
 
-  it("generates filename for events JSON", () => {
-    const filename = generateExportFilename("events", "json");
-
-    expect(filename).toBe("pleno-audit-events-2023-11-15.json");
-  });
-
   it("generates filename for ai-prompts CSV", () => {
     const filename = generateExportFilename("ai-prompts", "csv");
 
@@ -557,51 +371,6 @@ describe("generateExportFilename", () => {
 });
 
 describe("CSV escaping edge cases", () => {
-  it("handles null values", () => {
-    const events: EventLogExport[] = [
-      {
-        id: "event1",
-        timestamp: 1700000000000,
-        type: "test",
-        domain: "test.com",
-        details: JSON.stringify(null),
-      },
-    ];
-
-    const csv = exportEventsToCSV(events);
-    expect(csv).toBeDefined();
-  });
-
-  it("handles values with newlines", () => {
-    const events: EventLogExport[] = [
-      {
-        id: "event1",
-        timestamp: 1700000000000,
-        type: "test",
-        domain: "test.com",
-        details: JSON.stringify({ message: "line1\nline2" }),
-      },
-    ];
-
-    const csv = exportEventsToCSV(events);
-    expect(csv).toContain('"');
-  });
-
-  it("handles values with commas", () => {
-    const events: EventLogExport[] = [
-      {
-        id: "event1",
-        timestamp: 1700000000000,
-        type: "test",
-        domain: "test.com",
-        details: JSON.stringify({ list: "a,b,c" }),
-      },
-    ];
-
-    const csv = exportEventsToCSV(events);
-    expect(csv).toContain('"');
-  });
-
   it("handles boolean values", () => {
     const services: DetectedServiceExport[] = [
       {

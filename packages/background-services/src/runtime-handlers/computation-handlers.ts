@@ -1,8 +1,5 @@
 import type { DetectedService } from "@pleno-audit/casb-types";
-import { analyzePrompt } from "@pleno-audit/ai-detector";
-import type { CapturedAIPrompt } from "@pleno-audit/ai-detector";
 import type { AlertSeverity, AlertCategory } from "@pleno-audit/alerts";
-import type { CSPViolation, NetworkRequest } from "@pleno-audit/csp";
 import type { AsyncHandlerEntry, RuntimeHandlerDependencies } from "./types.js";
 
 interface EventItem {
@@ -16,7 +13,6 @@ interface EventItem {
 
 interface ConnectionInfo {
   domain: string;
-  requestCount: number;
 }
 
 type ServiceTag =
@@ -66,19 +62,16 @@ function extractTags(service: DetectedService): ServiceTag[] {
 }
 
 
-function convertToEvents(
+/** Postureからリスク検出をAlert形式で抽出 */
+function extractPostureAlerts(
   services: DetectedService[],
-  violations: CSPViolation[],
-  networkRequests: NetworkRequest[],
-  aiPrompts: CapturedAIPrompt[],
-  doHRequests: { id: string; domain: string; timestamp: number; blocked: boolean }[]
 ): EventItem[] {
-  const events: EventItem[] = [];
+  const alerts: EventItem[] = [];
 
   for (const service of services) {
     if (service.nrdResult?.isNRD) {
       const age = service.nrdResult.domainAge;
-      events.push({
+      alerts.push({
         id: `nrd-${service.domain}`,
         category: "nrd",
         severity: age !== null && age < 7 ? "critical" : "high",
@@ -89,7 +82,7 @@ function convertToEvents(
     }
     if (service.typosquatResult?.isTyposquat) {
       const score = service.typosquatResult.totalScore;
-      events.push({
+      alerts.push({
         id: `typosquat-${service.domain}`,
         category: "typosquat",
         severity: score >= 70 ? "critical" : score >= 40 ? "high" : "medium",
@@ -100,62 +93,7 @@ function convertToEvents(
     }
   }
 
-  for (const prompt of aiPrompts) {
-    const { pii, risk } = analyzePrompt(prompt.prompt);
-    if (pii.hasSensitiveData) {
-      if (risk.riskLevel !== "info" && risk.riskLevel !== "low") {
-        let domain: string;
-        try { domain = new URL(prompt.apiEndpoint).hostname; } catch { domain = prompt.apiEndpoint; }
-        events.push({
-          id: `ai-${prompt.id}`,
-          category: "ai_sensitive",
-          severity: risk.riskLevel,
-          title: prompt.provider || domain,
-          domain,
-          timestamp: prompt.timestamp,
-        });
-      }
-    }
-  }
-
-  for (const v of violations.slice(0, 50)) {
-    let domain: string;
-    try { domain = new URL(v.pageUrl).hostname; } catch { domain = v.pageUrl; }
-    events.push({
-      id: `csp-${v.timestamp}-${v.blockedURL}`,
-      category: "csp_violation",
-      severity: v.directive === "script-src" || v.directive === "default-src" ? "high" : "medium",
-      title: v.directive,
-      domain,
-      timestamp: new Date(v.timestamp).getTime(),
-    });
-  }
-
-  for (const r of doHRequests.slice(0, 20)) {
-    events.push({
-      id: `doh-${r.id}`,
-      category: "shadow_ai",
-      severity: r.blocked ? "high" : "medium",
-      title: r.domain,
-      domain: r.domain,
-      timestamp: r.timestamp,
-    });
-  }
-
-  for (const req of networkRequests.slice(0, 100)) {
-    let domain: string;
-    try { domain = new URL(req.url).hostname; } catch { domain = req.url; }
-    events.push({
-      id: `net-${req.timestamp}-${req.url}`,
-      category: "network" as AlertCategory,
-      severity: "info",
-      title: `${req.method} ${domain}`,
-      domain,
-      timestamp: new Date(req.timestamp).getTime(),
-    });
-  }
-
-  return events.sort((a, b) => b.timestamp - a.timestamp);
+  return alerts.sort((a, b) => b.timestamp - a.timestamp);
 }
 
 export function createComputationHandlers(
@@ -166,31 +104,15 @@ export function createComputationHandlers(
       "GET_POPUP_EVENTS",
       {
         execute: async () => {
-          const [services, violationsResult, networkResult, aiPrompts, doHResult] =
-            await Promise.all([
-              deps.getServices(),
-              deps.getCSPReports({ type: "csp-violation", limit: 500 }),
-              deps.getNetworkRequests({ limit: 500 }),
-              deps.getAIPrompts(),
-              deps.getDoHRequests({ limit: 100 }),
-            ]);
-
-          const violations = Array.isArray(violationsResult)
-            ? violationsResult
-            : (violationsResult as { reports?: CSPViolation[] })?.reports ?? [];
-          const networkRequests = Array.isArray(networkResult)
-            ? networkResult
-            : (networkResult as { requests?: NetworkRequest[] })?.requests ?? [];
-          const doHRequests = (doHResult as { requests?: { id: string; domain: string; timestamp: number; blocked: boolean }[] })?.requests ?? [];
-
-          const events = convertToEvents(services, violations, networkRequests, aiPrompts, doHRequests);
+          const services = await deps.getServices();
+          const alerts = extractPostureAlerts(services);
 
           const counts: Record<string, number> = {};
-          for (const e of events) {
-            counts[e.severity] = (counts[e.severity] || 0) + 1;
+          for (const a of alerts) {
+            counts[a.severity] = (counts[a.severity] || 0) + 1;
           }
 
-          return { events, counts, total: events.length };
+          return { events: alerts, counts, total: alerts.length };
         },
         fallback: () => ({ events: [], counts: {}, total: 0 }),
       },
@@ -210,11 +132,9 @@ export function createComputationHandlers(
           const result: UnifiedService[] = [];
 
           for (const service of services) {
-            const destMap = serviceConnections[service.domain];
-            const connections: ConnectionInfo[] = destMap
-              ? Object.entries(destMap)
-                  .map(([domain, requestCount]) => ({ domain, requestCount }))
-                  .sort((a, b) => b.requestCount - a.requestCount)
+            const destList = serviceConnections[service.domain];
+            const connections: ConnectionInfo[] = destList
+              ? destList.map((domain) => ({ domain }))
               : [];
             result.push({
               id: `domain:${service.domain}`,
@@ -231,11 +151,9 @@ export function createComputationHandlers(
 
           for (const [id, ext] of Object.entries(extMap)) {
             const icon = ext.icons?.find((ic) => ic.size >= 16)?.url || ext.icons?.[0]?.url;
-            const destMap = extensionConnections[id];
-            const connections: ConnectionInfo[] = destMap
-              ? Object.entries(destMap)
-                  .map(([domain, requestCount]) => ({ domain, requestCount }))
-                  .sort((a, b) => b.requestCount - a.requestCount)
+            const destList = extensionConnections[id];
+            const connections: ConnectionInfo[] = destList
+              ? destList.map((domain) => ({ domain }))
               : [];
             result.push({
               id: `extension:${id}`,

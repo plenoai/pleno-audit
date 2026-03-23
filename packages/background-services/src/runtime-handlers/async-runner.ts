@@ -11,7 +11,7 @@ export function runAsyncMessageHandler(
   sender: chrome.runtime.MessageSender,
   sendResponse: (response?: unknown) => void,
 ): true {
-  config.execute(message, sender)
+  Promise.resolve(config.execute(message, sender))
     .then(sendResponse)
     .catch((error) => {
       logger.error("Async message handler failed", {

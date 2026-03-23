@@ -11,9 +11,6 @@ export type {
   NRDDetectedDetails,
   ExtensionRequestDetails,
   AISensitiveDataDetectedDetails,
-  EventLogBase,
-  EventLog,
-  EventLogType,
 } from "@pleno-audit/casb-types";
 
 // Detection Types

@@ -1,7 +1,6 @@
 // Background services facade
 export {
   createBackgroundServices,
-  type NewEvent,
   type PageAnalysis,
 } from "./background-services.js";
 

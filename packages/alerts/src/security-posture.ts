@@ -15,14 +15,13 @@ export interface PostureInput {
   nrdCount: number;
   typosquatCount: number;
   cspViolationCount: number;
-  aiPromptCount: number;
 }
 
 /**
  * 減点内訳
  */
 export interface PosturePenalty {
-  category: "nrd" | "typosquat" | "csp_violation" | "ai_monitoring";
+  category: "nrd" | "typosquat" | "csp_violation";
   count: number;
   penalty: number;
 }
@@ -52,7 +51,6 @@ export interface SecurityPosture {
  * - NRD: 1件あたり20pt減点（新規登録ドメインはフィッシングリスク高）
  * - Typosquat: 1件あたり30pt減点（なりすまし攻撃の直接的兆候）
  * - CSP違反: 10件ごとに5pt減点（ノイズが多いため段階的）
- * - AI利用: 減点なし（監視対象であり脅威ではない）
  */
 const PENALTY_WEIGHTS = {
   nrd: 20,
@@ -75,8 +73,6 @@ export function calculateSecurityPosture(input: PostureInput): SecurityPosture {
   const cspPenalty = Math.floor(input.cspViolationCount / 10) * PENALTY_WEIGHTS.cspViolationPer10;
   penalties.push({ category: "csp_violation", count: input.cspViolationCount, penalty: cspPenalty });
 
-  penalties.push({ category: "ai_monitoring", count: input.aiPromptCount, penalty: 0 });
-
   const totalPenalty = nrdPenalty + typosquatPenalty + cspPenalty;
   const score = Math.max(0, 100 - totalPenalty);
 
@@ -91,11 +87,10 @@ export function calculateSecurityPosture(input: PostureInput): SecurityPosture {
 /**
  * UI向けステータスを導出
  *
- * 優先順位: NRD/Typosquat検出 > CSP違反多数 > AI利用中 > 正常
+ * 優先順位: NRD/Typosquat検出 > CSP違反多数 > 正常
  */
 function deriveStatus(input: PostureInput): PostureStatus {
   if (input.nrdCount > 0 || input.typosquatCount > 0) return "danger";
   if (input.cspViolationCount > 10) return "warning";
-  if (input.aiPromptCount > 0) return "monitoring";
   return "normal";
 }

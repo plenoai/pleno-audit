@@ -11,8 +11,6 @@ export const periodOptions: { value: Period; label: string }[] = [
 export const tabs: { id: TabType; label: string }[] = [
   { id: "services", label: "サービス" },
   { id: "extensions", label: "拡張機能" },
-  { id: "ai", label: "AI" },
-  { id: "events", label: "イベント" },
 ];
 
 export const loadingTabs: { id: TabType; label: string }[] = [
@@ -24,6 +22,4 @@ export const validTabs: TabType[] = tabs.map((tab) => tab.id);
 export const shortcutTabs: TabType[] = [
   "services",
   "extensions",
-  "ai",
-  "events",
 ];

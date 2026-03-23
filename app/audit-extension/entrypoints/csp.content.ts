@@ -1,17 +1,10 @@
 /**
  * CSP Content Script
- * Detects CSP violations and writes them to the persistent event queue.
+ * Detects CSP violations and sends them to the background via runtime messaging.
  * Main world custom events are handled by security-bridge.content.ts.
  */
 
 import type { CSPViolation } from "@pleno-audit/csp";
-import { createProducer, type QueueAdapter } from "@pleno-audit/event-queue";
-
-const queueAdapter: QueueAdapter = {
-  get: (keys) => chrome.storage.local.get(keys),
-  set: (items) => chrome.storage.local.set(items),
-  remove: (keys) => chrome.storage.local.remove(keys),
-};
 
 function extractDomain(url: string): string {
   try {
@@ -25,10 +18,6 @@ export default defineContentScript({
   matches: ["<all_urls>"],
   runAt: "document_start",
   main() {
-    const tabId = Date.now() % 1_000_000;
-    const producer = createProducer(queueAdapter, tabId);
-    producer.setContext({ senderUrl: document.location.href });
-
     // Listen for CSP violation events
     document.addEventListener(
       "securitypolicyviolation",
@@ -50,7 +39,7 @@ export default defineContentScript({
 
         // Avoid doing heavy work in the same browser event tick.
         queueMicrotask(() => {
-          void producer.enqueue("CSP_VIOLATION", { data: violation });
+          void chrome.runtime.sendMessage({ type: "CSP_VIOLATION", data: violation });
         });
       },
       true

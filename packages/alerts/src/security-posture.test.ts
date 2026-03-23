@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { calculateSecurityPosture, type PostureInput } from "./security-posture.js";
 
-const clean: PostureInput = { nrdCount: 0, typosquatCount: 0, cspViolationCount: 0, aiPromptCount: 0 };
+const clean: PostureInput = { nrdCount: 0, typosquatCount: 0, cspViolationCount: 0 };
 
 describe("calculateSecurityPosture", () => {
   it("returns 100 for clean state", () => {
@@ -34,26 +34,19 @@ describe("calculateSecurityPosture", () => {
     expect(result.score).toBe(0);
   });
 
-  it("AI prompts do not reduce score but set monitoring status", () => {
-    const result = calculateSecurityPosture({ ...clean, aiPromptCount: 5 });
-    expect(result.score).toBe(100);
-    expect(result.status).toBe("monitoring");
-  });
-
-  it("danger takes priority over monitoring", () => {
-    const result = calculateSecurityPosture({ ...clean, nrdCount: 1, aiPromptCount: 10 });
+  it("danger takes priority over other statuses", () => {
+    const result = calculateSecurityPosture({ ...clean, nrdCount: 1 });
     expect(result.status).toBe("danger");
   });
 
   it("provides breakdown for each category", () => {
     const result = calculateSecurityPosture({
-      nrdCount: 1, typosquatCount: 1, cspViolationCount: 20, aiPromptCount: 3,
+      nrdCount: 1, typosquatCount: 1, cspViolationCount: 20,
     });
-    expect(result.breakdown).toHaveLength(4);
+    expect(result.breakdown).toHaveLength(3);
     expect(result.breakdown.find(b => b.category === "nrd")?.penalty).toBe(20);
     expect(result.breakdown.find(b => b.category === "typosquat")?.penalty).toBe(30);
     expect(result.breakdown.find(b => b.category === "csp_violation")?.penalty).toBe(10);
-    expect(result.breakdown.find(b => b.category === "ai_monitoring")?.penalty).toBe(0);
     expect(result.score).toBe(40);
   });
 

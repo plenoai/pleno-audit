@@ -1,4 +1,4 @@
-import type { DoHMonitorConfig, DoHRequestRecord } from "@pleno-audit/extension-runtime";
+import type { DoHMonitorConfig } from "@pleno-audit/extension-runtime";
 
 interface DebugBridgeResponse {
   success: boolean;
@@ -9,10 +9,6 @@ interface DebugBridgeResponse {
 interface DebugBridgeHandlerDependencies {
   getDoHMonitorConfig: () => Promise<DoHMonitorConfig>;
   setDoHMonitorConfig: (config: Partial<DoHMonitorConfig>) => Promise<{ success: boolean }>;
-  getDoHRequests: (options?: { limit?: number; offset?: number }) => Promise<{
-    requests: DoHRequestRecord[];
-    total: number;
-  }>;
 }
 
 type DebugHandler = (data: unknown) => Promise<DebugBridgeResponse>;
@@ -46,11 +42,6 @@ export function createDebugBridgeHandler(
       const params = rawData as Partial<DoHMonitorConfig>;
       await deps.setDoHMonitorConfig(params);
       return { success: true };
-    }],
-    ["DEBUG_DOH_REQUESTS", async (rawData) => {
-      const params = rawData as { limit?: number; offset?: number } | undefined;
-      const result = await deps.getDoHRequests(params);
-      return { success: true, data: result };
     }],
   ]);
 

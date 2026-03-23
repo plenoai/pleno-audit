@@ -21,8 +21,6 @@ export type {
   PermissionExport,
   ComplianceExport,
   ComplianceControlExport,
-  // Audit log export types
-  EventLogExport,
   AIPromptExport,
   DetectedServiceExport,
   AuditLogExportOptions,
@@ -44,8 +42,6 @@ export {
 
 // Audit log exporter functions
 export {
-  exportEventsToCSV,
-  exportEventsToJSON,
   exportAIPromptsToCSV,
   exportAIPromptsToJSON,
   exportDetectedServicesToCSV,

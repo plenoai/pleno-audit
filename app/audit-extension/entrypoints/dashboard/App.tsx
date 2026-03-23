@@ -11,7 +11,7 @@ import { createDashboardStyles } from "./styles";
 import type { Period, TabType } from "./types";
 import { getInitialTab } from "./utils";
 import { ExtensionsTab } from "./views/ExtensionsTab";
-import { AITab, EventsTab, ServicesTab } from "./views";
+import { ServicesTab } from "./views";
 
 function DashboardContent() {
   const { colors, isDark } = useTheme();
@@ -31,8 +31,6 @@ function DashboardContent() {
   const { handleClearData, handleExportJSON } = useDashboardActions({
     reports: dashboard.reports,
     services: dashboard.services,
-    events: dashboard.events,
-    aiPrompts: dashboard.aiPrompts,
     loadData: dashboard.loadData,
   });
 
@@ -70,10 +68,6 @@ function DashboardContent() {
           onExport={handleExportJSON}
         />
 
-        {activeTab === "ai" && (
-          <AITab prompts={dashboard.aiPrompts} />
-        )}
-
         {activeTab === "services" && (
           <ServicesTab
             services={dashboard.services}
@@ -83,10 +77,6 @@ function DashboardContent() {
             aiServices={dashboard.aiServices}
             serviceConnections={dashboard.serviceConnections}
           />
-        )}
-
-        {activeTab === "events" && (
-          <EventsTab events={dashboard.events} />
         )}
 
         {activeTab === "extensions" && (

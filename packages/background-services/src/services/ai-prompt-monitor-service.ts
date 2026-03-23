@@ -8,7 +8,6 @@ import {
 } from "@pleno-audit/ai-detector";
 import type { AIMonitorConfig, CapturedAIPrompt } from "@pleno-audit/ai-detector";
 
-const MAX_AI_PROMPTS = 500;
 const AI_RISK_LEVEL_PRIORITY: Record<string, number> = {
   low: 1,
   medium: 2,
@@ -19,7 +18,6 @@ const AI_RISK_LEVEL_PRIORITY: Record<string, number> = {
 interface AIServiceStorage {
   detectionConfig?: DetectionConfig;
   aiMonitorConfig?: AIMonitorConfig;
-  aiPrompts?: CapturedAIPrompt[];
   services?: Record<string, {
     aiDetected?: {
       providers?: string[];
@@ -36,14 +34,7 @@ interface CreateAIPromptMonitorServiceParams {
   defaultDetectionConfig: DetectionConfig;
   getStorage: () => Promise<AIServiceStorage>;
   setStorage: (data: Partial<AIServiceStorage>) => Promise<void>;
-  clearAIPrompts: () => Promise<void>;
   queueStorageOperation: <T>(operation: () => Promise<T>) => Promise<T>;
-  addEvent: (event: {
-    type: string;
-    domain: string;
-    timestamp: number;
-    details: Record<string, unknown>;
-  }) => Promise<unknown>;
   updateService: (domain: string, update: Record<string, unknown>) => Promise<void>;
   checkAIServicePolicy: (params: {
     domain: string;
@@ -69,16 +60,6 @@ interface CreateAIPromptMonitorServiceParams {
   };
 }
 
-function getPromptPreview(prompt: CapturedAIPrompt["prompt"]): string {
-  if (prompt.messages?.length) {
-    const lastUserMsg = [...prompt.messages]
-      .reverse()
-      .find((message) => message.role === "user");
-    return lastUserMsg?.content.substring(0, 100) || "";
-  }
-  return prompt.text?.substring(0, 100) || prompt.rawBody?.substring(0, 100) || "";
-}
-
 function getHigherRiskLevel(
   current?: string,
   incoming?: string
@@ -96,23 +77,6 @@ function getHigherRiskLevel(
 }
 
 export function createAIPromptMonitorService(params: CreateAIPromptMonitorServiceParams) {
-  async function storeAIPrompt(prompt: CapturedAIPrompt) {
-    return params.queueStorageOperation(async () => {
-      const storage = await params.getStorage();
-      const config = storage.aiMonitorConfig || DEFAULT_AI_MONITOR_CONFIG;
-      const maxPrompts = config.maxStoredRecords || MAX_AI_PROMPTS;
-
-      const aiPrompts = storage.aiPrompts || [];
-      aiPrompts.unshift(prompt);
-
-      if (aiPrompts.length > maxPrompts) {
-        aiPrompts.splice(maxPrompts);
-      }
-
-      await params.setStorage({ aiPrompts });
-    });
-  }
-
   async function handleAIPromptCaptured(
     data: CapturedAIPrompt
   ): Promise<{ success: boolean }> {
@@ -135,12 +99,6 @@ export function createAIPromptMonitorService(params: CreateAIPromptMonitorServic
     const isShadowAIDetected = isShadowAI(provider);
     const providerInfo = getProviderInfo(provider);
 
-    const enhancedData: CapturedAIPrompt = {
-      ...data,
-      provider: provider as CapturedAIPrompt["provider"],
-    };
-    await storeAIPrompt(enhancedData);
-
     let domain = "unknown";
     try {
       domain = new URL(data.apiEndpoint).hostname;
@@ -148,37 +106,7 @@ export function createAIPromptMonitorService(params: CreateAIPromptMonitorServic
       // ignore
     }
 
-    await params.addEvent({
-      type: "ai_prompt_sent",
-      domain,
-      timestamp: data.timestamp,
-      details: {
-        provider: providerClassification.provider,
-        model: data.model,
-        promptPreview: getPromptPreview(data.prompt),
-        contentSize: data.prompt.contentSize,
-        messageCount: data.prompt.messages?.length,
-        isShadowAI: isShadowAIDetected,
-        providerConfidence: providerClassification.confidence,
-      },
-    });
-
     if (analysis.pii.hasSensitiveData) {
-      await params.addEvent({
-        type: "ai_sensitive_data_detected",
-        domain,
-        timestamp: data.timestamp,
-        details: {
-          provider,
-          model: data.model,
-          classifications: analysis.pii.classifications,
-          highestRisk: analysis.pii.highestRisk,
-          detectionCount: analysis.pii.detectionCount,
-          riskScore: analysis.risk.riskScore,
-          riskLevel: analysis.risk.riskLevel,
-        },
-      });
-
       if (analysis.risk.shouldAlert) {
         await params.getAlertManager().alertAISensitive({
           domain,
@@ -198,22 +126,6 @@ export function createAIPromptMonitorService(params: CreateAIPromptMonitorServic
         riskLevel: providerInfo.riskLevel,
         confidence: providerClassification.confidence,
         model: data.model,
-      });
-    }
-
-    if (data.response) {
-      await params.addEvent({
-        type: "ai_response_received",
-        domain,
-        timestamp: data.responseTimestamp || Date.now(),
-        details: {
-          provider,
-          model: data.model,
-          responsePreview: data.response.text?.substring(0, 100) || "",
-          contentSize: data.response.contentSize,
-          latencyMs: data.response.latencyMs,
-          isStreaming: data.response.isStreaming,
-        },
       });
     }
 
@@ -269,16 +181,6 @@ export function createAIPromptMonitorService(params: CreateAIPromptMonitorServic
     return { success: true };
   }
 
-  async function getAIPrompts(): Promise<CapturedAIPrompt[]> {
-    const storage = await params.getStorage();
-    return storage.aiPrompts || [];
-  }
-
-  async function getAIPromptsCount(): Promise<number> {
-    const storage = await params.getStorage();
-    return (storage.aiPrompts || []).length;
-  }
-
   async function getAIMonitorConfig(): Promise<AIMonitorConfig> {
     const storage = await params.getStorage();
     return storage.aiMonitorConfig || DEFAULT_AI_MONITOR_CONFIG;
@@ -293,17 +195,9 @@ export function createAIPromptMonitorService(params: CreateAIPromptMonitorServic
     return { success: true };
   }
 
-  async function clearAIData(): Promise<{ success: boolean }> {
-    await params.clearAIPrompts();
-    return { success: true };
-  }
-
   return {
     handleAIPromptCaptured,
-    getAIPrompts,
-    getAIPromptsCount,
     getAIMonitorConfig,
     setAIMonitorConfig,
-    clearAIData,
   };
 }

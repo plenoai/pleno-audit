@@ -3,7 +3,7 @@ import type { DebugBridgeDeps, DebugHandler, DebugHandlerResult } from "./types.
 import { getSnapshot } from "./snapshot.js";
 import { getStorageKeys, getStorageValue, setStorageValue, clearStorage } from "./storage.js";
 import { getServices, getService, clearServices } from "./services.js";
-import { getDoHConfig, setDoHConfig, getDoHRequests } from "./doh.js";
+import { getDoHConfig, setDoHConfig } from "./doh.js";
 import { getNetworkConfig, setNetworkConfig } from "./network.js";
 import { openTab } from "./tabs.js";
 
@@ -32,7 +32,6 @@ export function createDebugHandlers(logger: Logger, deps?: DebugBridgeDeps): Deb
     DEBUG_DOH_CONFIG_GET: async () => getDoHConfig(),
     DEBUG_DOH_CONFIG_SET: async (data) =>
       setDoHConfig(data as { action?: string; maxStoredRequests?: number }),
-    DEBUG_DOH_REQUESTS: async (data) => getDoHRequests(data as { limit?: number; offset?: number }),
     DEBUG_NETWORK_CONFIG_GET: async () => getNetworkConfig(deps),
     DEBUG_NETWORK_CONFIG_SET: async (data) =>
       setNetworkConfig(

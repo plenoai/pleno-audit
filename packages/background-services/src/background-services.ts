@@ -1,6 +1,5 @@
 import { queryExistingCookies, type Logger } from "@pleno-audit/extension-runtime";
 import { createBackgroundServiceContext } from "./background-services/context.js";
-import { addEvent } from "./background-services/events.js";
 import {
   checkAIServicePolicy,
   checkDataTransferPolicy,
@@ -30,14 +29,10 @@ import {
 import { createPageAnalysisHandler } from "./background-services/analysis.js";
 import { extractDomainFromUrl } from "./background-services/utils.js";
 
-export type { NewEvent, PageAnalysis } from "./background-services/types.js";
+export type { PageAnalysis } from "./background-services/types.js";
 
 export function createBackgroundServices(serviceLogger: Logger) {
   const { state, bind } = createBackgroundServiceContext(serviceLogger);
-
-  const events = {
-    addEvent: bind(addEvent),
-  };
 
   const alerts = {
     getAlertManager: bind(getAlertManager),
@@ -65,7 +60,6 @@ export function createBackgroundServices(serviceLogger: Logger) {
       getAlertManager: alerts.getAlertManager,
       initStorage: storage.initStorage,
       updateService: storage.updateService,
-      addEvent: events.addEvent,
       addCookieToService: storage.addCookieToService,
       queryExistingCookies,
     }),
@@ -88,7 +82,6 @@ export function createBackgroundServices(serviceLogger: Logger) {
   };
 
   return {
-    events,
     alerts,
     storage,
     analysis,

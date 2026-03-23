@@ -12,7 +12,7 @@ interface ServicesTabProps {
   loginServices: DetectedService[];
   typosquatServices: DetectedService[];
   aiServices: DetectedService[];
-  serviceConnections: Record<string, Record<string, number>>;
+  serviceConnections: Record<string, string[]>;
 }
 
 function getServiceTags(s: DetectedService): { label: string; variant: "danger" | "warning" | "info" | "success" }[] {
@@ -140,13 +140,11 @@ export function ServicesTab({ services, nrdServices, loginServices, typosquatSer
           header: "通信先",
           width: "120px",
           render: (s) => {
-            const destMap = serviceConnections[s.domain];
-            if (!destMap || Object.keys(destMap).length === 0) {
+            const destinations = serviceConnections[s.domain];
+            if (!destinations || destinations.length === 0) {
               return <span style={{ color: colors.textMuted }}>-</span>;
             }
-            const destinations = Object.entries(destMap)
-              .map(([domain, count]) => ({ domain, count }))
-              .sort((a, b) => b.count - a.count);
+            const sorted = [...destinations].sort();
             const isExpanded = expandedDomains.has(s.domain);
             return (
               <div>
@@ -169,7 +167,7 @@ export function ServicesTab({ services, nrdServices, loginServices, typosquatSer
                   }}
                 >
                   <span style={{ fontSize: "10px" }}>{isExpanded ? "\u25BC" : "\u25B6"}</span>
-                  <Badge variant="info">{destinations.length}</Badge>
+                  <Badge variant="info">{sorted.length}</Badge>
                 </button>
                 {isExpanded && (
                   <div
@@ -183,20 +181,15 @@ export function ServicesTab({ services, nrdServices, loginServices, typosquatSer
                       overflowY: "auto",
                     }}
                   >
-                    {destinations.map((d) => (
+                    {sorted.map((domain) => (
                       <div
-                        key={d.domain}
+                        key={domain}
                         style={{
-                          display: "flex",
-                          justifyContent: "space-between",
                           padding: "3px 0",
                           borderBottom: `1px solid ${colors.borderLight}`,
                         }}
                       >
-                        <code style={{ fontSize: "11px", color: colors.textPrimary }}>{d.domain}</code>
-                        <span style={{ color: colors.textMuted, marginLeft: "8px", whiteSpace: "nowrap" }}>
-                          {d.count}件
-                        </span>
+                        <code style={{ fontSize: "11px", color: colors.textPrimary }}>{domain}</code>
                       </div>
                     ))}
                   </div>

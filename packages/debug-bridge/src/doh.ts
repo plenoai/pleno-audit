@@ -47,31 +47,3 @@ export async function setDoHConfig(params: {
   }
 }
 
-export async function getDoHRequests(params?: {
-  limit?: number;
-  offset?: number;
-}): Promise<DebugHandlerResult> {
-  try {
-    const storage = await chrome.storage.local.get("doHRequests") as Record<string, unknown>;
-    const allRequests = (storage.doHRequests as Array<{ timestamp: number }>) || [];
-    const total = allRequests.length;
-
-    const limit = params?.limit ?? 100;
-    const offset = params?.offset ?? 0;
-
-    const sorted = [...allRequests].sort(
-      (a: { timestamp: number }, b: { timestamp: number }) => b.timestamp - a.timestamp
-    );
-    const requests = sorted.slice(offset, offset + limit);
-
-    return {
-      success: true,
-      data: { requests, total },
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Failed to get DoH requests",
-    };
-  }
-}

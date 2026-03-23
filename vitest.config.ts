@@ -37,12 +37,6 @@ export default defineConfig({
           branches: 85,
           statements: 90,
         },
-        "packages/event-queue/src/**": {
-          lines: 95,
-          functions: 90,
-          branches: 90,
-          statements: 95,
-        },
         "packages/ai-detector/src/**": {
           lines: 70,
           functions: 70,

@@ -35,7 +35,7 @@ export interface AsyncMessageHandlerConfig {
   execute: (
     message: RuntimeMessage,
     sender: chrome.runtime.MessageSender,
-  ) => Promise<unknown>;
+  ) => Promise<unknown> | unknown;
   fallback: () => unknown;
 }
 
@@ -112,13 +112,13 @@ handleNetworkInspection: (data: unknown, sender: chrome.runtime.MessageSender) =
     offset?: number;
     since?: string;
     until?: string;
-  }) => Promise<unknown>;
-  generateCSPPolicy: (options?: Partial<CSPGenerationOptions>) => Promise<unknown>;
-  generateCSPPolicyByDomain: (options?: Partial<CSPGenerationOptions>) => Promise<unknown>;
+  }) => unknown;
+  generateCSPPolicy: (options?: Partial<CSPGenerationOptions>) => unknown;
+  generateCSPPolicyByDomain: (options?: Partial<CSPGenerationOptions>) => unknown;
   saveGeneratedCSPPolicy: (result: unknown) => Promise<void>;
   getCSPConfig: () => Promise<CSPConfig>;
   setCSPConfig: (config: Partial<CSPConfig>) => Promise<{ success: boolean }>;
-  clearCSPData: () => Promise<{ success: boolean }>;
+  clearCSPData: () => { success: boolean };
   clearAllData: () => Promise<{ success: boolean }>;
 
   getSSOManager: () => Promise<{
@@ -136,11 +136,8 @@ handleNetworkInspection: (data: unknown, sender: chrome.runtime.MessageSender) =
   setDetectionConfig: (config: Partial<DetectionConfig>) => Promise<{ success: boolean }>;
 
   handleAIPromptCaptured: (data: CapturedAIPrompt) => Promise<{ success: boolean }>;
-  getAIPrompts: () => Promise<CapturedAIPrompt[]>;
-  getAIPromptsCount: () => Promise<number>;
   getAIMonitorConfig: () => Promise<AIMonitorConfig>;
   setAIMonitorConfig: (config: Partial<AIMonitorConfig>) => Promise<{ success: boolean }>;
-  clearAIData: () => Promise<{ success: boolean }>;
 
   handleNRDCheck: (domain: string) => Promise<unknown>;
   getNRDConfig: () => Promise<NRDConfig>;
@@ -180,25 +177,9 @@ handleNetworkInspection: (data: unknown, sender: chrome.runtime.MessageSender) =
   setDoHMonitorConfig: (
     config: Partial<DoHMonitorConfig>,
   ) => Promise<{ success: boolean }>;
-  getDoHRequests: (options?: {
-    limit?: number;
-    offset?: number;
-  }) => Promise<unknown>;
 
-  getServiceConnections: () => Promise<Record<string, Record<string, number>>>;
-  getExtensionConnections: () => Promise<Record<string, Record<string, number>>>;
+  getServiceConnections: () => Promise<Record<string, string[]>>;
+  getExtensionConnections: () => Promise<Record<string, string[]>>;
 
-  getEvents: (options?: {
-    limit?: number;
-    offset?: number;
-    since?: number;
-    until?: number;
-    type?: string[];
-  }) => Promise<unknown>;
-  getEventsCount: (options?: {
-    since?: number;
-    until?: number;
-    type?: string[];
-  }) => Promise<number>;
 }
 

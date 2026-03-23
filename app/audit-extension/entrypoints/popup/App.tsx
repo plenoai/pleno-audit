@@ -1,6 +1,5 @@
 import { useState, useEffect } from "preact/hooks";
 import type { DetectedService } from "@pleno-audit/casb-types";
-import type { CapturedAIPrompt } from "@pleno-audit/ai-detector";
 import type { CSPViolation } from "@pleno-audit/csp";
 import { calculateSecurityPosture, type PostureStatus } from "@pleno-audit/alerts";
 import {
@@ -24,7 +23,7 @@ const logger = createLogger("popup-app");
 
 const TABS: { key: Tab; label: string }[] = [
   { key: "service", label: "Service" },
-  { key: "event", label: "Event" },
+  { key: "event", label: "Alert" },
   { key: "policy", label: "Policy" },
 ];
 
@@ -35,12 +34,11 @@ const STATUS_MAP: Record<PostureStatus, { variant: "danger" | "warning" | "info"
   normal:     { variant: "success", label: "正常", dot: true },
 };
 
-function getStatus(services: DetectedService[], violations: CSPViolation[], aiPrompts: CapturedAIPrompt[]) {
+function getStatus(services: DetectedService[], violations: CSPViolation[]) {
   const posture = calculateSecurityPosture({
     nrdCount: services.filter(s => s.nrdResult?.isNRD).length,
     typosquatCount: services.filter(s => s.typosquatResult?.isTyposquat).length,
     cspViolationCount: violations.length,
-    aiPromptCount: aiPrompts.length,
   });
   return STATUS_MAP[posture.status];
 }
@@ -52,14 +50,12 @@ function PopupContent() {
   const [tab, setTab] = useState<Tab>("service");
   const [loading, setLoading] = useState(true);
   const [violations, setViolations] = useState<CSPViolation[]>([]);
-  const [aiPrompts, setAIPrompts] = useState<CapturedAIPrompt[]>([]);
   const [unifiedServices, setUnifiedServices] = useState<UnifiedService[]>([]);
   const [eventCount, setEventCount] = useState(0);
 
   useEffect(() => {
     loadData();
     loadCSPData();
-    loadAIData();
     loadPopupEvents();
     loadUnifiedServices();
     const listener = (changes: {
@@ -73,13 +69,6 @@ function PopupContent() {
         loadCSPData();
         loadPopupEvents();
         loadUnifiedServices();
-      }
-      if (changes.aiPrompts) {
-        loadAIData();
-        loadPopupEvents();
-      }
-      if (changes.doHRequests) {
-        loadPopupEvents();
       }
     };
     chrome.storage.onChanged.addListener(listener);
@@ -122,18 +111,6 @@ function PopupContent() {
     }
   }
 
-  async function loadAIData() {
-    try {
-      const data = await sendMessage<CapturedAIPrompt[]>({ type: "GET_AI_PROMPTS" });
-      if (Array.isArray(data)) setAIPrompts(data);
-    } catch (error) {
-      logger.warn({
-        event: "POPUP_AI_DATA_LOAD_FAILED",
-        error,
-      });
-    }
-  }
-
   async function loadPopupEvents() {
     try {
       const result = await sendMessage<{ total: number }>({ type: "GET_POPUP_EVENTS" });
@@ -159,7 +136,7 @@ function PopupContent() {
 
   const services = Object.values(data.services) as DetectedService[];
 
-  const status = getStatus(services, violations, aiPrompts);
+  const status = getStatus(services, violations);
 
   const tabCounts: Record<Tab, number | undefined> = {
     service: unifiedServices.length,

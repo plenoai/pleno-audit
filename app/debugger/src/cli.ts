@@ -3,7 +3,7 @@ import { Command } from "commander";
 import { statusCommand } from "./commands/status.js";
 import { snapshotCommand } from "./commands/snapshot.js";
 import { storageCommand } from "./commands/storage.js";
-import { eventsCommand } from "./commands/events.js";
+
 import { servicesCommand } from "./commands/services.js";
 import { messageCommand } from "./commands/message.js";
 import { watchCommand } from "./commands/watch.js";
@@ -30,7 +30,7 @@ program.addCommand(snapshotCommand);
 
 // Data commands
 program.addCommand(storageCommand);
-program.addCommand(eventsCommand);
+
 program.addCommand(servicesCommand);
 
 // Extension operations

@@ -20,19 +20,6 @@ export interface ExtensionNetworkServiceDeps {
     alertCooldown?: Record<string, number>;
     networkMonitorConfig?: NetworkMonitorConfig;
   }) => Promise<void>;
-  addEvent: (event: {
-    type: "extension_request";
-    domain: string;
-    timestamp: number;
-    details: {
-      extensionId: string;
-      extensionName: string;
-      url: string;
-      method: string;
-      resourceType: string;
-      initiatorType: NetworkRequestRecord["initiatorType"];
-    };
-  }) => Promise<unknown>;
   getAlertManager: () => AlertManager;
   getRuntimeId: () => string;
   /** 全ネットワークリクエストの通知コールバック（通信先集約等に使用） */
