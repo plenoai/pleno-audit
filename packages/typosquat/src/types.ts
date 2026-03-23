@@ -12,6 +12,7 @@ export type HomoglyphType =
   | "latin_digit" // l→1, O→0
   | "latin_sequence" // rn→m, vv→w
   | "cyrillic" // キリル文字偽装
+  | "greek" // ギリシャ文字偽装
   | "japanese" // 日本語文字悪用
   | "mixed_script"; // 混在スクリプト
 
@@ -47,6 +48,7 @@ export type ScriptType =
 export interface ScoreBreakdown {
   latinHomoglyphs: number;
   cyrillicHomoglyphs: number;
+  greekHomoglyphs: number;
   japaneseHomoglyphs: number;
   mixedScript: number;
   punycode: number;

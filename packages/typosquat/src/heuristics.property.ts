@@ -481,6 +481,7 @@ describe("typosquat heuristics - property tests", () => {
             return (
               breakdown.latinHomoglyphs >= 0 &&
               breakdown.cyrillicHomoglyphs >= 0 &&
+              breakdown.greekHomoglyphs >= 0 &&
               breakdown.japaneseHomoglyphs >= 0 &&
               breakdown.mixedScript >= 0 &&
               breakdown.punycode >= 0

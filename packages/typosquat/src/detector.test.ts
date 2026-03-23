@@ -79,6 +79,7 @@ describe("createTyposquatDetector", () => {
           breakdown: {
             latinHomoglyphs: 0,
             cyrillicHomoglyphs: 0,
+            greekHomoglyphs: 0,
             japaneseHomoglyphs: 0,
             mixedScript: 0,
             punycode: 0,
@@ -110,6 +111,7 @@ describe("createTyposquatDetector", () => {
           breakdown: {
             latinHomoglyphs: 0,
             cyrillicHomoglyphs: 0,
+            greekHomoglyphs: 0,
             japaneseHomoglyphs: 0,
             mixedScript: 0,
             punycode: 0,
@@ -223,6 +225,7 @@ describe("createTyposquatDetector", () => {
       expect(result.heuristics.breakdown).toBeDefined();
       expect(typeof result.heuristics.breakdown.latinHomoglyphs).toBe("number");
       expect(typeof result.heuristics.breakdown.cyrillicHomoglyphs).toBe("number");
+      expect(typeof result.heuristics.breakdown.greekHomoglyphs).toBe("number");
       expect(typeof result.heuristics.breakdown.japaneseHomoglyphs).toBe("number");
       expect(typeof result.heuristics.breakdown.mixedScript).toBe("number");
       expect(typeof result.heuristics.breakdown.punycode).toBe("number");

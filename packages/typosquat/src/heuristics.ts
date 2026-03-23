@@ -3,6 +3,16 @@
  *
  * ドメイン名の文字特性を分析し、ホモグリフ攻撃の可能性を検出する。
  * 外部DBやドメインリストは使用せず、純粋に文字の特徴から判定。
+ *
+ * スコアリングルール:
+ * - シーケンス (rn→m, vv→w, nn→m, uu→w): ラベル先頭のみ30点 (上限50)
+ * - 数字 (0→O, 1→l): 文字挟み(letter-digit-letter)30点、片側のみ15点 (上限30)
+ *   ラベル先頭の数字はスキップ（自然な命名パターン: 1password, 000webhost等）
+ * - キリル文字: 1文字25点 (上限50) + mixed script 40点
+ * - ギリシャ文字: 1文字25点 (上限50) + mixed script 40点
+ * - 日本語全角: 1文字15点 (上限30)
+ * - Punycode: 10点（xn--ラベルのASCII部分はhomoglyph分析対象外）
+ * - 閾値: デフォルト30点以上で検出
  */
 
 import type {
@@ -50,6 +60,38 @@ export const CYRILLIC_TO_LATIN: Map<string, string> = new Map([
   ["\u0433", "r"], // г → r
   ["\u0442", "t"], // т → t (近似)
   ["\u043C", "m"], // м → m (近似)
+]);
+
+/**
+ * ギリシャ文字→ラテン文字のホモグリフマッピング
+ * Latin + Greek の混在は isSuspiciousMixedScript で検出されるが、
+ * 個別のホモグリフ検出も行うことでスコアを高精度化
+ */
+export const GREEK_TO_LATIN: Map<string, string> = new Map([
+  ["\u03BF", "o"], // ο (omicron) → o
+  ["\u03B1", "a"], // α (alpha) → a (近似)
+  ["\u03B5", "e"], // ε (epsilon) → e (近似)
+  ["\u03B9", "i"], // ι (iota) → i
+  ["\u03BA", "k"], // κ (kappa) → k
+  ["\u03BD", "v"], // ν (nu) → v
+  ["\u03C1", "p"], // ρ (rho) → p
+  ["\u03C4", "t"], // τ (tau) → t (近似)
+  ["\u03C5", "u"], // υ (upsilon) → u
+  ["\u03C7", "x"], // χ (chi) → x
+  ["\u0391", "A"], // Α (Alpha) → A
+  ["\u0392", "B"], // Β (Beta) → B
+  ["\u0395", "E"], // Ε (Epsilon) → E
+  ["\u0397", "H"], // Η (Eta) → H
+  ["\u0399", "I"], // Ι (Iota) → I
+  ["\u039A", "K"], // Κ (Kappa) → K
+  ["\u039C", "M"], // Μ (Mu) → M
+  ["\u039D", "N"], // Ν (Nu) → N
+  ["\u039F", "O"], // Ο (Omicron) → O
+  ["\u03A1", "P"], // Ρ (Rho) → P
+  ["\u03A4", "T"], // Τ (Tau) → T
+  ["\u03A7", "X"], // Χ (Chi) → X
+  ["\u03A5", "Y"], // Υ (Upsilon) → Y
+  ["\u0396", "Z"], // Ζ (Zeta) → Z
 ]);
 
 /**
@@ -243,11 +285,11 @@ export function detectLatinHomoglyphs(domain: string): HomoglyphMatch[] {
     }
   }
 
-  // シーケンス検出 (rn, vv, cl)
+  // シーケンス検出 (rn, vv, nn, uu)
+  // cl→d は除外: clで始まる英単語が多すぎ (click, clean, cloud...) 、視覚的類似性も弱い
   const sequences = [
     { pattern: "rn", replacement: "m" },
     { pattern: "vv", replacement: "w" },
-    { pattern: "cl", replacement: "d" },
     { pattern: "nn", replacement: "m" },
     { pattern: "uu", replacement: "w" },
   ];
@@ -284,6 +326,29 @@ export function detectCyrillicHomoglyphs(domain: string): HomoglyphMatch[] {
         possibleReplacement: latinEquiv,
         position: i,
         type: "cyrillic",
+      });
+    }
+  }
+
+  return matches;
+}
+
+/**
+ * ギリシャ文字のホモグリフを検出
+ */
+export function detectGreekHomoglyphs(domain: string): HomoglyphMatch[] {
+  const matches: HomoglyphMatch[] = [];
+
+  for (let i = 0; i < domain.length; i++) {
+    const char = domain[i];
+    const latinEquiv = GREEK_TO_LATIN.get(char);
+
+    if (latinEquiv) {
+      matches.push({
+        original: char,
+        possibleReplacement: latinEquiv,
+        position: i,
+        type: "greek",
       });
     }
   }
@@ -359,16 +424,25 @@ export function calculateTyposquatHeuristics(
   const scripts = detectScripts(normalizedDomain);
   const hasMixedScript = isSuspiciousMixedScript(scripts);
 
+  // xn--ラベルを除外したドメインでホモグリフ検出
+  // Punycodeエンコード済みラベルのASCII文字は視覚的攻撃ではない
+  const analysisLabels = normalizedDomain.split(".");
+  const analysisDomain = analysisLabels
+    .map(label => label.startsWith("xn--") ? "" : label)
+    .join(".");
+
   // ホモグリフ検出
-  const latinHomoglyphs = detectLatinHomoglyphs(normalizedDomain);
-  const cyrillicHomoglyphs = detectCyrillicHomoglyphs(normalizedDomain);
+  const latinHomoglyphs = detectLatinHomoglyphs(analysisDomain);
+  const cyrillicHomoglyphs = detectCyrillicHomoglyphs(analysisDomain);
+  const greekHomoglyphs = detectGreekHomoglyphs(analysisDomain);
   const japaneseHomoglyphs = config.detectJapaneseHomoglyphs
-    ? detectJapaneseHomoglyphs(normalizedDomain)
+    ? detectJapaneseHomoglyphs(analysisDomain)
     : [];
 
   const allHomoglyphs = [
     ...latinHomoglyphs,
     ...cyrillicHomoglyphs,
+    ...greekHomoglyphs,
     ...japaneseHomoglyphs,
   ];
 
@@ -376,12 +450,83 @@ export function calculateTyposquatHeuristics(
   const sequenceHomoglyphs = latinHomoglyphs.filter(h => h.type === "latin_sequence");
   const digitHomoglyphs = latinHomoglyphs.filter(h => h.type === "latin_digit");
 
+  // ドメインラベル（ドットで分割）を取得
+  const labels = normalizedDomain.split(".");
+
+  // シーケンスはラベル先頭（position 0）のみスコアリング
+  // "rnicrosoft" のrn は危険だが "learn" のrn は自然な英語
+  const labelStarts = new Set<number>();
+  let offset = 0;
+  for (const label of labels) {
+    labelStarts.add(offset);
+    offset += label.length + 1;
+  }
+  const dangerousSequences = sequenceHomoglyphs.filter(h => labelStarts.has(h.position));
+
+  // 数字は「文字列中に埋め込まれた」もののみスコアリング
+  // "g00gle" の0は危険（文字gの後）、"000webhost" の0はラベル先頭で自然
+  // 連続する数字はグループとして扱い、グループ前後の文字をチェック
+  const embeddedDigitPositions = new Set<number>();
+  const surroundedDigitPositions = new Set<number>();
+
+  // ラベルごとに数字グループを判定
+  offset = 0;
+  for (const label of labels) {
+    // このラベル内の数字ホモグリフ位置を収集
+    const digitPosInLabel: number[] = [];
+    for (const match of digitHomoglyphs) {
+      const posInLabel = match.position - offset;
+      if (posInLabel >= 0 && posInLabel < label.length) {
+        if (!digitPosInLabel.includes(posInLabel)) {
+          digitPosInLabel.push(posInLabel);
+        }
+      }
+    }
+    digitPosInLabel.sort((a, b) => a - b);
+
+    // 連続する数字をグループ化
+    const groups: number[][] = [];
+    for (const pos of digitPosInLabel) {
+      const lastGroup = groups[groups.length - 1];
+      if (lastGroup && pos === lastGroup[lastGroup.length - 1] + 1) {
+        lastGroup.push(pos);
+      } else {
+        groups.push([pos]);
+      }
+    }
+
+    // グループごとに前後の文字をチェック
+    for (const group of groups) {
+      const firstPos = group[0];
+      const lastPos = group[group.length - 1];
+      const hasLetterBefore = firstPos > 0 && /[a-zA-Z]/.test(label[firstPos - 1]);
+      const hasLetterAfter = lastPos < label.length - 1 && /[a-zA-Z]/.test(label[lastPos + 1]);
+
+      if (hasLetterBefore) {
+        for (const pos of group) {
+          embeddedDigitPositions.add(pos + offset);
+          if (hasLetterAfter) {
+            surroundedDigitPositions.add(pos + offset);
+          }
+        }
+      }
+    }
+
+    offset += label.length + 1;
+  }
+
   // スコア計算
-  // シーケンスホモグリフは1件で30点（非常に危険）
-  // 数字ホモグリフは1件10点（上限30点）
+  // シーケンス: ラベル先頭のみ、1件30点（上限50）
+  // 数字: 両側文字挟みは30点、片側のみは15点（上限30）
+  const digitScore = Math.min(
+    surroundedDigitPositions.size * 30 +
+    (embeddedDigitPositions.size - surroundedDigitPositions.size) * 15,
+    30
+  );
   const breakdown: ScoreBreakdown = {
-    latinHomoglyphs: Math.min(digitHomoglyphs.length * 10, 30) + Math.min(sequenceHomoglyphs.length * 30, 50),
+    latinHomoglyphs: digitScore + Math.min(dangerousSequences.length * 30, 50),
     cyrillicHomoglyphs: Math.min(cyrillicHomoglyphs.length * 25, 50),
+    greekHomoglyphs: Math.min(greekHomoglyphs.length * 25, 50),
     japaneseHomoglyphs: Math.min(japaneseHomoglyphs.length * 15, 30),
     mixedScript: hasMixedScript ? 40 : 0,
     punycode: isPunycode && config.warnOnPunycode ? 10 : 0,
@@ -390,6 +535,7 @@ export function calculateTyposquatHeuristics(
   const totalScore = Math.min(
     breakdown.latinHomoglyphs +
       breakdown.cyrillicHomoglyphs +
+      breakdown.greekHomoglyphs +
       breakdown.japaneseHomoglyphs +
       breakdown.mixedScript +
       breakdown.punycode,
