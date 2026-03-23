@@ -16,7 +16,6 @@ import type {
   NetworkMonitorConfig,
   NotificationConfig,
 } from "@pleno-audit/extension-runtime";
-import type { ConnectionMode } from "@pleno-audit/extension-enterprise";
 
 export type RuntimeMessage = {
   type?: string;
@@ -121,14 +120,6 @@ handleNetworkInspection: (data: unknown, sender: chrome.runtime.MessageSender) =
   setCSPConfig: (config: Partial<CSPConfig>) => Promise<{ success: boolean }>;
   clearCSPData: () => Promise<{ success: boolean }>;
   clearAllData: () => Promise<{ success: boolean }>;
-
-  getStats: () => Promise<unknown>;
-
-  getConnectionConfig: () => Promise<{ mode: ConnectionMode; endpoint: string | null }>;
-  setConnectionConfig: (mode: ConnectionMode, endpoint?: string) => Promise<{ success: boolean }>;
-  getSyncConfig: () => Promise<{ enabled: boolean; endpoint: string | null }>;
-  setSyncConfig: (enabled: boolean, endpoint?: string) => Promise<{ success: boolean }>;
-  triggerSync: () => Promise<{ success: boolean; sent: number; received: number }>;
 
   getSSOManager: () => Promise<{
     getStatus: () => Promise<unknown>;

@@ -4,8 +4,6 @@ import {
   STRICT_DIRECTIVES,
   REQUIRED_DIRECTIVES,
   DEFAULT_CSP_CONFIG,
-  DEFAULT_BATCH_INTERVAL_MS,
-  DEFAULT_BATCH_SIZE,
 } from "./constants.js";
 
 describe("INITIATOR_TO_DIRECTIVE", () => {
@@ -169,10 +167,6 @@ describe("DEFAULT_CSP_CONFIG", () => {
     expect(DEFAULT_CSP_CONFIG.collectCSPViolations).toBe(true);
   });
 
-  it("has null report endpoint by default", () => {
-    expect(DEFAULT_CSP_CONFIG.reportEndpoint).toBeNull();
-  });
-
   it("has reasonable max stored reports", () => {
     expect(DEFAULT_CSP_CONFIG.maxStoredReports).toBe(1000);
     expect(DEFAULT_CSP_CONFIG.maxStoredReports).toBeGreaterThan(0);
@@ -182,38 +176,7 @@ describe("DEFAULT_CSP_CONFIG", () => {
     expect(DEFAULT_CSP_CONFIG).toHaveProperty("enabled");
     expect(DEFAULT_CSP_CONFIG).toHaveProperty("collectNetworkRequests");
     expect(DEFAULT_CSP_CONFIG).toHaveProperty("collectCSPViolations");
-    expect(DEFAULT_CSP_CONFIG).toHaveProperty("reportEndpoint");
     expect(DEFAULT_CSP_CONFIG).toHaveProperty("maxStoredReports");
-  });
-});
-
-describe("DEFAULT_BATCH_INTERVAL_MS", () => {
-  it("has positive value", () => {
-    expect(DEFAULT_BATCH_INTERVAL_MS).toBeGreaterThan(0);
-  });
-
-  it("is 30 seconds", () => {
-    expect(DEFAULT_BATCH_INTERVAL_MS).toBe(30000);
-  });
-
-  it("is reasonable for batch processing", () => {
-    expect(DEFAULT_BATCH_INTERVAL_MS).toBeGreaterThanOrEqual(1000); // At least 1 second
-    expect(DEFAULT_BATCH_INTERVAL_MS).toBeLessThanOrEqual(300000); // At most 5 minutes
-  });
-});
-
-describe("DEFAULT_BATCH_SIZE", () => {
-  it("has positive value", () => {
-    expect(DEFAULT_BATCH_SIZE).toBeGreaterThan(0);
-  });
-
-  it("is 100", () => {
-    expect(DEFAULT_BATCH_SIZE).toBe(100);
-  });
-
-  it("is reasonable for batch processing", () => {
-    expect(DEFAULT_BATCH_SIZE).toBeGreaterThanOrEqual(10);
-    expect(DEFAULT_BATCH_SIZE).toBeLessThanOrEqual(1000);
   });
 });
 

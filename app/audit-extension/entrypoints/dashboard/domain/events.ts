@@ -48,7 +48,15 @@ export const EVENT_FILTER_TYPES = [
   "csp_violation",
   "login_detected",
   "ai_prompt_sent",
+  "ai_response_received",
+  "ai_sensitive_data_detected",
   "nrd_detected",
+  "typosquat_detected",
+  "privacy_policy_found",
+  "terms_of_service_found",
+  "cookie_set",
+  "network_request",
+  "extension_request",
 ] as const;
 
 export function getEventLabel(type: string): string {

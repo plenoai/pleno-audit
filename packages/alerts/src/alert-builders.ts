@@ -14,6 +14,7 @@ import type {
   AISensitiveAlertDetails,
   ShadowAIAlertDetails,
   ExtensionAlertDetails,
+  CSPAlertDetails,
   DataExfiltrationAlertDetails,
   CredentialTheftAlertDetails,
   SupplyChainAlertDetails,
@@ -231,6 +232,42 @@ const TYPOSQUAT_ALERT_DEFINITION: AlertDefinition<
 };
 
 export const buildTyposquatAlert = createAlertBuilder(TYPOSQUAT_ALERT_DEFINITION);
+
+export interface CSPViolationAlertParams {
+  domain: string;
+  directive: string;
+  blockedURL: string;
+  violationCount: number;
+}
+
+const CSP_VIOLATION_ALERT_DEFINITION: AlertDefinition<
+  CSPViolationAlertParams,
+  CSPAlertDetails
+> = {
+  category: "csp_violation",
+  detailsType: "csp",
+  build: (params, helpers) => {
+    const isCriticalDirective = ["script-src", "default-src"].includes(params.directive);
+    const severity = helpers.resolveSeverity(
+      [[isCriticalDirective, "high"]],
+      "medium"
+    );
+
+    return {
+      severity,
+      title: `CSP違反: ${params.directive}`,
+      description: `${params.blockedURL}が${params.directive}ポリシーに違反（${params.violationCount}回）`,
+      domain: params.domain,
+      details: {
+        directive: params.directive,
+        blockedURL: params.blockedURL,
+        violationCount: params.violationCount,
+      },
+    };
+  },
+};
+
+export const buildCSPViolationAlert = createAlertBuilder(CSP_VIOLATION_ALERT_DEFINITION);
 
 export interface AISensitiveAlertParams {
   domain: string;

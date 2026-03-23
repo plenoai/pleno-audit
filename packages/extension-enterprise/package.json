@@ -8,7 +8,6 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@pleno-audit/extension-runtime": "workspace:*",
-    "@pleno-audit/csp": "workspace:*"
+    "@pleno-audit/extension-runtime": "workspace:*"
   }
 }

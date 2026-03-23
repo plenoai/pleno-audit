@@ -1,11 +1,5 @@
 import { queryExistingCookies, type Logger } from "@pleno-audit/extension-runtime";
 import { createBackgroundServiceContext } from "./background-services/context.js";
-import {
-  ensureApiClient,
-  ensureSyncManager,
-  initializeApiClientWithMigration,
-  initializeSyncManagerWithAutoStart,
-} from "./background-services/client.js";
 import { addEvent } from "./background-services/events.js";
 import {
   checkAIServicePolicy,
@@ -32,11 +26,6 @@ import {
   cleanupOldData,
   getBlockingConfig,
   setBlockingConfig,
-  getConnectionConfig,
-  setConnectionConfig,
-  getSyncConfig,
-  setSyncConfig,
-  triggerSync,
 } from "./background-services/config.js";
 import { createPageAnalysisHandler } from "./background-services/analysis.js";
 import { extractDomainFromUrl } from "./background-services/utils.js";
@@ -45,28 +34,6 @@ export type { NewEvent, PageAnalysis } from "./background-services/types.js";
 
 export function createBackgroundServices(serviceLogger: Logger) {
   const { state, bind } = createBackgroundServiceContext(serviceLogger);
-
-  const api = {
-    ensureApiClient: bind(ensureApiClient),
-    initializeApiClientWithMigration: (
-      checkMigrationNeeded: Parameters<typeof initializeApiClientWithMigration>[1],
-      migrateToDatabase: Parameters<typeof initializeApiClientWithMigration>[2]
-    ) => initializeApiClientWithMigration(state, checkMigrationNeeded, migrateToDatabase),
-    clearReportsIfInitialized: async () => {
-      if (!state.apiClient) {
-        return;
-      }
-      await state.apiClient.clearReports();
-    },
-  };
-
-  const sync = {
-    ensureSyncManager: bind(ensureSyncManager),
-    initializeSyncManagerWithAutoStart: () => initializeSyncManagerWithAutoStart(state),
-    getSyncConfig: bind(getSyncConfig),
-    setSyncConfig: bind(setSyncConfig),
-    triggerSync: bind(triggerSync),
-  };
 
   const events = {
     addEvent: bind(addEvent),
@@ -114,8 +81,6 @@ export function createBackgroundServices(serviceLogger: Logger) {
     cleanupOldData: bind(cleanupOldData),
     getBlockingConfig,
     setBlockingConfig: bind(setBlockingConfig),
-    getConnectionConfig: bind(getConnectionConfig),
-    setConnectionConfig: bind(setConnectionConfig),
   };
 
   const utils = {
@@ -123,8 +88,6 @@ export function createBackgroundServices(serviceLogger: Logger) {
   };
 
   return {
-    api,
-    sync,
     events,
     alerts,
     storage,

@@ -11,9 +11,7 @@ import {
   type DetectionConfig,
   type NotificationConfig,
 } from "@pleno-audit/extension-runtime";
-import type { ConnectionMode } from "@pleno-audit/extension-enterprise";
 import type { BackgroundServiceState } from "./state.js";
-import { ensureApiClient, ensureSyncManager, setConnectionConfigInternal } from "./client.js";
 
 const logger = createLogger("background-config");
 
@@ -82,16 +80,7 @@ export async function cleanupOldData(state: BackgroundServiceState): Promise<{ d
 
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - config.retentionDays);
-    const cutoffTimestamp = cutoffDate.toISOString();
     const cutoffMs = cutoffDate.getTime();
-
-    let deleted = 0;
-    try {
-      const client = await ensureApiClient(state);
-      deleted = await client.deleteOldReports(cutoffTimestamp);
-    } catch {
-      // Remote API may not be configured
-    }
 
     const storage = await getStorage();
     const aiPrompts = storage.aiPrompts || [];
@@ -107,8 +96,8 @@ export async function cleanupOldData(state: BackgroundServiceState): Promise<{ d
       },
     });
 
-    state.logger?.info(`Data cleanup completed. Deleted ${deleted} CSP reports.`);
-    return { deleted };
+    state.logger?.info(`Data cleanup completed.`);
+    return { deleted: 0 };
   } catch (error) {
     state.logger?.error("Error during data cleanup:", error);
     return { deleted: 0 };
@@ -130,61 +119,5 @@ export async function setBlockingConfig(
   } catch (error) {
     state.logger?.error("Error setting blocking config:", error);
     return { success: false };
-  }
-}
-
-export async function getConnectionConfig(
-  state: BackgroundServiceState
-): Promise<{ mode: ConnectionMode; endpoint: string | null }> {
-  const client = await ensureApiClient(state);
-  return {
-    mode: client.getMode(),
-    endpoint: client.getEndpoint(),
-  };
-}
-
-export async function setConnectionConfig(
-  state: BackgroundServiceState,
-  mode: ConnectionMode,
-  endpoint?: string
-): Promise<{ success: boolean }> {
-  return setConnectionConfigInternal(state, mode, endpoint);
-}
-
-export async function getSyncConfig(
-  state: BackgroundServiceState
-): Promise<{ enabled: boolean; endpoint: string | null }> {
-  const manager = await ensureSyncManager(state);
-  return {
-    enabled: manager.isEnabled(),
-    endpoint: manager.getRemoteEndpoint(),
-  };
-}
-
-export async function setSyncConfig(
-  state: BackgroundServiceState,
-  enabled: boolean,
-  endpoint?: string
-): Promise<{ success: boolean }> {
-  try {
-    const manager = await ensureSyncManager(state);
-    await manager.setEnabled(enabled, endpoint);
-    return { success: true };
-  } catch (error) {
-    state.logger?.error("Error setting sync config:", error);
-    return { success: false };
-  }
-}
-
-export async function triggerSync(
-  state: BackgroundServiceState
-): Promise<{ success: boolean; sent: number; received: number }> {
-  try {
-    const manager = await ensureSyncManager(state);
-    const result = await manager.sync();
-    return { success: true, ...result };
-  } catch (error) {
-    state.logger?.error("Error triggering sync:", error);
-    return { success: false, sent: 0, received: 0 };
   }
 }
