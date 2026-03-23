@@ -243,22 +243,22 @@ export const TECH_STACK_ROWS: TechStackRow[] = [
 export const PACKAGE_ITEMS: PackageItem[] = [
   {
     icon: Database,
-    title: 'packages/detectors',
+    title: 'lib/detectors',
     description: 'CASBドメイン（サービス検出、認証検出）',
   },
   {
     icon: Shield,
-    title: 'packages/csp',
+    title: 'lib/csp',
     description: 'CSP監査（違反検出、ポリシー生成）',
   },
   {
     icon: AlertTriangle,
-    title: 'packages/nrd, typosquat',
+    title: 'lib/nrd, typosquat',
     description: 'ドメイン検出アルゴリズム',
   },
   {
     icon: Zap,
-    title: 'packages/ai-detector',
+    title: 'lib/ai-detector',
     description: 'AIサービス検出アルゴリズム',
   },
   {

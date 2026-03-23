@@ -5,7 +5,7 @@ import {
   runAllTests,
   calculateDefenseScore,
   createWebStorage,
-} from "@pleno-audit/battacker";
+} from "@libztbs/battacker";
 
 const storage = createWebStorage();
 

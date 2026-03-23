@@ -1,11 +1,11 @@
-import { createLogger } from "@pleno-audit/extension-runtime";
+import { createLogger } from "@libztbs/extension-runtime";
 import {
   allAttacks,
   calculateDefenseScore,
   runAllTests,
   type DefenseScore,
   type ScanProgressEvent,
-} from "@pleno-audit/battacker";
+} from "@libztbs/battacker";
 
 const logger = createLogger("battacker-content");
 

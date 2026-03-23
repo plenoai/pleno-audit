@@ -1,4 +1,4 @@
-import type { DoHRequestRecord } from "@pleno-audit/extension-runtime";
+import type { DoHRequestRecord } from "@libztbs/extension-runtime";
 import { Badge } from "../../../components";
 import { usePopupStyles } from "../styles";
 import { useTheme } from "../../../lib/theme";

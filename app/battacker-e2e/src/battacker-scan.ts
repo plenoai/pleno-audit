@@ -2,7 +2,7 @@
  * Battacker (plenoai.com) E2E Scan Script
  *
  * Usage:
- *   pnpm --filter @pleno-audit/battacker-e2e battacker
+ *   pnpm --filter @libztbs/battacker-e2e battacker
  *
  * Or run directly:
  *   npx tsx app/battacker-e2e/src/battacker-scan.ts

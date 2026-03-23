@@ -1,5 +1,5 @@
 import { useMemo, useState } from "preact/hooks";
-import type { DetectedService } from "@pleno-audit/casb-types";
+import type { DetectedService } from "@libztbs/types";
 import { Badge, Button, SearchInput } from "../../../components";
 import { FilteredTab } from "../components/FilteredTab";
 import { useTabFilter } from "../hooks/useTabFilter";

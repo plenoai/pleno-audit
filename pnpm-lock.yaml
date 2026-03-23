@@ -44,45 +44,45 @@ importers:
 
   app/audit-extension:
     dependencies:
-      '@pleno-audit/ai-detector':
+      '@libztbs/ai-detector':
         specifier: workspace:*
-        version: link:../../packages/ai-detector
-      '@pleno-audit/alerts':
+        version: link:../../lib/ai-detector
+      '@libztbs/alerts':
         specifier: workspace:*
-        version: link:../../packages/alerts
-      '@pleno-audit/background-services':
+        version: link:../../lib/alerts
+      '@libztbs/background-services':
         specifier: workspace:*
-        version: link:../../packages/background-services
-      '@pleno-audit/casb-types':
+        version: link:../../lib/background-services
+      '@libztbs/csp':
         specifier: workspace:*
-        version: link:../../packages/casb-types
-      '@pleno-audit/csp':
+        version: link:../../lib/csp
+      '@libztbs/data-export':
         specifier: workspace:*
-        version: link:../../packages/csp
-      '@pleno-audit/data-export':
+        version: link:../../lib/data-export
+      '@libztbs/debug-bridge':
         specifier: workspace:*
-        version: link:../../packages/data-export
-      '@pleno-audit/debug-bridge':
+        version: link:../../lib/debug-bridge
+      '@libztbs/detectors':
         specifier: workspace:*
-        version: link:../../packages/debug-bridge
-      '@pleno-audit/detectors':
+        version: link:../../lib/detectors
+      '@libztbs/extension-enterprise':
         specifier: workspace:*
-        version: link:../../packages/detectors
-      '@pleno-audit/extension-enterprise':
+        version: link:../../lib/extension-enterprise
+      '@libztbs/extension-network-service':
         specifier: workspace:*
-        version: link:../../packages/extension-enterprise
-      '@pleno-audit/extension-network-service':
+        version: link:../../lib/extension-network-service
+      '@libztbs/extension-runtime':
         specifier: workspace:*
-        version: link:../../packages/extension-network-service
-      '@pleno-audit/extension-runtime':
+        version: link:../../lib/extension-runtime
+      '@libztbs/nrd':
         specifier: workspace:*
-        version: link:../../packages/extension-runtime
-      '@pleno-audit/nrd':
+        version: link:../../lib/nrd
+      '@libztbs/types':
         specifier: workspace:*
-        version: link:../../packages/nrd
-      '@pleno-audit/typosquat':
+        version: link:../../lib/types
+      '@libztbs/typosquat':
         specifier: workspace:*
-        version: link:../../packages/typosquat
+        version: link:../../lib/typosquat
       lucide-preact:
         specifier: ^0.577.0
         version: 0.577.0(preact@10.29.0)
@@ -117,12 +117,12 @@ importers:
 
   app/battacker-extension:
     dependencies:
-      '@pleno-audit/battacker':
+      '@libztbs/battacker':
         specifier: workspace:*
-        version: link:../../packages/battacker
-      '@pleno-audit/extension-runtime':
+        version: link:../../lib/battacker
+      '@libztbs/extension-runtime':
         specifier: workspace:*
-        version: link:../../packages/extension-runtime
+        version: link:../../lib/extension-runtime
       motion:
         specifier: ^12.38.0
         version: 12.38.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -139,9 +139,9 @@ importers:
 
   app/battacker-web:
     dependencies:
-      '@pleno-audit/battacker':
+      '@libztbs/battacker':
         specifier: workspace:*
-        version: link:../../packages/battacker
+        version: link:../../lib/battacker
       framer-motion:
         specifier: ^12.38.0
         version: 12.38.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -177,9 +177,9 @@ importers:
         specifier: ^8.18.0
         version: 8.19.0
     devDependencies:
-      '@pleno-audit/extension-runtime':
+      '@libztbs/extension-runtime':
         specifier: workspace:*
-        version: link:../../packages/extension-runtime
+        version: link:../../lib/extension-runtime
       '@types/node':
         specifier: ^25.5.0
         version: 25.5.0
@@ -233,120 +233,110 @@ importers:
         specifier: ^7.3.1
         version: 7.3.1(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(tsx@4.21.0)
 
-  packages/ai-detector:
+  lib/ai-detector:
     dependencies:
-      '@pleno-audit/alerts':
+      '@libztbs/alerts':
         specifier: workspace:*
         version: link:../alerts
 
-  packages/alerts: {}
+  lib/alerts: {}
 
-  packages/background-services:
+  lib/background-services:
     dependencies:
-      '@pleno-audit/ai-detector':
+      '@libztbs/ai-detector':
         specifier: workspace:*
         version: link:../ai-detector
-      '@pleno-audit/alerts':
+      '@libztbs/alerts':
         specifier: workspace:*
         version: link:../alerts
-      '@pleno-audit/casb-types':
-        specifier: workspace:*
-        version: link:../casb-types
-      '@pleno-audit/csp':
+      '@libztbs/csp':
         specifier: workspace:*
         version: link:../csp
-      '@pleno-audit/detectors':
+      '@libztbs/detectors':
         specifier: workspace:*
         version: link:../detectors
-      '@pleno-audit/extension-runtime':
+      '@libztbs/extension-runtime':
         specifier: workspace:*
         version: link:../extension-runtime
-      '@pleno-audit/nrd':
+      '@libztbs/nrd':
         specifier: workspace:*
         version: link:../nrd
-      '@pleno-audit/typosquat':
+      '@libztbs/types':
+        specifier: workspace:*
+        version: link:../types
+      '@libztbs/typosquat':
         specifier: workspace:*
         version: link:../typosquat
 
-  packages/battacker:
+  lib/battacker:
     devDependencies:
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
 
-  packages/casb-types:
+  lib/csp: {}
+
+  lib/data-export: {}
+
+  lib/debug-bridge:
     dependencies:
-      '@pleno-audit/ai-detector':
+      '@libztbs/extension-runtime':
+        specifier: workspace:*
+        version: link:../extension-runtime
+
+  lib/detectors: {}
+
+  lib/extension-enterprise:
+    dependencies:
+      '@libztbs/extension-runtime':
+        specifier: workspace:*
+        version: link:../extension-runtime
+
+  lib/extension-network-service:
+    dependencies:
+      '@libztbs/alerts':
+        specifier: workspace:*
+        version: link:../alerts
+      '@libztbs/extension-runtime':
+        specifier: workspace:*
+        version: link:../extension-runtime
+
+  lib/extension-runtime:
+    dependencies:
+      '@libztbs/ai-detector':
         specifier: workspace:*
         version: link:../ai-detector
-      '@pleno-audit/csp':
+      '@libztbs/alerts':
+        specifier: workspace:*
+        version: link:../alerts
+      '@libztbs/csp':
         specifier: workspace:*
         version: link:../csp
-      '@pleno-audit/typosquat':
+      '@libztbs/detectors':
+        specifier: workspace:*
+        version: link:../detectors
+      '@libztbs/nrd':
+        specifier: workspace:*
+        version: link:../nrd
+      '@libztbs/types':
+        specifier: workspace:*
+        version: link:../types
+
+  lib/nrd: {}
+
+  lib/types:
+    dependencies:
+      '@libztbs/ai-detector':
+        specifier: workspace:*
+        version: link:../ai-detector
+      '@libztbs/csp':
+        specifier: workspace:*
+        version: link:../csp
+      '@libztbs/typosquat':
         specifier: workspace:*
         version: link:../typosquat
 
-  packages/csp: {}
-
-  packages/data-export: {}
-
-  packages/debug-bridge:
-    dependencies:
-      '@pleno-audit/extension-runtime':
-        specifier: workspace:*
-        version: link:../extension-runtime
-
-  packages/detectors:
-    dependencies:
-      '@pleno-audit/casb-types':
-        specifier: workspace:*
-        version: link:../casb-types
-
-  packages/extension-enterprise:
-    dependencies:
-      '@pleno-audit/extension-runtime':
-        specifier: workspace:*
-        version: link:../extension-runtime
-
-  packages/extension-network-service:
-    dependencies:
-      '@pleno-audit/alerts':
-        specifier: workspace:*
-        version: link:../alerts
-      '@pleno-audit/extension-runtime':
-        specifier: workspace:*
-        version: link:../extension-runtime
-
-  packages/extension-runtime:
-    dependencies:
-      '@pleno-audit/ai-detector':
-        specifier: workspace:*
-        version: link:../ai-detector
-      '@pleno-audit/alerts':
-        specifier: workspace:*
-        version: link:../alerts
-      '@pleno-audit/casb-types':
-        specifier: workspace:*
-        version: link:../casb-types
-      '@pleno-audit/csp':
-        specifier: workspace:*
-        version: link:../csp
-      '@pleno-audit/detectors':
-        specifier: workspace:*
-        version: link:../detectors
-      '@pleno-audit/nrd':
-        specifier: workspace:*
-        version: link:../nrd
-
-  packages/nrd: {}
-
-  packages/storage:
-    dependencies:
-      '@pleno-audit/casb-types':
-        specifier: workspace:*
-        version: link:../casb-types
-
-  packages/typosquat: {}
+  lib/typosquat: {}
 
 packages:
 

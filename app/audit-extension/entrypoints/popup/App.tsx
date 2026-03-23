@@ -1,11 +1,11 @@
 import { useState, useEffect } from "preact/hooks";
-import type { DetectedService } from "@pleno-audit/casb-types";
-import type { CSPViolation } from "@pleno-audit/csp";
-import { calculateSecurityPosture, type PostureStatus } from "@pleno-audit/alerts";
+import type { DetectedService } from "@libztbs/types";
+import type { CSPViolation } from "@libztbs/csp";
+import { calculateSecurityPosture, type PostureStatus } from "@libztbs/alerts";
 import {
   createLogger,
   type StorageData,
-} from "@pleno-audit/extension-runtime";
+} from "@libztbs/extension-runtime";
 import { Shield } from "lucide-preact";
 import { ThemeContext, useThemeState, useTheme } from "../../lib/theme";
 import { Badge, Button, ErrorBoundary, PopupSettingsMenu } from "../../components";

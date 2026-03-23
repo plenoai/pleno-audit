@@ -1,4 +1,4 @@
-import type { DefenseScore, TestResult } from "@pleno-audit/battacker";
+import type { DefenseScore, TestResult } from "@libztbs/battacker";
 
 export function ResultsTab({ score }: { score: DefenseScore }) {
   const allResults = score.categories.flatMap((cat) => cat.testResults);

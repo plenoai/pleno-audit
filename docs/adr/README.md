@@ -25,3 +25,4 @@
 | [050](./050-event-timestamp-source-of-truth.md) | イベント時刻の単一責務化 | Accepted |
 | [051](./051-deprecate-parquet-storage.md) | parquet-storage廃止とposture/policy/alertストレージモデル | Accepted |
 | [052](./052-extension-connection-tracking-limitation.md) | 他の拡張機能のネットワーク通信は観測不可 | Accepted |
+| [054](./054-libztbs-extraction.md) | libztbs — ゼロトラストブラウザ基盤の分離 | Accepted |

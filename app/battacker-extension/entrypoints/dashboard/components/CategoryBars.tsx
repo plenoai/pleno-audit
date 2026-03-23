@@ -1,6 +1,6 @@
 import { motion } from "motion/react";
-import type { CategoryScore } from "@pleno-audit/battacker";
-import { CATEGORY_LABELS } from "@pleno-audit/battacker";
+import type { CategoryScore } from "@libztbs/battacker";
+import { CATEGORY_LABELS } from "@libztbs/battacker";
 
 export function CategoryBarWithSkeleton({
   category,

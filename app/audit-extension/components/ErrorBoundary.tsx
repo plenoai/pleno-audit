@@ -1,6 +1,6 @@
 import { Component } from "preact";
 import type { ComponentChild } from "preact";
-import { createLogger } from "@pleno-audit/extension-runtime";
+import { createLogger } from "@libztbs/extension-runtime";
 import { ErrorState, parseErrorMessage } from "./ErrorState";
 
 const logger = createLogger("ErrorBoundary");

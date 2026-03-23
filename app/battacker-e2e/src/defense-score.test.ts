@@ -25,7 +25,7 @@ const TEST_PAGE_PATH = resolve(__dirname, "../fixtures/test-page.html");
 const DEFENSE_REPORT_PATH = resolve(__dirname, "../defense-score-report.json");
 
 // ============================================================================
-// Types (mirroring @pleno-audit/battacker)
+// Types (mirroring @libztbs/battacker)
 // ============================================================================
 
 type AttackCategory =
@@ -75,7 +75,7 @@ interface CategoryScore {
 }
 
 // ============================================================================
-// Scoring constants (from @pleno-audit/battacker/types)
+// Scoring constants (from @libztbs/battacker/types)
 // ============================================================================
 
 const SEVERITY_SCORES: Record<Severity, number> = {

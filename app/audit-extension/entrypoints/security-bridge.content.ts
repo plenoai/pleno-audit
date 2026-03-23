@@ -3,7 +3,7 @@
  * Main worldからの検知イベントをキュー制御し、負荷に応じてバッチでbackgroundへ送信する。
  */
 
-import { createLogger, isRuntimeAvailable, fireMessage } from "@pleno-audit/extension-runtime";
+import { createLogger, isRuntimeAvailable, fireMessage } from "@libztbs/extension-runtime";
 
 const logger = createLogger("security-bridge");
 

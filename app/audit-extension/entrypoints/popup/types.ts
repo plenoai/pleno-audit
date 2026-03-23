@@ -1,5 +1,5 @@
-import type { CSPViolation, NetworkRequest } from "@pleno-audit/csp";
-import type { DetectedService } from "@pleno-audit/casb-types";
+import type { CSPViolation, NetworkRequest } from "@libztbs/csp";
+import type { DetectedService } from "@libztbs/types";
 
 export interface ViolationProps {
   violations: CSPViolation[];

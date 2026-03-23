@@ -1,12 +1,12 @@
 import { useState, useEffect } from "preact/hooks";
-import type { CSPConfig } from "@pleno-audit/csp";
-import type { NRDConfig } from "@pleno-audit/nrd";
-import { DEFAULT_NRD_CONFIG } from "@pleno-audit/nrd";
-import { DEFAULT_CSP_CONFIG } from "@pleno-audit/csp";
+import type { CSPConfig } from "@libztbs/csp";
+import type { NRDConfig } from "@libztbs/nrd";
+import { DEFAULT_NRD_CONFIG } from "@libztbs/nrd";
+import { DEFAULT_CSP_CONFIG } from "@libztbs/csp";
 import {
   createLogger,
   type EnterpriseStatus,
-} from "@pleno-audit/extension-runtime";
+} from "@libztbs/extension-runtime";
 import { usePopupStyles } from "../styles";
 import { useTheme } from "../../../lib/theme";
 import { LockedBanner } from "./LockedBanner";

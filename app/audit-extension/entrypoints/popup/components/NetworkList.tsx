@@ -1,4 +1,4 @@
-import type { NetworkRequest } from "@pleno-audit/csp";
+import type { NetworkRequest } from "@libztbs/csp";
 import { Badge } from "../../../components";
 import { usePopupStyles } from "../styles";
 import { useTheme } from "../../../lib/theme";
