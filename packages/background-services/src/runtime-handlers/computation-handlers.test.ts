@@ -2,9 +2,6 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { createComputationHandlers } from "./computation-handlers.js";
 import type { RuntimeHandlerDependencies } from "./types.js";
 import type { DetectedService } from "@pleno-audit/casb-types";
-import type { CSPViolation, NetworkRequest } from "@pleno-audit/csp";
-
-// analyzePromptは実モジュールを使う（純関数のため）
 
 // ---------------------------------------------------------------------------
 // テストデータファクトリ
@@ -22,32 +19,6 @@ function createService(overrides: Partial<DetectedService> = {}): DetectedServic
   };
 }
 
-function createViolation(overrides: Partial<CSPViolation> = {}): CSPViolation {
-  return {
-    type: "csp-violation",
-    timestamp: "2024-01-01T00:00:00.000Z",
-    pageUrl: "https://example.com/page",
-    directive: "script-src",
-    blockedURL: "https://evil.com/script.js",
-    domain: "example.com",
-    disposition: "enforce",
-    ...overrides,
-  };
-}
-
-function createNetworkRequest(overrides: Partial<NetworkRequest> = {}): NetworkRequest {
-  return {
-    type: "network-request",
-    timestamp: "2024-01-01T00:00:00.000Z",
-    pageUrl: "https://example.com/page",
-    url: "https://cdn.example.com/resource.js",
-    method: "GET",
-    initiator: "fetch",
-    domain: "cdn.example.com",
-    ...overrides,
-  };
-}
-
 // ---------------------------------------------------------------------------
 // モック依存関係
 // ---------------------------------------------------------------------------
@@ -58,8 +29,6 @@ function createMockDeps(): Pick<
   | "getServices"
   | "getCSPReports"
   | "getNetworkRequests"
-  | "getAIPrompts"
-  | "getDoHRequests"
   | "getExtensionStats"
   | "getKnownExtensions"
   | "getServiceConnections"
@@ -70,8 +39,6 @@ function createMockDeps(): Pick<
     getServices: vi.fn<() => Promise<DetectedService[]>>().mockResolvedValue([]),
     getCSPReports: vi.fn().mockResolvedValue({ reports: [] }),
     getNetworkRequests: vi.fn().mockResolvedValue({ requests: [] }),
-    getAIPrompts: vi.fn().mockResolvedValue([]),
-    getDoHRequests: vi.fn().mockResolvedValue({ requests: [] }),
     getExtensionStats: vi.fn().mockResolvedValue(null),
     getKnownExtensions: vi.fn().mockReturnValue({}),
     getServiceConnections: vi.fn().mockResolvedValue({}),
@@ -117,14 +84,10 @@ describe("GET_POPUP_EVENTS", () => {
     fallback = popupEntry[1].fallback;
   });
 
-  it("全データソースを呼び出す", async () => {
+  it("servicesを取得する", async () => {
     await execute();
 
     expect(deps.getServices).toHaveBeenCalledOnce();
-    expect(deps.getCSPReports).toHaveBeenCalledWith({ type: "csp-violation", limit: 500 });
-    expect(deps.getNetworkRequests).toHaveBeenCalledWith({ limit: 500 });
-    expect(deps.getAIPrompts).toHaveBeenCalledOnce();
-    expect(deps.getDoHRequests).toHaveBeenCalledWith({ limit: 100 });
   });
 
   it("データがない場合、空のeventsとcountsを返す", async () => {
@@ -268,191 +231,6 @@ describe("GET_POPUP_EVENTS", () => {
   });
 
   // -------------------------------------------------------------------------
-  // AIプロンプトイベント変換
-  // -------------------------------------------------------------------------
-
-  describe("AIプロンプトのイベント変換", () => {
-    it("機密情報を含むプロンプトをai_sensitiveイベントに変換する", async () => {
-      (deps.getAIPrompts as ReturnType<typeof vi.fn>).mockResolvedValue([
-        {
-          id: "prompt-1",
-          timestamp: 1700000020000,
-          pageUrl: "https://chat.openai.com",
-          apiEndpoint: "https://api.openai.com/v1/chat/completions",
-          method: "POST",
-          prompt: {
-            messages: [{ role: "user", content: "My credit card number is 4111-1111-1111-1111 and SSN is 123-45-6789" }],
-          },
-          provider: "openai",
-        },
-      ]);
-
-      const result = await execute();
-
-      const aiEvent = result.events.find((e: { id: string }) => e.id === "ai-prompt-1");
-      expect(aiEvent).toBeDefined();
-      expect(aiEvent).toMatchObject({
-        category: "ai_sensitive",
-        domain: "api.openai.com",
-        timestamp: 1700000020000,
-      });
-    });
-
-    it("機密情報のないプロンプトはイベントに変換しない", async () => {
-      (deps.getAIPrompts as ReturnType<typeof vi.fn>).mockResolvedValue([
-        {
-          id: "prompt-2",
-          timestamp: 1700000021000,
-          pageUrl: "https://chat.openai.com",
-          apiEndpoint: "https://api.openai.com/v1/chat/completions",
-          method: "POST",
-          prompt: { messages: [{ role: "user", content: "Hello, how are you?" }] },
-          provider: "openai",
-        },
-      ]);
-
-      const result = await execute();
-
-      const aiEvent = result.events.find((e: { id: string }) => e.id === "ai-prompt-2");
-      expect(aiEvent).toBeUndefined();
-    });
-  });
-
-  // -------------------------------------------------------------------------
-  // CSP違反イベント変換
-  // -------------------------------------------------------------------------
-
-  describe("CSP違反のイベント変換", () => {
-    it("script-srcディレクティブ違反をhighとして返す", async () => {
-      (deps.getCSPReports as ReturnType<typeof vi.fn>).mockResolvedValue({
-        reports: [
-          createViolation({
-            directive: "script-src",
-            pageUrl: "https://example.com/page",
-            blockedURL: "https://evil.com/script.js",
-            timestamp: "2024-01-15T10:00:00.000Z",
-          }),
-        ],
-      });
-
-      const result = await execute();
-
-      const cspEvent = result.events.find((e: { category: string }) => e.category === "csp_violation");
-      expect(cspEvent).toBeDefined();
-      expect(cspEvent).toMatchObject({
-        category: "csp_violation",
-        severity: "high",
-        title: "script-src",
-        domain: "example.com",
-      });
-    });
-
-    it("default-srcディレクティブ違反をhighとして返す", async () => {
-      (deps.getCSPReports as ReturnType<typeof vi.fn>).mockResolvedValue({
-        reports: [createViolation({ directive: "default-src" })],
-      });
-
-      const result = await execute();
-
-      const cspEvent = result.events.find((e: { category: string }) => e.category === "csp_violation");
-      expect(cspEvent).toMatchObject({ severity: "high" });
-    });
-
-    it("img-srcなどのディレクティブ違反をmediumとして返す", async () => {
-      (deps.getCSPReports as ReturnType<typeof vi.fn>).mockResolvedValue({
-        reports: [createViolation({ directive: "img-src" })],
-      });
-
-      const result = await execute();
-
-      const cspEvent = result.events.find((e: { category: string }) => e.category === "csp_violation");
-      expect(cspEvent).toMatchObject({ severity: "medium" });
-    });
-
-    it("配列形式のviolationsResultにも対応する", async () => {
-      (deps.getCSPReports as ReturnType<typeof vi.fn>).mockResolvedValue([
-        createViolation({ directive: "script-src" }),
-      ]);
-
-      const result = await execute();
-
-      const cspEvent = result.events.find((e: { category: string }) => e.category === "csp_violation");
-      expect(cspEvent).toBeDefined();
-    });
-  });
-
-  // -------------------------------------------------------------------------
-  // DoHリクエストイベント変換
-  // -------------------------------------------------------------------------
-
-  describe("DoHリクエストのイベント変換", () => {
-    it("blockedなDoHリクエストをhighとして返す", async () => {
-      (deps.getDoHRequests as ReturnType<typeof vi.fn>).mockResolvedValue({
-        requests: [{ id: "doh-1", domain: "dns.google", timestamp: 1700000030000, blocked: true }],
-      });
-
-      const result = await execute();
-
-      const dohEvent = result.events.find((e: { id: string }) => e.id === "doh-doh-1");
-      expect(dohEvent).toMatchObject({
-        category: "shadow_ai",
-        severity: "high",
-        title: "dns.google",
-        domain: "dns.google",
-      });
-    });
-
-    it("非blockedのDoHリクエストをmediumとして返す", async () => {
-      (deps.getDoHRequests as ReturnType<typeof vi.fn>).mockResolvedValue({
-        requests: [{ id: "doh-2", domain: "cloudflare-dns.com", timestamp: 1700000031000, blocked: false }],
-      });
-
-      const result = await execute();
-
-      const dohEvent = result.events.find((e: { id: string }) => e.id === "doh-doh-2");
-      expect(dohEvent).toMatchObject({ severity: "medium" });
-    });
-  });
-
-  // -------------------------------------------------------------------------
-  // ネットワークリクエストイベント変換
-  // -------------------------------------------------------------------------
-
-  describe("ネットワークリクエストのイベント変換", () => {
-    it("ネットワークリクエストをinfoイベントとして返す", async () => {
-      (deps.getNetworkRequests as ReturnType<typeof vi.fn>).mockResolvedValue({
-        requests: [
-          createNetworkRequest({
-            url: "https://api.example.com/data",
-            method: "POST",
-            timestamp: "2024-01-15T12:00:00.000Z",
-          }),
-        ],
-      });
-
-      const result = await execute();
-
-      const netEvent = result.events.find((e: { category: string }) => e.category === "network");
-      expect(netEvent).toBeDefined();
-      expect(netEvent).toMatchObject({
-        severity: "info",
-        title: "POST api.example.com",
-        domain: "api.example.com",
-      });
-    });
-
-    it("配列形式のnetworkResultにも対応する", async () => {
-      (deps.getNetworkRequests as ReturnType<typeof vi.fn>).mockResolvedValue([
-        createNetworkRequest({ url: "https://cdn.example.com/file.js", method: "GET" }),
-      ]);
-
-      const result = await execute();
-
-      const netEvent = result.events.find((e: { category: string }) => e.category === "network");
-      expect(netEvent).toBeDefined();
-    });
-  });
-
   // -------------------------------------------------------------------------
   // ソート・集計
   // -------------------------------------------------------------------------
@@ -486,15 +264,11 @@ describe("GET_POPUP_EVENTS", () => {
           nrdResult: { isNRD: true, confidence: "high", domainAge: 30, checkedAt: 1700000001000 },
         }),
       ]);
-      (deps.getCSPReports as ReturnType<typeof vi.fn>).mockResolvedValue({
-        reports: [createViolation({ directive: "img-src" })],
-      });
 
       const result = await execute();
 
       expect(result.counts.critical).toBe(1);
       expect(result.counts.high).toBe(1);
-      expect(result.counts.medium).toBe(1);
       expect(result.total).toBe(result.events.length);
     });
 
@@ -753,14 +527,14 @@ describe("GET_AGGREGATED_SERVICES", () => {
         createService({ domain: "example.com" }),
       ]);
       (deps.getServiceConnections as ReturnType<typeof vi.fn>).mockResolvedValue({
-        "example.com": { "cdn.example.net": 2, "api.example.net": 1 },
+        "example.com": ["cdn.example.net", "api.example.net"],
       });
 
-      const result = (await execute()) as Array<{ connections: Array<{ domain: string; requestCount: number }> }>;
+      const result = (await execute()) as Array<{ connections: Array<{ domain: string }> }>;
 
       expect(result[0].connections).toHaveLength(2);
-      expect(result[0].connections[0]).toEqual({ domain: "cdn.example.net", requestCount: 2 });
-      expect(result[0].connections[1]).toEqual({ domain: "api.example.net", requestCount: 1 });
+      expect(result[0].connections[0]).toEqual({ domain: "cdn.example.net" });
+      expect(result[0].connections[1]).toEqual({ domain: "api.example.net" });
     });
 
     it("serviceConnectionsにサービスがない場合、空の接続を返す", async () => {
@@ -773,21 +547,6 @@ describe("GET_AGGREGATED_SERVICES", () => {
 
       expect(result[0].connections).toHaveLength(0);
     });
-
-    it("接続はrequestCount降順でソートされる", async () => {
-      (deps.getServices as ReturnType<typeof vi.fn>).mockResolvedValue([
-        createService({ domain: "example.com" }),
-      ]);
-      (deps.getServiceConnections as ReturnType<typeof vi.fn>).mockResolvedValue({
-        "example.com": { "low.com": 1, "high.com": 3, "mid.com": 2 },
-      });
-
-      const result = (await execute()) as Array<{ connections: Array<{ domain: string; requestCount: number }> }>;
-
-      expect(result[0].connections[0]).toEqual({ domain: "high.com", requestCount: 3 });
-      expect(result[0].connections[1]).toEqual({ domain: "mid.com", requestCount: 2 });
-      expect(result[0].connections[2]).toEqual({ domain: "low.com", requestCount: 1 });
-    });
   });
 
   // -------------------------------------------------------------------------
@@ -797,7 +556,7 @@ describe("GET_AGGREGATED_SERVICES", () => {
   describe("拡張機能サービスの変換", () => {
     it("extensionConnectionsから拡張機能をUnifiedService形式で返す", async () => {
       (deps.getExtensionConnections as ReturnType<typeof vi.fn>).mockResolvedValue({
-        "ext-abc": { "example.com": 10 },
+        "ext-abc": ["example.com"],
       });
       (deps.getKnownExtensions as ReturnType<typeof vi.fn>).mockReturnValue({
         "ext-abc": {
@@ -812,7 +571,7 @@ describe("GET_AGGREGATED_SERVICES", () => {
       const result = (await execute()) as Array<{
         id: string;
         source: { type: string; extensionId: string; extensionName: string; icon?: string };
-        connections: Array<{ domain: string; requestCount: number }>;
+        connections: Array<{ domain: string }>;
         tags: unknown[];
         lastActivity: number;
       }>;
@@ -830,7 +589,7 @@ describe("GET_AGGREGATED_SERVICES", () => {
         tags: [],
         lastActivity: 0,
       });
-      expect(extService!.connections).toContainEqual({ domain: "example.com", requestCount: 10 });
+      expect(extService!.connections).toContainEqual({ domain: "example.com" });
     });
 
     it("extensionConnectionsが空でも既知の拡張機能は空の接続で返す", async () => {
@@ -848,7 +607,7 @@ describe("GET_AGGREGATED_SERVICES", () => {
 
     it("アイコンがない拡張機能ではiconがundefinedになる", async () => {
       (deps.getExtensionConnections as ReturnType<typeof vi.fn>).mockResolvedValue({
-        "ext-no-icon": { "test.com": 1 },
+        "ext-no-icon": ["test.com"],
       });
       (deps.getKnownExtensions as ReturnType<typeof vi.fn>).mockReturnValue({
         "ext-no-icon": { id: "ext-no-icon", name: "No Icon", version: "1.0", enabled: true },
@@ -865,8 +624,8 @@ describe("GET_AGGREGATED_SERVICES", () => {
 
     it("複数拡張機能の接続先をそれぞれ正確に返す", async () => {
       (deps.getExtensionConnections as ReturnType<typeof vi.fn>).mockResolvedValue({
-        "ext-a": { "shared.com": 6 },
-        "ext-b": { "shared.com": 4 },
+        "ext-a": ["shared.com"],
+        "ext-b": ["shared.com"],
       });
       (deps.getKnownExtensions as ReturnType<typeof vi.fn>).mockReturnValue({
         "ext-a": { id: "ext-a", name: "Ext A", version: "1.0", enabled: true },
@@ -875,14 +634,14 @@ describe("GET_AGGREGATED_SERVICES", () => {
 
       const result = (await execute()) as Array<{
         id: string;
-        connections: Array<{ domain: string; requestCount: number }>;
+        connections: Array<{ domain: string }>;
       }>;
 
       const extA = result.find((s) => s.id === "extension:ext-a");
       const extB = result.find((s) => s.id === "extension:ext-b");
 
-      expect(extA?.connections[0].requestCount).toBe(6);
-      expect(extB?.connections[0].requestCount).toBe(4);
+      expect(extA?.connections[0].domain).toBe("shared.com");
+      expect(extB?.connections[0].domain).toBe("shared.com");
     });
 
     it("ドメインサービスと拡張機能サービスを両方返す", async () => {
@@ -890,7 +649,7 @@ describe("GET_AGGREGATED_SERVICES", () => {
         createService({ domain: "example.com" }),
       ]);
       (deps.getExtensionConnections as ReturnType<typeof vi.fn>).mockResolvedValue({
-        "ext-1": { "example.com": 5 },
+        "ext-1": ["example.com"],
       });
       (deps.getKnownExtensions as ReturnType<typeof vi.fn>).mockReturnValue({
         "ext-1": { id: "ext-1", name: "Test Ext", version: "2.0", enabled: true },

@@ -11,7 +11,6 @@ import {
   type CookieBannerResult,
 } from "@pleno-audit/detectors";
 import { browserAdapter, createLogger } from "@pleno-audit/extension-runtime";
-import { createProducer, type QueueAdapter } from "@pleno-audit/event-queue";
 
 const logger = createLogger("content");
 
@@ -21,12 +20,6 @@ const findPrivacyPolicy = createPrivacyFinder(browserAdapter);
 const findTermsOfService = createTosFinder(browserAdapter);
 const findCookiePolicy = createCookiePolicyFinder(browserAdapter);
 const findCookieBanner = createCookieBannerFinder(browserAdapter);
-
-const queueAdapter: QueueAdapter = {
-  get: (keys) => chrome.storage.local.get(keys),
-  set: (items) => chrome.storage.local.set(items),
-  remove: (keys) => chrome.storage.local.remove(keys),
-};
 
 interface PageAnalysis {
   url: string;
@@ -79,7 +72,7 @@ async function analyzePage(): Promise<PageAnalysis> {
   return { url, domain, timestamp, login, privacy, tos, cookiePolicy, cookieBanner, faviconUrl };
 }
 
-async function runAnalysis(producer: ReturnType<typeof createProducer>) {
+async function runAnalysis() {
   const analysis = await analyzePage();
   const { login, privacy, tos, cookiePolicy, cookieBanner, domain, faviconUrl } = analysis;
 
@@ -93,32 +86,27 @@ async function runAnalysis(producer: ReturnType<typeof createProducer>) {
     cookieBanner.found ||
     faviconUrl
   ) {
-    await producer.enqueue("PAGE_ANALYZED", { payload: analysis });
+    await chrome.runtime.sendMessage({ type: "PAGE_ANALYZED", payload: analysis });
   }
 
   // Check NRD in background (non-blocking)
-  producer.enqueue("CHECK_NRD", { data: { domain } });
+  chrome.runtime.sendMessage({ type: "CHECK_NRD", data: { domain } });
 
   // Check Typosquatting in background (non-blocking)
-  producer.enqueue("CHECK_TYPOSQUAT", { data: { domain } });
+  chrome.runtime.sendMessage({ type: "CHECK_TYPOSQUAT", data: { domain } });
 }
 
 export default defineContentScript({
   matches: ["<all_urls>"],
   runAt: "document_idle",
   main() {
-    // Content scripts have a stable tab ID available via runtime
-    const tabId = crypto.getRandomValues(new Uint32Array(1))[0];
-    const producer = createProducer(queueAdapter, tabId);
-    producer.setContext({ senderUrl: window.location.href });
-
     if (document.readyState === "complete") {
-      runAnalysis(producer).catch((error) => {
+      runAnalysis().catch((error) => {
         logger.warn("initial runAnalysis failed", error);
       });
     } else {
       window.addEventListener("load", () => {
-        runAnalysis(producer).catch((error) => {
+        runAnalysis().catch((error) => {
           logger.warn("load runAnalysis failed", error);
         });
       });

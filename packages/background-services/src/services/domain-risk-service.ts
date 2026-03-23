@@ -1,11 +1,10 @@
-import type { DetectedService, NRDDetectedDetails } from "@pleno-audit/casb-types";
+import type { DetectedService } from "@pleno-audit/casb-types";
 import type { NRDCache, NRDConfig, NRDResult } from "@pleno-audit/nrd";
 import { DEFAULT_NRD_CONFIG, createNRDDetector } from "@pleno-audit/nrd";
-import type { TyposquatCache, TyposquatConfig, TyposquatDetectedDetails, TyposquatResult } from "@pleno-audit/typosquat";
+import type { TyposquatCache, TyposquatConfig, TyposquatResult } from "@pleno-audit/typosquat";
 import { DEFAULT_TYPOSQUAT_CONFIG, createTyposquatDetector } from "@pleno-audit/typosquat";
 import { DEFAULT_DETECTION_CONFIG, type DetectionConfig } from "@pleno-audit/extension-runtime";
 import type { AlertManager } from "@pleno-audit/alerts";
-import { resolveEventTimestamp } from "./event-timestamp.js";
 
 interface LoggerLike {
   error: (...args: unknown[]) => void;
@@ -18,26 +17,11 @@ interface DomainRiskStorage {
   detectionConfig?: DetectionConfig;
 }
 
-type DomainRiskEvent =
-  | {
-      type: "nrd_detected";
-      domain: string;
-      timestamp: number;
-      details: NRDDetectedDetails;
-    }
-  | {
-      type: "typosquat_detected";
-      domain: string;
-      timestamp: number;
-      details: TyposquatDetectedDetails;
-    };
-
 interface DomainRiskServiceDeps {
   logger: LoggerLike;
   getStorage: () => Promise<DomainRiskStorage>;
   setStorage: (data: Partial<DomainRiskStorage>) => Promise<void>;
   updateService: (domain: string, update: Partial<DetectedService>) => Promise<void>;
-  addEvent: (event: DomainRiskEvent) => Promise<unknown>;
   getAlertManager: () => AlertManager;
 }
 
@@ -105,25 +89,6 @@ export function createDomainRiskService(deps: DomainRiskServiceDeps): DomainRisk
             confidence: result.confidence,
             domainAge: result.domainAge,
             checkedAt: result.checkedAt,
-          },
-        });
-
-        await deps.addEvent({
-          type: "nrd_detected",
-          domain: result.domain,
-          timestamp: resolveEventTimestamp(result.checkedAt, {
-            logger: deps.logger,
-            context: "nrd_detected",
-          }),
-          details: {
-            isNRD: result.isNRD,
-            confidence: result.confidence,
-            registrationDate: result.registrationDate,
-            domainAge: result.domainAge,
-            method: result.method,
-            suspiciousScore: result.suspiciousScores.totalScore,
-            isDDNS: result.ddns.isDDNS,
-            ddnsProvider: result.ddns.provider,
           },
         });
 
@@ -198,23 +163,6 @@ export function createDomainRiskService(deps: DomainRiskServiceDeps): DomainRisk
             confidence: result.confidence,
             totalScore: result.heuristics.totalScore,
             checkedAt: result.checkedAt,
-          },
-        });
-
-        await deps.addEvent({
-          type: "typosquat_detected",
-          domain: result.domain,
-          timestamp: resolveEventTimestamp(result.checkedAt, {
-            logger: deps.logger,
-            context: "typosquat_detected",
-          }),
-          details: {
-            isTyposquat: result.isTyposquat,
-            confidence: result.confidence,
-            totalScore: result.heuristics.totalScore,
-            homoglyphCount: result.heuristics.homoglyphs.length,
-            hasMixedScript: result.heuristics.hasMixedScript,
-            detectedScripts: result.heuristics.detectedScripts,
           },
         });
 

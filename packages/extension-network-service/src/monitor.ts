@@ -46,23 +46,6 @@ export async function initExtensionMonitor(context: ExtensionNetworkContext): Pr
     // 通信先集約等の外部コールバック
     context.deps.onNetworkRequest?.(networkRecord);
 
-    void context.deps
-      .addEvent({
-        type: "extension_request",
-        domain: record.domain,
-        timestamp: record.timestamp,
-        details: {
-          extensionId: record.extensionId ?? "unknown",
-          extensionName: record.extensionName ?? "unknown",
-          url: record.url,
-          method: record.method,
-          resourceType: record.resourceType,
-          initiatorType: networkRecord.initiatorType,
-        },
-      })
-      .catch((error) => {
-        context.deps.logger.error("Failed to add extension request event:", error);
-      });
   });
 
   await context.state.extensionMonitor.start();

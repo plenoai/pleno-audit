@@ -9,7 +9,6 @@ export {
   setStorage,
   getStorageKey,
   getServiceCount,
-  clearAIPrompts,
   clearAllStorage,
 } from "./storage.js";
 
@@ -41,11 +40,9 @@ export {
 // Re-export types from storage-types
 export type {
   DetectedService,
-  EventLog,
   CSPConfig,
   CSPReport,
   GeneratedCSPByDomain,
-  CapturedAIPrompt,
   AIMonitorConfig,
   ExtensionRequestRecord,
   NetworkMonitorConfig,

@@ -1,50 +1,27 @@
 /**
  * Security Bridge Content Script
- * Main worldからの検知イベントをキュー制御し、負荷に応じてバッチでstorageキューに書き込む。
- * Background SWの生死に依存しない永続キュー方式。
+ * Main worldからの検知イベントをキュー制御し、負荷に応じてバッチでbackgroundへ送信する。
  */
 
 import { createLogger } from "@pleno-audit/extension-runtime";
-import { createProducer, type QueueAdapter, type Priority } from "@pleno-audit/event-queue";
 
 const logger = createLogger("security-bridge");
-
-const queueAdapter: QueueAdapter = {
-  get: (keys) => chrome.storage.local.get(keys),
-  set: (items) => chrome.storage.local.set(items),
-  remove: (keys) => chrome.storage.local.remove(keys),
-};
 
 type RuntimeEvent = {
   type: string;
   data: Record<string, unknown>;
-  priority: Priority;
 };
 
 export default defineContentScript({
   matches: ["<all_urls>"],
   runAt: "document_start",
   main() {
-    const tabId = chrome.runtime.id ? crypto.getRandomValues(new Uint32Array(1))[0] : 0;
     const MAX_QUEUE = 200;
     const MAX_UNLOAD_BATCH = 50;
     const queue: RuntimeEvent[] = [];
     let flushScheduled = false;
     let longTaskDetectedAt = 0;
     let fallbackTimer: number | null = null;
-
-    // Producer is initialized lazily once we know the tab ID
-    let producer: ReturnType<typeof createProducer> | null = null;
-
-    function getProducer(): ReturnType<typeof createProducer> {
-      if (!producer) {
-        // Use a stable ID derived from runtime. Content scripts don't have sender.tab.id,
-        // so we use a combination that's unique per content script instance.
-        producer = createProducer(queueAdapter, tabId);
-        producer.setContext({ senderUrl: window.location.href });
-      }
-      return producer;
-    }
 
     const LOW_PRIORITY_TYPES = new Set([
       "COOKIE_ACCESS_DETECTED",
@@ -76,8 +53,8 @@ export default defineContentScript({
       return false;
     }
 
-    function getPriority(type: string): Priority {
-      return HIGH_PRIORITY_TYPES.has(type) ? "high" : "low";
+    function isHighPriority(type: string): boolean {
+      return HIGH_PRIORITY_TYPES.has(type);
     }
 
     function pushEvent(type: string, detail: unknown): void {
@@ -88,10 +65,8 @@ export default defineContentScript({
         ? (detail as Record<string, unknown>)
         : {}) as Record<string, unknown>;
 
-      const priority = getPriority(type);
-
       if (queue.length >= MAX_QUEUE) {
-        if (priority !== "high") return;
+        if (!isHighPriority(type)) return;
         queue.shift();
       }
 
@@ -102,7 +77,6 @@ export default defineContentScript({
           source: "security-bridge",
           queuedAt: now,
         },
-        priority,
       });
 
       scheduleFlush();
@@ -152,15 +126,13 @@ export default defineContentScript({
 
       if (batch.length > 0) {
         try {
-          await getProducer().enqueueBatch(
-            batch.map((e) => ({
-              type: e.type,
-              data: { data: e.data } as Record<string, unknown>,
-              priority: e.priority,
-            })),
+          await Promise.all(
+            batch.map((e) =>
+              chrome.runtime.sendMessage({ type: e.type, data: e.data }),
+            ),
           );
         } catch (error) {
-          logger.warn("Queue write failed, re-queuing events", error);
+          logger.warn("Message send failed, re-queuing events", error);
           for (let i = batch.length - 1; i >= 0; i--) {
             queue.unshift(batch[i]);
           }
@@ -227,14 +199,10 @@ export default defineContentScript({
       }
       if (queue.length > 0) {
         const batch = queue.splice(0, MAX_UNLOAD_BATCH);
-        // Fire-and-forget: storage write may complete even after unload
-        void getProducer().enqueueBatch(
-          batch.map((e) => ({
-            type: e.type,
-            data: { data: e.data } as Record<string, unknown>,
-            priority: e.priority,
-          })),
-        );
+        // Fire-and-forget: messages may complete even after unload
+        for (const e of batch) {
+          void chrome.runtime.sendMessage({ type: e.type, data: e.data });
+        }
       }
     });
   },

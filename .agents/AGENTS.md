@@ -12,12 +12,10 @@ CASB/Browser Security
 - `packages/alerts/` - リアルタイムセキュリティアラート基盤
 - `packages/battacker/` - ブラウザ防御耐性テスト用コアライブラリ
 - `packages/data-export/` - セキュリティデータエクスポート（JSON/CSV/Markdown/HTML）
-- `packages/storage/` - イベントストア基盤
 - `packages/extension-runtime/` - 拡張機能ランタイム（ストレージ、APIクライアント、同期）
 - `packages/background-services/` - 拡張機能バックグラウンドサービスのファサード
 - `packages/debug-bridge/` - デバッグサーバーとの通信ブリッジ
 - `packages/extension-network-service/` - ネットワーク監視・DNR管理
-- `packages/event-queue/` - 非同期イベント処理キュー
 
 ### アプリケーション
 

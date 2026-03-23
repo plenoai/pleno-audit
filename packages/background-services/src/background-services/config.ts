@@ -78,17 +78,6 @@ export async function cleanupOldData(state: BackgroundServiceState): Promise<{ d
       return { deleted: 0 };
     }
 
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - config.retentionDays);
-    const cutoffMs = cutoffDate.getTime();
-
-    const storage = await getStorage();
-    const aiPrompts = storage.aiPrompts || [];
-    const filteredPrompts = aiPrompts.filter((p) => p.timestamp >= cutoffMs);
-    if (filteredPrompts.length < aiPrompts.length) {
-      await setStorage({ aiPrompts: filteredPrompts });
-    }
-
     await setStorage({
       dataRetentionConfig: {
         ...config,

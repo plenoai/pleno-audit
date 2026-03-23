@@ -5,7 +5,6 @@ import type {
   StorageData,
   CSPConfig,
   DetectedService,
-  CapturedAIPrompt,
   AIMonitorConfig,
   DataRetentionConfig,
   DetectionConfig,
@@ -31,11 +30,9 @@ const STORAGE_KEYS = [
   "alerts",
   "cspConfig",
   "generatedCSPPolicy",
-  "aiPrompts",
   "aiMonitorConfig",
   "nrdConfig",
   "networkMonitorConfig",
-  "doHRequests",
   "doHMonitorConfig",
   "dataRetentionConfig",
   "detectionConfig",
@@ -64,14 +61,12 @@ export async function getStorage(): Promise<StorageData> {
     policyConfig: result.policyConfig as StorageData["policyConfig"],
     alerts: (result.alerts as StorageData["alerts"]) || [],
     cspConfig: (result.cspConfig as CSPConfig) || DEFAULT_CSP_CONFIG,
-    aiPrompts: (result.aiPrompts as CapturedAIPrompt[]) || [],
     aiMonitorConfig:
       (result.aiMonitorConfig as AIMonitorConfig) || DEFAULT_AI_MONITOR_CONFIG,
     nrdConfig: (result.nrdConfig as NRDConfig) || DEFAULT_NRD_CONFIG,
     networkMonitorConfig:
       (result.networkMonitorConfig as StorageData["networkMonitorConfig"]) ||
       DEFAULT_NETWORK_MONITOR_CONFIG,
-    doHRequests: (result.doHRequests as StorageData["doHRequests"]) || [],
     doHMonitorConfig:
       (result.doHMonitorConfig as StorageData["doHMonitorConfig"]) ||
       DEFAULT_DOH_MONITOR_CONFIG,
@@ -102,11 +97,9 @@ export async function getStorageKey<K extends StorageKey>(
     services: {},
     alerts: [],
     cspConfig: DEFAULT_CSP_CONFIG,
-    aiPrompts: [],
     aiMonitorConfig: DEFAULT_AI_MONITOR_CONFIG,
     nrdConfig: DEFAULT_NRD_CONFIG,
     networkMonitorConfig: DEFAULT_NETWORK_MONITOR_CONFIG,
-    doHRequests: [],
     doHMonitorConfig: DEFAULT_DOH_MONITOR_CONFIG,
     dataRetentionConfig: DEFAULT_DATA_RETENTION_CONFIG,
     detectionConfig: DEFAULT_DETECTION_CONFIG,
@@ -120,14 +113,6 @@ export async function getStorageKey<K extends StorageKey>(
 export async function getServiceCount(): Promise<number> {
   const services = await getStorageKey("services");
   return Object.keys(services).length;
-}
-
-/**
- * AIプロンプトをクリア
- */
-export async function clearAIPrompts(): Promise<void> {
-  const api = getBrowserAPI();
-  await api.storage.local.remove(["aiPrompts"]);
 }
 
 /**
@@ -152,11 +137,9 @@ export async function clearAllStorage(options?: { preserveTheme?: boolean }): Pr
     services: {},
     alerts: [],
     cspConfig: DEFAULT_CSP_CONFIG,
-    aiPrompts: [],
     aiMonitorConfig: DEFAULT_AI_MONITOR_CONFIG,
     nrdConfig: DEFAULT_NRD_CONFIG,
     networkMonitorConfig: DEFAULT_NETWORK_MONITOR_CONFIG,
-    doHRequests: [],
     doHMonitorConfig: DEFAULT_DOH_MONITOR_CONFIG,
     dataRetentionConfig: DEFAULT_DATA_RETENTION_CONFIG,
     detectionConfig: DEFAULT_DETECTION_CONFIG,

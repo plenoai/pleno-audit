@@ -3,10 +3,8 @@ import type {
   CSPGenerationOptions,
   CSPReport,
   CSPViolation,
-  CSPViolationDetails,
   GeneratedCSPPolicy,
   NetworkRequest,
-  NetworkRequestDetails,
 } from "@pleno-audit/csp";
 import { CSPAnalyzer, DEFAULT_CSP_CONFIG, type GeneratedCSPByDomain } from "@pleno-audit/csp";
 import { resolveEventTimestamp } from "./event-timestamp.js";
@@ -24,77 +22,15 @@ interface CSPServiceLogger {
   warn?: (message: string, ...args: unknown[]) => void;
 }
 
-interface CSPEventRecord {
-  type: string;
-  domain: string;
-  timestamp: number;
-  details: CSPViolationDetails | NetworkRequestDetails;
-}
-
-interface CSPEventQueryResult {
-  events: CSPEventRecord[];
-  total: number;
-  hasMore: boolean;
-}
-
 interface CreateCSPReportingServiceParams {
   logger: CSPServiceLogger;
   initStorage: () => Promise<{ cspConfig?: CSPConfig }>;
   saveStorage: (data: { cspConfig: CSPConfig }) => Promise<void>;
-  addEvent: (event: {
-    type: "csp_violation" | "network_request";
-    domain: string;
-    timestamp: number;
-    details: CSPViolationDetails | NetworkRequestDetails;
-  }) => Promise<unknown>;
-  getCSPEvents: (options?: {
-    type?: ("csp_violation" | "network_request")[];
-    limit?: number;
-    offset?: number;
-    since?: number;
-    until?: number;
-  }) => Promise<CSPEventQueryResult>;
-  clearCSPEvents: () => Promise<void>;
-}
-
-function eventToCSPReport(event: CSPEventRecord): CSPReport | null {
-  if (event.type === "csp_violation") {
-    const details = event.details as CSPViolationDetails;
-    return {
-      type: "csp-violation",
-      timestamp: new Date(event.timestamp).toISOString(),
-      pageUrl: details.pageUrl || "",
-      directive: details.directive,
-      blockedURL: details.blockedURL,
-      domain: event.domain,
-      disposition: details.disposition,
-      originalPolicy: details.originalPolicy,
-      sourceFile: details.sourceFile,
-      lineNumber: details.lineNumber,
-      columnNumber: details.columnNumber,
-      statusCode: details.statusCode,
-    };
-  }
-
-  if (event.type === "network_request") {
-    const details = event.details as NetworkRequestDetails;
-    return {
-      type: "network-request",
-      timestamp: new Date(event.timestamp).toISOString(),
-      pageUrl: details.pageUrl || "",
-      url: details.url,
-      method: details.method,
-      initiator: details.initiator as NetworkRequest["initiator"],
-      domain: event.domain,
-      resourceType: details.resourceType,
-    };
-  }
-
-  return null;
 }
 
 export function createCSPReportingService(params: CreateCSPReportingServiceParams) {
   let cspGenerationTimer: ReturnType<typeof setTimeout> | null = null;
+  const reports: CSPReport[] = [];
 
   async function getCSPConfig(): Promise<CSPConfig> {
     const storage = await params.initStorage();
@@ -105,65 +41,59 @@ export function createCSPReportingService(params: CreateCSPReportingServiceParam
     await chrome.storage.local.set({ generatedCSPPolicy: result });
   }
 
-  async function getCSPReports(options?: {
+  function getCSPReports(options?: {
     type?: "csp-violation" | "network-request";
     limit?: number;
     offset?: number;
     since?: string;
     until?: string;
-  }): Promise<CSPReport[] | { reports: CSPReport[]; total: number; hasMore: boolean }> {
-    try {
-      const eventTypes: ("csp_violation" | "network_request")[] = [];
-      if (!options?.type || options.type === "csp-violation") {
-        eventTypes.push("csp_violation");
-      }
-      if (!options?.type || options.type === "network-request") {
-        eventTypes.push("network_request");
-      }
+  }): CSPReport[] | { reports: CSPReport[]; total: number; hasMore: boolean } {
+    let filtered = reports;
 
-      const result = await params.getCSPEvents({
-        type: eventTypes,
-        limit: options?.limit,
-        offset: options?.offset,
-        since: options?.since ? new Date(options.since).getTime() : undefined,
-        until: options?.until ? new Date(options.until).getTime() : undefined,
-      });
-
-      const reports = result.events
-        .map(eventToCSPReport)
-        .filter((r): r is CSPReport => r !== null);
-
-      const hasPaginationParams = Boolean(
-        options?.limit !== undefined
-        || options?.offset !== undefined
-        || options?.since !== undefined
-        || options?.until !== undefined,
-      );
-
-      if (!hasPaginationParams) {
-        return reports;
-      }
-
-      return {
-        reports,
-        total: result.total,
-        hasMore: result.hasMore,
-      };
-    } catch (error) {
-      params.logger.error("Error getting CSP reports:", error);
-      return [];
+    if (options?.type) {
+      filtered = filtered.filter((r) => r.type === options.type);
     }
+    if (options?.since) {
+      const sinceTime = new Date(options.since).getTime();
+      filtered = filtered.filter((r) => new Date(r.timestamp).getTime() >= sinceTime);
+    }
+    if (options?.until) {
+      const untilTime = new Date(options.until).getTime();
+      filtered = filtered.filter((r) => new Date(r.timestamp).getTime() <= untilTime);
+    }
+
+    const hasPaginationParams = Boolean(
+      options?.limit !== undefined
+      || options?.offset !== undefined
+      || options?.since !== undefined
+      || options?.until !== undefined,
+    );
+
+    if (!hasPaginationParams) {
+      return filtered;
+    }
+
+    const total = filtered.length;
+    const offset = options?.offset ?? 0;
+    const limit = options?.limit ?? total;
+    const paginated = filtered.slice(offset, offset + limit);
+
+    return {
+      reports: paginated,
+      total,
+      hasMore: offset + limit < total,
+    };
   }
 
-  async function getAllCSPReports(): Promise<CSPReport[]> {
-    const result = await getCSPReports();
+  function getAllCSPReports(): CSPReport[] {
+    const result = getCSPReports();
     return Array.isArray(result) ? result : result.reports;
   }
 
-  async function generateCSPPolicy(
+  function generateCSPPolicy(
     options?: Partial<CSPGenerationOptions>
-  ): Promise<GeneratedCSPPolicy> {
-    const cspReports = await getAllCSPReports();
+  ): GeneratedCSPPolicy {
+    const cspReports = getAllCSPReports();
     const analyzer = new CSPAnalyzer(cspReports);
     return analyzer.generatePolicy({
       strictMode: options?.strictMode ?? false,
@@ -174,10 +104,10 @@ export function createCSPReportingService(params: CreateCSPReportingServiceParam
     });
   }
 
-  async function generateCSPPolicyByDomain(
+  function generateCSPPolicyByDomain(
     options?: Partial<CSPGenerationOptions>
-  ): Promise<GeneratedCSPByDomain> {
-    const cspReports = await getAllCSPReports();
+  ): GeneratedCSPByDomain {
+    const cspReports = getAllCSPReports();
     const analyzer = new CSPAnalyzer(cspReports);
     return analyzer.generatePolicyByDomain({
       strictMode: options?.strictMode ?? false,
@@ -195,7 +125,7 @@ export function createCSPReportingService(params: CreateCSPReportingServiceParam
 
     cspGenerationTimer = setTimeout(async () => {
       try {
-        const result = await generateCSPPolicyByDomain({
+        const result = generateCSPPolicyByDomain({
           strictMode: false,
           includeReportUri: true,
         });
@@ -223,21 +153,19 @@ export function createCSPReportingService(params: CreateCSPReportingServiceParam
       context: "csp_violation",
     });
 
-    await params.addEvent({
-      type: "csp_violation",
+    reports.push({
+      type: "csp-violation",
+      timestamp: new Date(timestamp).toISOString(),
+      pageUrl: pageUrl || "",
+      directive: data.directive,
+      blockedURL: data.blockedURL,
       domain: data.domain,
-      timestamp,
-      details: {
-        directive: data.directive,
-        blockedURL: data.blockedURL,
-        disposition: data.disposition,
-        pageUrl,
-        originalPolicy: data.originalPolicy,
-        sourceFile: data.sourceFile,
-        lineNumber: data.lineNumber,
-        columnNumber: data.columnNumber,
-        statusCode: data.statusCode,
-      },
+      disposition: data.disposition,
+      originalPolicy: data.originalPolicy,
+      sourceFile: data.sourceFile,
+      lineNumber: data.lineNumber,
+      columnNumber: data.columnNumber,
+      statusCode: data.statusCode,
     });
 
     scheduleCSPPolicyGeneration();
@@ -261,17 +189,15 @@ export function createCSPReportingService(params: CreateCSPReportingServiceParam
       context: "network_request",
     });
 
-    await params.addEvent({
-      type: "network_request",
+    reports.push({
+      type: "network-request",
+      timestamp: new Date(timestamp).toISOString(),
+      pageUrl: pageUrl || "",
+      url: data.url,
+      method: data.method,
+      initiator: data.initiator,
       domain: data.domain,
-      timestamp,
-      details: {
-        url: data.url,
-        method: data.method,
-        initiator: data.initiator,
-        pageUrl,
-        resourceType: data.resourceType,
-      },
+      resourceType: data.resourceType,
     });
 
     return { success: true };
@@ -286,14 +212,9 @@ export function createCSPReportingService(params: CreateCSPReportingServiceParam
     return { success: true };
   }
 
-  async function clearCSPData(): Promise<{ success: boolean }> {
-    try {
-      await params.clearCSPEvents();
-      return { success: true };
-    } catch (error) {
-      params.logger.error("Error clearing data:", error);
-      return { success: false };
-    }
+  function clearCSPData(): { success: boolean } {
+    reports.length = 0;
+    return { success: true };
   }
 
   return {

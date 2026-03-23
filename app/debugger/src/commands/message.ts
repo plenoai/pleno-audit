@@ -3,7 +3,7 @@ import { getExtensionClient } from "../extension-client.js";
 
 export const messageCommand = new Command("message")
   .description("Send a raw message to the extension")
-  .argument("<type>", "Message type (e.g., GET_SERVICES, GET_EVENTS)")
+  .argument("<type>", "Message type (e.g., GET_SERVICES, GET_AI_PROMPTS)")
   .argument("[data]", "JSON data to send with the message")
   .option("-p, --pretty", "Pretty print JSON output")
   .action(async (type: string, data: string | undefined, options) => {

@@ -118,10 +118,10 @@ export interface CSPGenerationOptions {
 }
 
 // ============================================================================
-// CSP Event Details (for EventLog integration)
+// CSP Detection Details
 // ============================================================================
 
-/** CSP違反イベント詳細（EventLog用） */
+/** CSP違反の詳細 */
 export interface CSPViolationDetails {
   directive: string;
   blockedURL: string;
@@ -134,7 +134,7 @@ export interface CSPViolationDetails {
   statusCode?: number;
 }
 
-/** ネットワークリクエストイベント詳細（EventLog用） */
+/** ネットワークリクエストの詳細 */
 export interface NetworkRequestDetails {
   url: string;
   method: string;

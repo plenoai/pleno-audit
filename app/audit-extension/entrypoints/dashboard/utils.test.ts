@@ -68,12 +68,12 @@ describe("resolveTabFromHash", () => {
   });
 
   it("returns valid tab as-is", () => {
-    expect(resolveTabFromHash("ai")).toBe("ai");
     expect(resolveTabFromHash("services")).toBe("services");
-    expect(resolveTabFromHash("events")).toBe("events");
+    expect(resolveTabFromHash("extensions")).toBe("extensions");
   });
 
   it("returns null for invalid tab", () => {
+    expect(resolveTabFromHash("events")).toBeNull();
     expect(resolveTabFromHash("invalid")).toBeNull();
     expect(resolveTabFromHash("")).toBeNull();
     expect(resolveTabFromHash("overview")).toBeNull();

@@ -5,13 +5,11 @@ import { DEFAULT_NRD_CONFIG } from "@pleno-audit/nrd";
 import { DEFAULT_TYPOSQUAT_CONFIG } from "@pleno-audit/typosquat";
 import type { CSPViolation } from "@pleno-audit/csp";
 import { DEFAULT_CSP_CONFIG } from "@pleno-audit/csp";
-import { EventStore } from "@pleno-audit/storage";
 import {
   startCookieMonitor,
   onCookieChange,
   getStorage,
   setStorage,
-  clearAIPrompts,
   clearAllStorage,
   createLogger,
   DEFAULT_NETWORK_MONITOR_CONFIG,
@@ -35,7 +33,6 @@ import {
   createAIPromptMonitorService,
   createCSPReportingService,
   createBackgroundServices,
-  type NewEvent,
   type PageAnalysis,
   createRuntimeMessageHandlers as createRuntimeMessageHandlersModule,
   runAsyncMessageHandler as runAsyncMessageHandlerModule,
@@ -72,14 +69,10 @@ import {
   registerNetworkMonitorListener,
   type ExtensionStats,
 } from "@pleno-audit/extension-network-service";
-import { createConsumer, type QueueAdapter, type QueueItem } from "@pleno-audit/event-queue";
 
-
-const eventStore = new EventStore();
 
 const backgroundServices = createBackgroundServices(logger);
 const {
-  events: backgroundEvents,
   alerts: backgroundAlerts,
   storage: backgroundStorage,
   analysis: backgroundAnalysis,
@@ -88,13 +81,6 @@ const {
 } = backgroundServices;
 
 let doHMonitor: DoHMonitor | null = null;
-
-/** addEvent + EventStore永続化を一元化 */
-async function persistEvent(event: NewEvent) {
-  const eventLog = await backgroundEvents.addEvent(event);
-  await eventStore.add(eventLog);
-  return eventLog;
-}
 
 backgroundAlerts.registerNotificationClickHandler();
 
@@ -119,27 +105,13 @@ async function setDoHMonitorConfig(config: Partial<DoHMonitorConfig>): Promise<{
   return { success: true };
 }
 
-async function getDoHRequests(options?: { limit?: number; offset?: number }): Promise<{ requests: DoHRequestRecord[]; total: number }> {
-  const storage = await getStorage();
-  const allRequests = storage.doHRequests || [];
-  const total = allRequests.length;
-
-  const limit = options?.limit ?? 100;
-  const offset = options?.offset ?? 0;
-
-  const sorted = [...allRequests].sort((a, b) => b.timestamp - a.timestamp);
-  const requests = sorted.slice(offset, offset + limit);
-
-  return { requests, total };
-}
-
 // ============================================================================
 // Service Connection Tracking (通信先集約)
 // ============================================================================
 
 /** 通信先の集約バッファ（バッチ書き込み用） */
-let pendingConnections = new Map<string, Map<string, number>>();
-let pendingExtensionConnections = new Map<string, Map<string, number>>();
+let pendingConnections = new Map<string, Set<string>>();
+let pendingExtensionConnections = new Map<string, Set<string>>();
 /** 書き込みチェーン — read-modify-write の競合を防止 */
 let connectionWriteChain: Promise<void> = Promise.resolve();
 
@@ -154,27 +126,29 @@ function extractDomainFromUrl(url: string): string | null {
 
 /** バッファをchrome.storage.localにフラッシュ（チェーン内で実行） */
 async function flushConnectionsBatch(
-  serviceBatch: Map<string, Map<string, number>>,
-  extensionBatch: Map<string, Map<string, number>>,
+  serviceBatch: Map<string, Set<string>>,
+  extensionBatch: Map<string, Set<string>>,
 ): Promise<void> {
   const storage = await chrome.storage.local.get(["serviceConnections", "extensionConnections"]);
-  const connections: Record<string, Record<string, number>> =
-    (storage.serviceConnections as Record<string, Record<string, number>>) || {};
-  const extConnections: Record<string, Record<string, number>> =
-    (storage.extensionConnections as Record<string, Record<string, number>>) || {};
+  const connections: Record<string, string[]> =
+    (storage.serviceConnections as Record<string, string[]>) || {};
+  const extConnections: Record<string, string[]> =
+    (storage.extensionConnections as Record<string, string[]>) || {};
 
-  for (const [source, destMap] of serviceBatch) {
-    if (!connections[source]) connections[source] = {};
-    for (const [dest, count] of destMap) {
-      connections[source][dest] = (connections[source][dest] || 0) + count;
+  for (const [source, destSet] of serviceBatch) {
+    const existing = new Set(connections[source] || []);
+    for (const dest of destSet) {
+      existing.add(dest);
     }
+    connections[source] = [...existing];
   }
 
-  for (const [extKey, destMap] of extensionBatch) {
-    if (!extConnections[extKey]) extConnections[extKey] = {};
-    for (const [dest, count] of destMap) {
-      extConnections[extKey][dest] = (extConnections[extKey][dest] || 0) + count;
+  for (const [extKey, destSet] of extensionBatch) {
+    const existing = new Set(extConnections[extKey] || []);
+    for (const dest of destSet) {
+      existing.add(dest);
     }
+    extConnections[extKey] = [...existing];
   }
 
   await chrome.storage.local.set({ serviceConnections: connections, extensionConnections: extConnections });
@@ -210,21 +184,21 @@ function trackServiceConnection(record: {
     const sourceDomain = extractDomainFromUrl(record.initiator);
     if (!sourceDomain || sourceDomain === record.domain) return;
 
-    let destMap = pendingConnections.get(sourceDomain);
-    if (!destMap) {
-      destMap = new Map();
-      pendingConnections.set(sourceDomain, destMap);
+    let destSet = pendingConnections.get(sourceDomain);
+    if (!destSet) {
+      destSet = new Set();
+      pendingConnections.set(sourceDomain, destSet);
     }
-    destMap.set(record.domain, (destMap.get(record.domain) ?? 0) + 1);
+    destSet.add(record.domain);
   } else if (record.initiatorType === "extension" && record.extensionId) {
     const extKey = record.extensionId;
 
-    let destMap = pendingExtensionConnections.get(extKey);
-    if (!destMap) {
-      destMap = new Map();
-      pendingExtensionConnections.set(extKey, destMap);
+    let destSet = pendingExtensionConnections.get(extKey);
+    if (!destSet) {
+      destSet = new Set();
+      pendingExtensionConnections.set(extKey, destSet);
     }
-    destMap.set(record.domain, (destMap.get(record.domain) ?? 0) + 1);
+    destSet.add(record.domain);
   } else {
     return;
   }
@@ -234,7 +208,6 @@ const extensionNetworkService = createExtensionNetworkService({
   logger,
   getStorage,
   setStorage,
-  addEvent: (event) => persistEvent(event as NewEvent),
   getAlertManager: backgroundAlerts.getAlertManager,
   getRuntimeId: () => chrome.runtime.id,
   onNetworkRequest: trackServiceConnection,
@@ -301,7 +274,6 @@ async function getExtensionStats(): Promise<ExtensionStats> {
 }
 
 const securityEventHandlers = createSecurityEventHandlers({
-  addEvent: (event) => persistEvent(event as NewEvent),
   getAlertManager: backgroundAlerts.getAlertManager,
   extractDomainFromUrl: backgroundUtils.extractDomainFromUrl,
   checkDataTransferPolicy: backgroundAlerts.checkDataTransferPolicy,
@@ -320,32 +292,13 @@ const cspReportingService = createCSPReportingService({
   logger,
   initStorage: backgroundStorage.initStorage,
   saveStorage: async (data) => backgroundStorage.saveStorage(data),
-  addEvent: async (event) => persistEvent(event as NewEvent),
-  getCSPEvents: async (options) => {
-    return eventStore.query({
-      type: options?.type,
-      limit: options?.limit,
-      offset: options?.offset,
-      since: options?.since,
-      until: options?.until,
-    });
-  },
-  clearCSPEvents: async () => {
-    // Clear only CSP-related events by querying and deleting
-    const violations = await eventStore.queryAll({ type: ["csp_violation", "network_request"] });
-    for (const event of violations) {
-      await eventStore.delete(event.id);
-    }
-  },
 });
 
 const aiPromptMonitorService = createAIPromptMonitorService({
   defaultDetectionConfig: DEFAULT_DETECTION_CONFIG,
   getStorage,
   setStorage,
-  clearAIPrompts,
   queueStorageOperation: backgroundStorage.queueStorageOperation,
-  addEvent: async (event) => persistEvent(event as NewEvent),
   updateService: backgroundStorage.updateService,
   checkAIServicePolicy: backgroundAlerts.checkAIServicePolicy,
   getAlertManager: backgroundAlerts.getAlertManager,
@@ -356,7 +309,6 @@ const domainRiskService = createDomainRiskService({
   getStorage,
   setStorage: async (data) => setStorage(data),
   updateService: backgroundStorage.updateService,
-  addEvent: async (event) => persistEvent(event as NewEvent),
   getAlertManager: backgroundAlerts.getAlertManager,
 });
 
@@ -410,7 +362,6 @@ async function clearAllData(): Promise<{ success: boolean }> {
 const handleDebugBridgeForward = createDebugBridgeHandler({
   getDoHMonitorConfig,
   setDoHMonitorConfig,
-  getDoHRequests,
 });
 
 function initializeDebugBridge(): void {
@@ -474,15 +425,7 @@ function initializeBackgroundServices(): void {
     .catch((error) => logger.error("Extension monitor init failed:", error));
 }
 
-const queueQueueAdapter: QueueAdapter = {
-  get: (keys) => chrome.storage.local.get(keys),
-  set: (items) => chrome.storage.local.set(items),
-  remove: (keys) => chrome.storage.local.remove(keys),
-};
-
 function registerRecurringAlarms(): void {
-  // Event queue processing（30秒ごとにキューを処理）
-  chrome.alarms.create("processEventQueue", { periodInMinutes: 0.5 });
   // DNR API rate limit対応: 36秒間隔（Chrome制限: 10分間に最大20回、30秒以上の間隔）
   chrome.alarms.create("checkDNRMatches", { periodInMinutes: 0.6 });
   // Extension risk analysis (runs every 5 minutes)
@@ -551,11 +494,8 @@ handleNetworkInspection: (data, sender) => networkSecurityInspector.handleNetwor
     getDetectionConfig: backgroundConfig.getDetectionConfig,
     setDetectionConfig: backgroundConfig.setDetectionConfig,
     handleAIPromptCaptured: (payload) => aiPromptMonitorService.handleAIPromptCaptured(payload as CapturedAIPrompt),
-    getAIPrompts: aiPromptMonitorService.getAIPrompts,
-    getAIPromptsCount: aiPromptMonitorService.getAIPromptsCount,
     getAIMonitorConfig: aiPromptMonitorService.getAIMonitorConfig,
     setAIMonitorConfig: aiPromptMonitorService.setAIMonitorConfig,
-    clearAIData: aiPromptMonitorService.clearAIData,
     handleNRDCheck: domainRiskService.handleNRDCheck,
     getNRDConfig: domainRiskService.getNRDConfig,
     setNRDConfig: domainRiskService.setNRDConfig,
@@ -572,11 +512,11 @@ handleNetworkInspection: (data, sender) => networkSecurityInspector.handleNetwor
     analyzeExtensionRisks,
     getServiceConnections: async () => {
       const storage = await chrome.storage.local.get("serviceConnections");
-      return (storage.serviceConnections as Record<string, Record<string, number>>) || {};
+      return (storage.serviceConnections as Record<string, string[]>) || {};
     },
     getExtensionConnections: async () => {
       const storage = await chrome.storage.local.get("extensionConnections");
-      return (storage.extensionConnections as Record<string, Record<string, number>>) || {};
+      return (storage.extensionConnections as Record<string, string[]>) || {};
     },
     getDataRetentionConfig: backgroundConfig.getDataRetentionConfig,
     setDataRetentionConfig: backgroundConfig.setDataRetentionConfig,
@@ -587,19 +527,6 @@ handleNetworkInspection: (data, sender) => networkSecurityInspector.handleNetwor
     setNotificationConfig: backgroundConfig.setNotificationConfig,
     getDoHMonitorConfig,
     setDoHMonitorConfig,
-    getDoHRequests,
-    getEvents: async (options) => eventStore.query({
-      limit: options?.limit,
-      offset: options?.offset,
-      since: options?.since,
-      until: options?.until,
-      type: options?.type as import("@pleno-audit/casb-types").EventLogType[],
-    }),
-    getEventsCount: async (options) => eventStore.count({
-      since: options?.since,
-      until: options?.until,
-      type: options?.type as import("@pleno-audit/casb-types").EventLogType[],
-    }),
   };
 }
 
@@ -611,37 +538,9 @@ export default defineBackground(() => {
   initializeBackgroundServices();
   registerRecurringAlarms();
 
-  // ============================================================================
-  // Event Queue Consumer
-  // ============================================================================
-
-  const eventQueueConsumer = createConsumer(queueQueueAdapter);
-
   const runtimeHandlers = createRuntimeMessageHandlersModule(
     createRuntimeHandlerDependencies(),
   );
-
-  async function processEventQueue(): Promise<void> {
-    const result = await eventQueueConsumer.process(async (item: QueueItem) => {
-      const asyncHandler = runtimeHandlers.async.get(item.type);
-      if (!asyncHandler) {
-        logger.debug("No handler for queued event", { type: item.type });
-        return;
-      }
-
-      // Bridge QueueItem → RuntimeMessage + MessageSender
-      const message: RuntimeMessage = { type: item.type, ...(item.data as object) };
-      const sender: chrome.runtime.MessageSender = {
-        tab: { id: item.tabId, url: item.senderUrl } as chrome.tabs.Tab,
-      };
-
-      await asyncHandler.execute(message, sender);
-    });
-
-    if (result.processed > 0 || result.failed > 0) {
-      logger.debug("Event queue processed", result);
-    }
-  }
 
   // ============================================================================
   // Alarm Handlers
@@ -658,12 +557,6 @@ export default defineBackground(() => {
     // アラーム処理のたびに通信先バッファをフラッシュ（MV3 SW停止前に確実に永続化）
     flushServiceConnections();
 
-    if (alarm.name === "processEventQueue") {
-      processEventQueue().catch((error) =>
-        logger.error("Event queue processing failed:", error),
-      );
-      return;
-    }
     const handler = alarmHandlers.get(alarm.name);
     if (handler) {
       try {
@@ -672,19 +565,6 @@ export default defineBackground(() => {
         logger.error(`Alarm handler "${alarm.name}" failed:`, error);
       }
     }
-  });
-
-  // ============================================================================
-  // Tab cleanup: remove orphan queue entries when tabs close
-  // ============================================================================
-
-  chrome.tabs.onRemoved.addListener(() => {
-    chrome.tabs.query({}, (tabs) => {
-      const activeTabIds = tabs.map((t) => t.id).filter((id): id is number => id != null);
-      eventQueueConsumer.cleanup(activeTabIds).catch((error) =>
-        logger.debug("Queue cleanup failed:", error),
-      );
-    });
   });
 
   // ============================================================================
@@ -733,22 +613,9 @@ export default defineBackground(() => {
 
   doHMonitor.onRequest(async (record: DoHRequestRecord) => {
     try {
-      const storage = await getStorage();
-      if (!storage.doHRequests) {
-        storage.doHRequests = [];
-      }
-      storage.doHRequests.push(record);
+      logger.debug("DoH request detected:", record.domain);
 
-      // Keep only recent requests
-      const maxRequests = storage.doHMonitorConfig?.maxStoredRequests ?? 1000;
-      if (storage.doHRequests.length > maxRequests) {
-        storage.doHRequests = storage.doHRequests.slice(-maxRequests);
-      }
-
-      await setStorage(storage);
-      logger.debug("DoH request stored:", record.domain);
-
-      const config = storage.doHMonitorConfig ?? DEFAULT_DOH_MONITOR_CONFIG;
+      const config = await getDoHMonitorConfig();
       if (config.action === "alert" || config.action === "block") {
         await chrome.notifications.create(`doh-${record.id}`, {
           type: "basic",
@@ -759,7 +626,7 @@ export default defineBackground(() => {
         });
       }
     } catch (error) {
-      logger.error("Failed to store DoH request:", error);
+      logger.error("Failed to handle DoH request:", error);
     }
   });
 
@@ -772,14 +639,5 @@ export default defineBackground(() => {
     backgroundStorage
       .addCookieToService(domain, cookie)
       .catch((err) => logger.debug("Add cookie to service failed:", err));
-    persistEvent({
-      type: "cookie_set",
-      domain,
-      timestamp: cookie.detectedAt,
-      details: {
-        name: cookie.name,
-        isSession: cookie.isSession,
-      },
-    }).catch((err) => logger.debug("Add cookie event failed:", err));
   });
 });

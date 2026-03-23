@@ -21,7 +21,6 @@ function createMockDeps(overrides?: Partial<PageAnalysisDependencies>): PageAnal
       policyConfig: {} as StorageData["policyConfig"],
     }),
     updateService: vi.fn<(domain: string, update: Record<string, unknown>) => Promise<void>>().mockResolvedValue(undefined),
-    addEvent: vi.fn().mockResolvedValue(undefined),
     addCookieToService: vi.fn().mockResolvedValue(undefined),
     queryExistingCookies: vi.fn().mockResolvedValue([]),
     ...overrides,
@@ -92,99 +91,6 @@ describe("createPageAnalysisHandler", () => {
     expect(deps.updateService).toHaveBeenCalledWith("example.com", {
       termsOfServiceUrl: "https://example.com/tos",
     });
-  });
-
-  it("ログイン検出でlogin_detectedイベントを追加する", async () => {
-    const deps = createMockDeps();
-    const handler = createPageAnalysisHandler(deps);
-    const login = { hasLoginForm: true, hasPasswordInput: true, isLoginUrl: false, formAction: "/login" };
-
-    await handler(createBaseAnalysis({ login }));
-
-    expect(deps.addEvent).toHaveBeenCalledWith(
-      expect.objectContaining({ type: "login_detected", domain: "example.com", details: login }),
-    );
-  });
-
-  it("プライバシーポリシー検出でprivacy_policy_foundイベントを追加する", async () => {
-    const deps = createMockDeps();
-    const handler = createPageAnalysisHandler(deps);
-
-    await handler(createBaseAnalysis({
-      privacy: { found: true, url: "https://example.com/privacy", method: "link_text" },
-    }));
-
-    expect(deps.addEvent).toHaveBeenCalledWith(
-      expect.objectContaining({
-        type: "privacy_policy_found",
-        domain: "example.com",
-        details: { url: "https://example.com/privacy", method: "link_text" },
-      }),
-    );
-  });
-
-  it("ToS検出でterms_of_service_foundイベントを追加する", async () => {
-    const deps = createMockDeps();
-    const handler = createPageAnalysisHandler(deps);
-
-    await handler(createBaseAnalysis({
-      tos: { found: true, url: "https://example.com/tos", method: "url_pattern" },
-    }));
-
-    expect(deps.addEvent).toHaveBeenCalledWith(
-      expect.objectContaining({
-        type: "terms_of_service_found",
-        domain: "example.com",
-        details: { url: "https://example.com/tos", method: "url_pattern" },
-      }),
-    );
-  });
-
-  it("cookiePolicy検出でcookie_policy_foundイベントを追加する", async () => {
-    const deps = createMockDeps();
-    const handler = createPageAnalysisHandler(deps);
-
-    await handler(createBaseAnalysis({
-      cookiePolicy: { found: true, url: "https://example.com/cookie-policy", method: "link_text" },
-    }));
-
-    expect(deps.addEvent).toHaveBeenCalledWith(
-      expect.objectContaining({
-        type: "cookie_policy_found",
-        domain: "example.com",
-        details: { url: "https://example.com/cookie-policy", method: "link_text" },
-      }),
-    );
-  });
-
-  it("cookieBanner検出でcookie_banner_detectedイベントを追加する", async () => {
-    const deps = createMockDeps();
-    const handler = createPageAnalysisHandler(deps);
-
-    await handler(createBaseAnalysis({
-      cookieBanner: {
-        found: true,
-        selector: "#cookie-banner",
-        hasAcceptButton: true,
-        hasRejectButton: true,
-        hasSettingsButton: false,
-        isGDPRCompliant: true,
-      },
-    }));
-
-    expect(deps.addEvent).toHaveBeenCalledWith(
-      expect.objectContaining({
-        type: "cookie_banner_detected",
-        domain: "example.com",
-        details: {
-          selector: "#cookie-banner",
-          hasAcceptButton: true,
-          hasRejectButton: true,
-          hasSettingsButton: false,
-          isGDPRCompliant: true,
-        },
-      }),
-    );
   });
 
   it("違反がある場合にalertComplianceを呼ぶ", async () => {

@@ -32,7 +32,6 @@ import {
   setStorage,
   getStorageKey,
   getServiceCount,
-  clearAIPrompts,
   clearAllStorage,
   queueStorageOperation,
 } from "./storage.js";
@@ -54,7 +53,6 @@ describe("storage", () => {
 
       expect(result.services).toEqual({});
       expect(result.alerts).toEqual([]);
-      expect(result.aiPrompts).toEqual([]);
       expect(result.networkMonitorConfig).toEqual({
         enabled: true,
         captureAllRequests: true,
@@ -99,11 +97,9 @@ describe("storage", () => {
           "policyConfig",
           "alerts",
           "cspConfig",
-          "aiPrompts",
           "aiMonitorConfig",
           "nrdConfig",
           "networkMonitorConfig",
-          "doHRequests",
           "doHMonitorConfig",
           "dataRetentionConfig",
           "detectionConfig",
@@ -219,14 +215,6 @@ describe("storage", () => {
     });
   });
 
-  describe("clearAIPrompts", () => {
-    it("removes aiPrompts from storage", async () => {
-      await clearAIPrompts();
-
-      expect(mockStorageRemove).toHaveBeenCalledWith(["aiPrompts"]);
-    });
-  });
-
   describe("clearAllStorage", () => {
     it("clears all storage and sets default values", async () => {
       await clearAllStorage();
@@ -236,7 +224,6 @@ describe("storage", () => {
         expect.objectContaining({
           services: {},
           alerts: [],
-          aiPrompts: [],
         })
       );
     });

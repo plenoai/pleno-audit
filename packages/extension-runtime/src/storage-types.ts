@@ -1,8 +1,8 @@
 /**
  * Extension Storage Schema
  */
-import type { DetectedService, EventLog } from "@pleno-audit/casb-types";
-import type { CapturedAIPrompt, AIMonitorConfig } from "@pleno-audit/ai-detector";
+import type { DetectedService } from "@pleno-audit/casb-types";
+import type { AIMonitorConfig } from "@pleno-audit/ai-detector";
 import type { NRDConfig } from "@pleno-audit/nrd";
 import type { CSPConfig, CSPReport, GeneratedCSPByDomain } from "@pleno-audit/csp";
 import type { PolicyConfig, SecurityAlert } from "@pleno-audit/alerts";
@@ -187,12 +187,10 @@ export interface StorageData {
 
   cspConfig?: CSPConfig;
   generatedCSPPolicy?: GeneratedCSPByDomain;
-  aiPrompts?: CapturedAIPrompt[];
   aiMonitorConfig?: AIMonitorConfig;
   nrdConfig?: NRDConfig;
   /** ネットワーク監視設定 */
   networkMonitorConfig?: NetworkMonitorConfig;
-  doHRequests?: DoHRequestRecord[];
   doHMonitorConfig?: DoHMonitorConfig;
   dataRetentionConfig?: DataRetentionConfig;
   detectionConfig?: DetectionConfig;
@@ -258,11 +256,9 @@ export interface EnterpriseStatus {
 
 export type {
   DetectedService,
-  EventLog,
   CSPConfig,
   CSPReport,
   GeneratedCSPByDomain,
-  CapturedAIPrompt,
   AIMonitorConfig,
   NRDConfig,
   SecurityAlert,

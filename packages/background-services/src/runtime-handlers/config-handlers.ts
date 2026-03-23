@@ -55,12 +55,5 @@ export function createConfigurationHandlers(
       execute: (message) => deps.setDoHMonitorConfig(message.data as Partial<DoHMonitorConfig>),
       fallback: () => ({ success: false }),
     }],
-    ["GET_DOH_REQUESTS", {
-      execute: (message) => deps.getDoHRequests(message.data as {
-        limit?: number;
-        offset?: number;
-      }),
-      fallback: () => ({ requests: [], total: 0 }),
-    }],
   ];
 }

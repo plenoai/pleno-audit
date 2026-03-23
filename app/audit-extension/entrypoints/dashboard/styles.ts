@@ -94,19 +94,6 @@ export function createDashboardStyles(colors: ThemeColors, isDark: boolean) {
       color: colors.textSecondary,
       minWidth: "40px",
     },
-    eventItem: {
-      display: "flex",
-      alignItems: "center",
-      gap: "12px",
-      padding: "10px 12px",
-      background: colors.bgSecondary,
-      borderRadius: "6px",
-    },
-    eventTime: {
-      fontSize: "12px",
-      color: colors.textSecondary,
-      minWidth: "70px",
-    },
     code: {
       fontSize: "12px",
       fontFamily: "monospace",

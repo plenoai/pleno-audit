@@ -1,11 +1,10 @@
 /**
  * @fileoverview Audit Log Exporter
  *
- * 監査ログ（イベントログ、AIプロンプト、検出サービス）をCSV/JSON形式でエクスポート
+ * 監査ログ（AIプロンプト、検出サービス）をCSV/JSON形式でエクスポート
  */
 
 import type {
-  EventLogExport,
   AIPromptExport,
   DetectedServiceExport,
 } from "./types.js";
@@ -29,63 +28,6 @@ function escapeCSV(value: string | number | boolean | null | undefined): string 
  */
 function formatTimestamp(timestamp: number): string {
   return new Date(timestamp).toISOString();
-}
-
-// ============================================================================
-// Event Log Export
-// ============================================================================
-
-/**
- * イベントログをCSV形式にエクスポート
- */
-export function exportEventsToCSV(
-  events: EventLogExport[],
-  options?: { includeDetails?: boolean }
-): string {
-  const includeDetails = options?.includeDetails ?? true;
-
-  const headers = includeDetails
-    ? ["id", "timestamp", "type", "domain", "details"]
-    : ["id", "timestamp", "type", "domain"];
-
-  const rows = events.map((event) => {
-    const base = [
-      escapeCSV(event.id),
-      escapeCSV(formatTimestamp(event.timestamp)),
-      escapeCSV(event.type),
-      escapeCSV(event.domain),
-    ];
-
-    if (includeDetails) {
-      base.push(escapeCSV(event.details));
-    }
-
-    return base.join(",");
-  });
-
-  return [headers.join(","), ...rows].join("\n");
-}
-
-/**
- * イベントログをJSON形式にエクスポート
- */
-export function exportEventsToJSON(
-  events: EventLogExport[],
-  options?: { pretty?: boolean }
-): string {
-  const exportData = {
-    exportedAt: new Date().toISOString(),
-    recordCount: events.length,
-    events: events.map((event) => ({
-      ...event,
-      timestamp: formatTimestamp(event.timestamp),
-      details: JSON.parse(event.details),
-    })),
-  };
-
-  return options?.pretty
-    ? JSON.stringify(exportData, null, 2)
-    : JSON.stringify(exportData);
 }
 
 // ============================================================================
@@ -226,8 +168,6 @@ export function exportDetectedServicesToJSON(
  * 監査ログ全体をエクスポート
  */
 export interface AuditLogData {
-  events: EventLogExport[];
-  aiPrompts: AIPromptExport[];
   services: DetectedServiceExport[];
 }
 
@@ -241,19 +181,8 @@ export function exportAuditLogToJSON(
   const exportData = {
     exportedAt: new Date().toISOString(),
     summary: {
-      eventCount: data.events.length,
-      aiPromptCount: data.aiPrompts.length,
       serviceCount: data.services.length,
     },
-    events: data.events.map((event) => ({
-      ...event,
-      timestamp: formatTimestamp(event.timestamp),
-      details: JSON.parse(event.details),
-    })),
-    aiPrompts: data.aiPrompts.map((prompt) => ({
-      ...prompt,
-      timestamp: formatTimestamp(prompt.timestamp),
-    })),
     services: data.services.map((service) => ({
       ...service,
       detectedAt: formatTimestamp(service.detectedAt),
@@ -280,7 +209,7 @@ export function createExportBlob(
  * ファイル名を生成
  */
 export function generateExportFilename(
-  dataType: "events" | "ai-prompts" | "services" | "audit-log",
+  dataType: "ai-prompts" | "services" | "audit-log",
   format: "json" | "csv"
 ): string {
   const timestamp = new Date().toISOString().split("T")[0];
