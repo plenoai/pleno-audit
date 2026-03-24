@@ -3,9 +3,10 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "dev": "wxt",
-    "dev:firefox": "wxt -b firefox",
-    "build": "wxt build",
+    "prebuild:hooks": "pnpm --filter @libztbs/main-world-hooks run build:hooks",
+    "dev": "pnpm prebuild:hooks && wxt",
+    "dev:firefox": "pnpm prebuild:hooks && wxt -b firefox",
+    "build": "pnpm prebuild:hooks && wxt build",
     "build:firefox": "wxt build -b firefox",
     "build:all": "wxt build && wxt build -b firefox"
   },
