@@ -93,6 +93,9 @@ export default defineContentScript({
       "__EVENTSOURCE_DETECTED__",
       "__FONT_FINGERPRINT_DETECTED__",
       "__IDLE_CALLBACK_DETECTED__",
+      "__CLIPBOARD_EVENT_SNIFFING_DETECTED__",
+      "__DRAG_EVENT_SNIFFING_DETECTED__",
+      "__SELECTION_SNIFFING_DETECTED__",
     ];
 
     const signal = abortController.signal;

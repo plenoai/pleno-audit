@@ -59,6 +59,9 @@ import type {
   EventSourceChannelAlertDetails,
   FontFingerprintAlertDetails,
   IdleCallbackTimingAlertDetails,
+  ClipboardEventSniffingAlertDetails,
+  DragEventSniffingAlertDetails,
+  SelectionSniffingAlertDetails,
 } from "./types.js";
 
 export interface CreateAlertInput {
@@ -2117,4 +2120,97 @@ const IDLE_CALLBACK_TIMING_ALERT_DEFINITION: AlertDefinition<
 
 export const buildIdleCallbackTimingAlert = createAlertBuilder(
   IDLE_CALLBACK_TIMING_ALERT_DEFINITION
+);
+
+// ============================================================================
+// Clipboard Event Sniffing (copy/cut/paste listener — Red iter8)
+// ============================================================================
+
+export interface ClipboardEventSniffingAlertParams {
+  domain: string;
+  eventType: string;
+}
+
+const CLIPBOARD_EVENT_SNIFFING_ALERT_DEFINITION: AlertDefinition<
+  ClipboardEventSniffingAlertParams,
+  ClipboardEventSniffingAlertDetails
+> = {
+  category: "clipboard_event_sniffing",
+  detailsType: "clipboard_event_sniffing",
+  build: (params) => ({
+    severity: "high",
+    title: `クリップボードイベントスニッフィング検出: ${params.domain}`,
+    description: `「${params.eventType}」イベントのリスナーが登録されました（クリップボード内容の盗み見の可能性）`,
+    domain: params.domain,
+    details: {
+      domain: params.domain,
+      eventType: params.eventType,
+    },
+  }),
+};
+
+export const buildClipboardEventSniffingAlert = createAlertBuilder(
+  CLIPBOARD_EVENT_SNIFFING_ALERT_DEFINITION
+);
+
+// ============================================================================
+// Drag Event Sniffing (dragstart/drop listener — Red iter8)
+// ============================================================================
+
+export interface DragEventSniffingAlertParams {
+  domain: string;
+  eventType: string;
+}
+
+const DRAG_EVENT_SNIFFING_ALERT_DEFINITION: AlertDefinition<
+  DragEventSniffingAlertParams,
+  DragEventSniffingAlertDetails
+> = {
+  category: "drag_event_sniffing",
+  detailsType: "drag_event_sniffing",
+  build: (params) => ({
+    severity: "high",
+    title: `ドラッグ&ドロップデータ窃取検出: ${params.domain}`,
+    description: `「${params.eventType}」イベントのリスナーが登録されました（ドラッグ&ドロップによるデータ窃取の可能性）`,
+    domain: params.domain,
+    details: {
+      domain: params.domain,
+      eventType: params.eventType,
+    },
+  }),
+};
+
+export const buildDragEventSniffingAlert = createAlertBuilder(
+  DRAG_EVENT_SNIFFING_ALERT_DEFINITION
+);
+
+// ============================================================================
+// Selection API Keylogging (selectionchange listener — Red iter7)
+// ============================================================================
+
+export interface SelectionSniffingAlertParams {
+  domain: string;
+  eventType: string;
+}
+
+const SELECTION_SNIFFING_ALERT_DEFINITION: AlertDefinition<
+  SelectionSniffingAlertParams,
+  SelectionSniffingAlertDetails
+> = {
+  category: "selection_sniffing",
+  detailsType: "selection_sniffing",
+  build: (params) => ({
+    severity: "high",
+    title: `セレクションAPIキーロギング検出: ${params.domain}`,
+    description: `「${params.eventType}」イベントのリスナーが登録されました（テキスト選択内容の盗み見の可能性）`,
+    domain: params.domain,
+    details: {
+      domain: params.domain,
+      eventType: params.eventType,
+    },
+  }),
+};
+
+export const buildSelectionSniffingAlert = createAlertBuilder(
+  SELECTION_SNIFFING_ALERT_DEFINITION
 );

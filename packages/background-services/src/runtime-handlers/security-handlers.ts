@@ -212,5 +212,17 @@ export function createSecurityAsyncHandlers(
       execute: (message, sender) => deps.handleIdleCallbackTiming(message.data, sender),
       fallback: () => ({ success: false }),
     }],
+    ["CLIPBOARD_EVENT_SNIFFING_DETECTED", {
+      execute: (message, sender) => deps.handleClipboardEventSniffing(message.data, sender),
+      fallback: () => ({ success: false }),
+    }],
+    ["DRAG_EVENT_SNIFFING_DETECTED", {
+      execute: (message, sender) => deps.handleDragEventSniffing(message.data, sender),
+      fallback: () => ({ success: false }),
+    }],
+    ["SELECTION_SNIFFING_DETECTED", {
+      execute: (message, sender) => deps.handleSelectionSniffing(message.data, sender),
+      fallback: () => ({ success: false }),
+    }],
   ];
 }

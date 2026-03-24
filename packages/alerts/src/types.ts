@@ -69,7 +69,10 @@ export type AlertCategory =
   | "execcommand_clipboard" // document.execCommand clipboard bypass
   | "eventsource_channel" // EventSource covert C2 channel
   | "font_fingerprint" // FontFace API font fingerprinting
-  | "idle_callback_timing"; // requestIdleCallback timing side channel
+  | "idle_callback_timing" // requestIdleCallback timing side channel
+  | "clipboard_event_sniffing" // Clipboard event listener sniffing (copy/cut/paste) — Red iter8
+  | "drag_event_sniffing" // Drag-and-drop event listener data theft (dragstart/drop) — Red iter8
+  | "selection_sniffing"; // Selection API keylogging (selectionchange) — Red iter7
 
 /**
  * Alert status
@@ -157,7 +160,10 @@ export type AlertDetails =
   | ExecCommandClipboardAlertDetails
   | EventSourceChannelAlertDetails
   | FontFingerprintAlertDetails
-  | IdleCallbackTimingAlertDetails;
+  | IdleCallbackTimingAlertDetails
+  | ClipboardEventSniffingAlertDetails
+  | DragEventSniffingAlertDetails
+  | SelectionSniffingAlertDetails;
 
 export interface NRDAlertDetails {
   type: "nrd";
@@ -562,6 +568,24 @@ export interface IdleCallbackTimingAlertDetails {
   type: "idle_callback_timing";
   domain: string;
   callCount: number;
+}
+
+export interface ClipboardEventSniffingAlertDetails {
+  type: "clipboard_event_sniffing";
+  domain: string;
+  eventType: string;
+}
+
+export interface DragEventSniffingAlertDetails {
+  type: "drag_event_sniffing";
+  domain: string;
+  eventType: string;
+}
+
+export interface SelectionSniffingAlertDetails {
+  type: "selection_sniffing";
+  domain: string;
+  eventType: string;
 }
 
 /**

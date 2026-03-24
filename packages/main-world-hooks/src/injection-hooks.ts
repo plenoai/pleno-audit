@@ -193,6 +193,12 @@ export function initInjectionHooks(emitSecurityEvent: SharedHookUtils["emitSecur
   // DeviceMotion / DeviceOrientation (sensor fingerprinting)
   const originalAddEventListener = EventTarget.prototype.addEventListener;
   const sensorEvents = new Set(["devicemotion", "deviceorientation"]);
+  // Clipboard event sniffing (copy/cut/paste) — Red iter8 attack
+  const clipboardSniffEvents = new Set(["copy", "cut", "paste"]);
+  // Drag-and-drop data theft (dragstart/drop) — Red iter8 attack
+  const dragSniffEvents = new Set(["dragstart", "drop"]);
+  // Selection API keylogging (selectionchange) — Red iter7 attack
+  const selectionSniffEvents = new Set(["selectionchange"]);
   EventTarget.prototype.addEventListener = function (
     type: string,
     listener: EventListenerOrEventListenerObject | null,
@@ -201,6 +207,24 @@ export function initInjectionHooks(emitSecurityEvent: SharedHookUtils["emitSecur
     if (sensorEvents.has(type)) {
       emitSecurityEvent("__DEVICE_SENSOR_ACCESSED__", {
         sensorType: type,
+        timestamp: Date.now(),
+        pageUrl: location.href,
+      });
+    } else if (clipboardSniffEvents.has(type)) {
+      emitSecurityEvent("__CLIPBOARD_EVENT_SNIFFING_DETECTED__", {
+        eventType: type,
+        timestamp: Date.now(),
+        pageUrl: location.href,
+      });
+    } else if (dragSniffEvents.has(type)) {
+      emitSecurityEvent("__DRAG_EVENT_SNIFFING_DETECTED__", {
+        eventType: type,
+        timestamp: Date.now(),
+        pageUrl: location.href,
+      });
+    } else if (selectionSniffEvents.has(type)) {
+      emitSecurityEvent("__SELECTION_SNIFFING_DETECTED__", {
+        eventType: type,
         timestamp: Date.now(),
         pageUrl: location.href,
       });

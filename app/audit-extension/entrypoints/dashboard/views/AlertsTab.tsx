@@ -57,6 +57,9 @@ const categoryLabels: Record<string, string> = {
   device_sensor: "Sensor",
   device_enumeration: "DevEnum",
   storage_exfiltration: "Storage",
+  clipboard_event_sniffing: "ClipSniff",
+  drag_event_sniffing: "DragSniff",
+  selection_sniffing: "SelSniff",
 };
 
 const severityButtons: { key: AlertSeverity; label: string }[] = [

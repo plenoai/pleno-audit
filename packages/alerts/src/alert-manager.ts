@@ -68,6 +68,9 @@ import type {
   EventSourceChannelAlertParams,
   FontFingerprintAlertParams,
   IdleCallbackTimingAlertParams,
+  ClipboardEventSniffingAlertParams,
+  DragEventSniffingAlertParams,
+  SelectionSniffingAlertParams,
 } from "./alert-builders.js";
 import {
   buildNRDAlert,
@@ -123,6 +126,9 @@ import {
   buildEventSourceChannelAlert,
   buildFontFingerprintAlert,
   buildIdleCallbackTimingAlert,
+  buildClipboardEventSniffingAlert,
+  buildDragEventSniffingAlert,
+  buildSelectionSniffingAlert,
 } from "./alert-builders.js";
 
 /**
@@ -617,6 +623,24 @@ export function createAlertManager(
     return createOptionalAlert(buildIdleCallbackTimingAlert(params));
   }
 
+  async function alertClipboardEventSniffing(
+    params: ClipboardEventSniffingAlertParams
+  ): Promise<SecurityAlert | null> {
+    return createOptionalAlert(buildClipboardEventSniffingAlert(params));
+  }
+
+  async function alertDragEventSniffing(
+    params: DragEventSniffingAlertParams
+  ): Promise<SecurityAlert | null> {
+    return createOptionalAlert(buildDragEventSniffingAlert(params));
+  }
+
+  async function alertSelectionSniffing(
+    params: SelectionSniffingAlertParams
+  ): Promise<SecurityAlert | null> {
+    return createOptionalAlert(buildSelectionSniffingAlert(params));
+  }
+
   async function updateAlertStatus(
     alertId: string,
     status: AlertStatus
@@ -713,6 +737,9 @@ export function createAlertManager(
     alertEventSourceChannel,
     alertFontFingerprint,
     alertIdleCallbackTiming,
+    alertClipboardEventSniffing,
+    alertDragEventSniffing,
+    alertSelectionSniffing,
     updateAlertStatus,
     getAlerts,
     getAlertCount,

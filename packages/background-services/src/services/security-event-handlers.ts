@@ -1391,5 +1391,74 @@ export function createSecurityEventHandlers(
 
       return { success: true };
     },
+
+    async handleClipboardEventSniffing(
+      data: { eventType?: string; timestamp?: number; pageUrl?: string; source?: string },
+      sender: chrome.runtime.MessageSender,
+    ): Promise<{ success: boolean }> {
+      const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+
+      await deps.getAlertManager().alertClipboardEventSniffing({
+        domain: pageDomain,
+        eventType: data.eventType ?? "unknown",
+      });
+
+      deps.logger.warn({
+        event: "SECURITY_CLIPBOARD_EVENT_SNIFFING_DETECTED",
+        data: {
+          source: sourceLabel(data.source),
+          domain: pageDomain,
+          eventType: data.eventType,
+        },
+      });
+
+      return { success: true };
+    },
+
+    async handleDragEventSniffing(
+      data: { eventType?: string; timestamp?: number; pageUrl?: string; source?: string },
+      sender: chrome.runtime.MessageSender,
+    ): Promise<{ success: boolean }> {
+      const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+
+      await deps.getAlertManager().alertDragEventSniffing({
+        domain: pageDomain,
+        eventType: data.eventType ?? "unknown",
+      });
+
+      deps.logger.warn({
+        event: "SECURITY_DRAG_EVENT_SNIFFING_DETECTED",
+        data: {
+          source: sourceLabel(data.source),
+          domain: pageDomain,
+          eventType: data.eventType,
+        },
+      });
+
+      return { success: true };
+    },
+
+    async handleSelectionSniffing(
+      data: { eventType?: string; timestamp?: number; pageUrl?: string; source?: string },
+      sender: chrome.runtime.MessageSender,
+    ): Promise<{ success: boolean }> {
+      const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+
+      await deps.getAlertManager().alertSelectionSniffing({
+        domain: pageDomain,
+        eventType: data.eventType ?? "unknown",
+      });
+
+      deps.logger.warn({
+        event: "SECURITY_SELECTION_SNIFFING_DETECTED",
+        data: {
+          source: sourceLabel(data.source),
+          domain: pageDomain,
+          eventType: data.eventType,
+        },
+      });
+
+      return { success: true };
+    },
   };
 }
