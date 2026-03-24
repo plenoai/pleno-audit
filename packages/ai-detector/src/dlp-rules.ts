@@ -46,6 +46,10 @@ export interface DLPRule {
   confidence: "high" | "medium" | "low";
   enabled: boolean;
   custom?: boolean;
+  /** Minimum Shannon entropy (bits/char) for match to be valid. Reduces false positives. */
+  entropyThreshold?: number;
+  /** Cheap indexOf guards — regex only runs if any keyword found in text. */
+  keywords?: string[];
 }
 
 /**
@@ -99,6 +103,8 @@ const BASE_DLP_RULES: DLPRule[] = [
       /(?:api[_-]?key|apikey|api_secret|secret_key|access_token|auth_token|bearer)[\s:="']+[a-zA-Z0-9_-]{20,}/gi,
     confidence: "high",
     enabled: true,
+    keywords: ["api", "secret", "access_token", "auth_token", "bearer"],
+    entropyThreshold: 3.5,
   },
   {
     id: "base-password",
@@ -108,6 +114,8 @@ const BASE_DLP_RULES: DLPRule[] = [
     pattern: /(?:password|passwd|pwd)[\s:="']+[^\s"']{8,}/gi,
     confidence: "high",
     enabled: true,
+    keywords: ["password", "passwd", "pwd"],
+    entropyThreshold: 3.0,
   },
   {
     id: "base-openai-api-key",
@@ -117,6 +125,8 @@ const BASE_DLP_RULES: DLPRule[] = [
     pattern: /sk-[a-zA-Z0-9]{32,}/g,
     confidence: "high",
     enabled: true,
+    keywords: ["sk-"],
+    entropyThreshold: 3.0,
   },
   {
     id: "base-anthropic-api-key",
@@ -126,6 +136,7 @@ const BASE_DLP_RULES: DLPRule[] = [
     pattern: /sk-ant-[a-zA-Z0-9-]{80,}/g,
     confidence: "high",
     enabled: true,
+    keywords: ["sk-ant-"],
   },
   {
     id: "base-github-token",
@@ -135,6 +146,7 @@ const BASE_DLP_RULES: DLPRule[] = [
     pattern: /ghp_[a-zA-Z0-9]{36}/g,
     confidence: "high",
     enabled: true,
+    keywords: ["ghp_"],
   },
   {
     id: "base-github-oauth-token",
@@ -144,6 +156,7 @@ const BASE_DLP_RULES: DLPRule[] = [
     pattern: /gho_[a-zA-Z0-9]{36}/g,
     confidence: "high",
     enabled: true,
+    keywords: ["gho_"],
   },
   {
     id: "base-aws-access-key",
@@ -153,6 +166,7 @@ const BASE_DLP_RULES: DLPRule[] = [
     pattern: /AKIA[0-9A-Z]{16}/g,
     confidence: "high",
     enabled: true,
+    keywords: ["AKIA"],
   },
   {
     id: "base-private-key",
@@ -162,6 +176,7 @@ const BASE_DLP_RULES: DLPRule[] = [
     pattern: /-----BEGIN (?:RSA |DSA |EC )?PRIVATE KEY-----/g,
     confidence: "high",
     enabled: true,
+    keywords: ["PRIVATE KEY"],
   },
 
   // === Base: PII ===
@@ -326,6 +341,7 @@ export const EXTENDED_DLP_RULES: DLPRule[] = [
     pattern: /AIza[0-9A-Za-z-_]{35}/g,
     confidence: "high",
     enabled: true,
+    keywords: ["AIza"],
   },
   {
     id: "azure-subscription-key",
@@ -344,6 +360,7 @@ export const EXTENDED_DLP_RULES: DLPRule[] = [
     pattern: /(?:sk|pk)_(?:test|live)_[0-9a-zA-Z]{24,}/g,
     confidence: "high",
     enabled: true,
+    keywords: ["sk_", "pk_"],
   },
   {
     id: "slack-token",
@@ -353,6 +370,7 @@ export const EXTENDED_DLP_RULES: DLPRule[] = [
     pattern: /xox[baprs]-[0-9]{10,13}-[0-9]{10,13}[a-zA-Z0-9-]*/g,
     confidence: "high",
     enabled: true,
+    keywords: ["xox"],
   },
   {
     id: "twilio-key",
@@ -371,6 +389,7 @@ export const EXTENDED_DLP_RULES: DLPRule[] = [
     pattern: /SG\.[a-zA-Z0-9_-]{22}\.[a-zA-Z0-9_-]{43}/g,
     confidence: "high",
     enabled: true,
+    keywords: ["SG."],
   },
   {
     id: "mailchimp-key",
@@ -389,6 +408,7 @@ export const EXTENDED_DLP_RULES: DLPRule[] = [
     pattern: /eyJ[A-Za-z0-9-_]+\.eyJ[A-Za-z0-9-_]+\.[A-Za-z0-9-_.+/=]+/g,
     confidence: "high",
     enabled: true,
+    keywords: ["eyJ"],
   },
   {
     id: "basic-auth",
@@ -398,6 +418,7 @@ export const EXTENDED_DLP_RULES: DLPRule[] = [
     pattern: /Basic\s+[A-Za-z0-9+/=]{20,}/g,
     confidence: "high",
     enabled: true,
+    keywords: ["Basic"],
   },
   {
     id: "bearer-token",
@@ -407,6 +428,8 @@ export const EXTENDED_DLP_RULES: DLPRule[] = [
     pattern: /Bearer\s+[A-Za-z0-9-_.~+/]+=*/g,
     confidence: "medium",
     enabled: true,
+    keywords: ["Bearer"],
+    entropyThreshold: 3.0,
   },
 
   // === Extended: Japan-specific ===
@@ -465,6 +488,7 @@ export const EXTENDED_DLP_RULES: DLPRule[] = [
     pattern: /(?:mongodb|mysql|postgresql|redis|amqp):\/\/[^\s:]+:[^\s@]+@[^\s]+/gi,
     confidence: "high",
     enabled: true,
+    keywords: ["mongodb://", "mysql://", "postgresql://", "redis://", "amqp://"],
   },
 
   // === Extended: Environment variables ===
@@ -476,6 +500,86 @@ export const EXTENDED_DLP_RULES: DLPRule[] = [
     pattern: /(?:export\s+)?[A-Z_][A-Z0-9_]*=['""]?[^'"">\s]{10,}['""]?/g,
     confidence: "medium",
     enabled: true,
+    entropyThreshold: 3.5,
+  },
+
+  // === Extended: Generic Secret Detection (betterleaks-inspired) ===
+  {
+    id: "generic-secret-hex",
+    name: "Generic Hex Secret",
+    description: "長い16進数文字列（変数代入コンテキスト）",
+    classification: "credentials",
+    pattern:
+      /(?:secret|token|key|password|credential)[_\s:="']*[0-9a-f]{32,}/gi,
+    confidence: "high",
+    enabled: true,
+    keywords: ["secret", "token", "key", "password", "credential"],
+    entropyThreshold: 3.0,
+  },
+  {
+    id: "generic-secret-base64",
+    name: "Generic Base64 Secret",
+    description: "変数代入コンテキスト内のBase64文字列",
+    classification: "credentials",
+    pattern:
+      /(?:secret|token|key|password|credential)[_\s:="']*[A-Za-z0-9+/]{40,}={0,2}/gi,
+    confidence: "high",
+    enabled: true,
+    keywords: ["secret", "token", "key", "password", "credential"],
+    entropyThreshold: 3.5,
+  },
+  {
+    id: "generic-prefix-token",
+    name: "Generic Prefixed Token",
+    description: "xxx_形式の汎用トークン",
+    classification: "credentials",
+    pattern: /[a-z]{2,10}_[A-Za-z0-9]{20,}/g,
+    confidence: "medium",
+    enabled: true,
+    keywords: ["_"],
+    entropyThreshold: 3.5,
+  },
+  {
+    id: "private-key-pkcs8",
+    name: "PKCS#8 Private Key",
+    description: "PKCS#8秘密鍵ヘッダー",
+    classification: "credentials",
+    pattern: /-----BEGIN ENCRYPTED PRIVATE KEY-----/g,
+    confidence: "high",
+    enabled: true,
+    keywords: ["ENCRYPTED PRIVATE KEY"],
+  },
+  {
+    id: "private-key-openssh",
+    name: "OpenSSH Private Key",
+    description: "OpenSSH秘密鍵ヘッダー",
+    classification: "credentials",
+    pattern: /-----BEGIN OPENSSH PRIVATE KEY-----/g,
+    confidence: "high",
+    enabled: true,
+    keywords: ["OPENSSH PRIVATE KEY"],
+  },
+  {
+    id: "pgp-private-key",
+    name: "PGP Private Key",
+    description: "PGP秘密鍵ブロック",
+    classification: "credentials",
+    pattern: /-----BEGIN PGP PRIVATE KEY BLOCK-----/g,
+    confidence: "high",
+    enabled: true,
+    keywords: ["PGP PRIVATE KEY"],
+  },
+  {
+    id: "generic-high-entropy",
+    name: "High Entropy String",
+    description: "代入コンテキスト内の高エントロピー文字列",
+    classification: "credentials",
+    pattern:
+      /(?:secret|token|key|api_key|apikey|auth)[_\s:="']+[^\s"']{16,}/gi,
+    confidence: "medium",
+    enabled: true,
+    keywords: ["secret", "token", "key", "api_key", "apikey", "auth"],
+    entropyThreshold: 4.0,
   },
 ];
 
@@ -493,6 +597,26 @@ const RULE_CATALOG = {
 // ============================================================================
 // Sensitive Data Detection Functions
 // ============================================================================
+
+/**
+ * Shannon entropy (bits per character) を計算する。
+ * 高エントロピー = ランダム性が高い = 実際のシークレットの可能性が高い。
+ * 低エントロピー = 繰り返しが多い = プレースホルダーやダミー値の可能性が高い。
+ */
+export function calculateShannonEntropy(text: string): number {
+  if (text.length === 0) return 0;
+  const freq = new Map<string, number>();
+  for (const ch of text) {
+    freq.set(ch, (freq.get(ch) ?? 0) + 1);
+  }
+  let entropy = 0;
+  const len = text.length;
+  for (const count of freq.values()) {
+    const p = count / len;
+    entropy -= p * Math.log2(p);
+  }
+  return entropy;
+}
 
 /**
  * テキストをマスク
@@ -513,6 +637,13 @@ function getBaseEnabledRules(): DLPRule[] {
   return RULE_CATALOG.base.filter((r) => r.enabled);
 }
 
+function matchesKeywords(text: string, keywords: string[]): boolean {
+  for (const kw of keywords) {
+    if (text.includes(kw)) return true;
+  }
+  return false;
+}
+
 function scanRules<T>(
   text: string,
   rules: DLPRule[],
@@ -520,10 +651,20 @@ function scanRules<T>(
 ): T[] {
   const results: T[] = [];
   for (const rule of rules) {
+    if (rule.keywords && !matchesKeywords(text, rule.keywords)) {
+      continue;
+    }
+
     const regex = new RegExp(rule.pattern.source, rule.pattern.flags);
     let match: RegExpExecArray | null;
 
     while ((match = regex.exec(text)) !== null) {
+      if (
+        rule.entropyThreshold !== undefined &&
+        calculateShannonEntropy(match[0]) < rule.entropyThreshold
+      ) {
+        continue;
+      }
       results.push(onMatch(rule, match));
     }
   }
@@ -532,9 +673,23 @@ function scanRules<T>(
 
 function hasAnyMatch(text: string, rules: DLPRule[]): boolean {
   for (const rule of rules) {
-    const regex = new RegExp(rule.pattern.source, rule.pattern.flags);
-    if (regex.test(text)) {
-      return true;
+    if (rule.keywords && !matchesKeywords(text, rule.keywords)) {
+      continue;
+    }
+
+    if (rule.entropyThreshold === undefined) {
+      const regex = new RegExp(rule.pattern.source, rule.pattern.flags);
+      if (regex.test(text)) {
+        return true;
+      }
+    } else {
+      const regex = new RegExp(rule.pattern.source, rule.pattern.flags);
+      let match: RegExpExecArray | null;
+      while ((match = regex.exec(text)) !== null) {
+        if (calculateShannonEntropy(match[0]) >= rule.entropyThreshold) {
+          return true;
+        }
+      }
     }
   }
   return false;

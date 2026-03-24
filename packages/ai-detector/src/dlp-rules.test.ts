@@ -1,14 +1,93 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import {
   createDLPManager,
+  calculateShannonEntropy,
   EXTENDED_DLP_RULES,
   ALL_DLP_RULES,
   DEFAULT_DLP_CONFIG,
+  detectSensitiveData,
+  hasSensitiveData,
   type DLPManager,
 } from "./dlp-rules.js";
 
 // Helper to build test patterns without triggering secret scanning
 const buildTestKey = (prefix: string, suffix: string) => prefix + suffix;
+
+describe("calculateShannonEntropy", () => {
+  it("returns 0 for empty string", () => {
+    expect(calculateShannonEntropy("")).toBe(0);
+  });
+
+  it("returns 0 for single repeated character", () => {
+    expect(calculateShannonEntropy("aaaaaaa")).toBe(0);
+  });
+
+  it("returns 1.0 for two equally distributed characters", () => {
+    const entropy = calculateShannonEntropy("ab");
+    expect(entropy).toBeCloseTo(1.0, 5);
+  });
+
+  it("returns 2.0 for four equally distributed characters", () => {
+    const entropy = calculateShannonEntropy("abcd");
+    expect(entropy).toBeCloseTo(2.0, 5);
+  });
+
+  it("returns high entropy for random-looking strings", () => {
+    const entropy = calculateShannonEntropy("aK3$mP9x!qR7bN5cW2dF4gH6j");
+    expect(entropy).toBeGreaterThan(3.5);
+  });
+
+  it("returns low entropy for placeholder values", () => {
+    const entropy = calculateShannonEntropy("xxxxxxxxxxxxxxxxxxxxxxxx");
+    expect(entropy).toBe(0);
+  });
+
+  it("returns low entropy for repeated patterns", () => {
+    const entropy = calculateShannonEntropy("abcabcabcabcabcabc");
+    expect(entropy).toBeLessThan(2.0);
+  });
+});
+
+describe("Entropy-based filtering", () => {
+  it("filters out placeholder API keys via entropy", () => {
+    // Placeholder with low entropy — should be filtered
+    const placeholder = "api_key=xxxxxxxxxxxxxxxxxxxxxxxx";
+    const results = detectSensitiveData(placeholder);
+    const apiKeyMatch = results.find((r) => r.pattern === "API Key");
+    expect(apiKeyMatch).toBeUndefined();
+  });
+
+  it("detects real-looking API keys with high entropy", () => {
+    const realKey = "api_key=aK3mP9xqR7bN5cW2dF4gH6j";
+    const results = detectSensitiveData(realKey);
+    const apiKeyMatch = results.find((r) => r.pattern === "API Key");
+    expect(apiKeyMatch).toBeDefined();
+  });
+
+  it("rules without entropyThreshold still match low-entropy strings", () => {
+    // email rule has no entropyThreshold
+    const results = detectSensitiveData("test@test.com");
+    expect(results.some((r) => r.pattern === "Email Address")).toBe(true);
+  });
+});
+
+describe("Keyword pre-filtering", () => {
+  it("skips rules when no keyword matches", () => {
+    // Text without any credential keywords should not trigger credential rules
+    const text = "Hello world, this is a normal sentence.";
+    const results = detectSensitiveData(text);
+    const credentialResults = results.filter(
+      (r) => r.classification === "credentials"
+    );
+    expect(credentialResults).toHaveLength(0);
+  });
+
+  it("triggers rules when keyword is present", () => {
+    // ghp_ + exactly 36 alphanumeric chars
+    const text = buildTestKey("ghp_", "aK3mP9xqR7bN5cW2dF4gH6jaK3mP9xqR7bXy");
+    expect(hasSensitiveData(text)).toBe(true);
+  });
+});
 
 describe("EXTENDED_DLP_RULES", () => {
   describe("API key patterns", () => {
@@ -139,6 +218,81 @@ describe("EXTENDED_DLP_RULES", () => {
       expect("API_SECRET=mysupersecretkey123".match(rule!.pattern)).not.toBeNull();
     });
   });
+
+  describe("Generic secret detection patterns", () => {
+    it("detects hex secrets in variable context", () => {
+      const rule = EXTENDED_DLP_RULES.find((r) => r.id === "generic-secret-hex");
+      expect(rule).toBeDefined();
+      const text = 'secret="a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6"';
+      expect(text.match(rule!.pattern)).not.toBeNull();
+    });
+
+    it("detects base64 secrets in variable context", () => {
+      const rule = EXTENDED_DLP_RULES.find((r) => r.id === "generic-secret-base64");
+      expect(rule).toBeDefined();
+      const text = 'token="aGVsbG8gd29ybGQhIFRoaXMgaXMgYSB0ZXN0IHNlY3JldA=="';
+      expect(text.match(rule!.pattern)).not.toBeNull();
+    });
+
+    it("detects generic prefixed tokens", () => {
+      const rule = EXTENDED_DLP_RULES.find((r) => r.id === "generic-prefix-token");
+      expect(rule).toBeDefined();
+      // Should match xxx_ + 20+ chars pattern
+      const text = "myapp_aK3mP9xqR7bN5cW2dF4gH6j";
+      expect(text.match(rule!.pattern)).not.toBeNull();
+    });
+
+    it("does not match generic prefixed tokens with low entropy", () => {
+      const manager = createDLPManager();
+      const text = "myapp_aaaaaaaaaaaaaaaaaaaaaaaaaa";
+      const result = manager.analyze(text);
+      const prefixMatch = result.detected.find(
+        (d) => d.ruleId === "generic-prefix-token"
+      );
+      expect(prefixMatch).toBeUndefined();
+    });
+
+    it("detects PKCS#8 private keys", () => {
+      const rule = EXTENDED_DLP_RULES.find((r) => r.id === "private-key-pkcs8");
+      expect(rule).toBeDefined();
+      expect(
+        "-----BEGIN ENCRYPTED PRIVATE KEY-----".match(rule!.pattern)
+      ).not.toBeNull();
+    });
+
+    it("detects OpenSSH private keys", () => {
+      const rule = EXTENDED_DLP_RULES.find((r) => r.id === "private-key-openssh");
+      expect(rule).toBeDefined();
+      expect(
+        "-----BEGIN OPENSSH PRIVATE KEY-----".match(rule!.pattern)
+      ).not.toBeNull();
+    });
+
+    it("detects PGP private keys", () => {
+      const rule = EXTENDED_DLP_RULES.find((r) => r.id === "pgp-private-key");
+      expect(rule).toBeDefined();
+      expect(
+        "-----BEGIN PGP PRIVATE KEY BLOCK-----".match(rule!.pattern)
+      ).not.toBeNull();
+    });
+
+    it("detects high-entropy strings in assignment context", () => {
+      const rule = EXTENDED_DLP_RULES.find((r) => r.id === "generic-high-entropy");
+      expect(rule).toBeDefined();
+      const text = 'secret="aK3$mP9x!qR7bN5cW2dF4gH6j"';
+      expect(text.match(rule!.pattern)).not.toBeNull();
+    });
+
+    it("filters low-entropy values in high-entropy rule via DLPManager", () => {
+      const manager = createDLPManager();
+      const text = 'secret="aaaaaaaaaaaaaaaaaaa"';
+      const result = manager.analyze(text);
+      const highEntropyMatch = result.detected.find(
+        (d) => d.ruleId === "generic-high-entropy"
+      );
+      expect(highEntropyMatch).toBeUndefined();
+    });
+  });
 });
 
 describe("createDLPManager", () => {
@@ -225,6 +379,20 @@ describe("createDLPManager", () => {
     });
   });
 
+  describe("entropy integration", () => {
+    it("filters low-entropy password matches", () => {
+      const result = manager.analyze("password=xxxxxxxxxxxxxxxx");
+      const pwMatch = result.detected.find((d) => d.ruleId === "base-password");
+      expect(pwMatch).toBeUndefined();
+    });
+
+    it("detects high-entropy password matches", () => {
+      const result = manager.analyze("password=aK3$mP9x!qR7");
+      const pwMatch = result.detected.find((d) => d.ruleId === "base-password");
+      expect(pwMatch).toBeDefined();
+    });
+  });
+
   describe("rule management", () => {
     it("enables and disables rules", () => {
       const initialRules = manager.getEnabledRules();
@@ -287,6 +455,25 @@ describe("createDLPManager", () => {
 
       const removed = manager.removeCustomRule(builtInRule!.id);
       expect(removed).toBe(false);
+    });
+
+    it("adds custom rules with entropyThreshold and keywords", () => {
+      manager.addCustomRule({
+        id: "custom-entropy-rule",
+        name: "Custom Entropy Rule",
+        description: "Rule with entropy threshold",
+        classification: "credentials",
+        pattern: /custom_[a-z]{20,}/g,
+        confidence: "high",
+        enabled: true,
+        entropyThreshold: 3.0,
+        keywords: ["custom_"],
+      });
+
+      const rule = manager.getAllRules().find((r) => r.id === "custom-entropy-rule");
+      expect(rule).toBeDefined();
+      expect(rule!.entropyThreshold).toBe(3.0);
+      expect(rule!.keywords).toEqual(["custom_"]);
     });
   });
 
@@ -388,6 +575,38 @@ describe("ReDoS耐性", () => {
         const re = new RegExp(rule.pattern.source, rule.pattern.flags);
         re.test(big);
       }
+    });
+  });
+
+  it(`generic-secret-hex: 長大hex文字列で ${BUDGET_MS}ms 以内`, () => {
+    const rule = EXTENDED_DLP_RULES.find((r) => r.id === "generic-secret-hex")!;
+    const malicious = "secret=" + "a".repeat(100_000);
+    expectWithinBudget(() => {
+      rule.pattern.test(malicious);
+    });
+  });
+
+  it(`generic-secret-base64: 長大base64文字列で ${BUDGET_MS}ms 以内`, () => {
+    const rule = EXTENDED_DLP_RULES.find((r) => r.id === "generic-secret-base64")!;
+    const malicious = "token=" + "A".repeat(100_000);
+    expectWithinBudget(() => {
+      rule.pattern.test(malicious);
+    });
+  });
+
+  it(`generic-prefix-token: 長大プレフィックストークンで ${BUDGET_MS}ms 以内`, () => {
+    const rule = EXTENDED_DLP_RULES.find((r) => r.id === "generic-prefix-token")!;
+    const malicious = "abc_" + "x".repeat(100_000);
+    expectWithinBudget(() => {
+      rule.pattern.test(malicious);
+    });
+  });
+
+  it(`generic-high-entropy: 長大文字列で ${BUDGET_MS}ms 以内`, () => {
+    const rule = EXTENDED_DLP_RULES.find((r) => r.id === "generic-high-entropy")!;
+    const malicious = "secret=" + "x".repeat(100_000);
+    expectWithinBudget(() => {
+      rule.pattern.test(malicious);
     });
   });
 });
