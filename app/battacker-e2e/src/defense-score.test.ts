@@ -2153,6 +2153,234 @@ const attacks: AttackDef[] = [
         }
       }),
   },
+  {
+    id: "fingerprinting-resize-observer",
+    name: "Resize Observer Fingerprinting",
+    category: "fingerprinting",
+    severity: "medium",
+    description:
+      "Uses ResizeObserver to track element dimensions for viewport/device fingerprinting. " +
+      "ResizeObserver reports precise DPI-scaled pixel dimensions that reveal screen density, " +
+      "zoom level, and device class. The ResizeObserver constructor is not hooked.",
+    simulate: (page) =>
+      page.evaluate(async () => {
+        const startTime = performance.now();
+        try {
+          if (typeof ResizeObserver === "undefined") {
+            return { blocked: true, executionTime: performance.now() - startTime, details: "ResizeObserver not supported" };
+          }
+
+          const measurements: { tag: string; width: number; height: number }[] = [];
+
+          // Inject a set of probe elements with known CSS sizes; the reported
+          // devicePixelContent dimensions reveal the effective DPR and zoom level.
+          const probes: HTMLElement[] = [];
+          for (let i = 0; i < 5; i++) {
+            const el = document.createElement("div");
+            el.style.cssText = `width:${(i + 1) * 100}px;height:${(i + 1) * 50}px;position:fixed;top:-9999px;left:-9999px;`;
+            document.body.appendChild(el);
+            probes.push(el);
+          }
+
+          await new Promise<void>((resolve) => {
+            const ro = new ResizeObserver((entries) => {
+              for (const entry of entries) {
+                const cs = entry.contentRect;
+                measurements.push({ tag: (entry.target as HTMLElement).style.width, width: cs.width, height: cs.height });
+              }
+              if (measurements.length >= probes.length) {
+                ro.disconnect();
+                resolve();
+              }
+            });
+            for (const el of probes) ro.observe(el);
+          });
+
+          for (const el of probes) el.remove();
+
+          // Derive an approximate device pixel ratio from discrepancy between
+          // CSS pixel dimensions and reported content rect (always 1:1 here,
+          // but window.devicePixelRatio confirms the fingerprint vector).
+          const dpr = window.devicePixelRatio ?? 1;
+          const fingerprint = `dpr=${dpr} viewport=${window.innerWidth}x${window.innerHeight} samples=${measurements.length}`;
+
+          return {
+            blocked: false,
+            executionTime: performance.now() - startTime,
+            details: `ResizeObserver fingerprinting: ${fingerprint} — ResizeObserver constructor not hooked, device dimensions exfiltrated`,
+          };
+        } catch (error: any) {
+          return { blocked: true, executionTime: performance.now() - startTime, details: `ResizeObserver fingerprinting blocked: ${error?.message}` };
+        }
+      }),
+  },
+  {
+    id: "phishing-execcommand-clipboard-poison",
+    name: "Clipboard Write Poisoning via execCommand",
+    category: "phishing",
+    severity: "high",
+    description:
+      "Uses document.execCommand('copy') — the legacy clipboard API — to overwrite the user's " +
+      "clipboard with a phishing URL. The hook is placed on navigator.clipboard.writeText; " +
+      "the synchronous execCommand path is not intercepted.",
+    simulate: (page) =>
+      page.evaluate(async () => {
+        const startTime = performance.now();
+        try {
+          // Stage malicious content in a temporary textarea, select it, then
+          // copy via execCommand. This bypasses any navigator.clipboard.writeText hook.
+          const ta = document.createElement("textarea");
+          ta.value = "https://evil-phishing-site.example.com/steal?token=abc123";
+          ta.style.cssText = "position:fixed;top:-9999px;left:-9999px;opacity:0;";
+          document.body.appendChild(ta);
+          ta.focus();
+          ta.select();
+
+          const success = document.execCommand("copy");
+
+          ta.remove();
+
+          if (success) {
+            return {
+              blocked: false,
+              executionTime: performance.now() - startTime,
+              details: `execCommand('copy') clipboard poison: write succeeded — navigator.clipboard.writeText is hooked but execCommand is not, phishing URL planted in clipboard`,
+            };
+          } else {
+            // execCommand may return false if the browser blocks it outside a
+            // user-gesture context (common in headless). Still not hooked.
+            return {
+              blocked: false,
+              executionTime: performance.now() - startTime,
+              details: `execCommand('copy') clipboard poison: write returned false (no user gesture) but no hook intercepted it — navigator.clipboard.writeText hook does not cover execCommand`,
+            };
+          }
+        } catch (error: any) {
+          return { blocked: true, executionTime: performance.now() - startTime, details: `execCommand clipboard poison blocked: ${error?.message}` };
+        }
+      }),
+  },
+  {
+    id: "side-channel-navigation-timing",
+    name: "Navigation Timing Fingerprinting",
+    category: "side-channel",
+    severity: "medium",
+    description:
+      "Reads performance.navigation and performance.timing directly — the deprecated but still " +
+      "available Level 1 API. These objects expose precise network timings (DNS, TCP, TLS, TTFB) " +
+      "that reveal ISP, CDN topology, and browsing patterns. PerformanceObserver is hooked but " +
+      "direct property access on performance.timing/navigation is not.",
+    simulate: (page) =>
+      page.evaluate(async () => {
+        const startTime = performance.now();
+        try {
+          // Level 1 deprecated API — still present in all major browsers.
+          // PerformanceObserver hook does not intercept attribute reads here.
+          const timing = performance.timing as PerformanceTiming | undefined;
+          const nav = performance.navigation as PerformanceNavigation | undefined;
+
+          const timingData: Record<string, number> = {};
+          if (timing) {
+            timingData.dnsLookup = timing.domainLookupEnd - timing.domainLookupStart;
+            timingData.tcpConnect = timing.connectEnd - timing.connectStart;
+            timingData.ttfb = timing.responseStart - timing.requestStart;
+            timingData.domContentLoaded = timing.domContentLoadedEventEnd - timing.navigationStart;
+            timingData.loadComplete = timing.loadEventEnd - timing.navigationStart;
+          }
+
+          const navData = nav
+            ? { type: nav.type, redirectCount: nav.redirectCount }
+            : { type: -1, redirectCount: -1 };
+
+          // Also read the newer but still unhooked entries via getEntriesByType
+          const navEntries = performance.getEntriesByType("navigation") as PerformanceNavigationTiming[];
+          const level2Data = navEntries.length > 0
+            ? { protocol: navEntries[0].nextHopProtocol, transferSize: navEntries[0].transferSize }
+            : null;
+
+          const summary = `dns=${timingData.dnsLookup}ms tcp=${timingData.tcpConnect}ms ttfb=${timingData.ttfb}ms dcl=${timingData.domContentLoaded}ms navType=${navData.type} redirects=${navData.redirectCount}`;
+
+          return {
+            blocked: false,
+            executionTime: performance.now() - startTime,
+            details: `Navigation timing fingerprint: ${summary}${level2Data ? ` protocol=${level2Data.protocol} transferSize=${level2Data.transferSize}` : ""} — PerformanceObserver hooked but performance.timing/navigation direct reads are not`,
+          };
+        } catch (error: any) {
+          return { blocked: true, executionTime: performance.now() - startTime, details: `Navigation timing fingerprinting blocked: ${error?.message}` };
+        }
+      }),
+  },
+  {
+    id: "covert-message-channel-sw",
+    name: "Service Worker Message Channel",
+    category: "covert",
+    severity: "critical",
+    description:
+      "Creates a MessageChannel and transfers one port to a service worker for out-of-band " +
+      "covert communication. postMessage hooks monitor window/frame messaging but do not " +
+      "intercept MessageChannel construction or port transfers to service workers. " +
+      "MessageChannel is not hooked.",
+    simulate: (page) =>
+      page.evaluate(async () => {
+        const startTime = performance.now();
+        try {
+          // Construct the channel — not hooked regardless of service worker availability.
+          const channel = new MessageChannel();
+          const port1 = channel.port1;
+          const port2 = channel.port2;
+
+          // Set up a loopback: send a covert message through port1 → port2
+          // to prove unmonitored bidirectional communication.
+          const received: string[] = [];
+          port2.onmessage = (evt: MessageEvent) => {
+            received.push(String(evt.data));
+          };
+          port1.start();
+          port2.start();
+
+          const SECRET_PAYLOAD = JSON.stringify({
+            type: "covert-exfil",
+            session: Math.random().toString(36).slice(2),
+            cookies: document.cookie,
+            origin: location.origin,
+          });
+          port1.postMessage(SECRET_PAYLOAD);
+
+          // Allow the microtask/macrotask queue to deliver the message.
+          await new Promise<void>((r) => setTimeout(r, 50));
+
+          port1.close();
+          port2.close();
+
+          // Attempt to register / reuse a service worker for the port transfer.
+          // In headless test context the SW may not be available, but the channel
+          // itself is constructed and messages flow regardless.
+          let swStatus = "no-sw-context";
+          if ("serviceWorker" in navigator) {
+            try {
+              const reg = await navigator.serviceWorker.getRegistration();
+              if (reg?.active) {
+                // In a real attack the attacker transfers port2 here:
+                // reg.active.postMessage({ type: 'port' }, [port2]);
+                swStatus = `sw-active(${reg.scope})`;
+              } else {
+                swStatus = "sw-not-active";
+              }
+            } catch {
+              swStatus = "sw-query-failed";
+            }
+          }
+
+          return {
+            blocked: false,
+            executionTime: performance.now() - startTime,
+            details: `MessageChannel covert channel: constructed unhooked, loopback delivered ${received.length} message(s), sw=${swStatus} — postMessage hooks do not intercept MessageChannel constructor or port transfers`,
+          };
+        } catch (error: any) {
+          return { blocked: true, executionTime: performance.now() - startTime, details: `MessageChannel covert channel blocked: ${error?.message}` };
+        }
+      }),
+  },
 ];
 
 // ============================================================================

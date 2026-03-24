@@ -60,7 +60,10 @@ export type AlertCategory =
   | "dom_clobbering" // DOM clobbering — named elements shadowing window globals
   | "cache_api_abuse" // Cache API usage for persistence or cache poisoning
   | "fetch_exfiltration" // fetch() to cross-origin with no-cors mode or large payload
-  | "wasm_execution"; // WebAssembly instantiation/compilation
+  | "wasm_execution" // WebAssembly instantiation/compilation
+  | "intersection_observer" // IntersectionObserver bulk element surveillance
+  | "indexeddb_abuse" // IndexedDB.open() for covert data persistence
+  | "history_manipulation"; // history.pushState/replaceState manipulation
 
 /**
  * Alert status
@@ -139,7 +142,10 @@ export type AlertDetails =
   | DOMClobberingAlertDetails
   | CacheAPIAbuseAlertDetails
   | FetchExfiltrationAlertDetails
-  | WASMExecutionAlertDetails;
+  | WASMExecutionAlertDetails
+  | IntersectionObserverAlertDetails
+  | IndexedDBAbuseAlertDetails
+  | HistoryManipulationAlertDetails;
 
 export interface NRDAlertDetails {
   type: "nrd";
@@ -489,6 +495,27 @@ export interface WASMExecutionAlertDetails {
   domain: string;
   method: string;
   byteLength: number | null;
+}
+
+export interface IntersectionObserverAlertDetails {
+  type: "intersection_observer";
+  domain: string;
+  observedCount: number;
+}
+
+export interface IndexedDBAbuseAlertDetails {
+  type: "indexeddb_abuse";
+  domain: string;
+  dbName: string;
+  version: number | null;
+}
+
+export interface HistoryManipulationAlertDetails {
+  type: "history_manipulation";
+  domain: string;
+  method: string;
+  url: string | null;
+  hasState: boolean;
 }
 
 /**

@@ -176,5 +176,17 @@ export function createSecurityAsyncHandlers(
       execute: (message, sender) => deps.handleWASMExecution(message.data, sender),
       fallback: () => ({ success: false }),
     }],
+    ["INTERSECTION_OBSERVER_DETECTED", {
+      execute: (message, sender) => deps.handleIntersectionObserver(message.data, sender),
+      fallback: () => ({ success: false }),
+    }],
+    ["INDEXEDDB_ABUSE_DETECTED", {
+      execute: (message, sender) => deps.handleIndexedDBAbuse(message.data, sender),
+      fallback: () => ({ success: false }),
+    }],
+    ["HISTORY_MANIPULATION_DETECTED", {
+      execute: (message, sender) => deps.handleHistoryManipulation(message.data, sender),
+      fallback: () => ({ success: false }),
+    }],
   ];
 }

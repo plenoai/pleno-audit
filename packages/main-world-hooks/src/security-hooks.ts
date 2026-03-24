@@ -543,6 +543,57 @@ export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecuri
     return originalFetch.call(this, input, init);
   };
 
+  // ===== IndexedDB Persistence Detection =====
+  // indexedDB.open() is used by malicious pages to persist data (stashing tokens, exfiltration buffers)
+  // across sessions — a technique used by persistent tracking and advanced malware.
+  if (typeof indexedDB !== "undefined" && indexedDB.open) {
+    try {
+      const originalIDBOpen = indexedDB.open.bind(indexedDB);
+      indexedDB.open = function (name: string, version?: number): IDBOpenDBRequest {
+        emitSecurityEvent("__INDEXEDDB_ABUSE_DETECTED__", {
+          dbName: name,
+          version: version ?? null,
+          timestamp: Date.now(),
+          pageUrl: window.location.href,
+        });
+        return originalIDBOpen(name, version as number);
+      };
+    } catch {
+      /* ignore */
+    }
+  }
+
+  // ===== History API Manipulation Detection =====
+  // Manipulating history.pushState/replaceState can be used to hijack the browser address bar,
+  // inject fake URLs for phishing, or exfiltrate state data through URL-embedded parameters.
+  try {
+    const originalPushState = history.pushState.bind(history);
+    history.pushState = function (state: unknown, unused: string, url?: string | URL | null) {
+      emitSecurityEvent("__HISTORY_MANIPULATION_DETECTED__", {
+        method: "pushState",
+        url: url != null ? String(url) : null,
+        hasState: state !== null && state !== undefined,
+        timestamp: Date.now(),
+        pageUrl: window.location.href,
+      });
+      return originalPushState(state, unused, url as string | URL | null);
+    };
+
+    const originalReplaceState = history.replaceState.bind(history);
+    history.replaceState = function (state: unknown, unused: string, url?: string | URL | null) {
+      emitSecurityEvent("__HISTORY_MANIPULATION_DETECTED__", {
+        method: "replaceState",
+        url: url != null ? String(url) : null,
+        hasState: state !== null && state !== undefined,
+        timestamp: Date.now(),
+        pageUrl: window.location.href,
+      });
+      return originalReplaceState(state, unused, url as string | URL | null);
+    };
+  } catch {
+    /* ignore */
+  }
+
   // ===== Suspicious Download =====
   const originalCreateObjectURL = URL.createObjectURL;
   URL.createObjectURL = function (blob: Blob | MediaSource) {

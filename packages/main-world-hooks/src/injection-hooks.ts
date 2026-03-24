@@ -352,4 +352,42 @@ export function initInjectionHooks(emitSecurityEvent: SharedHookUtils["emitSecur
       });
     }
   });
+
+  // ===== IntersectionObserver Surveillance Detection =====
+  // Bulk observe() calls on many elements is a pattern used for scroll/visibility tracking surveillance.
+  if (typeof IntersectionObserver !== "undefined") {
+    const OriginalIntersectionObserver = IntersectionObserver;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- intentional monkey-patch of IntersectionObserver
+    (window as any).IntersectionObserver = function (
+      this: unknown,
+      callback: IntersectionObserverCallback,
+      options?: IntersectionObserverInit,
+    ) {
+      const instance = new OriginalIntersectionObserver(callback, options);
+      let observedCount = 0;
+      let emitted = false;
+      const originalObserve = instance.observe.bind(instance);
+      instance.observe = function (target: Element) {
+        observedCount++;
+        // Bulk surveillance heuristic: more than 5 elements observed by the same observer
+        if (!emitted && observedCount > 5) {
+          emitted = true;
+          emitSecurityEvent("__INTERSECTION_OBSERVER_DETECTED__", {
+            observedCount,
+            timestamp: Date.now(),
+            pageUrl: location.href,
+          });
+        }
+        return originalObserve(target);
+      };
+      // Emit on first instantiation to record baseline usage
+      emitSecurityEvent("__INTERSECTION_OBSERVER_DETECTED__", {
+        observedCount: 0,
+        timestamp: Date.now(),
+        pageUrl: location.href,
+      });
+      return instance;
+    } as unknown as typeof IntersectionObserver;
+    (window as any).IntersectionObserver.prototype = OriginalIntersectionObserver.prototype;
+  }
 }

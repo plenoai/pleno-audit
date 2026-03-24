@@ -1182,5 +1182,80 @@ export function createSecurityEventHandlers(
 
       return { success: true };
     },
+
+    async handleIntersectionObserver(
+      data: { observedCount?: number; timestamp?: number; pageUrl?: string; source?: string },
+      sender: chrome.runtime.MessageSender,
+    ): Promise<{ success: boolean }> {
+      const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+
+      await deps.getAlertManager().alertIntersectionObserver({
+        domain: pageDomain,
+        observedCount: data.observedCount ?? 0,
+      });
+
+      deps.logger.warn({
+        event: "SECURITY_INTERSECTION_OBSERVER_DETECTED",
+        data: {
+          source: sourceLabel(data.source),
+          domain: pageDomain,
+          observedCount: data.observedCount,
+        },
+      });
+
+      return { success: true };
+    },
+
+    async handleIndexedDBAbuse(
+      data: { dbName?: string; version?: number | null; timestamp?: number; pageUrl?: string; source?: string },
+      sender: chrome.runtime.MessageSender,
+    ): Promise<{ success: boolean }> {
+      const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+
+      await deps.getAlertManager().alertIndexedDBAbuse({
+        domain: pageDomain,
+        dbName: data.dbName ?? "",
+        version: data.version ?? null,
+      });
+
+      deps.logger.warn({
+        event: "SECURITY_INDEXEDDB_ABUSE_DETECTED",
+        data: {
+          source: sourceLabel(data.source),
+          domain: pageDomain,
+          dbName: data.dbName,
+          version: data.version,
+        },
+      });
+
+      return { success: true };
+    },
+
+    async handleHistoryManipulation(
+      data: { method?: string; url?: string | null; hasState?: boolean; timestamp?: number; pageUrl?: string; source?: string },
+      sender: chrome.runtime.MessageSender,
+    ): Promise<{ success: boolean }> {
+      const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+
+      await deps.getAlertManager().alertHistoryManipulation({
+        domain: pageDomain,
+        method: data.method ?? "pushState",
+        url: data.url ?? null,
+        hasState: data.hasState ?? false,
+      });
+
+      deps.logger.warn({
+        event: "SECURITY_HISTORY_MANIPULATION_DETECTED",
+        data: {
+          source: sourceLabel(data.source),
+          domain: pageDomain,
+          method: data.method,
+          url: data.url,
+          hasState: data.hasState,
+        },
+      });
+
+      return { success: true };
+    },
   };
 }

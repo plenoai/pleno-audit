@@ -53,6 +53,9 @@ import type {
   CacheAPIAbuseAlertDetails,
   FetchExfiltrationAlertDetails,
   WASMExecutionAlertDetails,
+  IntersectionObserverAlertDetails,
+  IndexedDBAbuseAlertDetails,
+  HistoryManipulationAlertDetails,
 } from "./types.js";
 
 export interface CreateAlertInput {
@@ -1803,4 +1806,130 @@ const WASM_EXECUTION_ALERT_DEFINITION: AlertDefinition<
 
 export const buildWASMExecutionAlert = createAlertBuilder(
   WASM_EXECUTION_ALERT_DEFINITION
+);
+
+// ============================================================================
+// IntersectionObserver Surveillance
+// ============================================================================
+
+export interface IntersectionObserverAlertParams {
+  domain: string;
+  observedCount: number;
+}
+
+const INTERSECTION_OBSERVER_ALERT_DEFINITION: AlertDefinition<
+  IntersectionObserverAlertParams,
+  IntersectionObserverAlertDetails
+> = {
+  category: "intersection_observer",
+  detailsType: "intersection_observer",
+  build: (params, helpers) => {
+    const isBulk = params.observedCount > 5;
+    const severity = helpers.resolveSeverity([[isBulk, "medium"]], "low");
+    const description = isBulk
+      ? `${params.observedCount}個の要素を一括監視（バルクサーベイランスパターン）`
+      : "IntersectionObserverが生成されました";
+
+    return {
+      severity,
+      title: `IntersectionObserverによるサーベイランスを検出: ${params.domain}`,
+      description,
+      domain: params.domain,
+      details: {
+        domain: params.domain,
+        observedCount: params.observedCount,
+      },
+    };
+  },
+};
+
+export const buildIntersectionObserverAlert = createAlertBuilder(
+  INTERSECTION_OBSERVER_ALERT_DEFINITION
+);
+
+// ============================================================================
+// IndexedDB Abuse
+// ============================================================================
+
+export interface IndexedDBAbuseAlertParams {
+  domain: string;
+  dbName: string;
+  version: number | null;
+}
+
+const INDEXEDDB_ABUSE_ALERT_DEFINITION: AlertDefinition<
+  IndexedDBAbuseAlertParams,
+  IndexedDBAbuseAlertDetails
+> = {
+  category: "indexeddb_abuse",
+  detailsType: "indexeddb_abuse",
+  build: (params) => ({
+    severity: "medium",
+    title: `IndexedDBへの不審なアクセスを検出: ${params.domain}`,
+    description: `データベース「${params.dbName}」${params.version !== null ? `（バージョン${params.version}）` : ""}を開きました — データ永続化の可能性`,
+    domain: params.domain,
+    details: {
+      domain: params.domain,
+      dbName: params.dbName,
+      version: params.version,
+    },
+  }),
+};
+
+export const buildIndexedDBAbuseAlert = createAlertBuilder(
+  INDEXEDDB_ABUSE_ALERT_DEFINITION
+);
+
+// ============================================================================
+// History API Manipulation
+// ============================================================================
+
+export interface HistoryManipulationAlertParams {
+  domain: string;
+  method: string;
+  url: string | null;
+  hasState: boolean;
+}
+
+const HISTORY_MANIPULATION_ALERT_DEFINITION: AlertDefinition<
+  HistoryManipulationAlertParams,
+  HistoryManipulationAlertDetails
+> = {
+  category: "history_manipulation",
+  detailsType: "history_manipulation",
+  build: (params, helpers) => {
+    // An absolute URL with a different origin than the page domain suggests potential address bar spoofing.
+    const hasAbsoluteUrl = (() => {
+      if (!params.url) return false;
+      try {
+        const parsed = new URL(params.url);
+        // Absolute URL with http/https scheme is a stronger manipulation signal
+        return parsed.protocol === "http:" || parsed.protocol === "https:";
+      } catch {
+        // Relative URL — normal SPA navigation
+        return false;
+      }
+    })();
+    const severity = helpers.resolveSeverity([[hasAbsoluteUrl && params.hasState, "high"], [hasAbsoluteUrl, "medium"]], "low");
+    const description = params.url
+      ? `history.${params.method}でURLを「${params.url}」に変更${params.hasState ? "（状態データあり）" : ""}`
+      : `history.${params.method}が呼び出されました${params.hasState ? "（状態データあり）" : ""}`;
+
+    return {
+      severity,
+      title: `History APIの操作を検出: ${params.domain}`,
+      description,
+      domain: params.domain,
+      details: {
+        domain: params.domain,
+        method: params.method,
+        url: params.url,
+        hasState: params.hasState,
+      },
+    };
+  },
+};
+
+export const buildHistoryManipulationAlert = createAlertBuilder(
+  HISTORY_MANIPULATION_ALERT_DEFINITION
 );

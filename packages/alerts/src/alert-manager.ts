@@ -59,6 +59,9 @@ import type {
   CacheAPIAbuseAlertParams,
   FetchExfiltrationAlertParams,
   WASMExecutionAlertParams,
+  IntersectionObserverAlertParams,
+  IndexedDBAbuseAlertParams,
+  HistoryManipulationAlertParams,
 } from "./alert-builders.js";
 import {
   buildNRDAlert,
@@ -105,6 +108,9 @@ import {
   buildCacheAPIAbuseAlert,
   buildFetchExfiltrationAlert,
   buildWASMExecutionAlert,
+  buildIntersectionObserverAlert,
+  buildIndexedDBAbuseAlert,
+  buildHistoryManipulationAlert,
 } from "./alert-builders.js";
 
 /**
@@ -545,6 +551,24 @@ export function createAlertManager(
     return createOptionalAlert(buildWASMExecutionAlert(params));
   }
 
+  async function alertIntersectionObserver(
+    params: IntersectionObserverAlertParams
+  ): Promise<SecurityAlert | null> {
+    return createOptionalAlert(buildIntersectionObserverAlert(params));
+  }
+
+  async function alertIndexedDBAbuse(
+    params: IndexedDBAbuseAlertParams
+  ): Promise<SecurityAlert | null> {
+    return createOptionalAlert(buildIndexedDBAbuseAlert(params));
+  }
+
+  async function alertHistoryManipulation(
+    params: HistoryManipulationAlertParams
+  ): Promise<SecurityAlert | null> {
+    return createOptionalAlert(buildHistoryManipulationAlert(params));
+  }
+
   async function updateAlertStatus(
     alertId: string,
     status: AlertStatus
@@ -632,6 +656,9 @@ export function createAlertManager(
     alertCacheAPIAbuse,
     alertFetchExfiltration,
     alertWASMExecution,
+    alertIntersectionObserver,
+    alertIndexedDBAbuse,
+    alertHistoryManipulation,
     updateAlertStatus,
     getAlerts,
     getAlertCount,
