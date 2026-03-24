@@ -144,16 +144,20 @@ export function AlertsTab() {
             onChange={setSearchQuery}
             placeholder="タイトル・ドメインで検索..."
           />
-          {severityButtons.map((b) => (
-            <Badge
-              key={b.key}
-              variant={severityVariant[b.key]}
-              active={filters[b.key]}
-              onClick={() => setFilter(b.key, !filters[b.key])}
-            >
-              {b.label} ({counts[b.key] ?? 0})
-            </Badge>
-          ))}
+          {severityButtons.map((b) => {
+            const count = counts[b.key] ?? 0;
+            if (count === 0) return null;
+            return (
+              <Badge
+                key={b.key}
+                variant={severityVariant[b.key]}
+                active={filters[b.key]}
+                onClick={() => setFilter(b.key, !filters[b.key])}
+              >
+                {b.label} ({count})
+              </Badge>
+            );
+          })}
         </>
       }
       columns={[

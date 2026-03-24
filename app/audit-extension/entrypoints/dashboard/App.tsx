@@ -70,10 +70,6 @@ function DashboardContent() {
           {activeTab === "services" && (
             <ServicesTab
               services={dashboard.services}
-              nrdServices={dashboard.nrdServices}
-              loginServices={dashboard.loginServices}
-              typosquatServices={dashboard.typosquatServices}
-              aiServices={dashboard.aiServices}
               serviceConnections={dashboard.serviceConnections}
             />
           )}

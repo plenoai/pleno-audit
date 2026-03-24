@@ -9,10 +9,6 @@ import { useTheme } from "../../../lib/theme";
 
 interface ServicesTabProps {
   services: DetectedService[];
-  nrdServices: DetectedService[];
-  loginServices: DetectedService[];
-  typosquatServices: DetectedService[];
-  aiServices: DetectedService[];
   serviceConnections: Record<string, string[]>;
 }
 
@@ -70,28 +66,49 @@ function getServiceRiskLevel(s: DetectedService, connectionCount: number): false
   return false;
 }
 
-export function ServicesTab({ services, nrdServices, loginServices, typosquatServices, aiServices, serviceConnections }: ServicesTabProps) {
+export function ServicesTab({ services, serviceConnections }: ServicesTabProps) {
   const { colors, isDark } = useTheme();
-  const { searchQuery, setSearchQuery, filters, setFilter } = useTabFilter({
-    nrd: false,
-    login: false,
-    typosquat: false,
-    ai: false,
-  });
+  const { searchQuery, setSearchQuery } = useTabFilter({});
   const [expandedDomains, setExpandedDomains] = useState<Set<string>>(new Set());
+  const [activeTagFilters, setActiveTagFilters] = useState<Set<string>>(new Set());
+
+  const tagSummary = useMemo(() => {
+    const map = new Map<string, { variant: "danger" | "warning" | "info" | "success"; count: number }>();
+    for (const s of services) {
+      for (const tag of getServiceTags(s)) {
+        const existing = map.get(tag.label);
+        if (existing) existing.count++;
+        else map.set(tag.label, { variant: tag.variant, count: 1 });
+      }
+    }
+    return [...map.entries()]
+      .map(([label, { variant, count }]) => ({ label, variant, count }))
+      .sort((a, b) => b.count - a.count);
+  }, [services]);
+
+  const toggleTagFilter = (label: string) => {
+    setActiveTagFilters((prev) => {
+      const next = new Set(prev);
+      if (next.has(label)) next.delete(label);
+      else next.add(label);
+      return next;
+    });
+  };
 
   const filtered = useMemo(() => {
     let result = services;
-    if (filters.nrd) result = result.filter((s) => s.nrdResult?.isNRD);
-    if (filters.login) result = result.filter((s) => s.hasLoginPage);
-    if (filters.typosquat) result = result.filter((s) => s.typosquatResult?.isTyposquat);
-    if (filters.ai) result = result.filter((s) => s.aiDetected?.hasAIActivity);
+    if (activeTagFilters.size > 0) {
+      result = result.filter((s) => {
+        const tags = getServiceTags(s);
+        return tags.some((t) => activeTagFilters.has(t.label));
+      });
+    }
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       result = result.filter((s) => s.domain.toLowerCase().includes(q));
     }
     return result;
-  }, [services, searchQuery, filters.nrd, filters.login, filters.typosquat, filters.ai]);
+  }, [services, searchQuery, activeTagFilters]);
 
   const toggleExpand = (domain: string) => {
     setExpandedDomains((prev) => {
@@ -166,18 +183,16 @@ export function ServicesTab({ services, nrdServices, loginServices, typosquatSer
       filterBar={
         <>
           <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="ドメインで検索..." />
-          <Badge variant="danger" active={filters.nrd} onClick={() => setFilter("nrd", !filters.nrd)}>
-            NRD ({nrdServices.length})
-          </Badge>
-          <Badge variant="warning" active={filters.login} onClick={() => setFilter("login", !filters.login)}>
-            ログイン ({loginServices.length})
-          </Badge>
-          <Badge variant="danger" active={filters.typosquat} onClick={() => setFilter("typosquat", !filters.typosquat)}>
-            Typosquat ({typosquatServices.length})
-          </Badge>
-          <Badge variant="info" active={filters.ai} onClick={() => setFilter("ai", !filters.ai)}>
-            AI ({aiServices.length})
-          </Badge>
+          {tagSummary.map((tag) => (
+            <Badge
+              key={tag.label}
+              variant={tag.variant}
+              active={activeTagFilters.has(tag.label)}
+              onClick={() => toggleTagFilter(tag.label)}
+            >
+              {tag.label} ({tag.count})
+            </Badge>
+          ))}
         </>
       }
       columns={[

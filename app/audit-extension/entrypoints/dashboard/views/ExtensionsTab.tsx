@@ -24,19 +24,40 @@ interface ExtensionInfo {
   icons?: { size: number; url: string }[];
 }
 
+type TagVariant = "danger" | "warning" | "info" | "success";
+
+interface ExtTag {
+  label: string;
+  variant: TagVariant;
+}
+
+function getExtensionTags(ext: ExtensionInfo): ExtTag[] {
+  const tags: ExtTag[] = [];
+  const allPerms = [...ext.permissions, ...ext.hostPermissions];
+  for (const p of allPerms) {
+    const risk = DANGEROUS_PERMISSIONS.find((d) => d.permission === p);
+    if (risk?.severity === "critical") tags.push({ label: p, variant: "danger" });
+  }
+  const hasAllUrls = ext.hostPermissions.some(
+    (p) => p === "<all_urls>" || p === "*://*/*" || p === "http://*/*" || p === "https://*/*",
+  );
+  if (hasAllUrls) tags.push({ label: "<all_urls>", variant: "danger" });
+  if (ext.updateUrl && !ext.updateUrl.includes("google.com")) {
+    tags.push({ label: "外部更新", variant: "danger" });
+  }
+  if (!ext.mayDisable) tags.push({ label: "削除不可", variant: "warning" });
+  if (!ext.enabled) tags.push({ label: "無効", variant: "info" });
+  if (ext.installType === "admin") tags.push({ label: "管理者", variant: "warning" });
+  return tags;
+}
 
 export function ExtensionsTab() {
   const { colors, isDark } = useTheme();
-  const { searchQuery, setSearchQuery, filters, setFilter } = useTabFilter({
-    external_update: false,
-    not_removable: false,
-    disabled: false,
-    admin: false,
-    all_urls: false,
-  });
   const [extensions, setExtensions] = useState<ExtensionInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [activeTagFilters, setActiveTagFilters] = useState<Set<string>>(new Set());
+  const { searchQuery, setSearchQuery } = useTabFilter({});
 
   useEffect(() => {
     (async () => {
@@ -59,7 +80,7 @@ export function ExtensionsTab() {
               homepageUrl: ext.homepageUrl,
               updateUrl: ext.updateUrl,
               icons: ext.icons,
-            }))
+            })),
         );
       } catch (error) {
         logger.error("Failed to load extensions", error);
@@ -69,25 +90,41 @@ export function ExtensionsTab() {
     })();
   }, []);
 
-  const tagCounts = useMemo(() => {
-    const counts = { external_update: 0, not_removable: 0, disabled: 0, admin: 0, all_urls: 0 };
+  /** 全拡張機能のタグを集計 → {label, variant, count} */
+  const tagSummary = useMemo(() => {
+    const map = new Map<string, { variant: TagVariant; count: number }>();
     for (const ext of extensions) {
-      if (ext.updateUrl && !ext.updateUrl.includes("google.com")) counts.external_update++;
-      if (!ext.mayDisable) counts.not_removable++;
-      if (!ext.enabled) counts.disabled++;
-      if (ext.installType === "admin") counts.admin++;
-      if (ext.hostPermissions.some((p) => p === "<all_urls>" || p === "*://*/*" || p === "http://*/*" || p === "https://*/*")) counts.all_urls++;
+      for (const tag of getExtensionTags(ext)) {
+        const existing = map.get(tag.label);
+        if (existing) {
+          existing.count++;
+        } else {
+          map.set(tag.label, { variant: tag.variant, count: 1 });
+        }
+      }
     }
-    return counts;
+    return [...map.entries()]
+      .map(([label, { variant, count }]) => ({ label, variant, count }))
+      .sort((a, b) => b.count - a.count);
   }, [extensions]);
+
+  const toggleTagFilter = (label: string) => {
+    setActiveTagFilters((prev) => {
+      const next = new Set(prev);
+      if (next.has(label)) next.delete(label);
+      else next.add(label);
+      return next;
+    });
+  };
 
   const filtered = useMemo(() => {
     let result = extensions;
-    if (filters.external_update) result = result.filter((ext) => ext.updateUrl != null && !ext.updateUrl.includes("google.com"));
-    if (filters.not_removable) result = result.filter((ext) => !ext.mayDisable);
-    if (filters.disabled) result = result.filter((ext) => !ext.enabled);
-    if (filters.admin) result = result.filter((ext) => ext.installType === "admin");
-    if (filters.all_urls) result = result.filter((ext) => ext.hostPermissions.some((p) => p === "<all_urls>" || p === "*://*/*" || p === "http://*/*" || p === "https://*/*"));
+    if (activeTagFilters.size > 0) {
+      result = result.filter((ext) => {
+        const tags = getExtensionTags(ext);
+        return tags.some((t) => activeTagFilters.has(t.label));
+      });
+    }
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       result = result.filter(
@@ -95,11 +132,11 @@ export function ExtensionsTab() {
           ext.name.toLowerCase().includes(q) ||
           ext.description.toLowerCase().includes(q) ||
           ext.permissions.some((p) => p.toLowerCase().includes(q)) ||
-          ext.hostPermissions.some((p) => p.toLowerCase().includes(q))
+          ext.hostPermissions.some((p) => p.toLowerCase().includes(q)),
       );
     }
     return result;
-  }, [extensions, searchQuery, filters.external_update, filters.not_removable, filters.disabled, filters.admin, filters.all_urls]);
+  }, [extensions, searchQuery, activeTagFilters]);
 
   const toggleExpand = (id: string) => {
     setExpandedIds((prev) => {
@@ -149,7 +186,7 @@ export function ExtensionsTab() {
                     style={{
                       fontSize: "11px",
                       fontFamily: "monospace",
-                      color: isAllUrls || isDangerous ? colors.danger ?? "#ef4444" : colors.textSecondary,
+                      color: isAllUrls || isDangerous ? "var(--danger)" : colors.textSecondary,
                       overflow: "hidden",
                       textOverflow: "ellipsis",
                       whiteSpace: "nowrap",
@@ -179,21 +216,16 @@ export function ExtensionsTab() {
       filterBar={
         <>
           <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="拡張機能名、権限で検索..." />
-          <Badge variant="danger" active={filters.external_update} onClick={() => setFilter("external_update", !filters.external_update)}>
-            外部更新 ({tagCounts.external_update})
-          </Badge>
-          <Badge variant="warning" active={filters.not_removable} onClick={() => setFilter("not_removable", !filters.not_removable)}>
-            削除不可 ({tagCounts.not_removable})
-          </Badge>
-          <Badge variant="info" active={filters.disabled} onClick={() => setFilter("disabled", !filters.disabled)}>
-            無効 ({tagCounts.disabled})
-          </Badge>
-          <Badge variant="warning" active={filters.admin} onClick={() => setFilter("admin", !filters.admin)}>
-            管理者 ({tagCounts.admin})
-          </Badge>
-          <Badge variant="danger" active={filters.all_urls} onClick={() => setFilter("all_urls", !filters.all_urls)}>
-            &lt;all_urls&gt; ({tagCounts.all_urls})
-          </Badge>
+          {tagSummary.map((tag) => (
+            <Badge
+              key={tag.label}
+              variant={tag.variant}
+              active={activeTagFilters.has(tag.label)}
+              onClick={() => toggleTagFilter(tag.label)}
+            >
+              {tag.label} ({tag.count})
+            </Badge>
+          ))}
         </>
       }
       columns={[
@@ -237,22 +269,7 @@ export function ExtensionsTab() {
           header: "タグ",
           width: "220px",
           render: (ext) => {
-            const allPerms = [...ext.permissions, ...ext.hostPermissions];
-            const tags: { label: string; variant: "danger" | "warning" | "info" | "success" }[] = [];
-            for (const p of allPerms) {
-              const risk = DANGEROUS_PERMISSIONS.find((d) => d.permission === p);
-              if (risk?.severity === "critical") tags.push({ label: p, variant: "danger" });
-            }
-            const hasAllUrls = ext.hostPermissions.some(
-              (p) => p === "<all_urls>" || p === "*://*/*" || p === "http://*/*" || p === "https://*/*"
-            );
-            if (hasAllUrls) tags.push({ label: "<all_urls>", variant: "danger" });
-            if (ext.updateUrl && !ext.updateUrl.includes("google.com")) {
-              tags.push({ label: "外部更新", variant: "danger" });
-            }
-            if (!ext.mayDisable) tags.push({ label: "削除不可", variant: "warning" });
-            if (!ext.enabled) tags.push({ label: "無効", variant: "info" });
-            if (ext.installType === "admin") tags.push({ label: "管理者", variant: "warning" });
+            const tags = getExtensionTags(ext);
             if (tags.length === 0) return <span style={{ color: colors.textMuted }}>-</span>;
             return (
               <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
@@ -284,7 +301,7 @@ export function ExtensionsTab() {
         {
           key: "version",
           header: "バージョン",
-          width: "80px",
+          width: "100px",
           render: (ext) => <code style={{ fontSize: "11px" }}>{ext.version}</code>,
         },
       ]}
