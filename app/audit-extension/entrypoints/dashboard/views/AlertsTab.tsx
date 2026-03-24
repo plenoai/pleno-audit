@@ -12,8 +12,10 @@ interface AlertItem {
   category: AlertCategory;
   severity: AlertSeverity;
   title: string;
+  description: string;
   domain: string;
   timestamp: number;
+  details?: Record<string, unknown>;
 }
 
 const severityVariant: Record<AlertSeverity, "danger" | "warning" | "info"> = {
@@ -57,6 +59,25 @@ const categoryLabels: Record<string, string> = {
   device_sensor: "Sensor",
   device_enumeration: "DevEnum",
   storage_exfiltration: "Storage",
+  prototype_pollution: "Proto",
+  dns_prefetch_leak: "DNS",
+  form_hijack: "FormHijack",
+  css_keylogging: "CSSKey",
+  performance_observer: "PerfObs",
+  postmessage_exfil: "PostMsg",
+  dom_clobbering: "DOMClob",
+  cache_api_abuse: "Cache",
+  fetch_exfiltration: "FetchExfil",
+  wasm_execution: "WASM",
+  intersection_observer: "IO",
+  indexeddb_abuse: "IDB",
+  history_manipulation: "History",
+  message_channel: "MsgCh",
+  resize_observer: "ResizeObs",
+  execcommand_clipboard: "ExecCmd",
+  eventsource_channel: "SSE",
+  font_fingerprint: "Font",
+  idle_callback_timing: "Idle",
   clipboard_event_sniffing: "ClipSniff",
   drag_event_sniffing: "DragSniff",
   selection_sniffing: "SelSniff",
@@ -74,6 +95,7 @@ export function AlertsTab() {
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
   const { searchQuery, setSearchQuery, filters, setFilter } = useTabFilter<
     Record<AlertSeverity, boolean>
@@ -96,6 +118,15 @@ export function AlertsTab() {
       .finally(() => setLoading(false));
   }, []);
 
+  const toggleExpand = (id: string) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
   const activeSeverities = useMemo(
     () => severityButtons.filter((b) => filters[b.key]).map((b) => b.key),
     [filters],
@@ -113,7 +144,8 @@ export function AlertsTab() {
       result = result.filter(
         (a) =>
           a.title.toLowerCase().includes(q) ||
-          a.domain.toLowerCase().includes(q),
+          a.domain.toLowerCase().includes(q) ||
+          (a.description && a.description.toLowerCase().includes(q)),
       );
     }
 
@@ -139,6 +171,71 @@ export function AlertsTab() {
       data={filtered}
       rowKey={(a) => a.id}
       rowHighlight={(a) => severityVariant[a.severity] ?? false}
+      onRowClick={(a) => toggleExpand(a.id)}
+      expandRow={(a) => {
+        if (!expandedIds.has(a.id)) return null;
+        const details = a.details ?? {};
+        const detailEntries = Object.entries(details).filter(
+          ([k]) => k !== "type",
+        );
+        return (
+          <div
+            style={{
+              background: colors.bgSecondary,
+              padding: "8px 16px 8px 48px",
+              borderBottom: `1px solid ${colors.borderLight}`,
+            }}
+          >
+            {a.description && (
+              <div
+                style={{
+                  fontSize: "12px",
+                  color: colors.textSecondary,
+                  marginBottom: detailEntries.length > 0 ? "6px" : 0,
+                }}
+              >
+                {a.description}
+              </div>
+            )}
+            {detailEntries.length > 0 && (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "auto 1fr",
+                  gap: "2px 12px",
+                  fontSize: "11px",
+                  fontFamily: "monospace",
+                }}
+              >
+                {detailEntries.map(([key, value]) => (
+                  <>
+                    <span
+                      key={`${key}-label`}
+                      style={{ color: colors.textMuted }}
+                    >
+                      {key}:
+                    </span>
+                    <span
+                      key={`${key}-value`}
+                      style={{
+                        color: colors.textPrimary,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                      title={String(value)}
+                    >
+                      {typeof value === "object"
+                        ? JSON.stringify(value)
+                        : String(value)}
+                    </span>
+                  </>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      }}
       emptyMessage="検出されたアラートはありません"
       filterBar={
         <>

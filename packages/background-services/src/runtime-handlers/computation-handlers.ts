@@ -7,8 +7,10 @@ interface EventItem {
   category: AlertCategory;
   severity: AlertSeverity;
   title: string;
+  description: string;
   domain: string;
   timestamp: number;
+  details?: Record<string, unknown>;
 }
 
 interface ConnectionInfo {
@@ -78,8 +80,10 @@ function extractPostureAlerts(
         category: "nrd",
         severity: age !== null && age < 7 ? "critical" : "high",
         title: service.domain,
+        description: `新規登録ドメイン（${age !== null ? `${age}日前` : "日数不明"}）`,
         domain: service.domain,
         timestamp: service.nrdResult.checkedAt,
+        details: { domainAge: age, confidence: service.nrdResult.confidence },
       });
     }
     if (service.typosquatResult?.isTyposquat) {
@@ -89,8 +93,10 @@ function extractPostureAlerts(
         category: "typosquat",
         severity: score >= 70 ? "critical" : score >= 40 ? "high" : "medium",
         title: service.domain,
+        description: `タイポスクワット検出（スコア: ${score}）`,
         domain: service.domain,
         timestamp: service.typosquatResult.checkedAt,
+        details: { score, confidence: service.typosquatResult.confidence, heuristics: service.typosquatResult.heuristics },
       });
     }
   }
@@ -117,8 +123,10 @@ export function createComputationHandlers(
             category: a.category,
             severity: a.severity,
             title: a.title,
+            description: a.description,
             domain: a.domain,
             timestamp: a.timestamp,
+            details: a.details as Record<string, unknown> | undefined,
           }));
 
           const seenIds = new Set(postureAlerts.map((a) => a.id));
