@@ -128,11 +128,11 @@ test.describe("False-Positive Smoke Test", () => {
     // Wait for extension hooks to inject
     await ctx.page.waitForTimeout(2000);
 
-    // Wait for all async patterns to complete (Worker, ServiceWorker, etc.)
-    await ctx.page.waitForTimeout(3000);
-
-    // Wait for security-bridge batch processing to flush events to background
-    await ctx.page.waitForTimeout(3000);
+    // Wait for all patterns to complete:
+    // - Immediate patterns run instantly
+    // - Boundary tests run after 4s delay (to reset time windows)
+    // - Then security-bridge batch processing needs time to flush
+    await ctx.page.waitForTimeout(8000);
 
     // Collect alerts from extension
     const sw = ctx.context

@@ -904,18 +904,23 @@
       dynamicCDNScript();
       spaStateManagement();
       normalEventListeners();
-      cookieBoundary();
-      storageBoundary();
-      qsaBoundary();
-      eventListenerBoundary();
-      sendBeaconBoundary();
-      fetchBoundary();
+      // Boundary value tests run after a 4-second delay to ensure
+      // time windows (3s for cookie/storage, 5s for QSA/events) have reset.
+      // This prevents pattern interaction (e.g., pattern 2 cookie reads + pattern 29)
+      // from crossing thresholds.
+      log("Waiting 4s for time windows to reset before boundary tests...", "info");
+      setTimeout(function () {
+        cookieBoundary();
+        storageBoundary();
+        qsaBoundary();
+        eventListenerBoundary();
+        sendBeaconBoundary();
+        fetchBoundary();
 
-      log("", "info");
-      log("All patterns executed.", "info");
-
-      // Delay summary to allow async patterns (Worker, SW) to complete
-      setTimeout(showSummary, 1500);
+        log("", "info");
+        log("All patterns executed.", "info");
+        setTimeout(showSummary, 500);
+      }, 4000);
     }
 
     // Expose for Playwright / devtools
