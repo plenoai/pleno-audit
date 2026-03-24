@@ -73,11 +73,11 @@ describe("createNetworkSecurityInspector", () => {
 
     const result = await inspector.handleNetworkInspection({
       pageUrl: "https://example.com",
-      url: "https://analytics.example.net/collect",
+      url: "https://tracker.example.net/tracking/collect",
       method: "POST",
       initiator: "sendBeacon",
       bodySize: 128,
-      bodySample: "{\"event\":\"pageview\"}",
+      bodySample: "{\"tracking_id\":\"abc123\",\"page\":\"/home\"}",
       timestamp: 1700000002000,
     }, {} as chrome.runtime.MessageSender);
 
@@ -86,8 +86,8 @@ describe("createNetworkSecurityInspector", () => {
     expect(handleTrackingBeacon).toHaveBeenCalledTimes(1);
     expect(handleDataExfiltration).not.toHaveBeenCalled();
     expect(handleTrackingBeacon.mock.calls[0][0]).toMatchObject({
-      url: "https://analytics.example.net/collect",
-      targetDomain: "analytics.example.net",
+      url: "https://tracker.example.net/tracking/collect",
+      targetDomain: "tracker.example.net",
     });
   });
 
@@ -122,7 +122,7 @@ describe("createNetworkSecurityInspector", () => {
 
     const result = await inspector.handleNetworkInspection({
       pageUrl: "https://example.com",
-      url: "/analytics/collect",
+      url: "https://tracker.ads.net/tracking/pixel.gif",
       method: "GET",
       initiator: "img",
       bodySize: 0,
@@ -134,8 +134,8 @@ describe("createNetworkSecurityInspector", () => {
     expect(handleDataExfiltration).not.toHaveBeenCalled();
     expect(handleTrackingBeacon).toHaveBeenCalledTimes(1);
     expect(handleTrackingBeacon.mock.calls[0][0]).toMatchObject({
-      url: "https://example.com/analytics/collect",
-      targetDomain: "example.com",
+      url: "https://tracker.ads.net/tracking/pixel.gif",
+      targetDomain: "tracker.ads.net",
       initiator: "img",
     });
   });
@@ -206,11 +206,11 @@ describe("createNetworkSecurityInspector", () => {
 
     const result = await inspector.handleNetworkInspection({
       pageUrl: "https://example.com",
-      url: "https://tracking.example.net/collect",
+      url: "https://tracking.example.net/tracking/collect",
       method: "POST",
       initiator: "fetch",
       bodySize: 512,
-      bodySample: '{"token": "secret_tok_123", "event": "click"}',
+      bodySample: '{"token": "secret_tok_123", "visitor_id": "v-abc"}',
       timestamp: 1700000003000,
     }, {} as chrome.runtime.MessageSender);
 
@@ -229,7 +229,7 @@ describe("createNetworkSecurityInspector", () => {
 
     const request = {
       pageUrl: "https://example.com",
-      url: "https://analytics.example.net/pixel",
+      url: "https://analytics.example.net/tracking/pixel.gif",
       method: "GET",
       initiator: "img",
       bodySize: 0,

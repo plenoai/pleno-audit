@@ -970,9 +970,9 @@ const AUDIO_FINGERPRINT_ALERT_DEFINITION: AlertDefinition<
   category: "audio_fingerprint",
   detailsType: "audio_fingerprint",
   build: (params) => ({
-    severity: "high",
+    severity: "info",
     title: `Audio指紋採取検出: ${params.domain}`,
-    description: `AudioContextを${params.contextCount}回生成してフィンガープリントを収集`,
+    description: `AudioContextを${params.contextCount}回生成（音楽再生でも発火するため情報レベル）`,
     domain: params.domain,
     details: {
       domain: params.domain,
@@ -1176,9 +1176,9 @@ const WEBRTC_CONNECTION_ALERT_DEFINITION: AlertDefinition<
   category: "webrtc_connection",
   detailsType: "webrtc_connection",
   build: (params) => ({
-    severity: "medium",
+    severity: "info",
     title: `WebRTC接続検出: ${params.domain}`,
-    description: "WebRTCピア接続が作成されました（IP漏洩リスク）",
+    description: "WebRTCピア接続が作成されました（ビデオ通話でも発火するため情報レベル）",
     domain: params.domain,
     details: {
       domain: params.domain,

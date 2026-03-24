@@ -5,8 +5,10 @@ import type {
 
 const DATA_EXFILTRATION_THRESHOLD = 10 * 1024;
 const TRACKING_BEACON_SIZE_LIMIT = 2048;
-const TRACKING_URL_PATTERNS = /tracking|beacon|analytics|pixel|collect|telemetry|metrics|ping/i;
-const TRACKING_PAYLOAD_PATTERNS = /event|click|view|session|user_id|visitor|pageview|action/i;
+// Stricter URL patterns: require tracking-specific path segments (not generic terms like /collect or /metrics)
+const TRACKING_URL_PATTERNS = /\/tracking[/.]|\/beacon[/.]|\/analytics[/.]|\/pixel[/.]|\/telemetry[/.]|[?&](?:utm_|_ga=|fbclid=)/i;
+// Payload patterns: require 2+ tracking-specific keys together (single "event" is too common)
+const TRACKING_PAYLOAD_PATTERNS = /(?:["'](?:user_id|visitor_id|tracking_id|_ga|utm_source|fbclid|gclid)["'])/i;
 // Each entry: [cheapGuard, regex] — guard is checked with indexOf before running regex
 const SENSITIVE_CHECKS: ReadonlyArray<
   readonly [guard: string, pattern: RegExp, type: string]
@@ -139,9 +141,18 @@ function isTrackingBeacon(
   absoluteUrl: string,
   bodySize: number,
   bodySample: string,
+  pageUrl?: string,
 ): boolean {
   if (bodySize >= TRACKING_BEACON_SIZE_LIMIT) {
     return false;
+  }
+  // Skip same-origin beacons (first-party analytics is legitimate)
+  if (pageUrl) {
+    try {
+      const targetHost = new URL(absoluteUrl).hostname;
+      const pageHost = new URL(pageUrl).hostname;
+      if (targetHost === pageHost) return false;
+    } catch { /* ignore */ }
   }
   return TRACKING_URL_PATTERNS.test(absoluteUrl)
     || TRACKING_PAYLOAD_PATTERNS.test(bodySample);
@@ -219,7 +230,7 @@ export function createNetworkSecurityInspector(
     const hasDataExfiltration = shouldEvaluateExfiltration
       ? bodySize >= DATA_EXFILTRATION_THRESHOLD || sensitiveDataTypes.length > 0
       : false;
-    const hasTrackingBeacon = isTrackingBeacon(normalizedUrl, bodySize, bodySample);
+    const hasTrackingBeacon = isTrackingBeacon(normalizedUrl, bodySize, bodySample, input.pageUrl);
 
     return {
       hasDataExfiltration,
