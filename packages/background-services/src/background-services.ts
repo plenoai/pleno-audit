@@ -20,8 +20,6 @@ import {
   setDetectionConfig,
   getNotificationConfig,
   setNotificationConfig,
-  getBlockingConfig,
-  setBlockingConfig,
 } from "./background-services/config.js";
 import { createPageAnalysisHandler } from "./background-services/analysis.js";
 import { extractDomainFromUrl } from "./background-services/utils.js";
@@ -67,8 +65,6 @@ export function createBackgroundServices(serviceLogger: Logger) {
     setDetectionConfig,
     getNotificationConfig,
     setNotificationConfig,
-    getBlockingConfig,
-    setBlockingConfig: bind(setBlockingConfig),
   };
 
   const utils = {

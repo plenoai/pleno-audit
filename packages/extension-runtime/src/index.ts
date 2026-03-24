@@ -49,13 +49,11 @@ export type {
   NetworkRequestRecord,
   InitiatorType,
   DetectionConfig,
-  BlockingConfig,
   NotificationConfig,
   AlertCooldownData,
 } from "./storage-types.js";
 export {
   DEFAULT_DETECTION_CONFIG,
-  DEFAULT_BLOCKING_CONFIG,
   DEFAULT_NOTIFICATION_CONFIG,
   DEFAULT_NETWORK_MONITOR_CONFIG,
 } from "./storage-types.js";
@@ -102,15 +100,6 @@ export {
   type NetworkRisk,
   type RiskFlag,
 } from "./extension-risk-analyzer.js";
-
-// Blocking Engine
-export {
-  createBlockingEngine,
-  type BlockTarget,
-  type BlockDecision,
-  type BlockEvent,
-  type BlockingEngine,
-} from "./blocking-engine.js";
 
 // Messaging (content script → background)
 export {

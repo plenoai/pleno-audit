@@ -1,63 +1,7 @@
-import { useState, useEffect } from "preact/hooks";
 import { RefreshCw, Shield } from "lucide-preact";
 import { Badge, SettingsMenu } from "../../../components";
 import { useTheme } from "../../../lib/theme";
-import {
-  DEFAULT_BLOCKING_CONFIG,
-  type BlockingConfig,
-} from "@libztbs/extension-runtime";
 import type { DashboardStyles } from "../styles";
-
-function ProtectionPill() {
-  const { colors } = useTheme();
-  const [config, setConfig] = useState<BlockingConfig | null>(null);
-
-  useEffect(() => {
-    chrome.runtime.sendMessage({ type: "GET_BLOCKING_CONFIG" })
-      .then((c) => setConfig(c ?? DEFAULT_BLOCKING_CONFIG))
-      .catch(() => setConfig(DEFAULT_BLOCKING_CONFIG));
-  }, []);
-
-  function toggle() {
-    if (!config) return;
-    const prev = config;
-    const next = {
-      ...config,
-      enabled: !config.enabled,
-      userConsentGiven: !config.enabled ? true : config.userConsentGiven,
-    };
-    setConfig(next);
-    chrome.runtime.sendMessage({ type: "SET_BLOCKING_CONFIG", data: next })
-      .catch(() => setConfig(prev));
-  }
-
-  if (!config) return null;
-
-  const enabled = config.enabled;
-  return (
-    <button
-      onClick={toggle}
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: "5px",
-        padding: "4px 10px",
-        borderRadius: "9999px",
-        border: `1px solid ${enabled ? colors.status.success.border : colors.border}`,
-        background: enabled ? colors.status.success.bg : colors.bgPrimary,
-        color: enabled ? colors.status.success.text : colors.textSecondary,
-        fontSize: "11px",
-        fontWeight: 500,
-        cursor: "pointer",
-        transition: "all 0.15s",
-      }}
-      title={`タイポスクワット、NRDログイン、機密データ送信を検出時にブロック\n現在: ${enabled ? "有効" : "無効"}`}
-    >
-      <Shield size={12} />
-      保護 {enabled ? "ON" : "OFF"}
-    </button>
-  );
-}
 
 interface DashboardHeaderProps {
   styles: DashboardStyles;
@@ -96,7 +40,6 @@ export function DashboardHeader({
           </p>
         </div>
         <div style={styles.controls}>
-          <ProtectionPill />
           <button
             className="hover-bg"
             onClick={onRefresh}

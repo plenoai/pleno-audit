@@ -8,7 +8,6 @@ import type {
   CSPViolation,
 } from "@libztbs/csp";
 import type {
-  BlockingConfig,
   DetectionConfig,
   DoHMonitorConfig,
   EnterpriseStatus,
@@ -58,7 +57,6 @@ export interface RuntimeHandlerFallbacks {
   nrdConfig: NRDConfig;
   typosquatConfig: TyposquatConfig;
   networkMonitorConfig: NetworkMonitorConfig;
-  blockingConfig: BlockingConfig;
   notificationConfig: NotificationConfig;
   doHMonitorConfig: DoHMonitorConfig;
 }
@@ -158,9 +156,6 @@ handleNetworkInspection: (data: unknown, sender: chrome.runtime.MessageSender) =
   getAllExtensionRisks: () => Promise<unknown[]>;
   getExtensionRiskAnalysis: (extensionId: string) => Promise<unknown>;
   analyzeExtensionRisks: () => Promise<void>;
-
-  getBlockingConfig: () => Promise<BlockingConfig>;
-  setBlockingConfig: (config: BlockingConfig) => Promise<{ success: boolean }>;
 
   getNotificationConfig: () => Promise<NotificationConfig>;
   setNotificationConfig: (

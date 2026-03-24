@@ -7,11 +7,9 @@ import type {
   DetectedService,
   AIMonitorConfig,
   DetectionConfig,
-  BlockingConfig,
 } from "./storage-types.js";
 import {
   DEFAULT_DETECTION_CONFIG,
-  DEFAULT_BLOCKING_CONFIG,
   DEFAULT_NETWORK_MONITOR_CONFIG,
   DEFAULT_NOTIFICATION_CONFIG,
 } from "./storage-types.js";
@@ -33,7 +31,6 @@ const STORAGE_KEYS = [
   "networkMonitorConfig",
   "doHMonitorConfig",
   "detectionConfig",
-  "blockingConfig",
   "notificationConfig",
   "alertCooldown",
 ] as const;
@@ -69,8 +66,6 @@ export async function getStorage(): Promise<StorageData> {
       DEFAULT_DOH_MONITOR_CONFIG,
     detectionConfig:
       (result.detectionConfig as DetectionConfig) || DEFAULT_DETECTION_CONFIG,
-    blockingConfig:
-      (result.blockingConfig as BlockingConfig) || DEFAULT_BLOCKING_CONFIG,
     notificationConfig:
       (result.notificationConfig as StorageData["notificationConfig"]) ||
       DEFAULT_NOTIFICATION_CONFIG,
@@ -97,7 +92,6 @@ export async function getStorageKey<K extends StorageKey>(
     networkMonitorConfig: DEFAULT_NETWORK_MONITOR_CONFIG,
     doHMonitorConfig: DEFAULT_DOH_MONITOR_CONFIG,
     detectionConfig: DEFAULT_DETECTION_CONFIG,
-    blockingConfig: DEFAULT_BLOCKING_CONFIG,
     notificationConfig: DEFAULT_NOTIFICATION_CONFIG,
     alertCooldown: {},
   };
@@ -136,7 +130,6 @@ export async function clearAllStorage(options?: { preserveTheme?: boolean }): Pr
     networkMonitorConfig: DEFAULT_NETWORK_MONITOR_CONFIG,
     doHMonitorConfig: DEFAULT_DOH_MONITOR_CONFIG,
     detectionConfig: DEFAULT_DETECTION_CONFIG,
-    blockingConfig: DEFAULT_BLOCKING_CONFIG,
     notificationConfig: DEFAULT_NOTIFICATION_CONFIG,
     alertCooldown: {},
   };

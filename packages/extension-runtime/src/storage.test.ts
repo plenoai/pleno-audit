@@ -102,7 +102,6 @@ describe("storage", () => {
           "networkMonitorConfig",
           "doHMonitorConfig",
           "detectionConfig",
-          "blockingConfig",
           "notificationConfig",
           "alertCooldown",
         ])

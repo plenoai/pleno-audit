@@ -1,11 +1,7 @@
 import {
-  DEFAULT_BLOCKING_CONFIG,
   DEFAULT_DETECTION_CONFIG,
   DEFAULT_NOTIFICATION_CONFIG,
-  getStorage,
-  setStorage,
   createLogger,
-  type BlockingConfig,
   type DetectionConfig,
   type NotificationConfig,
 } from "@libztbs/extension-runtime";
@@ -51,20 +47,3 @@ export async function setNotificationConfig(
   }
 }
 
-export async function getBlockingConfig(): Promise<BlockingConfig> {
-  const storage = await getStorage();
-  return storage.blockingConfig || DEFAULT_BLOCKING_CONFIG;
-}
-
-export async function setBlockingConfig(
-  state: BackgroundServiceState,
-  newConfig: BlockingConfig
-): Promise<{ success: boolean }> {
-  try {
-    await setStorage({ blockingConfig: newConfig });
-    return { success: true };
-  } catch (error) {
-    state.logger?.error("Error setting blocking config:", error);
-    return { success: false };
-  }
-}

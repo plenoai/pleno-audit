@@ -10,7 +10,6 @@
     "./storage": "./src/storage.ts",
     "./storage-types": "./src/storage-types.ts",
     "./network": "./src/network-monitor.ts",
-    "./blocking": "./src/blocking-engine.ts",
     "./cooldown": "./src/cooldown-manager.ts",
     "./browser": "./src/browser-adapter.ts",
     "./cookie": "./src/cookie-monitor.ts",

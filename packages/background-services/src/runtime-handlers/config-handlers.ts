@@ -1,5 +1,4 @@
 import type {
-  BlockingConfig,
   DetectionConfig,
   DoHMonitorConfig,
   NotificationConfig,
@@ -10,14 +9,6 @@ export function createConfigurationHandlers(
   deps: RuntimeHandlerDependencies,
 ): AsyncHandlerEntry[] {
   return [
-    ["GET_BLOCKING_CONFIG", {
-      execute: () => deps.getBlockingConfig(),
-      fallback: () => deps.fallbacks.blockingConfig,
-    }],
-    ["SET_BLOCKING_CONFIG", {
-      execute: (message) => deps.setBlockingConfig(message.data as BlockingConfig),
-      fallback: () => ({ success: false }),
-    }],
     ["GET_DETECTION_CONFIG", {
       execute: () => deps.getDetectionConfig(),
       fallback: () => deps.fallbacks.detectionConfig,

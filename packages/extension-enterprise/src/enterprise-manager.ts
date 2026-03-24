@@ -8,7 +8,6 @@ import type {
   EnterpriseManagedConfig,
   EnterpriseStatus,
   DetectionConfig,
-  BlockingConfig,
   NotificationConfig,
 } from "@libztbs/extension-runtime";
 import type { SSOConfig } from "./sso-manager.js";
@@ -244,18 +243,6 @@ class EnterpriseManager {
 
   getPolicyConfig() {
     return this.managedConfig?.policy ?? null;
-  }
-
-  getEffectiveBlockingConfig(userConfig: BlockingConfig): BlockingConfig {
-    if (!this.managedConfig?.settings) {
-      return userConfig;
-    }
-
-    const managed = this.managedConfig.settings;
-    return {
-      ...userConfig,
-      enabled: managed.enableBlocking ?? userConfig.enabled,
-    };
   }
 
   getEffectiveNotificationConfig(userConfig: NotificationConfig): NotificationConfig {
