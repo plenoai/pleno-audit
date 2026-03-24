@@ -244,7 +244,7 @@ export function initInjectionHooks(emitSecurityEvent: SharedHookUtils["emitSecur
     (window as any).PerformanceObserver.supportedEntryTypes = OriginalPerformanceObserver.supportedEntryTypes;
   }
 
-  // postMessage cross-origin exfiltration
+  // postMessage cross-origin exfiltration (outgoing)
   const originalPostMessage = window.postMessage.bind(window);
   window.postMessage = function (message: unknown, targetOriginOrOptions: string | WindowPostMessageOptions, transfer?: Transferable[]) {
     const targetOrigin = typeof targetOriginOrOptions === "string"
@@ -254,6 +254,7 @@ export function initInjectionHooks(emitSecurityEvent: SharedHookUtils["emitSecur
     if (isCrossOrigin) {
       emitSecurityEvent("__POSTMESSAGE_EXFIL_DETECTED__", {
         targetOrigin,
+        direction: "outgoing",
         timestamp: Date.now(),
         pageUrl: location.href,
       });
@@ -262,4 +263,16 @@ export function initInjectionHooks(emitSecurityEvent: SharedHookUtils["emitSecur
       ? originalPostMessage(message, targetOriginOrOptions as string, transfer)
       : originalPostMessage(message, targetOriginOrOptions as string);
   };
+
+  // postMessage cross-origin exfiltration (incoming from iframes/popups)
+  window.addEventListener("message", (event: MessageEvent) => {
+    if (event.origin !== window.location.origin && event.origin !== "") {
+      emitSecurityEvent("__POSTMESSAGE_EXFIL_DETECTED__", {
+        targetOrigin: event.origin,
+        direction: "incoming",
+        timestamp: Date.now(),
+        pageUrl: location.href,
+      });
+    }
+  });
 }

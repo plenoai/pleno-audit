@@ -396,6 +396,9 @@ export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecuri
     "undefined", "Infinity", "NaN", "isNaN", "isFinite", "parseInt", "parseFloat",
     "encodeURI", "decodeURI", "encodeURIComponent", "decodeURIComponent",
   ]);
+  // Also detect form/embed/object elements with any id/name - these are the primary
+  // DOM clobbering vectors as they expose nested named access (e.g., formId.inputName)
+  const CLOBBERING_TAGS = new Set(["FORM", "EMBED", "OBJECT", "IMG", "A"]);
 
   const domClobberingObserver = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
@@ -404,7 +407,9 @@ export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecuri
         const el = node as Element;
         for (const attrName of ["id", "name"]) {
           const attrValue = el.getAttribute(attrName);
-          if (attrValue && DANGEROUS_GLOBAL_NAMES.has(attrValue)) {
+          if (!attrValue) continue;
+          // Detect dangerous global name clobbering OR form/embed/object with any id/name
+          if (DANGEROUS_GLOBAL_NAMES.has(attrValue) || (CLOBBERING_TAGS.has(el.tagName) && attrName === "id")) {
             emitSecurityEvent("__DOM_CLOBBERING_DETECTED__", {
               attributeName: attrName,
               attributeValue: attrValue,
