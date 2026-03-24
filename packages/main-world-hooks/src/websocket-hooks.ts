@@ -16,8 +16,9 @@ export function initWebSocketHooks(emitSecurityEvent: SharedHookUtils["emitSecur
   } as unknown as typeof WebSocket;
 
   window.WebSocket.prototype = OriginalWebSocket.prototype;
-  window.WebSocket.CONNECTING = OriginalWebSocket.CONNECTING;
-  window.WebSocket.OPEN = OriginalWebSocket.OPEN;
-  window.WebSocket.CLOSING = OriginalWebSocket.CLOSING;
-  window.WebSocket.CLOSED = OriginalWebSocket.CLOSED;
+  // Static readonly constants must be copied via cast for monkey-patching
+  (window.WebSocket as any).CONNECTING = OriginalWebSocket.CONNECTING;
+  (window.WebSocket as any).OPEN = OriginalWebSocket.OPEN;
+  (window.WebSocket as any).CLOSING = OriginalWebSocket.CLOSING;
+  (window.WebSocket as any).CLOSED = OriginalWebSocket.CLOSED;
 }

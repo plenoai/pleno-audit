@@ -9,7 +9,8 @@ import { type SharedHookUtils } from "./shared.js";
 export function initInjectionHooks(emitSecurityEvent: SharedHookUtils["emitSecurityEvent"]): void {
   // eval()
   const originalEval = window.eval;
-  window.eval = function (code: string) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- intentional monkey-patch of eval
+  window.eval = function (this: unknown, code: string) {
     emitSecurityEvent("__DYNAMIC_CODE_EXECUTION_DETECTED__", {
       method: "eval",
       codeLength: typeof code === "string" ? code.length : 0,
@@ -17,12 +18,13 @@ export function initInjectionHooks(emitSecurityEvent: SharedHookUtils["emitSecur
       timestamp: Date.now(),
       pageUrl: location.href,
     });
-    return originalEval.call(this, code);
+    return originalEval.call(this as any, code);
   } as typeof eval;
 
   // Function constructor
   const OriginalFunction = window.Function;
-  window.Function = function (...args: string[]) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- intentional monkey-patch of Function constructor
+  window.Function = function (this: unknown, ...args: string[]) {
     const body = args.length > 0 ? args[args.length - 1] : "";
     emitSecurityEvent("__DYNAMIC_CODE_EXECUTION_DETECTED__", {
       method: "Function",
@@ -32,9 +34,9 @@ export function initInjectionHooks(emitSecurityEvent: SharedHookUtils["emitSecur
       timestamp: Date.now(),
       pageUrl: location.href,
     });
-    return OriginalFunction.apply(this, args);
+    return OriginalFunction.apply(this as any, args);
   } as FunctionConstructor;
-  window.Function.prototype = OriginalFunction.prototype;
+  (window.Function as any).prototype = OriginalFunction.prototype;
 
   // requestFullscreen
   const originalRequestFullscreen = Element.prototype.requestFullscreen;

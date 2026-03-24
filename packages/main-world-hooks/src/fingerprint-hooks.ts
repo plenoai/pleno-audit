@@ -31,7 +31,8 @@ export function initFingerprintHooks(emitSecurityEvent: SharedHookUtils["emitSec
   }
 
   const originalGetContext = HTMLCanvasElement.prototype.getContext;
-  HTMLCanvasElement.prototype.getContext = function (contextType: string, ...rest: unknown[]) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- intentional monkey-patch
+  HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement, contextType: string, ...rest: unknown[]) {
     const ctx = (originalGetContext as Function).apply(this, [contextType, ...rest]);
     if (ctx && (contextType === "webgl" || contextType === "webgl2" || contextType === "experimental-webgl")) {
       hookWebGLGetParameter(ctx as WebGLRenderingContext);

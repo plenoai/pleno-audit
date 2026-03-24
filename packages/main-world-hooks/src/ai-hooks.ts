@@ -244,7 +244,7 @@ export function initAIHooks(shared: SharedHookUtils): void {
   XMLHttpRequest.prototype.open = function (method: string, url: string | URL, ...rest: unknown[]) {
     (this as XMLHttpRequest & { __serviceDetectionUrl: string | URL }).__serviceDetectionUrl = url;
     (this as XMLHttpRequest & { __serviceDetectionMethod: string }).__serviceDetectionMethod = method;
-    return originalXHROpen.call(this, method, url, ...(rest as [boolean?, string?, string?]));
+    return (originalXHROpen as Function).call(this, method, url, ...rest);
   };
 
   XMLHttpRequest.prototype.send = function (body?: Document | XMLHttpRequestBodyInit | null) {
