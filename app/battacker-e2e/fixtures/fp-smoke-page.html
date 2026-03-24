@@ -491,6 +491,136 @@
     }
 
     // ============================================================
+    // Pattern 15: Dynamic DOM — SPA modal/tooltip injection
+    // Dynamic elements with safe id/name attributes (not dangerous globals)
+    // DOM clobbering only alerts on DANGEROUS_GLOBAL_NAMES
+    // ============================================================
+    function dynamicDOM() {
+      // Create a modal overlay (common SPA pattern)
+      var modal = document.createElement("div");
+      modal.id = "modal-overlay";
+      modal.innerHTML = '<div id="modal-content"><h3>Settings</h3><p>Preferences panel</p></div>';
+      document.body.appendChild(modal);
+
+      // Create a tooltip element
+      var tooltip = document.createElement("span");
+      tooltip.id = "tooltip-help";
+      tooltip.setAttribute("name", "help-text");
+      tooltip.textContent = "This is a tooltip";
+      document.body.appendChild(tooltip);
+
+      // Create a form dynamically (common in SPAs)
+      var form = document.createElement("form");
+      form.id = "settings-form";
+      form.innerHTML = '<input id="username-input" name="username" type="text"><button type="submit">Save</button>';
+      document.body.appendChild(form);
+
+      // Create an image dynamically
+      var img = document.createElement("img");
+      img.id = "avatar-img";
+      img.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1' height='1'%3E%3C/svg%3E";
+      document.body.appendChild(img);
+
+      // Create an anchor dynamically
+      var link = document.createElement("a");
+      link.id = "profile-link";
+      link.href = "/profile";
+      link.textContent = "Profile";
+      document.body.appendChild(link);
+
+      // Cleanup
+      setTimeout(function () {
+        modal.remove(); tooltip.remove(); form.remove(); img.remove(); link.remove();
+      }, 500);
+
+      record("Dynamic DOM", true, "Injected modal/tooltip/form/img/a with safe id names");
+    }
+
+    // ============================================================
+    // Pattern 16: Dynamic DNS prefetch (same-site CDN)
+    // DNS prefetch hook skips same-site preconnects
+    // ============================================================
+    function dynamicDNSPrefetch() {
+      // Same-site preconnect (should be filtered by eTLD+1 check)
+      // On 127.0.0.1, any external domain will trigger, so test with localhost variants
+      var link = document.createElement("link");
+      link.rel = "preconnect";
+      // Note: On localhost, there's no meaningful "same-site" domain to test
+      // This tests the dynamic injection path works without crashing
+      link.href = "http://127.0.0.1:3000"; // same host
+      document.head.appendChild(link);
+      setTimeout(function () { link.remove(); }, 500);
+      record("Dynamic DNS Prefetch", true, "Same-host preconnect injected dynamically");
+    }
+
+    // ============================================================
+    // Pattern 17: Dynamic CSS (safe patterns)
+    // CSS keylogging needs BOTH input[value AND background-image: url(
+    // ============================================================
+    function dynamicCSSSafe() {
+      // Theme switch (common in dark mode toggle)
+      var style = document.createElement("style");
+      style.textContent = [
+        ":root { --bg: #0f172a; --fg: #e2e8f0; }",
+        "body { background: var(--bg); color: var(--fg); }",
+        ".dark-mode .card { background: #1e293b; }",
+      ].join("\n");
+      document.head.appendChild(style);
+
+      // Another style with background-image but NOT input[value (safe)
+      var style2 = document.createElement("style");
+      style2.textContent = ".hero { background-image: url(data:image/svg+xml,...); }";
+      document.head.appendChild(style2);
+
+      // Style with input selector but NOT background-image: url( (safe)
+      var style3 = document.createElement("style");
+      style3.textContent = "input[type=text] { border: 1px solid #ccc; }";
+      document.head.appendChild(style3);
+
+      setTimeout(function () { style.remove(); style2.remove(); style3.remove(); }, 500);
+      record("Dynamic CSS Safe", true, "Injected theme CSS without keylogging patterns");
+    }
+
+    // ============================================================
+    // Pattern 18: Normal fetch POST (login, form submission)
+    // Fetch exfiltration only triggers on cross-origin + body > 10KB
+    // ============================================================
+    function normalFetchPOST() {
+      // Same-origin POST (login form) — should never trigger
+      fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: "alice", password: "hunter2" }),
+      }).catch(function () { /* expected 404 */ });
+
+      // Cross-origin POST with small body (< 10KB) — should not trigger
+      fetch("https://httpbin.org/post", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "Alice", email: "alice@example.com" }),
+      }).catch(function () { /* may fail due to CORS */ });
+
+      record("Normal Fetch POST", true, "Same-origin login + small cross-origin POST (< 10KB)");
+    }
+
+    // ============================================================
+    // Pattern 19: Prototype-safe operations
+    // Object.defineProperty on NON-prototype targets is safe
+    // ============================================================
+    function prototypeSafe() {
+      var obj = {};
+      Object.defineProperty(obj, "name", { value: "test", writable: false });
+      Object.defineProperty(obj, "version", { value: 1, configurable: true });
+
+      // Object.setPrototypeOf on a custom object (not to Object.prototype/Array.prototype/null)
+      var child = {};
+      var parent = { hello: function () { return "world"; } };
+      Object.setPrototypeOf(child, parent);
+
+      record("Prototype Safe", true, "Object.defineProperty/setPrototypeOf on normal objects");
+    }
+
+    // ============================================================
     // Run all patterns on page load
     // ============================================================
     function runAll() {
@@ -513,6 +643,11 @@
       blobDownload();
       querySelectorAllUsage();
       cookieReads();
+      dynamicDOM();
+      dynamicDNSPrefetch();
+      dynamicCSSSafe();
+      normalFetchPOST();
+      prototypeSafe();
 
       log("", "info");
       log("All patterns executed.", "info");
