@@ -24,29 +24,19 @@ const AUDIT_EXTENSION_PATH = resolve(__dirname, "../../audit-extension/dist/chro
 const TEST_PAGE_PATH = resolve(__dirname, "../fixtures/test-page.html");
 const DEFENSE_REPORT_PATH = resolve(__dirname, "../defense-score-report.json");
 
-// ============================================================================
-// Types (mirroring @libztbs/battacker)
-// ============================================================================
+import {
+  type AttackCategory,
+  type Severity,
+  type Grade,
+  CATEGORY_WEIGHTS,
+  CATEGORY_LABELS,
+  scoreToGrade,
+  SEVERITY_SCORES,
+} from "@libztbs/battacker";
 
-type AttackCategory =
-  | "network"
-  | "phishing"
-  | "client-side"
-  | "download"
-  | "persistence"
-  | "side-channel"
-  | "fingerprinting"
-  | "cryptojacking"
-  | "privacy"
-  | "media"
-  | "storage"
-  | "worker"
-  | "injection"
-  | "covert"
-  | "advanced";
-
-type Severity = "critical" | "high" | "medium" | "low";
-type Grade = "A" | "B" | "C" | "D" | "F";
+// ============================================================================
+// E2E Test Types
+// ============================================================================
 
 interface AttackResult {
   blocked: boolean;
@@ -72,61 +62,6 @@ interface CategoryScore {
   maxScore: number;
   blocked: number;
   total: number;
-}
-
-// ============================================================================
-// Scoring constants (from @libztbs/battacker/types)
-// ============================================================================
-
-const SEVERITY_SCORES: Record<Severity, number> = {
-  critical: 30,
-  high: 20,
-  medium: 10,
-  low: 5,
-};
-
-const CATEGORY_WEIGHTS: Record<AttackCategory, number> = {
-  network: 0.09,
-  phishing: 0.05,
-  "client-side": 0.09,
-  download: 0.05,
-  persistence: 0.05,
-  "side-channel": 0.12,
-  fingerprinting: 0.08,
-  cryptojacking: 0.05,
-  privacy: 0.06,
-  media: 0.07,
-  storage: 0.04,
-  worker: 0.07,
-  injection: 0.06,
-  covert: 0.08,
-  advanced: 0.04,
-};
-
-const CATEGORY_LABELS: Record<AttackCategory, string> = {
-  network: "Network Attacks",
-  phishing: "Phishing Attacks",
-  "client-side": "Client-Side Attacks",
-  download: "Download Attacks",
-  persistence: "Persistence Attacks",
-  "side-channel": "Side-Channel Attacks",
-  fingerprinting: "Fingerprinting Attacks",
-  cryptojacking: "Cryptojacking Attacks",
-  privacy: "Privacy Attacks",
-  media: "Media Capture Attacks",
-  storage: "Storage Attacks",
-  worker: "Worker Attacks",
-  injection: "Injection Attacks",
-  covert: "Covert Channel Attacks",
-  advanced: "Advanced Exploitation",
-};
-
-function scoreToGrade(score: number): Grade {
-  if (score >= 90) return "A";
-  if (score >= 75) return "B";
-  if (score >= 60) return "C";
-  if (score >= 40) return "D";
-  return "F";
 }
 
 // ============================================================================
