@@ -406,11 +406,11 @@ export function initInjectionHooks(emitSecurityEvent: SharedHookUtils["emitSecur
   // ===== FontFace API Fingerprinting Detection =====
   // document.fonts.check() called repeatedly is used to fingerprint installed fonts.
   if (typeof document !== "undefined" && document.fonts && typeof document.fonts.check === "function") {
-    const originalFontCheck = FontFaceSet.prototype.check;
+    const originalFontCheck = document.fonts.check.bind(document.fonts);
     let fontCheckCount = 0;
     let fontCheckWindowStart = 0;
     let fontFingerprintEmitted = false;
-    FontFaceSet.prototype.check = function (font: string, text?: string) {
+    document.fonts.check = function (font: string, text?: string) {
       const now = Date.now();
       if (now - fontCheckWindowStart > 1000) {
         fontCheckCount = 0;
@@ -418,7 +418,7 @@ export function initInjectionHooks(emitSecurityEvent: SharedHookUtils["emitSecur
         fontFingerprintEmitted = false;
       }
       fontCheckCount++;
-      if (!fontFingerprintEmitted && fontCheckCount > 5) {
+      if (!fontFingerprintEmitted && fontCheckCount > 3) {
         fontFingerprintEmitted = true;
         emitSecurityEvent("__FONT_FINGERPRINT_DETECTED__", {
           callCount: fontCheckCount,
@@ -426,7 +426,7 @@ export function initInjectionHooks(emitSecurityEvent: SharedHookUtils["emitSecur
           pageUrl: location.href,
         });
       }
-      return originalFontCheck.call(this, font, text);
+      return originalFontCheck(font, text);
     };
   }
 
@@ -448,7 +448,7 @@ export function initInjectionHooks(emitSecurityEvent: SharedHookUtils["emitSecur
         idleCallbackEmitted = false;
       }
       idleCallbackCount++;
-      if (!idleCallbackEmitted && idleCallbackCount > 5) {
+      if (!idleCallbackEmitted && idleCallbackCount > 3) {
         idleCallbackEmitted = true;
         emitSecurityEvent("__IDLE_CALLBACK_DETECTED__", {
           callCount: idleCallbackCount,
@@ -461,39 +461,16 @@ export function initInjectionHooks(emitSecurityEvent: SharedHookUtils["emitSecur
   }
 
   // ===== IntersectionObserver Surveillance Detection =====
-  // Bulk observe() calls on many elements is a pattern used for scroll/visibility tracking surveillance.
-  if (typeof IntersectionObserver !== "undefined") {
-    const OriginalIntersectionObserver = IntersectionObserver;
-    const HookedIO = function (
-      this: unknown,
-      callback: IntersectionObserverCallback,
-      options?: IntersectionObserverInit,
-    ) {
-      const instance = new OriginalIntersectionObserver(callback, options);
-      let observedCount = 0;
-      let emitted = false;
-      const originalObserve = instance.observe.bind(instance);
-      instance.observe = function (target: Element) {
-        observedCount++;
-        if (!emitted && observedCount > 5) {
-          emitted = true;
-          emitSecurityEvent("__INTERSECTION_OBSERVER_DETECTED__", {
-            observedCount,
-            timestamp: Date.now(),
-            pageUrl: location.href,
-          });
-        }
-        return originalObserve(target);
-      };
+  // Hook prototype.observe() instead of constructor (Chromium prevents constructor override)
+  if (typeof IntersectionObserver !== "undefined" && IntersectionObserver.prototype.observe) {
+    const originalObserve = IntersectionObserver.prototype.observe;
+    IntersectionObserver.prototype.observe = function (target: Element) {
       emitSecurityEvent("__INTERSECTION_OBSERVER_DETECTED__", {
-        observedCount: 0,
+        observedCount: 1,
         timestamp: Date.now(),
         pageUrl: location.href,
       });
-      return instance;
-    } as unknown as typeof IntersectionObserver;
-    HookedIO.prototype = OriginalIntersectionObserver.prototype;
-    // Use same pattern as MessageChannel/ResizeObserver which works
-    window.IntersectionObserver = HookedIO;
+      return originalObserve.call(this, target);
+    };
   }
 }
