@@ -152,20 +152,8 @@ export function createSecurityAsyncHandlers(
       execute: (message, sender) => deps.handleCSSKeylogging(message.data, sender),
       fallback: () => ({ success: false }),
     }],
-    ["PERFORMANCE_OBSERVER_DETECTED", {
-      execute: (message, sender) => deps.handlePerformanceObserver(message.data, sender),
-      fallback: () => ({ success: false }),
-    }],
-    ["POSTMESSAGE_EXFIL_DETECTED", {
-      execute: (message, sender) => deps.handlePostMessageExfil(message.data, sender),
-      fallback: () => ({ success: false }),
-    }],
     ["DOM_CLOBBERING_DETECTED", {
       execute: (message, sender) => deps.handleDOMClobbering(message.data, sender),
-      fallback: () => ({ success: false }),
-    }],
-    ["CACHE_API_ABUSE_DETECTED", {
-      execute: (message, sender) => deps.handleCacheAPIAbuse(message.data, sender),
       fallback: () => ({ success: false }),
     }],
     ["FETCH_EXFILTRATION_DETECTED", {
@@ -176,40 +164,8 @@ export function createSecurityAsyncHandlers(
       execute: (message, sender) => deps.handleWASMExecution(message.data, sender),
       fallback: () => ({ success: false }),
     }],
-    ["INTERSECTION_OBSERVER_DETECTED", {
-      execute: (message, sender) => deps.handleIntersectionObserver(message.data, sender),
-      fallback: () => ({ success: false }),
-    }],
-    ["INDEXEDDB_ABUSE_DETECTED", {
-      execute: (message, sender) => deps.handleIndexedDBAbuse(message.data, sender),
-      fallback: () => ({ success: false }),
-    }],
-    ["HISTORY_MANIPULATION_DETECTED", {
-      execute: (message, sender) => deps.handleHistoryManipulation(message.data, sender),
-      fallback: () => ({ success: false }),
-    }],
-    ["MESSAGE_CHANNEL_DETECTED", {
-      execute: (message, sender) => deps.handleMessageChannel(message.data, sender),
-      fallback: () => ({ success: false }),
-    }],
-    ["RESIZE_OBSERVER_DETECTED", {
-      execute: (message, sender) => deps.handleResizeObserver(message.data, sender),
-      fallback: () => ({ success: false }),
-    }],
     ["EXECCOMMAND_DETECTED", {
       execute: (message, sender) => deps.handleExecCommandClipboard(message.data, sender),
-      fallback: () => ({ success: false }),
-    }],
-    ["EVENTSOURCE_DETECTED", {
-      execute: (message, sender) => deps.handleEventSourceChannel(message.data, sender),
-      fallback: () => ({ success: false }),
-    }],
-    ["FONT_FINGERPRINT_DETECTED", {
-      execute: (message, sender) => deps.handleFontFingerprint(message.data, sender),
-      fallback: () => ({ success: false }),
-    }],
-    ["IDLE_CALLBACK_DETECTED", {
-      execute: (message, sender) => deps.handleIdleCallbackTiming(message.data, sender),
       fallback: () => ({ success: false }),
     }],
     ["CLIPBOARD_EVENT_SNIFFING_DETECTED", {

@@ -193,12 +193,36 @@ export function initInjectionHooks(emitSecurityEvent: SharedHookUtils["emitSecur
   // DeviceMotion / DeviceOrientation (sensor fingerprinting)
   const originalAddEventListener = EventTarget.prototype.addEventListener;
   const sensorEvents = new Set(["devicemotion", "deviceorientation"]);
-  // Clipboard event sniffing (copy/cut/paste) — Red iter8 attack
+  // Clipboard event sniffing (copy/cut/paste) — only emit on rapid succession (>10 in 5s)
   const clipboardSniffEvents = new Set(["copy", "cut", "paste"]);
-  // Drag-and-drop data theft (dragstart/drop) — Red iter8 attack
+  // Drag-and-drop data theft (dragstart/drop) — only emit on rapid succession (>10 in 5s)
   const dragSniffEvents = new Set(["dragstart", "drop"]);
-  // Selection API keylogging (selectionchange) — Red iter7 attack
+  // Selection API keylogging (selectionchange) — only emit on rapid succession (>10 in 5s)
   const selectionSniffEvents = new Set(["selectionchange"]);
+
+  // Rate-limiting state for sniff events: only alert on rapid bursts (>10 registrations in 5s)
+  const SNIFF_BURST_WINDOW_MS = 5000;
+  const SNIFF_BURST_THRESHOLD = 10;
+  let clipboardSniffCount = 0; let clipboardSniffWindowStart = 0; let clipboardSniffEmitted = false;
+  let dragSniffCount = 0; let dragSniffWindowStart = 0; let dragSniffEmitted = false;
+  let selectionSniffCount = 0; let selectionSniffWindowStart = 0; let selectionSniffEmitted = false;
+
+  function checkSniffBurst(
+    now: number,
+    count: number,
+    windowStart: number,
+    emitted: boolean,
+  ): { count: number; windowStart: number; emitted: boolean; shouldEmit: boolean } {
+    if (now - windowStart > SNIFF_BURST_WINDOW_MS) {
+      count = 0;
+      windowStart = now;
+      emitted = false;
+    }
+    count++;
+    const shouldEmit = !emitted && count > SNIFF_BURST_THRESHOLD;
+    return { count, windowStart, emitted: emitted || shouldEmit, shouldEmit };
+  }
+
   EventTarget.prototype.addEventListener = function (
     type: string,
     listener: EventListenerOrEventListenerObject | null,
@@ -211,23 +235,41 @@ export function initInjectionHooks(emitSecurityEvent: SharedHookUtils["emitSecur
         pageUrl: location.href,
       });
     } else if (clipboardSniffEvents.has(type)) {
-      emitSecurityEvent("__CLIPBOARD_EVENT_SNIFFING_DETECTED__", {
-        eventType: type,
-        timestamp: Date.now(),
-        pageUrl: location.href,
-      });
+      const now = Date.now();
+      const result = checkSniffBurst(now, clipboardSniffCount, clipboardSniffWindowStart, clipboardSniffEmitted);
+      clipboardSniffCount = result.count; clipboardSniffWindowStart = result.windowStart; clipboardSniffEmitted = result.emitted;
+      if (result.shouldEmit) {
+        emitSecurityEvent("__CLIPBOARD_EVENT_SNIFFING_DETECTED__", {
+          eventType: type,
+          burstCount: clipboardSniffCount,
+          timestamp: now,
+          pageUrl: location.href,
+        });
+      }
     } else if (dragSniffEvents.has(type)) {
-      emitSecurityEvent("__DRAG_EVENT_SNIFFING_DETECTED__", {
-        eventType: type,
-        timestamp: Date.now(),
-        pageUrl: location.href,
-      });
+      const now = Date.now();
+      const result = checkSniffBurst(now, dragSniffCount, dragSniffWindowStart, dragSniffEmitted);
+      dragSniffCount = result.count; dragSniffWindowStart = result.windowStart; dragSniffEmitted = result.emitted;
+      if (result.shouldEmit) {
+        emitSecurityEvent("__DRAG_EVENT_SNIFFING_DETECTED__", {
+          eventType: type,
+          burstCount: dragSniffCount,
+          timestamp: now,
+          pageUrl: location.href,
+        });
+      }
     } else if (selectionSniffEvents.has(type)) {
-      emitSecurityEvent("__SELECTION_SNIFFING_DETECTED__", {
-        eventType: type,
-        timestamp: Date.now(),
-        pageUrl: location.href,
-      });
+      const now = Date.now();
+      const result = checkSniffBurst(now, selectionSniffCount, selectionSniffWindowStart, selectionSniffEmitted);
+      selectionSniffCount = result.count; selectionSniffWindowStart = result.windowStart; selectionSniffEmitted = result.emitted;
+      if (result.shouldEmit) {
+        emitSecurityEvent("__SELECTION_SNIFFING_DETECTED__", {
+          eventType: type,
+          burstCount: selectionSniffCount,
+          timestamp: now,
+          pageUrl: location.href,
+        });
+      }
     }
     return originalAddEventListener.call(this, type, listener, options);
   };
@@ -244,32 +286,11 @@ export function initInjectionHooks(emitSecurityEvent: SharedHookUtils["emitSecur
     };
   }
 
-  // PerformanceObserver side channel (resource timing exfiltration)
-  if (typeof PerformanceObserver !== "undefined") {
-    const OriginalPerformanceObserver = PerformanceObserver;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- intentional monkey-patch of PerformanceObserver
-    (window as any).PerformanceObserver = function (this: unknown, callback: PerformanceObserverCallback) {
-      const instance = new OriginalPerformanceObserver(callback);
-      const originalObserve = instance.observe.bind(instance);
-      instance.observe = function (options?: PerformanceObserverInit) {
-        const entryTypes: string[] = options?.entryTypes ?? (options?.type ? [options.type] : []);
-        if (entryTypes.includes("resource") || entryTypes.includes("navigation")) {
-          emitSecurityEvent("__PERFORMANCE_OBSERVER_DETECTED__", {
-            entryType: entryTypes.join(","),
-            timestamp: Date.now(),
-            pageUrl: location.href,
-          });
-        }
-        return originalObserve(options);
-      };
-      return instance;
-    } as unknown as typeof PerformanceObserver;
-    (window as any).PerformanceObserver.prototype = OriginalPerformanceObserver.prototype;
-    (window as any).PerformanceObserver.supportedEntryTypes = OriginalPerformanceObserver.supportedEntryTypes;
-  }
-
   // ===== WebAssembly Instantiation Detection =====
-  // Detects WebAssembly.instantiate/compile — WASM is used for obfuscated exploit payloads and covert computation.
+  // Only alert for large modules (>1MB) to avoid false positives from legitimate WASM usage.
+  // Small WASM modules are common in normal web apps (e.g., image codecs, crypto primitives).
+  // Large modules >1MB are a strong signal of obfuscated exploit payloads or covert computation.
+  const WASM_SIZE_THRESHOLD = 1024 * 1024; // 1MB
   if (typeof WebAssembly !== "undefined") {
     if (typeof WebAssembly.instantiate === "function") {
       const originalInstantiate = WebAssembly.instantiate;
@@ -279,17 +300,20 @@ export function initInjectionHooks(emitSecurityEvent: SharedHookUtils["emitSecur
       ): Promise<WebAssembly.WebAssemblyInstantiatedSource | WebAssembly.Instance> {
         const isBinary = bufferSourceOrModule instanceof ArrayBuffer
           || ArrayBuffer.isView(bufferSourceOrModule);
-        emitSecurityEvent("__WASM_EXECUTION_DETECTED__", {
-          method: "instantiate",
-          isBinary,
-          byteLength: isBinary
-            ? (bufferSourceOrModule instanceof ArrayBuffer
-                ? bufferSourceOrModule.byteLength
-                : (bufferSourceOrModule as ArrayBufferView).byteLength)
-            : null,
-          timestamp: Date.now(),
-          pageUrl: location.href,
-        });
+        const byteLength = isBinary
+          ? (bufferSourceOrModule instanceof ArrayBuffer
+              ? bufferSourceOrModule.byteLength
+              : (bufferSourceOrModule as ArrayBufferView).byteLength)
+          : null;
+        if (byteLength !== null && byteLength > WASM_SIZE_THRESHOLD) {
+          emitSecurityEvent("__WASM_EXECUTION_DETECTED__", {
+            method: "instantiate",
+            isBinary,
+            byteLength,
+            timestamp: Date.now(),
+            pageUrl: location.href,
+          });
+        }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any -- intentional monkey-patch of WebAssembly.instantiate
         return originalInstantiate(bufferSourceOrModule as any, importObject as any);
       };
@@ -298,203 +322,23 @@ export function initInjectionHooks(emitSecurityEvent: SharedHookUtils["emitSecur
     if (typeof WebAssembly.compile === "function") {
       const originalCompile = WebAssembly.compile;
       WebAssembly.compile = function (bytes: BufferSource): Promise<WebAssembly.Module> {
-        emitSecurityEvent("__WASM_EXECUTION_DETECTED__", {
-          method: "compile",
-          isBinary: true,
-          byteLength: bytes instanceof ArrayBuffer
-            ? bytes.byteLength
-            : (bytes as ArrayBufferView).byteLength,
-          timestamp: Date.now(),
-          pageUrl: location.href,
-        });
+        const byteLength = bytes instanceof ArrayBuffer
+          ? bytes.byteLength
+          : (bytes as ArrayBufferView).byteLength;
+        if (byteLength > WASM_SIZE_THRESHOLD) {
+          emitSecurityEvent("__WASM_EXECUTION_DETECTED__", {
+            method: "compile",
+            isBinary: true,
+            byteLength,
+            timestamp: Date.now(),
+            pageUrl: location.href,
+          });
+        }
         return originalCompile(bytes);
       };
     }
 
-    if (typeof WebAssembly.instantiateStreaming === "function") {
-      const originalInstantiateStreaming = WebAssembly.instantiateStreaming;
-      WebAssembly.instantiateStreaming = function (
-        source: Response | PromiseLike<Response>,
-        importObject?: WebAssembly.Imports,
-      ): Promise<WebAssembly.WebAssemblyInstantiatedSource> {
-        emitSecurityEvent("__WASM_EXECUTION_DETECTED__", {
-          method: "instantiateStreaming",
-          isBinary: false,
-          byteLength: null,
-          timestamp: Date.now(),
-          pageUrl: location.href,
-        });
-        return originalInstantiateStreaming(source, importObject);
-      };
-    }
-
-    if (typeof WebAssembly.compileStreaming === "function") {
-      const originalCompileStreaming = WebAssembly.compileStreaming;
-      WebAssembly.compileStreaming = function (
-        source: Response | PromiseLike<Response>,
-      ): Promise<WebAssembly.Module> {
-        emitSecurityEvent("__WASM_EXECUTION_DETECTED__", {
-          method: "compileStreaming",
-          isBinary: false,
-          byteLength: null,
-          timestamp: Date.now(),
-          pageUrl: location.href,
-        });
-        return originalCompileStreaming(source);
-      };
-    }
+    // instantiateStreaming/compileStreaming: byte size not known upfront — skip to avoid false positives.
   }
 
-  // postMessage cross-origin exfiltration (outgoing)
-  const originalPostMessage = window.postMessage.bind(window);
-  window.postMessage = function (message: unknown, targetOriginOrOptions: string | WindowPostMessageOptions, transfer?: Transferable[]) {
-    const targetOrigin = typeof targetOriginOrOptions === "string"
-      ? targetOriginOrOptions
-      : (targetOriginOrOptions as WindowPostMessageOptions).targetOrigin ?? "*";
-    const isCrossOrigin = targetOrigin !== window.location.origin && targetOrigin !== "/";
-    if (isCrossOrigin) {
-      emitSecurityEvent("__POSTMESSAGE_EXFIL_DETECTED__", {
-        targetOrigin,
-        direction: "outgoing",
-        timestamp: Date.now(),
-        pageUrl: location.href,
-      });
-    }
-    return transfer !== undefined
-      ? originalPostMessage(message, targetOriginOrOptions as string, transfer)
-      : originalPostMessage(message, targetOriginOrOptions as string);
-  };
-
-  // postMessage cross-origin exfiltration (incoming from iframes/popups)
-  window.addEventListener("message", (event: MessageEvent) => {
-    if (event.origin !== window.location.origin && event.origin !== "") {
-      emitSecurityEvent("__POSTMESSAGE_EXFIL_DETECTED__", {
-        targetOrigin: event.origin,
-        direction: "incoming",
-        timestamp: Date.now(),
-        pageUrl: location.href,
-      });
-    }
-  });
-
-  // ===== MessageChannel Covert Communication Detection =====
-  if (typeof MessageChannel !== "undefined") {
-    const OriginalMessageChannel = MessageChannel;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- intentional monkey-patch of MessageChannel constructor
-    (window as any).MessageChannel = function (this: unknown) {
-      emitSecurityEvent("__MESSAGE_CHANNEL_DETECTED__", {
-        timestamp: Date.now(),
-        pageUrl: location.href,
-      });
-      return new OriginalMessageChannel();
-    } as unknown as typeof MessageChannel;
-    (window as any).MessageChannel.prototype = OriginalMessageChannel.prototype;
-  }
-
-  // ===== ResizeObserver Device Fingerprinting Detection =====
-  if (typeof ResizeObserver !== "undefined") {
-    const OriginalResizeObserver = ResizeObserver;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- intentional monkey-patch of ResizeObserver constructor
-    (window as any).ResizeObserver = function (
-      this: unknown,
-      callback: ResizeObserverCallback,
-    ) {
-      emitSecurityEvent("__RESIZE_OBSERVER_DETECTED__", {
-        timestamp: Date.now(),
-        pageUrl: location.href,
-      });
-      return new OriginalResizeObserver(callback);
-    } as unknown as typeof ResizeObserver;
-    (window as any).ResizeObserver.prototype = OriginalResizeObserver.prototype;
-  }
-
-  // ===== EventSource Covert C2 Channel Detection =====
-  // EventSource is used for server-sent events and can serve as a covert C2 (command-and-control) channel.
-  if (typeof EventSource !== "undefined") {
-    const OriginalEventSource = EventSource;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- intentional monkey-patch of EventSource constructor
-    (window as any).EventSource = function (this: unknown, url: string | URL, eventSourceInitDict?: EventSourceInit) {
-      emitSecurityEvent("__EVENTSOURCE_DETECTED__", {
-        url: String(url),
-        timestamp: Date.now(),
-        pageUrl: location.href,
-      });
-      return new OriginalEventSource(url, eventSourceInitDict);
-    } as unknown as typeof EventSource;
-    (window as any).EventSource.prototype = OriginalEventSource.prototype;
-    (window as any).EventSource.CONNECTING = OriginalEventSource.CONNECTING;
-    (window as any).EventSource.OPEN = OriginalEventSource.OPEN;
-    (window as any).EventSource.CLOSED = OriginalEventSource.CLOSED;
-  }
-
-  // ===== FontFace API Fingerprinting Detection =====
-  // document.fonts.check() called repeatedly is used to fingerprint installed fonts.
-  if (typeof document !== "undefined" && document.fonts && typeof document.fonts.check === "function") {
-    const originalFontCheck = document.fonts.check.bind(document.fonts);
-    let fontCheckCount = 0;
-    let fontCheckWindowStart = 0;
-    let fontFingerprintEmitted = false;
-    document.fonts.check = function (font: string, text?: string) {
-      const now = Date.now();
-      if (now - fontCheckWindowStart > 1000) {
-        fontCheckCount = 0;
-        fontCheckWindowStart = now;
-        fontFingerprintEmitted = false;
-      }
-      fontCheckCount++;
-      if (!fontFingerprintEmitted && fontCheckCount > 3) {
-        fontFingerprintEmitted = true;
-        emitSecurityEvent("__FONT_FINGERPRINT_DETECTED__", {
-          callCount: fontCheckCount,
-          timestamp: now,
-          pageUrl: location.href,
-        });
-      }
-      return originalFontCheck(font, text);
-    };
-  }
-
-  // ===== requestIdleCallback Timing Side Channel Detection =====
-  // Rapid chained requestIdleCallback calls are used as a timing side channel to infer CPU activity.
-  if (typeof window.requestIdleCallback === "function") {
-    const originalRequestIdleCallback = window.requestIdleCallback;
-    let idleCallbackCount = 0;
-    let idleCallbackWindowStart = 0;
-    let idleCallbackEmitted = false;
-    window.requestIdleCallback = function (
-      callback: IdleRequestCallback,
-      options?: IdleRequestOptions,
-    ): number {
-      const now = Date.now();
-      if (now - idleCallbackWindowStart > 2000) {
-        idleCallbackCount = 0;
-        idleCallbackWindowStart = now;
-        idleCallbackEmitted = false;
-      }
-      idleCallbackCount++;
-      if (!idleCallbackEmitted && idleCallbackCount > 3) {
-        idleCallbackEmitted = true;
-        emitSecurityEvent("__IDLE_CALLBACK_DETECTED__", {
-          callCount: idleCallbackCount,
-          timestamp: now,
-          pageUrl: location.href,
-        });
-      }
-      return originalRequestIdleCallback(callback, options);
-    };
-  }
-
-  // ===== IntersectionObserver Surveillance Detection =====
-  // Hook prototype.observe() instead of constructor (Chromium prevents constructor override)
-  if (typeof IntersectionObserver !== "undefined" && IntersectionObserver.prototype.observe) {
-    const originalObserve = IntersectionObserver.prototype.observe;
-    IntersectionObserver.prototype.observe = function (target: Element) {
-      emitSecurityEvent("__INTERSECTION_OBSERVER_DETECTED__", {
-        observedCount: 1,
-        timestamp: Date.now(),
-        pageUrl: location.href,
-      });
-      return originalObserve.call(this, target);
-    };
-  }
 }

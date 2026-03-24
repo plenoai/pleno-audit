@@ -174,7 +174,11 @@ export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecuri
   };
 
   // ===== Cookie Access =====
-  let lastCookieAccessTime = 0;
+  // Alert only on high-frequency access (5+ reads within 3000ms) to reduce false positives
+  // from normal sites that legitimately read cookies on page load or user interaction.
+  let cookieAccessCount = 0;
+  let cookieAccessWindowStart = 0;
+  let cookieAccessEmitted = false;
   try {
     const desc = Object.getOwnPropertyDescriptor(Document.prototype, "cookie");
     if (desc?.get) {
@@ -182,9 +186,15 @@ export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecuri
       Object.defineProperty(document, "cookie", {
         get() {
           const now = Date.now();
-          if (now - lastCookieAccessTime > 1000) {
-            lastCookieAccessTime = now;
-            emitSecurityEvent("__COOKIE_ACCESS_DETECTED__", { timestamp: now, readCount: 1, pageUrl: window.location.href });
+          if (now - cookieAccessWindowStart > 3000) {
+            cookieAccessCount = 0;
+            cookieAccessWindowStart = now;
+            cookieAccessEmitted = false;
+          }
+          cookieAccessCount++;
+          if (!cookieAccessEmitted && cookieAccessCount >= 5) {
+            cookieAccessEmitted = true;
+            emitSecurityEvent("__COOKIE_ACCESS_DETECTED__", { timestamp: now, readCount: cookieAccessCount, pageUrl: window.location.href });
           }
           return originalGet.call(document);
         },
@@ -197,13 +207,14 @@ export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecuri
   }
 
   // ===== XSS / DOM Scraping =====
+  // Threshold raised from 50 to 300 calls/5s to avoid false positives from normal SPA frameworks.
   let qsaCount = 0;
   let qsaResetTime = Date.now();
   const originalQSA = document.querySelectorAll.bind(document);
   document.querySelectorAll = function (selector: string) {
     const now = Date.now();
     if (now - qsaResetTime > 5000) { qsaCount = 0; qsaResetTime = now; }
-    if (++qsaCount === 50) {
+    if (++qsaCount === 300) {
       emitSecurityEvent("__DOM_SCRAPING_DETECTED__", { selector, callCount: qsaCount, timestamp: now });
     }
     return originalQSA(selector);
@@ -224,6 +235,7 @@ export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecuri
   }
 
   // ===== Storage Exfiltration (localStorage/sessionStorage mass access) =====
+  // Threshold raised from 10 to 50 calls/3s to avoid false positives from normal SPA state hydration.
   for (const [storageType, storage] of [["localStorage", localStorage], ["sessionStorage", sessionStorage]] as const) {
     if (!storage) continue;
     let accessCount = 0;
@@ -232,7 +244,7 @@ export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecuri
     storage.getItem = function (key: string) {
       const now = Date.now();
       if (now - accessResetTime > 3000) { accessCount = 0; accessResetTime = now; }
-      if (++accessCount === 10) {
+      if (++accessCount === 50) {
         emitSecurityEvent("__STORAGE_EXFILTRATION_DETECTED__", {
           storageType,
           accessCount,
@@ -450,47 +462,12 @@ export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecuri
   if (document.body || document.head) startDomClobberingObserving();
   else document.addEventListener("DOMContentLoaded", startDomClobberingObserving, { once: true });
 
-  // ===== Cache API Abuse =====
-  // Detects caches.open() and cache.put() for persistence and cache poisoning attacks.
-  // emitSecurityEvent uses CustomEvent (not fetch), so no infinite loop risk.
-  if (typeof caches !== "undefined") {
-    try {
-      const originalCachesOpen = caches.open.bind(caches);
-      caches.open = async function (cacheName: string): Promise<Cache> {
-        emitSecurityEvent("__CACHE_API_ABUSE_DETECTED__", {
-          operation: "open",
-          cacheName,
-          timestamp: Date.now(),
-          pageUrl: window.location.href,
-        });
-        const cache = await originalCachesOpen(cacheName);
-        // Wrap cache.put to detect data storage
-        const originalPut = cache.put.bind(cache);
-        cache.put = async function (request: RequestInfo | URL, response: Response): Promise<void> {
-          const url = typeof request === "string"
-            ? request
-            : request instanceof URL
-              ? request.href
-              : (request as Request).url;
-          emitSecurityEvent("__CACHE_API_ABUSE_DETECTED__", {
-            operation: "put",
-            cacheName,
-            url,
-            timestamp: Date.now(),
-            pageUrl: window.location.href,
-          });
-          return originalPut(request, response);
-        };
-        return cache;
-      };
-    } catch {
-      /* ignore */
-    }
-  }
-
   // ===== Fetch Exfiltration Detection =====
-  // Detects fetch() calls to cross-origin URLs with no-cors mode or large data payloads.
+  // Detects cross-origin fetch() calls with a large body payload (> 10KB).
+  // The no-cors-only check was removed: embedded widgets, analytics, and fonts all use no-cors
+  // legitimately. Large body payloads (>10KB) are a reliable signal of bulk data exfiltration.
   // emitSecurityEvent uses CustomEvent internally, NOT fetch — no infinite loop risk.
+  const FETCH_BODY_THRESHOLD = 10 * 1024; // 10KB
   const originalFetch = window.fetch;
   window.fetch = async function (
     input: RequestInfo | URL,
@@ -510,19 +487,8 @@ export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecuri
         /* ignore */
       }
 
-      const isNoCors = (init?.mode === "no-cors") || ((input as Request).mode === "no-cors");
-
-      // Detect cross-origin no-cors fetch (data smuggling via opaque responses)
-      if (isCrossOrigin && isNoCors) {
-        emitSecurityEvent("__FETCH_EXFILTRATION_DETECTED__", {
-          url,
-          mode: "no-cors",
-          reason: "cross_origin_no_cors",
-          timestamp: Date.now(),
-          pageUrl: window.location.href,
-        });
-      } else if (isCrossOrigin && init?.body != null) {
-        // Cross-origin fetch with a non-empty body — potential exfiltration
+      if (isCrossOrigin && init?.body != null) {
+        // Cross-origin fetch with a large body — potential bulk exfiltration
         let bodySize = 0;
         try {
           const body = init.body;
@@ -532,15 +498,12 @@ export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecuri
             bodySize = body.size;
           } else if (body instanceof ArrayBuffer) {
             bodySize = body.byteLength;
-          } else if (body instanceof FormData || body instanceof URLSearchParams) {
-            // Rough estimate: mark as non-zero
-            bodySize = 1;
           }
+          // FormData/URLSearchParams: cannot determine size easily; skip to avoid false positives
         } catch {
           /* ignore */
         }
-        // Only alert for meaningful payloads (>= 100 bytes)
-        if (bodySize >= 100) {
+        if (bodySize >= FETCH_BODY_THRESHOLD) {
           emitSecurityEvent("__FETCH_EXFILTRATION_DETECTED__", {
             url,
             mode: init?.mode ?? "cors",
@@ -556,57 +519,6 @@ export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecuri
     }
     return originalFetch.call(this, input, init);
   };
-
-  // ===== IndexedDB Persistence Detection =====
-  // indexedDB.open() is used by malicious pages to persist data (stashing tokens, exfiltration buffers)
-  // across sessions — a technique used by persistent tracking and advanced malware.
-  if (typeof indexedDB !== "undefined" && indexedDB.open) {
-    try {
-      const originalIDBOpen = indexedDB.open.bind(indexedDB);
-      indexedDB.open = function (name: string, version?: number): IDBOpenDBRequest {
-        emitSecurityEvent("__INDEXEDDB_ABUSE_DETECTED__", {
-          dbName: name,
-          version: version ?? null,
-          timestamp: Date.now(),
-          pageUrl: window.location.href,
-        });
-        return originalIDBOpen(name, version as number);
-      };
-    } catch {
-      /* ignore */
-    }
-  }
-
-  // ===== History API Manipulation Detection =====
-  // Manipulating history.pushState/replaceState can be used to hijack the browser address bar,
-  // inject fake URLs for phishing, or exfiltrate state data through URL-embedded parameters.
-  try {
-    const originalPushState = history.pushState.bind(history);
-    history.pushState = function (state: unknown, unused: string, url?: string | URL | null) {
-      emitSecurityEvent("__HISTORY_MANIPULATION_DETECTED__", {
-        method: "pushState",
-        url: url != null ? String(url) : null,
-        hasState: state !== null && state !== undefined,
-        timestamp: Date.now(),
-        pageUrl: window.location.href,
-      });
-      return originalPushState(state, unused, url as string | URL | null);
-    };
-
-    const originalReplaceState = history.replaceState.bind(history);
-    history.replaceState = function (state: unknown, unused: string, url?: string | URL | null) {
-      emitSecurityEvent("__HISTORY_MANIPULATION_DETECTED__", {
-        method: "replaceState",
-        url: url != null ? String(url) : null,
-        hasState: state !== null && state !== undefined,
-        timestamp: Date.now(),
-        pageUrl: window.location.href,
-      });
-      return originalReplaceState(state, unused, url as string | URL | null);
-    };
-  } catch {
-    /* ignore */
-  }
 
   // ===== Suspicious Download =====
   const originalCreateObjectURL = URL.createObjectURL;

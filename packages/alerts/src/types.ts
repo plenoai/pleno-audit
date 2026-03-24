@@ -55,24 +55,24 @@ export type AlertCategory =
   | "dns_prefetch_leak" // DNS prefetch covert channel via dynamic link injection
   | "form_hijack" // Form action hijacking
   | "css_keylogging" // CSS input[value] attribute selector keylogging
-  | "performance_observer" // PerformanceObserver resource timing side channel
-  | "postmessage_exfil" // postMessage cross-origin data exfiltration
+  | "performance_observer" // PerformanceObserver resource timing side channel (kept for pipeline compat)
+  | "postmessage_exfil" // postMessage cross-origin data exfiltration (kept for pipeline compat)
   | "dom_clobbering" // DOM clobbering — named elements shadowing window globals
-  | "cache_api_abuse" // Cache API usage for persistence or cache poisoning
-  | "fetch_exfiltration" // fetch() to cross-origin with no-cors mode or large payload
-  | "wasm_execution" // WebAssembly instantiation/compilation
-  | "intersection_observer" // IntersectionObserver bulk element surveillance
-  | "indexeddb_abuse" // IndexedDB.open() for covert data persistence
-  | "history_manipulation" // history.pushState/replaceState manipulation
-  | "message_channel" // MessageChannel constructor for covert communication
-  | "resize_observer" // ResizeObserver constructor for device fingerprinting
+  | "cache_api_abuse" // Cache API usage for persistence or cache poisoning (kept for pipeline compat)
+  | "fetch_exfiltration" // fetch() cross-origin with large body payload (>10KB)
+  | "wasm_execution" // WebAssembly instantiation/compilation of large modules (>1MB)
+  | "intersection_observer" // IntersectionObserver bulk element surveillance (kept for pipeline compat)
+  | "indexeddb_abuse" // IndexedDB.open() for covert data persistence (kept for pipeline compat)
+  | "history_manipulation" // history.pushState/replaceState manipulation (kept for pipeline compat)
+  | "message_channel" // MessageChannel constructor for covert communication (kept for pipeline compat)
+  | "resize_observer" // ResizeObserver constructor for device fingerprinting (kept for pipeline compat)
   | "execcommand_clipboard" // document.execCommand clipboard bypass
-  | "eventsource_channel" // EventSource covert C2 channel
-  | "font_fingerprint" // FontFace API font fingerprinting
-  | "idle_callback_timing" // requestIdleCallback timing side channel
-  | "clipboard_event_sniffing" // Clipboard event listener sniffing (copy/cut/paste) — Red iter8
-  | "drag_event_sniffing" // Drag-and-drop event listener data theft (dragstart/drop) — Red iter8
-  | "selection_sniffing"; // Selection API keylogging (selectionchange) — Red iter7
+  | "eventsource_channel" // EventSource covert C2 channel (kept for pipeline compat)
+  | "font_fingerprint" // FontFace API font fingerprinting (kept for pipeline compat)
+  | "idle_callback_timing" // requestIdleCallback timing side channel (kept for pipeline compat)
+  | "clipboard_event_sniffing" // Clipboard event listener sniffing (copy/cut/paste) — burst >10 in 5s
+  | "drag_event_sniffing" // Drag-and-drop event listener data theft (dragstart/drop) — burst >10 in 5s
+  | "selection_sniffing"; // Selection API keylogging (selectionchange) — burst >10 in 5s
 
 /**
  * Alert status
