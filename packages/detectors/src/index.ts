@@ -65,3 +65,21 @@ export { createLoginDetector } from "./login-detector.js";
 // Favicon Detection
 export type { FaviconRequest } from "./favicon-detector.js";
 export { findFaviconUrl, findFavicons } from "./favicon-detector.js";
+
+// Service Filters
+export {
+  filterNRDServices,
+  filterLoginServices,
+  filterTyposquatServices,
+  filterAIServices,
+} from "./service-filters.js";
+
+// Service Explorer
+export {
+  buildServiceIndex,
+  queryServiceIndex,
+  type FilterCategory,
+  type ServiceIndex,
+  type ServiceQuery,
+  type ServiceQueryResult,
+} from "./service-explorer.js";

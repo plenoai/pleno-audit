@@ -26,3 +26,12 @@ export {
   type DomainCSPPolicy,
   type GeneratedCSPByDomain,
 } from "./analyzer.js";
+
+// Statistics
+export {
+  extractDirectives,
+  computeDirectiveStats,
+  computeDomainViolationStats,
+  type StatEntry,
+  type DomainViolationMeta,
+} from "./stats.js";

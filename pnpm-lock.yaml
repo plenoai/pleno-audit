@@ -46,43 +46,43 @@ importers:
     dependencies:
       '@libztbs/ai-detector':
         specifier: workspace:*
-        version: link:../../lib/ai-detector
+        version: link:../../packages/ai-detector
       '@libztbs/alerts':
         specifier: workspace:*
-        version: link:../../lib/alerts
+        version: link:../../packages/alerts
       '@libztbs/background-services':
         specifier: workspace:*
-        version: link:../../lib/background-services
+        version: link:../../packages/background-services
       '@libztbs/csp':
         specifier: workspace:*
-        version: link:../../lib/csp
+        version: link:../../packages/csp
       '@libztbs/data-export':
         specifier: workspace:*
-        version: link:../../lib/data-export
+        version: link:../../packages/data-export
       '@libztbs/debug-bridge':
         specifier: workspace:*
-        version: link:../../lib/debug-bridge
+        version: link:../../packages/debug-bridge
       '@libztbs/detectors':
         specifier: workspace:*
-        version: link:../../lib/detectors
+        version: link:../../packages/detectors
       '@libztbs/extension-enterprise':
         specifier: workspace:*
-        version: link:../../lib/extension-enterprise
+        version: link:../../packages/extension-enterprise
       '@libztbs/extension-network-service':
         specifier: workspace:*
-        version: link:../../lib/extension-network-service
+        version: link:../../packages/extension-network-service
       '@libztbs/extension-runtime':
         specifier: workspace:*
-        version: link:../../lib/extension-runtime
+        version: link:../../packages/extension-runtime
       '@libztbs/nrd':
         specifier: workspace:*
-        version: link:../../lib/nrd
+        version: link:../../packages/nrd
       '@libztbs/types':
         specifier: workspace:*
-        version: link:../../lib/types
+        version: link:../../packages/types
       '@libztbs/typosquat':
         specifier: workspace:*
-        version: link:../../lib/typosquat
+        version: link:../../packages/typosquat
       lucide-preact:
         specifier: ^0.577.0
         version: 0.577.0(preact@10.29.0)
@@ -119,10 +119,10 @@ importers:
     dependencies:
       '@libztbs/battacker':
         specifier: workspace:*
-        version: link:../../lib/battacker
+        version: link:../../packages/battacker
       '@libztbs/extension-runtime':
         specifier: workspace:*
-        version: link:../../lib/extension-runtime
+        version: link:../../packages/extension-runtime
       motion:
         specifier: ^12.38.0
         version: 12.38.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -141,7 +141,7 @@ importers:
     dependencies:
       '@libztbs/battacker':
         specifier: workspace:*
-        version: link:../../lib/battacker
+        version: link:../../packages/battacker
       framer-motion:
         specifier: ^12.38.0
         version: 12.38.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -179,7 +179,7 @@ importers:
     devDependencies:
       '@libztbs/extension-runtime':
         specifier: workspace:*
-        version: link:../../lib/extension-runtime
+        version: link:../../packages/extension-runtime
       '@types/node':
         specifier: ^25.5.0
         version: 25.5.0
@@ -233,7 +233,7 @@ importers:
         specifier: ^7.3.1
         version: 7.3.1(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(tsx@4.21.0)
 
-  lib/ai-detector:
+  packages/ai-detector:
     dependencies:
       '@libztbs/alerts':
         specifier: workspace:*
@@ -242,9 +242,9 @@ importers:
         specifier: workspace:*
         version: link:../types
 
-  lib/alerts: {}
+  packages/alerts: {}
 
-  lib/background-services:
+  packages/background-services:
     dependencies:
       '@libztbs/ai-detector':
         specifier: workspace:*
@@ -271,31 +271,35 @@ importers:
         specifier: workspace:*
         version: link:../typosquat
 
-  lib/battacker:
+  packages/battacker:
     devDependencies:
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
 
-  lib/csp: {}
+  packages/csp: {}
 
-  lib/data-export: {}
+  packages/data-export: {}
 
-  lib/debug-bridge:
+  packages/debug-bridge:
     dependencies:
       '@libztbs/extension-runtime':
         specifier: workspace:*
         version: link:../extension-runtime
 
-  lib/detectors: {}
+  packages/detectors:
+    dependencies:
+      '@libztbs/types':
+        specifier: workspace:*
+        version: link:../types
 
-  lib/extension-enterprise:
+  packages/extension-enterprise:
     dependencies:
       '@libztbs/extension-runtime':
         specifier: workspace:*
         version: link:../extension-runtime
 
-  lib/extension-network-service:
+  packages/extension-network-service:
     dependencies:
       '@libztbs/alerts':
         specifier: workspace:*
@@ -304,7 +308,7 @@ importers:
         specifier: workspace:*
         version: link:../extension-runtime
 
-  lib/extension-runtime:
+  packages/extension-runtime:
     dependencies:
       '@libztbs/ai-detector':
         specifier: workspace:*
@@ -325,11 +329,11 @@ importers:
         specifier: workspace:*
         version: link:../types
 
-  lib/nrd: {}
+  packages/nrd: {}
 
-  lib/types: {}
+  packages/types: {}
 
-  lib/typosquat: {}
+  packages/typosquat: {}
 
 packages:
 

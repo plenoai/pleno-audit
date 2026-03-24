@@ -18,6 +18,14 @@ export { createComputationHandlers } from "./runtime-handlers/computation-handle
 // Alarm handlers
 export { createAlarmHandlers } from "./services/alarm-handlers.js";
 
+// Connection Tracker
+export {
+  createConnectionTracker,
+  type ConnectionTracker,
+  type ConnectionRecord,
+  type ConnectionTrackerDeps,
+} from "./services/connection-tracker.js";
+
 // Individual services
 export { createAIPromptMonitorService } from "./services/ai-prompt-monitor-service.js";
 export { createCSPReportingService } from "./services/csp-reporting-service.js";

@@ -176,3 +176,41 @@ export interface AISensitiveDataDetectedDetails {
   riskLevel: string;
 }
 
+// ============================================================================
+// Service Aggregation (サービス集約)
+// ============================================================================
+
+/** サービスに付与されるタグ */
+export type ServiceTag =
+  | { type: "nrd"; domainAge: number | null; confidence: string }
+  | { type: "typosquat"; score: number; confidence: string }
+  | { type: "ai" }
+  | { type: "login" }
+  | { type: "privacy"; url: string }
+  | { type: "tos"; url: string }
+  | { type: "cookie"; count: number };
+
+/** 通信先情報 */
+export interface ConnectionInfo {
+  domain: string;
+  requestCount: number;
+}
+
+/** サービスのソース（ドメインまたは拡張機能） */
+export type ServiceSource =
+  | { type: "domain"; domain: string; service: DetectedService }
+  | { type: "extension"; extensionId: string; extensionName: string; icon?: string };
+
+/** 統合サービスモデル */
+export interface UnifiedService {
+  id: string;
+  source: ServiceSource;
+  connections: ConnectionInfo[];
+  tags: ServiceTag[];
+  lastActivity: number;
+  faviconUrl?: string;
+}
+
+/** ソートタイプ */
+export type SortType = "activity" | "connections" | "name";
+
