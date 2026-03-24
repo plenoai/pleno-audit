@@ -3103,6 +3103,190 @@ const attacks: AttackDef[] = [
         }
       }),
   },
+
+  {
+    id: "clipboard-event-sniffing",
+    name: "Clipboard Event Sniffing",
+    category: "privacy",
+    description:
+      "Registers 'copy', 'cut', and 'paste' event listeners on the document to intercept clipboard " +
+      "operations via event.clipboardData.getData(). The extension hooks clipboard.writeText and " +
+      "clipboard.readText on the Async Clipboard API but does not intercept DOM-level clipboard events, " +
+      "leaving event.clipboardData unmonitored.",
+    severity: "high",
+    simulate: (page) =>
+      page.evaluate(async () => {
+        const startTime = performance.now();
+        try {
+          const captured: { type: string; data: string }[] = [];
+
+          const onCopy = (event: ClipboardEvent) => {
+            const data = event.clipboardData?.getData("text/plain") ?? "";
+            captured.push({ type: "copy", data });
+          };
+          const onCut = (event: ClipboardEvent) => {
+            const data = event.clipboardData?.getData("text/plain") ?? "";
+            captured.push({ type: "cut", data });
+          };
+          const onPaste = (event: ClipboardEvent) => {
+            const data = event.clipboardData?.getData("text/plain") ?? "";
+            captured.push({ type: "paste", data });
+          };
+
+          document.addEventListener("copy", onCopy);
+          document.addEventListener("cut", onCut);
+          document.addEventListener("paste", onPaste);
+
+          // Create an input element, insert a secret value, select all, then
+          // programmatically dispatch a copy event so the handler fires in-page.
+          const input = document.createElement("input");
+          input.value = "secret-clipboard-content-12345";
+          document.body.appendChild(input);
+          input.select();
+
+          const copyEvent = new ClipboardEvent("copy", {
+            bubbles: true,
+            cancelable: true,
+            clipboardData: new DataTransfer(),
+          });
+          copyEvent.clipboardData?.setData("text/plain", input.value);
+          document.dispatchEvent(copyEvent);
+
+          // Simulate a paste event carrying sensitive data.
+          const pasteTransfer = new DataTransfer();
+          pasteTransfer.setData("text/plain", "pasted-secret-data-67890");
+          const pasteEvent = new ClipboardEvent("paste", {
+            bubbles: true,
+            cancelable: true,
+            clipboardData: pasteTransfer,
+          });
+          document.dispatchEvent(pasteEvent);
+
+          document.removeEventListener("copy", onCopy);
+          document.removeEventListener("cut", onCut);
+          document.removeEventListener("paste", onPaste);
+          document.body.removeChild(input);
+
+          if (captured.length === 0) {
+            return {
+              blocked: true,
+              executionTime: performance.now() - startTime,
+              details: "Clipboard event sniffing blocked: no events received",
+            };
+          }
+
+          const summary = captured
+            .map((c) => `${c.type}:"${c.data.substring(0, 40)}"`)
+            .join(", ");
+
+          return {
+            blocked: false,
+            executionTime: performance.now() - startTime,
+            details:
+              `Clipboard event sniffing via DOM 'copy'/'cut'/'paste' events — ` +
+              `${captured.length} event(s) intercepted via event.clipboardData.getData() — ` +
+              `${summary} — DOM clipboard events are not hooked by the extension`,
+          };
+        } catch (error: any) {
+          return {
+            blocked: true,
+            executionTime: performance.now() - startTime,
+            details: `Clipboard event sniffing blocked: ${error?.message}`,
+          };
+        }
+      }),
+  },
+
+  {
+    id: "drag-and-drop-data-theft",
+    name: "Drag-and-Drop Data Theft",
+    category: "privacy",
+    description:
+      "Registers 'dragstart' and 'drop' event listeners to intercept file and text data transferred " +
+      "via drag-and-drop operations. event.dataTransfer.getData() exposes the dragged content. " +
+      "The extension has no hooks on drag events or the DataTransfer API, making this an unhookable " +
+      "exfiltration surface for files and text dragged into or within the page.",
+    severity: "high",
+    simulate: (page) =>
+      page.evaluate(async () => {
+        const startTime = performance.now();
+        try {
+          const captured: { type: string; data: string }[] = [];
+
+          const onDragStart = (event: DragEvent) => {
+            const text = event.dataTransfer?.getData("text/plain") ?? "";
+            const uri = event.dataTransfer?.getData("text/uri-list") ?? "";
+            const html = event.dataTransfer?.getData("text/html") ?? "";
+            captured.push({ type: "dragstart", data: text || uri || html });
+          };
+          const onDrop = (event: DragEvent) => {
+            event.preventDefault();
+            const text = event.dataTransfer?.getData("text/plain") ?? "";
+            const uri = event.dataTransfer?.getData("text/uri-list") ?? "";
+            const html = event.dataTransfer?.getData("text/html") ?? "";
+            const fileCount = event.dataTransfer?.files.length ?? 0;
+            captured.push({
+              type: "drop",
+              data: text || uri || html || `${fileCount} file(s)`,
+            });
+          };
+
+          document.addEventListener("dragstart", onDragStart);
+          document.addEventListener("drop", onDrop);
+
+          // Simulate a dragstart carrying a sensitive text payload.
+          const dragTransfer = new DataTransfer();
+          dragTransfer.setData("text/plain", "dragged-sensitive-text-99999");
+          dragTransfer.setData("text/uri-list", "https://internal.corp/secret-doc");
+          const dragStartEvent = new DragEvent("dragstart", {
+            bubbles: true,
+            cancelable: true,
+            dataTransfer: dragTransfer,
+          });
+          document.dispatchEvent(dragStartEvent);
+
+          // Simulate a drop carrying a file-like payload.
+          const dropTransfer = new DataTransfer();
+          dropTransfer.setData("text/plain", "dropped-payload-content-abcde");
+          const dropEvent = new DragEvent("drop", {
+            bubbles: true,
+            cancelable: true,
+            dataTransfer: dropTransfer,
+          });
+          document.dispatchEvent(dropEvent);
+
+          document.removeEventListener("dragstart", onDragStart);
+          document.removeEventListener("drop", onDrop);
+
+          if (captured.length === 0) {
+            return {
+              blocked: true,
+              executionTime: performance.now() - startTime,
+              details: "Drag-and-drop data theft blocked: no events received",
+            };
+          }
+
+          const summary = captured
+            .map((c) => `${c.type}:"${c.data.substring(0, 40)}"`)
+            .join(", ");
+
+          return {
+            blocked: false,
+            executionTime: performance.now() - startTime,
+            details:
+              `Drag-and-drop data theft via DOM 'dragstart'/'drop' events — ` +
+              `${captured.length} event(s) captured via event.dataTransfer.getData() — ` +
+              `${summary} — drag events and DataTransfer are not hooked by the extension`,
+          };
+        } catch (error: any) {
+          return {
+            blocked: true,
+            executionTime: performance.now() - startTime,
+            details: `Drag-and-drop data theft blocked: ${error?.message}`,
+          };
+        }
+      }),
+  },
 ];
 
 // ============================================================================
