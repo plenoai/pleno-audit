@@ -13,9 +13,11 @@ interface FilteredTabProps<T> {
   data: T[];
   columns: Column<T>[];
   rowKey: (item: T, index: number) => string;
-  rowHighlight?: (item: T) => boolean;
+  rowHighlight?: (item: T) => boolean | "danger" | "warning" | "info";
   emptyMessage: string;
   filterBar?: ComponentChildren;
+  expandRow?: (item: T) => ComponentChildren | null;
+  onRowClick?: (item: T) => void;
 }
 
 export function FilteredTab<T>({
@@ -25,6 +27,8 @@ export function FilteredTab<T>({
   rowHighlight,
   emptyMessage,
   filterBar,
+  expandRow,
+  onRowClick,
 }: FilteredTabProps<T>) {
   const { colors } = useTheme();
 
@@ -49,6 +53,8 @@ export function FilteredTab<T>({
         rowKey={rowKey}
         rowHighlight={rowHighlight}
         emptyMessage={emptyMessage}
+        expandRow={expandRow}
+        onRowClick={onRowClick}
       />
     </div>
   );

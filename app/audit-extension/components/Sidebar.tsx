@@ -17,17 +17,14 @@ export function Sidebar({ tabs, activeTab, onChange }: SidebarProps) {
   return (
     <nav
       style={{
-        width: "180px",
-        minWidth: "180px",
+        width: "240px",
+        minWidth: "240px",
         background: colors.bgPrimary,
         borderRight: `1px solid ${colors.border}`,
-        padding: "48px 0 16px",
+        padding: "16px 0",
         display: "flex",
         flexDirection: "column",
         gap: "2px",
-        height: "100vh",
-        position: "sticky",
-        top: 0,
         overflowY: "auto",
       }}
     >
@@ -40,7 +37,7 @@ export function Sidebar({ tabs, activeTab, onChange }: SidebarProps) {
             style={{
               display: "block",
               width: "100%",
-              padding: "10px 16px",
+              padding: "10px 22px",
               border: "none",
               background: isActive ? colors.bgSecondary : "transparent",
               color: isActive ? colors.textPrimary : colors.textSecondary,

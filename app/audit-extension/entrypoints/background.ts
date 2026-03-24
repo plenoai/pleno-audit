@@ -444,6 +444,12 @@ export default defineBackground(() => {
   registerNetworkMonitorListener();
   registerDoHMonitorListener();
 
+  // アイコンクリックでダッシュボードを開く（popup削除に伴い action.onClicked を使用）
+  chrome.action.onClicked.addListener(() => {
+    const dashboardUrl = chrome.runtime.getURL("dashboard.html");
+    chrome.tabs.create({ url: dashboardUrl, active: true });
+  });
+
   initializeBackgroundServices();
   registerRecurringAlarms();
 

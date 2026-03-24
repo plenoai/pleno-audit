@@ -15,7 +15,9 @@ interface DataTableProps<T> {
   pageSize?: number;
   emptyMessage?: string;
   rowKey?: (item: T, index: number) => string;
-  rowHighlight?: (item: T) => boolean;
+  rowHighlight?: (item: T) => boolean | "danger" | "warning" | "info";
+  expandRow?: (item: T) => preact.ComponentChildren | null;
+  onRowClick?: (item: T) => void;
 }
 
 function getStyles(colors: ThemeColors, isDark: boolean): Record<string, CSSProperties> {
@@ -48,8 +50,14 @@ function getStyles(colors: ThemeColors, isDark: boolean): Record<string, CSSProp
     row: {
       transition: "background 0.1s",
     },
-    rowHighlight: {
+    rowHighlightDanger: {
+      background: isDark ? "#3d1a1a" : "#fef2f2",
+    },
+    rowHighlightWarning: {
       background: isDark ? "#3d3a0a" : "#fffbe6",
+    },
+    rowHighlightInfo: {
+      background: isDark ? "#0a2a3d" : "#eff6ff",
     },
     empty: {
       padding: "48px",
@@ -101,6 +109,8 @@ export function DataTable<T>({
   emptyMessage = "データがありません",
   rowKey = (_item: T, index: number) => String(index),
   rowHighlight,
+  expandRow,
+  onRowClick,
 }: DataTableProps<T>) {
   const { colors, isDark } = useTheme();
   const styles = getStyles(colors, isDark);
@@ -133,21 +143,40 @@ export function DataTable<T>({
           </tr>
         </thead>
         <tbody>
-          {paginated.map((item, i) => (
-            <tr
-              key={rowKey(item, i)}
-              style={{
-                ...styles.row,
-                ...(rowHighlight?.(item) ? styles.rowHighlight : {}),
-              }}
-            >
-              {columns.map((col) => (
-                <td key={col.key} style={styles.td}>
-                  {col.render(item)}
-                </td>
-              ))}
-            </tr>
-          ))}
+          {paginated.map((item, i) => {
+            const expanded = expandRow?.(item);
+            const highlight = rowHighlight?.(item);
+            const highlightStyle = highlight === "danger" ? styles.rowHighlightDanger
+              : highlight === "warning" || highlight === true ? styles.rowHighlightWarning
+              : highlight === "info" ? styles.rowHighlightInfo
+              : {};
+            return (
+              <>
+                <tr
+                  key={rowKey(item, i)}
+                  onClick={() => onRowClick?.(item)}
+                  style={{
+                    ...styles.row,
+                    ...highlightStyle,
+                    ...(onRowClick ? { cursor: "pointer" } : {}),
+                  }}
+                >
+                  {columns.map((col) => (
+                    <td key={col.key} style={styles.td}>
+                      {col.render(item)}
+                    </td>
+                  ))}
+                </tr>
+                {expanded && (
+                  <tr key={`${rowKey(item, i)}-expand`}>
+                    <td colSpan={columns.length} style={{ ...styles.td, padding: 0 }}>
+                      {expanded}
+                    </td>
+                  </tr>
+                )}
+              </>
+            );
+          })}
         </tbody>
       </table>
       {totalPages > 1 && (

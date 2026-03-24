@@ -25,6 +25,48 @@ function getServiceTags(s: DetectedService): { label: string; variant: "danger" 
   return tags;
 }
 
+/**
+ * サービスのリスクスコアを算出（0-100）
+ *
+ * - NRD: +40（新規ドメインはフィッシングリスク大）
+ *   - confidence high: +10, medium: +5
+ *   - domainAge < 30日: +5
+ * - Typosquat: +35（typosquatResult.totalScoreで加重）
+ * - AI: +5（情報漏洩リスクはあるが基本的なリスクは低い）
+ * - Login: +5（認証情報の存在、ただしloginページは一般的）
+ * - プライバシーポリシー/利用規約なし: 各+3（コンプライアンスリスク）
+ */
+function getServiceRiskScore(s: DetectedService, connectionCount: number): number {
+  let score = 0;
+
+  if (s.nrdResult?.isNRD) {
+    score += 40;
+    if (s.nrdResult.confidence === "high") score += 10;
+    else if (s.nrdResult.confidence === "medium") score += 5;
+    if (s.nrdResult.domainAge !== null && s.nrdResult.domainAge < 30) score += 5;
+  }
+
+  if (s.typosquatResult?.isTyposquat) {
+    score += 25 + Math.min(10, s.typosquatResult.totalScore);
+  }
+
+  if (s.aiDetected?.hasAIActivity) score += 5;
+  if (s.hasLoginPage) score += 5;
+  if (!s.privacyPolicyUrl) score += 3;
+  if (!s.termsOfServiceUrl) score += 3;
+  if (connectionCount > 20) score += 3;
+
+  return Math.min(100, score);
+}
+
+function getServiceRiskLevel(s: DetectedService, connectionCount: number): false | "danger" | "warning" | "info" {
+  const score = getServiceRiskScore(s, connectionCount);
+  if (score >= 40) return "danger";
+  if (score >= 15) return "warning";
+  if (score >= 8) return "info";
+  return false;
+}
+
 export function ServicesTab({ services, nrdServices, loginServices, typosquatServices, aiServices, serviceConnections }: ServicesTabProps) {
   const { colors, isDark } = useTheme();
   const { searchQuery, setSearchQuery, filters, setFilter } = useTabFilter({
@@ -64,7 +106,59 @@ export function ServicesTab({ services, nrdServices, loginServices, typosquatSer
     <FilteredTab
       data={filtered}
       rowKey={(s) => s.domain}
-      rowHighlight={(s) => s.nrdResult?.isNRD === true}
+      rowHighlight={(s) => getServiceRiskLevel(s, serviceConnections[s.domain]?.length ?? 0)}
+      onRowClick={(s) => {
+        const destinations = serviceConnections[s.domain];
+        if (destinations && destinations.length > 0) toggleExpand(s.domain);
+      }}
+      expandRow={(s) => {
+        if (!expandedDomains.has(s.domain)) return null;
+        const destinations = serviceConnections[s.domain];
+        if (!destinations || destinations.length === 0) return null;
+        const sorted = [...destinations].sort();
+        const shown = sorted.slice(0, 10);
+        const remaining = sorted.length - shown.length;
+        return (
+          <div style={{ background: colors.bgSecondary }}>
+            {shown.map((domain) => (
+              <div
+                key={domain}
+                style={{
+                  padding: "4px 16px 4px 48px",
+                  borderBottom: `1px solid ${colors.borderLight}`,
+                }}
+              >
+                <code
+                  style={{
+                    fontSize: "11px",
+                    fontFamily: "monospace",
+                    color: colors.textSecondary,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    display: "block",
+                  }}
+                  title={domain}
+                >
+                  └ {domain}
+                </code>
+              </div>
+            ))}
+            {remaining > 0 && (
+              <div
+                style={{
+                  padding: "4px 16px 4px 48px",
+                  color: colors.textMuted,
+                  fontStyle: "italic",
+                  fontSize: "11px",
+                }}
+              >
+                他 {remaining} 件
+              </div>
+            )}
+          </div>
+        );
+      }}
       emptyMessage="検出されたサービスはありません"
       filterBar={
         <>
@@ -103,20 +197,39 @@ export function ServicesTab({ services, nrdServices, loginServices, typosquatSer
         {
           key: "domain",
           header: "ドメイン",
-          render: (s) => (
-            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              {s.faviconUrl ? (
-                <img
-                  src={s.faviconUrl}
-                  alt=""
-                  style={{ width: "16px", height: "16px", borderRadius: "2px", flexShrink: 0 }}
-                />
-              ) : (
-                <Globe size={12} style={{ flexShrink: 0, color: colors.textMuted }} />
-              )}
-              <code style={{ fontSize: "12px" }}>{s.domain}</code>
-            </div>
-          ),
+          render: (s) => {
+            const hasConnections = (serviceConnections[s.domain]?.length ?? 0) > 0;
+            const isExpanded = expandedDomains.has(s.domain);
+            return (
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <span
+                  style={{
+                    fontSize: "10px",
+                    color: colors.textSecondary,
+                    opacity: hasConnections ? 1 : 0.3,
+                    transition: "transform 0.2s",
+                    transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)",
+                    display: "inline-block",
+                    width: "12px",
+                    textAlign: "center",
+                    flexShrink: 0,
+                  }}
+                >
+                  ▶
+                </span>
+                {s.faviconUrl ? (
+                  <img
+                    src={s.faviconUrl}
+                    alt=""
+                    style={{ width: "16px", height: "16px", borderRadius: "2px", flexShrink: 0 }}
+                  />
+                ) : (
+                  <Globe size={12} style={{ flexShrink: 0, color: colors.textMuted }} />
+                )}
+                <code style={{ fontSize: "12px" }}>{s.domain}</code>
+              </div>
+            );
+          },
         },
         {
           key: "tags",
@@ -124,77 +237,18 @@ export function ServicesTab({ services, nrdServices, loginServices, typosquatSer
           width: "180px",
           render: (s) => {
             const tags = getServiceTags(s);
-            if (tags.length === 0) return <span style={{ color: colors.textMuted }}>-</span>;
+            const connCount = serviceConnections[s.domain]?.length ?? 0;
+            if (tags.length === 0 && connCount === 0) return <span style={{ color: colors.textMuted }}>-</span>;
             return (
               <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
+                {connCount > 0 && (
+                  <Badge variant="info" size="sm">{connCount} 通信先</Badge>
+                )}
                 {tags.map((tag) => (
                   <Badge key={tag.label} variant={tag.variant} size="sm">
                     {tag.label}
                   </Badge>
                 ))}
-              </div>
-            );
-          },
-        },
-        {
-          key: "connections",
-          header: "通信先",
-          width: "120px",
-          render: (s) => {
-            const destinations = serviceConnections[s.domain];
-            if (!destinations || destinations.length === 0) {
-              return <span style={{ color: colors.textMuted }}>-</span>;
-            }
-            const sorted = [...destinations].sort();
-            const isExpanded = expandedDomains.has(s.domain);
-            return (
-              <div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleExpand(s.domain);
-                  }}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    padding: "2px 6px",
-                    borderRadius: "4px",
-                    fontSize: "12px",
-                    color: isDark ? "#60a5fa" : "#0070f3",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "4px",
-                  }}
-                >
-                  <span style={{ fontSize: "10px" }}>{isExpanded ? "\u25BC" : "\u25B6"}</span>
-                  <Badge variant="info">{sorted.length}</Badge>
-                </button>
-                {isExpanded && (
-                  <div
-                    style={{
-                      marginTop: "8px",
-                      padding: "8px",
-                      background: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)",
-                      borderRadius: "6px",
-                      fontSize: "11px",
-                      maxHeight: "200px",
-                      overflowY: "auto",
-                    }}
-                  >
-                    {sorted.map((domain) => (
-                      <div
-                        key={domain}
-                        style={{
-                          padding: "3px 0",
-                          borderBottom: `1px solid ${colors.borderLight}`,
-                        }}
-                      >
-                        <code style={{ fontSize: "11px", color: colors.textPrimary }}>{domain}</code>
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
             );
           },

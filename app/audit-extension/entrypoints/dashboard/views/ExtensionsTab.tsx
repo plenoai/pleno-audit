@@ -4,7 +4,7 @@ import { FilteredTab } from "../components/FilteredTab";
 import { useTabFilter } from "../hooks/useTabFilter";
 import { useTheme } from "../../../lib/theme";
 import { truncate } from "../utils";
-import { createLogger, getPermissionRiskLevel, DANGEROUS_PERMISSIONS, type PermissionRiskLevel } from "@libztbs/extension-runtime";
+import { createLogger, getPermissionRiskLevel, DANGEROUS_PERMISSIONS } from "@libztbs/extension-runtime";
 
 const logger = createLogger("extensions-tab");
 
@@ -24,10 +24,6 @@ interface ExtensionInfo {
   icons?: { size: number; url: string }[];
 }
 
-type RiskLevel = PermissionRiskLevel;
-
-const riskBadgeVariant: Record<RiskLevel, string> = { critical: "danger", high: "warning", medium: "info", low: "success" };
-const riskLabel: Record<RiskLevel, string> = { critical: "重大", high: "高", medium: "中", low: "低" };
 
 export function ExtensionsTab() {
   const { colors, isDark } = useTheme();
@@ -128,6 +124,62 @@ export function ExtensionsTab() {
       data={filtered}
       rowKey={(ext) => ext.id}
       rowHighlight={(ext) => getPermissionRiskLevel(ext.permissions, ext.hostPermissions) === "critical"}
+      onRowClick={(ext) => {
+        const allPerms = [...ext.permissions, ...ext.hostPermissions];
+        if (allPerms.length > 0) toggleExpand(ext.id);
+      }}
+      expandRow={(ext) => {
+        if (!expandedIds.has(ext.id)) return null;
+        const allPerms = [...ext.permissions, ...ext.hostPermissions];
+        if (allPerms.length === 0) return null;
+        const shown = allPerms.slice(0, 10);
+        const remaining = allPerms.length - shown.length;
+        return (
+          <div style={{ background: colors.bgSecondary }}>
+            {shown.map((perm) => {
+              const isAllUrls = perm === "<all_urls>" || perm === "*://*/*";
+              const isDangerous = DANGEROUS_PERMISSIONS.some((d) => d.permission === perm && d.severity === "critical");
+              return (
+                <div
+                  key={perm}
+                  style={{
+                    padding: "4px 16px 4px 48px",
+                    borderBottom: `1px solid ${colors.borderLight}`,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                  }}
+                >
+                  <code
+                    style={{
+                      fontSize: "11px",
+                      fontFamily: "monospace",
+                      color: isAllUrls || isDangerous ? colors.danger ?? "#ef4444" : colors.textSecondary,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    └ {perm}
+                  </code>
+                </div>
+              );
+            })}
+            {remaining > 0 && (
+              <div
+                style={{
+                  padding: "4px 16px 4px 48px",
+                  color: colors.textMuted,
+                  fontStyle: "italic",
+                  fontSize: "11px",
+                }}
+              >
+                他 {remaining} 件
+              </div>
+            )}
+          </div>
+        );
+      }}
       emptyMessage="拡張機能が見つかりません"
       filterBar={
         <>
@@ -164,14 +216,37 @@ export function ExtensionsTab() {
         {
           key: "name",
           header: "拡張機能名",
-          render: (ext) => (
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              {ext.icons?.[0]?.url && (
-                <img src={ext.icons[0].url} alt="" style={{ width: "16px", height: "16px" }} />
-              )}
-              <span>{ext.name}</span>
-            </div>
-          ),
+          render: (ext) => {
+            const allPerms = [...ext.permissions, ...ext.hostPermissions];
+            const hasPerms = allPerms.length > 0;
+            const isExpanded = expandedIds.has(ext.id);
+            return (
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <span
+                  style={{
+                    fontSize: "10px",
+                    color: colors.textSecondary,
+                    opacity: hasPerms ? 1 : 0.3,
+                    transition: "transform 0.2s",
+                    transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)",
+                    display: "inline-block",
+                    width: "12px",
+                    textAlign: "center",
+                    flexShrink: 0,
+                  }}
+                >
+                  ▶
+                </span>
+                {ext.icons?.[0]?.url && (
+                  <img src={ext.icons[0].url} alt="" style={{ width: "16px", height: "16px" }} />
+                )}
+                <span>{ext.name}</span>
+                {hasPerms && (
+                  <Badge variant={allPerms.length > 10 ? "warning" : "info"} size="sm">{allPerms.length}</Badge>
+                )}
+              </div>
+            );
+          },
         },
         {
           key: "tags",
@@ -200,63 +275,6 @@ export function ExtensionsTab() {
                 {tags.map((tag) => (
                   <Badge key={tag.label} variant={tag.variant} size="sm">{tag.label}</Badge>
                 ))}
-              </div>
-            );
-          },
-        },
-        {
-          key: "permissions",
-          header: "権限",
-          width: "120px",
-          render: (ext) => {
-            const allPerms = [...ext.permissions, ...ext.hostPermissions];
-            if (allPerms.length === 0) return <span style={{ color: colors.textMuted }}>-</span>;
-            const isExpanded = expandedIds.has(ext.id);
-            return (
-              <div>
-                <button
-                  onClick={(e) => { e.stopPropagation(); toggleExpand(ext.id); }}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    padding: "2px 6px",
-                    borderRadius: "4px",
-                    fontSize: "12px",
-                    color: isDark ? "#60a5fa" : "#0070f3",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "4px",
-                  }}
-                >
-                  <span style={{ fontSize: "10px" }}>{isExpanded ? "\u25BC" : "\u25B6"}</span>
-                  <Badge variant={allPerms.length > 10 ? "warning" : "info"}>{allPerms.length}</Badge>
-                </button>
-                {isExpanded && (
-                  <div
-                    style={{
-                      marginTop: "8px",
-                      padding: "8px",
-                      background: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)",
-                      borderRadius: "6px",
-                      fontSize: "11px",
-                      maxHeight: "200px",
-                      overflowY: "auto",
-                      display: "flex",
-                      flexWrap: "wrap",
-                      gap: "4px",
-                    }}
-                  >
-                    {allPerms.map((perm) => {
-                      const isAllUrls = perm === "<all_urls>" || perm === "*://*/*";
-                      return (
-                        <Badge key={perm} variant={isAllUrls ? "danger" : "default"} size="sm">
-                          {perm}
-                        </Badge>
-                      );
-                    })}
-                  </div>
-                )}
               </div>
             );
           },

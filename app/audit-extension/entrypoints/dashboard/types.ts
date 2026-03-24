@@ -1,3 +1,5 @@
 export type TabType =
   | "services"
-  | "extensions";
+  | "extensions"
+  | "alerts"
+  | "settings";

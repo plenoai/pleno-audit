@@ -4,25 +4,35 @@ export function createDashboardStyles(colors: ThemeColors, isDark: boolean) {
   return {
     wrapper: {
       display: "flex",
+      flexDirection: "column" as const,
       minHeight: "100vh",
       fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
       color: colors.textPrimary,
       background: colors.bgSecondary,
     },
+    body: {
+      display: "flex",
+      flex: 1,
+      minHeight: 0,
+    },
     container: {
       flex: 1,
       maxWidth: "1200px",
       padding: "24px",
-      overflowY: "auto",
+      overflowY: "auto" as const,
     },
     header: {
-      marginBottom: "32px",
+      position: "sticky" as const,
+      top: 0,
+      zIndex: 10,
+      background: colors.bgPrimary,
+      borderBottom: `1px solid ${colors.border}`,
+      padding: "12px 24px",
     },
     headerTop: {
       display: "flex",
       justifyContent: "space-between",
       alignItems: "center",
-      marginBottom: "24px",
     },
     title: {
       fontSize: "20px",
