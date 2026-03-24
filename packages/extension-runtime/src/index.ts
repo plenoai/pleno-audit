@@ -48,14 +48,12 @@ export type {
   NetworkMonitorConfig,
   NetworkRequestRecord,
   InitiatorType,
-  DataRetentionConfig,
   DetectionConfig,
   BlockingConfig,
   NotificationConfig,
   AlertCooldownData,
 } from "./storage-types.js";
 export {
-  DEFAULT_DATA_RETENTION_CONFIG,
   DEFAULT_DETECTION_CONFIG,
   DEFAULT_BLOCKING_CONFIG,
   DEFAULT_NOTIFICATION_CONFIG,

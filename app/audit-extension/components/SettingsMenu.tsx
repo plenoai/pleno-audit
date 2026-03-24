@@ -14,17 +14,9 @@ interface Props {
 
 const logger = createLogger("settings-menu");
 
-function formatRetentionDays(days: number): string {
-  if (days === 0) return "無期限";
-  if (days < 30) return `${days}日`;
-  const months = Math.round(days / 30);
-  return months === 1 ? "1ヶ月" : `${months}ヶ月`;
-}
-
 export function SettingsMenu({ onClearData, onExport }: Props) {
   const { colors } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
-  const [retentionDays, setRetentionDays] = useState<number | null>(null);
   const [notificationConfig, setNotificationConfig] = useState<NotificationConfig | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -47,19 +39,6 @@ export function SettingsMenu({ onClearData, onExport }: Props) {
   }, []);
 
   useEffect(() => {
-    if (isOpen && retentionDays === null) {
-      chrome.runtime.sendMessage({ type: "GET_DATA_RETENTION_CONFIG" })
-        .then((config) => {
-          setRetentionDays(config?.retentionDays ?? 180);
-        })
-        .catch((error) => {
-          setRetentionDays(180);
-          reportOperationError("データ保持設定の読み込みに失敗しました。", error);
-        });
-    }
-  }, [isOpen, retentionDays]);
-
-  useEffect(() => {
     if (isOpen && notificationConfig === null) {
       chrome.runtime.sendMessage({ type: "GET_NOTIFICATION_CONFIG" })
         .then((config) => {
@@ -71,23 +50,6 @@ export function SettingsMenu({ onClearData, onExport }: Props) {
         });
     }
   }, [isOpen, notificationConfig]);
-
-  function handleRetentionChange(days: number) {
-    if (retentionDays === null) return;
-    const previous = retentionDays;
-    setRetentionDays(days);
-    chrome.runtime.sendMessage({
-      type: "SET_DATA_RETENTION_CONFIG",
-      data: {
-        retentionDays: days,
-        autoCleanupEnabled: days !== 0,
-        lastCleanupTimestamp: 0,
-      },
-    }).catch((error) => {
-      setRetentionDays(previous);
-      reportOperationError("データ保持設定の保存に失敗しました。", error);
-    });
-  }
 
   function handleNotificationToggle() {
     if (!notificationConfig) return;
@@ -196,34 +158,6 @@ export function SettingsMenu({ onClearData, onExport }: Props) {
                 </button>
                 <div style={{ fontSize: "10px", color: colors.textMuted, marginTop: "6px", lineHeight: 1.4 }}>
                   重大なセキュリティイベントを通知
-                </div>
-              </div>
-            ) : (
-              <div style={{ fontSize: "12px", color: colors.textSecondary }}>読み込み中...</div>
-            )}
-          </div>
-
-          <div style={{ padding: "12px", borderBottom: `1px solid ${colors.border}` }}>
-            <div style={{ fontSize: "11px", color: colors.textSecondary, marginBottom: "8px", fontWeight: 500 }}>
-              データ保持期間
-            </div>
-            {retentionDays !== null ? (
-              <div>
-                <div style={{ fontSize: "12px", color: colors.textPrimary, marginBottom: "4px" }}>
-                  {formatRetentionDays(retentionDays)}
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="365"
-                  step="1"
-                  value={retentionDays}
-                  onChange={(e) => handleRetentionChange(parseInt((e.target as HTMLInputElement).value, 10))}
-                  style={{ width: "100%" }}
-                />
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10px", color: colors.textMuted, marginTop: "2px" }}>
-                  <span>無期限</span>
-                  <span>1年</span>
                 </div>
               </div>
             ) : (

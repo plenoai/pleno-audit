@@ -101,7 +101,6 @@ describe("storage", () => {
           "nrdConfig",
           "networkMonitorConfig",
           "doHMonitorConfig",
-          "dataRetentionConfig",
           "detectionConfig",
           "blockingConfig",
           "notificationConfig",

@@ -20,9 +20,6 @@ import {
   setDetectionConfig,
   getNotificationConfig,
   setNotificationConfig,
-  getDataRetentionConfig,
-  setDataRetentionConfig,
-  cleanupOldData,
   getBlockingConfig,
   setBlockingConfig,
 } from "./background-services/config.js";
@@ -70,9 +67,6 @@ export function createBackgroundServices(serviceLogger: Logger) {
     setDetectionConfig,
     getNotificationConfig,
     setNotificationConfig,
-    getDataRetentionConfig,
-    setDataRetentionConfig: bind(setDataRetentionConfig),
-    cleanupOldData: bind(cleanupOldData),
     getBlockingConfig,
     setBlockingConfig: bind(setBlockingConfig),
   };

@@ -9,7 +9,6 @@ import type {
 } from "@libztbs/csp";
 import type {
   BlockingConfig,
-  DataRetentionConfig,
   DetectionConfig,
   DoHMonitorConfig,
   EnterpriseStatus,
@@ -59,7 +58,6 @@ export interface RuntimeHandlerFallbacks {
   nrdConfig: NRDConfig;
   typosquatConfig: TyposquatConfig;
   networkMonitorConfig: NetworkMonitorConfig;
-  dataRetentionConfig: DataRetentionConfig;
   blockingConfig: BlockingConfig;
   notificationConfig: NotificationConfig;
   doHMonitorConfig: DoHMonitorConfig;
@@ -160,10 +158,6 @@ handleNetworkInspection: (data: unknown, sender: chrome.runtime.MessageSender) =
   getAllExtensionRisks: () => Promise<unknown[]>;
   getExtensionRiskAnalysis: (extensionId: string) => Promise<unknown>;
   analyzeExtensionRisks: () => Promise<void>;
-
-  getDataRetentionConfig: () => Promise<DataRetentionConfig>;
-  setDataRetentionConfig: (config: DataRetentionConfig) => Promise<{ success: boolean }>;
-  cleanupOldData: () => Promise<{ deleted: number }>;
 
   getBlockingConfig: () => Promise<BlockingConfig>;
   setBlockingConfig: (config: BlockingConfig) => Promise<{ success: boolean }>;

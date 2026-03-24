@@ -6,7 +6,6 @@ interface AlarmHandlerDependencies {
   logger: LoggerLike;
   checkDNRMatchesHandler: () => Promise<void>;
   analyzeExtensionRisks: () => Promise<void>;
-  cleanupOldData: () => Promise<{ deleted: number }>;
 }
 
 export function createAlarmHandlers(
@@ -18,9 +17,6 @@ export function createAlarmHandlers(
     }],
     ["extensionRiskAnalysis", () => {
       deps.analyzeExtensionRisks().catch((error) => deps.logger.debug("Extension risk analysis failed:", error));
-    }],
-    ["dataCleanup", () => {
-      deps.cleanupOldData().catch((error) => deps.logger.debug("Data cleanup failed:", error));
     }],
   ]);
 }

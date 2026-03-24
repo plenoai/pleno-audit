@@ -6,12 +6,10 @@ import type {
   CSPConfig,
   DetectedService,
   AIMonitorConfig,
-  DataRetentionConfig,
   DetectionConfig,
   BlockingConfig,
 } from "./storage-types.js";
 import {
-  DEFAULT_DATA_RETENTION_CONFIG,
   DEFAULT_DETECTION_CONFIG,
   DEFAULT_BLOCKING_CONFIG,
   DEFAULT_NETWORK_MONITOR_CONFIG,
@@ -34,7 +32,6 @@ const STORAGE_KEYS = [
   "nrdConfig",
   "networkMonitorConfig",
   "doHMonitorConfig",
-  "dataRetentionConfig",
   "detectionConfig",
   "blockingConfig",
   "notificationConfig",
@@ -70,8 +67,6 @@ export async function getStorage(): Promise<StorageData> {
     doHMonitorConfig:
       (result.doHMonitorConfig as StorageData["doHMonitorConfig"]) ||
       DEFAULT_DOH_MONITOR_CONFIG,
-    dataRetentionConfig:
-      (result.dataRetentionConfig as DataRetentionConfig) || DEFAULT_DATA_RETENTION_CONFIG,
     detectionConfig:
       (result.detectionConfig as DetectionConfig) || DEFAULT_DETECTION_CONFIG,
     blockingConfig:
@@ -101,7 +96,6 @@ export async function getStorageKey<K extends StorageKey>(
     nrdConfig: DEFAULT_NRD_CONFIG,
     networkMonitorConfig: DEFAULT_NETWORK_MONITOR_CONFIG,
     doHMonitorConfig: DEFAULT_DOH_MONITOR_CONFIG,
-    dataRetentionConfig: DEFAULT_DATA_RETENTION_CONFIG,
     detectionConfig: DEFAULT_DETECTION_CONFIG,
     blockingConfig: DEFAULT_BLOCKING_CONFIG,
     notificationConfig: DEFAULT_NOTIFICATION_CONFIG,
@@ -141,7 +135,6 @@ export async function clearAllStorage(options?: { preserveTheme?: boolean }): Pr
     nrdConfig: DEFAULT_NRD_CONFIG,
     networkMonitorConfig: DEFAULT_NETWORK_MONITOR_CONFIG,
     doHMonitorConfig: DEFAULT_DOH_MONITOR_CONFIG,
-    dataRetentionConfig: DEFAULT_DATA_RETENTION_CONFIG,
     detectionConfig: DEFAULT_DETECTION_CONFIG,
     blockingConfig: DEFAULT_BLOCKING_CONFIG,
     notificationConfig: DEFAULT_NOTIFICATION_CONFIG,

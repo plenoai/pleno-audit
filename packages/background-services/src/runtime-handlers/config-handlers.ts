@@ -1,6 +1,5 @@
 import type {
   BlockingConfig,
-  DataRetentionConfig,
   DetectionConfig,
   DoHMonitorConfig,
   NotificationConfig,
@@ -11,18 +10,6 @@ export function createConfigurationHandlers(
   deps: RuntimeHandlerDependencies,
 ): AsyncHandlerEntry[] {
   return [
-    ["GET_DATA_RETENTION_CONFIG", {
-      execute: () => deps.getDataRetentionConfig(),
-      fallback: () => deps.fallbacks.dataRetentionConfig,
-    }],
-    ["SET_DATA_RETENTION_CONFIG", {
-      execute: (message) => deps.setDataRetentionConfig(message.data as DataRetentionConfig),
-      fallback: () => ({ success: false }),
-    }],
-    ["TRIGGER_DATA_CLEANUP", {
-      execute: () => deps.cleanupOldData(),
-      fallback: () => ({ deleted: 0 }),
-    }],
     ["GET_BLOCKING_CONFIG", {
       execute: () => deps.getBlockingConfig(),
       fallback: () => deps.fallbacks.blockingConfig,

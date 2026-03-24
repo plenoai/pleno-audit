@@ -25,7 +25,6 @@ export function Settings() {
   const { colors } = useTheme();
   const [config, setConfig] = useState<CSPConfig | null>(null);
   const [nrdConfig, setNRDConfig] = useState<NRDConfig | null>(null);
-  const [retentionDays, setRetentionDays] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [enterpriseStatus, setEnterpriseStatus] = useState<EnterpriseStatus>(DEFAULT_ENTERPRISE_STATUS);
@@ -46,10 +45,9 @@ export function Settings() {
   }, []);
 
   async function loadConfig() {
-    const [cspResult, nrdResult, retentionResult] = await Promise.allSettled([
+    const [cspResult, nrdResult] = await Promise.allSettled([
       sendMessage<CSPConfig>({ type: "GET_CSP_CONFIG" }),
       sendMessage<NRDConfig>({ type: "GET_NRD_CONFIG" }),
-      sendMessage<{ retentionDays: number }>({ type: "GET_DATA_RETENTION_CONFIG" }),
     ]);
 
     if (cspResult.status === "fulfilled") {
@@ -71,43 +69,6 @@ export function Settings() {
       });
       setNRDConfig(DEFAULT_NRD_CONFIG);
     }
-
-    if (retentionResult.status === "fulfilled") {
-      setRetentionDays(retentionResult.value?.retentionDays ?? 180);
-    } else {
-      logger.warn({
-        event: "POPUP_RETENTION_CONFIG_LOAD_FAILED",
-        data: { reason: String(retentionResult.reason) },
-      });
-      setRetentionDays(180);
-    }
-  }
-
-  function handleRetentionChange(days: number) {
-    if (isLocked || retentionDays === null) return;
-    const previous = retentionDays;
-    setRetentionDays(days);
-    sendMessage({
-      type: "SET_DATA_RETENTION_CONFIG",
-      data: {
-        retentionDays: days,
-        autoCleanupEnabled: days !== 0,
-        lastCleanupTimestamp: 0,
-      },
-    }).catch((error) => {
-      logger.warn({
-        event: "POPUP_RETENTION_CONFIG_SAVE_FAILED",
-        error,
-      });
-      setRetentionDays(previous);
-    });
-  }
-
-  function formatRetentionDays(days: number): string {
-    if (days === 0) return "No expiration";
-    if (days < 30) return `${days} days`;
-    const months = Math.round(days / 30);
-    return months === 1 ? "1 month" : `${months} months`;
   }
 
   async function handleSave() {
@@ -150,7 +111,7 @@ export function Settings() {
     }
   }
 
-  if (!config || !nrdConfig || retentionDays === null) {
+  if (!config || !nrdConfig) {
     return (
       <div style={styles.section}>
         <p style={styles.emptyText}>Loading...</p>
@@ -241,29 +202,6 @@ export function Settings() {
         <span style={{ fontSize: "11px", color: colors.textSecondary }}>
           Domains registered within this period are flagged as NRD
         </span>
-      </div>
-
-      <hr style={{ margin: "16px 0", border: "none", borderTop: `1px solid ${colors.border}` }} />
-
-      <h3 style={styles.sectionTitle}>Data Retention</h3>
-
-      <div style={{ marginBottom: "12px" }}>
-        <label style={styles.label}>
-          {formatRetentionDays(retentionDays)}
-        </label>
-        <input
-          type="range"
-          min="0"
-          max="365"
-          step="1"
-          value={retentionDays}
-          onChange={(e) => handleRetentionChange(parseInt((e.target as HTMLInputElement).value, 10))}
-          style={{ width: "100%", marginBottom: "4px" }}
-        />
-        <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10px", color: colors.textSecondary }}>
-          <span>No expiration</span>
-          <span>1 year</span>
-        </div>
       </div>
 
       <div style={{ display: "flex", gap: "8px" }}>

@@ -1,13 +1,11 @@
 import {
   DEFAULT_BLOCKING_CONFIG,
-  DEFAULT_DATA_RETENTION_CONFIG,
   DEFAULT_DETECTION_CONFIG,
   DEFAULT_NOTIFICATION_CONFIG,
   getStorage,
   setStorage,
   createLogger,
   type BlockingConfig,
-  type DataRetentionConfig,
   type DetectionConfig,
   type NotificationConfig,
 } from "@libztbs/extension-runtime";
@@ -50,46 +48,6 @@ export async function setNotificationConfig(
   } catch (error) {
     logger.error("Error setting notification config:", error);
     return { success: false };
-  }
-}
-
-export async function getDataRetentionConfig(): Promise<DataRetentionConfig> {
-  const storage = await getStorage();
-  return storage.dataRetentionConfig || DEFAULT_DATA_RETENTION_CONFIG;
-}
-
-export async function setDataRetentionConfig(
-  state: BackgroundServiceState,
-  newConfig: DataRetentionConfig
-): Promise<{ success: boolean }> {
-  try {
-    await setStorage({ dataRetentionConfig: newConfig });
-    return { success: true };
-  } catch (error) {
-    state.logger?.error("Error setting data retention config:", error);
-    return { success: false };
-  }
-}
-
-export async function cleanupOldData(state: BackgroundServiceState): Promise<{ deleted: number }> {
-  try {
-    const config = await getDataRetentionConfig();
-    if (!config.autoCleanupEnabled || config.retentionDays === 0) {
-      return { deleted: 0 };
-    }
-
-    await setStorage({
-      dataRetentionConfig: {
-        ...config,
-        lastCleanupTimestamp: Date.now(),
-      },
-    });
-
-    state.logger?.info(`Data cleanup completed.`);
-    return { deleted: 0 };
-  } catch (error) {
-    state.logger?.error("Error during data cleanup:", error);
-    return { deleted: 0 };
   }
 }
 

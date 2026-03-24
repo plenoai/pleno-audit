@@ -13,7 +13,6 @@ import {
   clearAllStorage,
   createLogger,
   DEFAULT_NETWORK_MONITOR_CONFIG,
-  DEFAULT_DATA_RETENTION_CONFIG,
   DEFAULT_DETECTION_CONFIG,
   DEFAULT_BLOCKING_CONFIG,
   DEFAULT_NOTIFICATION_CONFIG,
@@ -356,8 +355,6 @@ function registerRecurringAlarms(): void {
   chrome.alarms.create("checkDNRMatches", { periodInMinutes: 0.6 });
   // Extension risk analysis (runs every 5 minutes)
   chrome.alarms.create("extensionRiskAnalysis", { periodInMinutes: 5 });
-  // Data cleanup alarm (runs once per day)
-  chrome.alarms.create("dataCleanup", { periodInMinutes: 60 * 24 });
 }
 
 function createRuntimeHandlerDependencies(): RuntimeHandlerDependencies {
@@ -370,7 +367,6 @@ function createRuntimeHandlerDependencies(): RuntimeHandlerDependencies {
       nrdConfig: DEFAULT_NRD_CONFIG,
       typosquatConfig: DEFAULT_TYPOSQUAT_CONFIG,
       networkMonitorConfig: DEFAULT_NETWORK_MONITOR_CONFIG,
-      dataRetentionConfig: DEFAULT_DATA_RETENTION_CONFIG,
       blockingConfig: DEFAULT_BLOCKING_CONFIG,
       notificationConfig: DEFAULT_NOTIFICATION_CONFIG,
       doHMonitorConfig: DEFAULT_DOH_MONITOR_CONFIG,
@@ -438,9 +434,6 @@ handleNetworkInspection: (data, sender) => networkSecurityInspector.handleNetwor
     analyzeExtensionRisks,
     getServiceConnections: connectionTracker.getServiceConnections,
     getExtensionConnections: connectionTracker.getExtensionConnections,
-    getDataRetentionConfig: backgroundConfig.getDataRetentionConfig,
-    setDataRetentionConfig: backgroundConfig.setDataRetentionConfig,
-    cleanupOldData: backgroundConfig.cleanupOldData,
     getBlockingConfig: backgroundConfig.getBlockingConfig,
     setBlockingConfig: backgroundConfig.setBlockingConfig,
     getNotificationConfig: backgroundConfig.getNotificationConfig,
@@ -470,7 +463,6 @@ export default defineBackground(() => {
     logger,
     checkDNRMatchesHandler,
     analyzeExtensionRisks,
-    cleanupOldData: backgroundConfig.cleanupOldData,
   });
 
   chrome.alarms.onAlarm.addListener((alarm) => {

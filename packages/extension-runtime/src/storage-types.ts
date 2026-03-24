@@ -62,18 +62,6 @@ export interface NetworkRequestRecord {
   detectedBy: "webRequest" | "declarativeNetRequest";
 }
 
-export interface DataRetentionConfig {
-  retentionDays: number;
-  autoCleanupEnabled: boolean;
-  lastCleanupTimestamp: number;
-}
-
-export const DEFAULT_DATA_RETENTION_CONFIG: DataRetentionConfig = {
-  retentionDays: 180, // 6ヶ月
-  autoCleanupEnabled: true,
-  lastCleanupTimestamp: 0,
-};
-
 export interface DetectionConfig {
   enableNRD: boolean;
   enableTyposquat: boolean;
@@ -192,7 +180,6 @@ export interface StorageData {
   /** ネットワーク監視設定 */
   networkMonitorConfig?: NetworkMonitorConfig;
   doHMonitorConfig?: DoHMonitorConfig;
-  dataRetentionConfig?: DataRetentionConfig;
   detectionConfig?: DetectionConfig;
   blockingConfig?: BlockingConfig;
   notificationConfig?: NotificationConfig;
