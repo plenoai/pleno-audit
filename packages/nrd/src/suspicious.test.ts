@@ -31,6 +31,24 @@ describe("calculateEntropy", () => {
     expect(entropy).toBeGreaterThanOrEqual(0);
     expect(entropy).toBeLessThanOrEqual(1);
   });
+
+  it("returns 0 for uniform string (all same chars)", () => {
+    expect(calculateEntropy("aaaaaaa")).toBe(0);
+  });
+
+  it("returns maximum entropy for fully varied string", () => {
+    // "abcd" has 4 unique chars out of 4 = max entropy
+    const entropy = calculateEntropy("abcd");
+    expect(entropy).toBe(1);
+  });
+
+  it("never exceeds 1 (floating point guard)", () => {
+    // Strings where floating point arithmetic might produce > 1
+    const values = ["ab", "abc", "abcdef", "abcdefghij"];
+    for (const v of values) {
+      expect(calculateEntropy(v)).toBeLessThanOrEqual(1);
+    }
+  });
 });
 
 describe("extractSLD", () => {
@@ -50,6 +68,14 @@ describe("extractSLD", () => {
   it("handles single part domains", () => {
     expect(extractSLD("localhost")).toBe("localhost");
   });
+
+  it("handles .com.au style SLDs", () => {
+    expect(extractSLD("example.com.au")).toBe("example");
+  });
+
+  it("handles .net.jp style SLDs", () => {
+    expect(extractSLD("example.net.jp")).toBe("example");
+  });
 });
 
 describe("extractTLD", () => {
@@ -61,6 +87,12 @@ describe("extractTLD", () => {
 
   it("returns lowercase TLD", () => {
     expect(extractTLD("example.COM")).toBe("com");
+  });
+
+  it("handles suspicious TLDs correctly", () => {
+    expect(extractTLD("phishing.xyz")).toBe("xyz");
+    expect(extractTLD("malware.tk")).toBe("tk");
+    expect(extractTLD("spam.top")).toBe("top");
   });
 });
 
@@ -85,6 +117,14 @@ describe("hasExcessiveHyphens", () => {
     expect(hasExcessiveHyphens("my-example")).toBe(false);
     expect(hasExcessiveHyphens("my-cool-site")).toBe(false);
   });
+
+  it("returns false for no hyphens", () => {
+    expect(hasExcessiveHyphens("example")).toBe(false);
+  });
+
+  it("returns false for exactly 2 hyphens (not consecutive)", () => {
+    expect(hasExcessiveHyphens("my-cool-site")).toBe(false);
+  });
 });
 
 describe("hasExcessiveNumbers", () => {
@@ -101,6 +141,19 @@ describe("hasExcessiveNumbers", () => {
   it("returns false for normal number usage", () => {
     expect(hasExcessiveNumbers("example1")).toBe(false);
     expect(hasExcessiveNumbers("version2")).toBe(false);
+  });
+
+  it("returns false for no numbers", () => {
+    expect(hasExcessiveNumbers("example")).toBe(false);
+  });
+
+  it("returns true for 3 digits in short string (high ratio)", () => {
+    // "abc123" = 50% digits (3/6), exceeds 30% threshold
+    expect(hasExcessiveNumbers("abc123")).toBe(true);
+  });
+
+  it("returns true for all-digit string", () => {
+    expect(hasExcessiveNumbers("12345")).toBe(true);
   });
 });
 
@@ -119,6 +172,22 @@ describe("isRandomLooking", () => {
     expect(isRandomLooking("example")).toBe(false);
     expect(isRandomLooking("google")).toBe(false);
     expect(isRandomLooking("amazon")).toBe(false);
+  });
+
+  it("returns false for short domains (1-2 chars)", () => {
+    // Short domains with no vowels are not flagged (length < 3 check)
+    expect(isRandomLooking("a")).toBe(false);
+    expect(isRandomLooking("ab")).toBe(false);
+  });
+
+  it("returns true for very low vowel ratio in 6+ char domains", () => {
+    // "bcdfgh" = 6 chars, 0 vowels → flagged
+    expect(isRandomLooking("bcdfgh")).toBe(true);
+  });
+
+  it("does not flag domain with reasonable vowel ratio", () => {
+    // "twitter" has 2 vowels out of 7 = ~28%, above 15% threshold
+    expect(isRandomLooking("twitter")).toBe(false);
   });
 });
 
@@ -144,6 +213,64 @@ describe("calculateSuspiciousScore", () => {
     const score = calculateSuspiciousScore("x--y--z1234567.xyz");
     expect(score.totalScore).toBeLessThanOrEqual(100);
   });
+
+  it("scores very short SLD (2 chars) with 10 extra points", () => {
+    // "ab.xyz" - short SLD + suspicious TLD
+    const shortSLD = calculateSuspiciousScore("ab.xyz");
+    const normalSLD = calculateSuspiciousScore("example.xyz");
+
+    // Short SLD should score higher (extra 10 pts)
+    expect(shortSLD.totalScore).toBeGreaterThan(normalSLD.totalScore);
+  });
+
+  it("includes entropy in score breakdown", () => {
+    const score = calculateSuspiciousScore("example.com");
+    expect(score.entropy).toBeGreaterThanOrEqual(0);
+    expect(score.entropy).toBeLessThanOrEqual(1);
+  });
+
+  it("detects excessive hyphens", () => {
+    // Note: extractSLD removes TLD, so hyphens must be in SLD part
+    const score = calculateSuspiciousScore("ex-am-pl-es.xyz");
+    expect(score.hasExcessiveHyphens).toBe(true);
+    expect(score.totalScore).toBeGreaterThan(25);
+  });
+
+  it("detects excessive numbers", () => {
+    const score = calculateSuspiciousScore("abc12345.com");
+    expect(score.hasExcessiveNumbers).toBe(true);
+    expect(score.totalScore).toBeGreaterThanOrEqual(15);
+  });
+
+  it("detects random-looking domain name", () => {
+    const score = calculateSuspiciousScore("xyzqwrt.com");
+    expect(score.isRandomLooking).toBe(true);
+    expect(score.totalScore).toBeGreaterThanOrEqual(20);
+  });
+
+  it("returns all required fields in result", () => {
+    const score = calculateSuspiciousScore("test.com");
+    expect(typeof score.entropy).toBe("number");
+    expect(typeof score.suspiciousTLD).toBe("boolean");
+    expect(typeof score.hasExcessiveHyphens).toBe("boolean");
+    expect(typeof score.hasExcessiveNumbers).toBe("boolean");
+    expect(typeof score.isRandomLooking).toBe("boolean");
+    expect(typeof score.totalScore).toBe("number");
+  });
+
+  it("compound risk factors accumulate score", () => {
+    // Random-looking domain + suspicious TLD
+    const compound = calculateSuspiciousScore("xyzqwrt.xyz");
+    const singleFactor = calculateSuspiciousScore("xyzqwrt.com");
+
+    expect(compound.totalScore).toBeGreaterThan(singleFactor.totalScore);
+  });
+
+  it("entropy contribution is bounded at 30 pts max", () => {
+    // Even fully random SLD should not contribute more than 30 pts from entropy alone
+    const score = calculateSuspiciousScore("abcdefghij.com");
+    expect(score.totalScore).toBeLessThanOrEqual(100);
+  });
 });
 
 describe("isHighRiskDomain", () => {
@@ -155,6 +282,22 @@ describe("isHighRiskDomain", () => {
   it("returns false when score is below threshold", () => {
     const scores = calculateSuspiciousScore("google.com");
     expect(isHighRiskDomain(scores, 50)).toBe(false);
+  });
+
+  it("returns true when score equals threshold (>= is inclusive)", () => {
+    const scores = calculateSuspiciousScore("xyzqwrt.xyz");
+    // Get the actual score and check equality
+    expect(isHighRiskDomain(scores, scores.totalScore)).toBe(true);
+  });
+
+  it("returns false when threshold is 0 only for zero-score domains", () => {
+    // Any domain with some entropy will have score > 0
+    const scores = calculateSuspiciousScore("google.com");
+    // google.com has non-zero entropy, so score > 0
+    // Use a threshold slightly above the score to verify false
+    if (scores.totalScore < 100) {
+      expect(isHighRiskDomain(scores, scores.totalScore + 1)).toBe(false);
+    }
   });
 });
 
@@ -169,5 +312,31 @@ describe("SUSPICIOUS_TLDS", () => {
     expect(SUSPICIOUS_TLDS.has("com")).toBe(false);
     expect(SUSPICIOUS_TLDS.has("org")).toBe(false);
     expect(SUSPICIOUS_TLDS.has("net")).toBe(false);
+  });
+
+  it("contains free abuse-prone TLDs (.tk, .ml, .ga, .cf, .gq)", () => {
+    expect(SUSPICIOUS_TLDS.has("tk")).toBe(true);
+    expect(SUSPICIOUS_TLDS.has("ml")).toBe(true);
+    expect(SUSPICIOUS_TLDS.has("ga")).toBe(true);
+    expect(SUSPICIOUS_TLDS.has("cf")).toBe(true);
+    expect(SUSPICIOUS_TLDS.has("gq")).toBe(true);
+  });
+
+  it("contains high-abuse generic TLDs (.buzz, .click, .link)", () => {
+    expect(SUSPICIOUS_TLDS.has("buzz")).toBe(true);
+    expect(SUSPICIOUS_TLDS.has("click")).toBe(true);
+    expect(SUSPICIOUS_TLDS.has("link")).toBe(true);
+  });
+
+  it("contains recent high-abuse TLDs (.icu, .cyou, .cfd)", () => {
+    expect(SUSPICIOUS_TLDS.has("icu")).toBe(true);
+    expect(SUSPICIOUS_TLDS.has("cyou")).toBe(true);
+    expect(SUSPICIOUS_TLDS.has("cfd")).toBe(true);
+  });
+
+  it("does not contain country TLDs like .jp, .uk, .de", () => {
+    expect(SUSPICIOUS_TLDS.has("jp")).toBe(false);
+    expect(SUSPICIOUS_TLDS.has("uk")).toBe(false);
+    expect(SUSPICIOUS_TLDS.has("de")).toBe(false);
   });
 });

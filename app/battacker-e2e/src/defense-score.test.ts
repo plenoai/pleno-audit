@@ -2836,6 +2836,273 @@ const attacks: AttackDef[] = [
         }
       }),
   },
+
+  {
+    id: "mutation-observer-self-surveillance",
+    name: "MutationObserver Self-Surveillance",
+    category: "advanced",
+    description:
+      "Installs a MutationObserver on the entire document subtree to capture every DOM mutation: " +
+      "added nodes, removed nodes, and attribute changes. This allows an attacker to observe user " +
+      "inputs, form field values injected into the DOM, and dynamically loaded content (e.g. chat " +
+      "messages, password hints). MutationObserver is used internally by the extension's own hook " +
+      "system and cannot itself be hooked on the attacker side without breaking the extension.",
+    severity: "high",
+    simulate: (page) =>
+      page.evaluate(async () => {
+        const startTime = performance.now();
+        try {
+          const mutations: { type: string; target: string; value: string }[] = [];
+
+          // MutationObserver constructor is not hooked — hooking it would break
+          // virtually every modern web framework (React, Vue, Angular all rely on it).
+          const observer = new MutationObserver((records) => {
+            for (const record of records) {
+              if (record.type === "childList") {
+                for (const node of record.addedNodes) {
+                  const el = node as HTMLElement;
+                  const text = el.textContent?.trim().substring(0, 80) ?? "";
+                  if (text) {
+                    mutations.push({
+                      type: "node-added",
+                      target: el.tagName ?? "TEXT",
+                      value: text,
+                    });
+                  }
+                  // Capture input values nested in added subtrees
+                  if (el.querySelectorAll) {
+                    for (const input of el.querySelectorAll("input, textarea")) {
+                      const inp = input as HTMLInputElement;
+                      if (inp.value) {
+                        mutations.push({
+                          type: "input-in-added-node",
+                          target: inp.name || inp.id || inp.type,
+                          value: inp.value.substring(0, 80),
+                        });
+                      }
+                    }
+                  }
+                }
+              } else if (record.type === "attributes") {
+                const el = record.target as HTMLElement;
+                const attrVal = el.getAttribute(record.attributeName ?? "") ?? "";
+                mutations.push({
+                  type: "attribute-change",
+                  target: `${el.tagName}[${record.attributeName}]`,
+                  value: attrVal.substring(0, 80),
+                });
+              } else if (record.type === "characterData") {
+                mutations.push({
+                  type: "text-change",
+                  target: record.target.parentElement?.tagName ?? "unknown",
+                  value: (record.target.textContent ?? "").substring(0, 80),
+                });
+              }
+            }
+          });
+
+          // Observe the entire document — subtree + all mutation types.
+          // childList catches dynamically loaded content; attributes catches
+          // value changes reflected as attrs; characterData catches text edits.
+          observer.observe(document.documentElement, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeOldValue: true,
+            characterData: true,
+            characterDataOldValue: true,
+          });
+
+          // Trigger observable mutations by programmatically manipulating the DOM.
+          const probe = document.createElement("div");
+          probe.id = "mutation-probe";
+          probe.textContent = "probe-value";
+          document.body.appendChild(probe);
+          probe.setAttribute("data-secret", "exfil-token-abc123");
+          probe.textContent = "updated-text";
+          document.body.removeChild(probe);
+
+          // Yield to the microtask queue so the observer callback fires.
+          await new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+          observer.disconnect();
+
+          return {
+            blocked: false,
+            executionTime: performance.now() - startTime,
+            details:
+              `MutationObserver surveillance active on full document subtree — ` +
+              `${mutations.length} mutations captured (childList, attributes, characterData) — ` +
+              `sample: ${JSON.stringify(mutations[0] ?? {}).substring(0, 120)} — ` +
+              `MutationObserver is not hooked; extension relies on it internally`,
+          };
+        } catch (error: any) {
+          return {
+            blocked: true,
+            executionTime: performance.now() - startTime,
+            details: `MutationObserver self-surveillance blocked: ${error?.message}`,
+          };
+        }
+      }),
+  },
+
+  {
+    id: "selection-api-keylogging",
+    name: "Selection API Keylogging",
+    category: "privacy",
+    description:
+      "Registers a 'selectionchange' event listener on document to be notified every time the user " +
+      "changes their text selection, then reads the selected text via document.getSelection(). " +
+      "This exposes passwords, PII, and confidential content the user highlights. Neither " +
+      "'selectionchange' event registration nor document.getSelection() are hooked by the extension.",
+    severity: "critical",
+    simulate: (page) =>
+      page.evaluate(async () => {
+        const startTime = performance.now();
+        try {
+          const captures: { text: string; anchorOffset: number; focusOffset: number }[] = [];
+
+          // 'selectionchange' fires on document — not a method call, not a constructor.
+          // The extension has no hook point for addEventListener on document for this event.
+          const onSelectionChange = () => {
+            // document.getSelection() is also not hooked.
+            const sel = document.getSelection();
+            if (!sel || sel.isCollapsed) return;
+            const text = sel.toString().substring(0, 200);
+            if (text.trim()) {
+              captures.push({
+                text,
+                anchorOffset: sel.anchorOffset,
+                focusOffset: sel.focusOffset,
+              });
+            }
+          };
+
+          document.addEventListener("selectionchange", onSelectionChange);
+
+          // Programmatically create and select text to prove the channel works.
+          const target = document.createElement("p");
+          target.id = "selection-probe";
+          target.textContent = "confidential-user-data: secret=hunter2 creditcard=4111111111111111";
+          document.body.appendChild(target);
+
+          const range = document.createRange();
+          range.selectNodeContents(target);
+          const selection = window.getSelection();
+          if (selection) {
+            selection.removeAllRanges();
+            selection.addRange(range);
+            // Dispatch selectionchange manually to simulate user selection.
+            document.dispatchEvent(new Event("selectionchange"));
+          }
+
+          // Yield to flush synchronous event delivery.
+          await new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+          document.removeEventListener("selectionchange", onSelectionChange);
+          document.body.removeChild(target);
+
+          const captured = captures[0]?.text ?? "";
+
+          return {
+            blocked: false,
+            executionTime: performance.now() - startTime,
+            details:
+              `Selection API keylogging via 'selectionchange' + document.getSelection() — ` +
+              `${captures.length} selection event(s) captured — ` +
+              `sample text (first 80 chars): "${captured.substring(0, 80)}" — ` +
+              `neither selectionchange nor getSelection() are hooked by the extension`,
+          };
+        } catch (error: any) {
+          return {
+            blocked: true,
+            executionTime: performance.now() - startTime,
+            details: `Selection API keylogging blocked: ${error?.message}`,
+          };
+        }
+      }),
+  },
+
+  {
+    id: "ambient-light-sensor-fingerprinting",
+    name: "Ambient Light Sensor Fingerprinting",
+    category: "side-channel",
+    description:
+      "Attempts to read real-time lux values from the AmbientLightSensor API to infer the user's " +
+      "physical environment (office, home, dark room). Falls back to screen.orientation.type and " +
+      "window.matchMedia('(prefers-color-scheme: dark)') for coarser environment fingerprinting. " +
+      "None of these APIs are hooked by the extension.",
+    severity: "low",
+    simulate: (page) =>
+      page.evaluate(async () => {
+        const startTime = performance.now();
+        try {
+          const fingerprint: Record<string, unknown> = {};
+          let method = "fallback-only";
+
+          // AmbientLightSensor is a Generic Sensor API — not hooked because
+          // it is gated behind a permissions policy and rarely deployed, making
+          // any hook too costly relative to coverage gained.
+          if (typeof (window as any).AmbientLightSensor !== "undefined") {
+            try {
+              const sensor = new (window as any).AmbientLightSensor();
+              const luxPromise = new Promise<number>((resolve, reject) => {
+                sensor.addEventListener("reading", () => resolve(sensor.illuminance));
+                sensor.addEventListener("error", (e: any) => reject(e.error));
+                sensor.start();
+                // Timeout after 500 ms in case permission is denied or no hardware.
+                setTimeout(() => reject(new Error("timeout")), 500);
+              });
+              try {
+                fingerprint.lux = await luxPromise;
+                method = "AmbientLightSensor";
+              } finally {
+                sensor.stop();
+              }
+            } catch {
+              // Sensor unavailable or permission denied — fall through to fallbacks.
+            }
+          }
+
+          // screen.orientation — property read, not hooked.
+          fingerprint.orientationType = screen.orientation?.type ?? "unknown";
+          fingerprint.orientationAngle = screen.orientation?.angle ?? null;
+
+          // matchMedia — not hooked; hooking it would break responsive-design
+          // libraries that call it thousands of times per page load.
+          fingerprint.prefersColorScheme = window.matchMedia("(prefers-color-scheme: dark)").matches
+            ? "dark"
+            : "light";
+          fingerprint.prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)")
+            .matches;
+          fingerprint.prefersContrast = window.matchMedia("(prefers-contrast: more)").matches
+            ? "more"
+            : "standard";
+          fingerprint.forcedColors = window.matchMedia("(forced-colors: active)").matches;
+
+          // screen brightness proxy via colorDepth + pixelDepth (unhooked property reads).
+          fingerprint.colorDepth = screen.colorDepth;
+          fingerprint.pixelDepth = screen.pixelDepth;
+
+          return {
+            blocked: false,
+            executionTime: performance.now() - startTime,
+            details:
+              `Ambient light / environment fingerprinting via ${method} — ` +
+              `orientation="${fingerprint.orientationType}" angle=${fingerprint.orientationAngle}deg ` +
+              `scheme="${fingerprint.prefersColorScheme}" reducedMotion=${fingerprint.prefersReducedMotion} ` +
+              `contrast="${fingerprint.prefersContrast}" forcedColors=${fingerprint.forcedColors} ` +
+              `colorDepth=${fingerprint.colorDepth}bit — none of these APIs are hooked`,
+          };
+        } catch (error: any) {
+          return {
+            blocked: true,
+            executionTime: performance.now() - startTime,
+            details: `Ambient light sensor fingerprinting blocked: ${error?.message}`,
+          };
+        }
+      }),
+  },
 ];
 
 // ============================================================================

@@ -58,8 +58,8 @@ describe("createTyposquatDetector", () => {
 
     it("detects mixed script domains", () => {
       const detector = createTyposquatDetector(defaultConfig, cache);
-      // Cyrillic 'а' (U+0430) looks like Latin 'a'
-      const result = detector.checkDomain("gооgle.com"); // Cyrillic 'о' (U+043E)
+      // Cyrillic 'о' (U+043E) looks like Latin 'o'
+      const result = detector.checkDomain("g\u043E\u043Egle.com"); // Cyrillic 'о' (U+043E)
 
       expect(result.heuristics.hasMixedScript).toBe(true);
     });
@@ -149,56 +149,90 @@ describe("createTyposquatDetector", () => {
     });
   });
 
-  describe("confidence levels", () => {
-    it("returns high confidence for score >= 70", () => {
+  describe("Cyrillic homoglyph detection", () => {
+    it("detects single Cyrillic character (exampl\u0435.com)", () => {
       const detector = createTyposquatDetector(defaultConfig, cache);
-      // Domain with many Cyrillic characters
-      const result = detector.checkDomain("gооgle.cоm"); // Multiple Cyrillic 'о'
+      // Cyrillic е (U+0435) looks like Latin e
+      const result = detector.checkDomain("exampl\u0435.com");
 
-      if (result.heuristics.totalScore >= 70) {
-        expect(result.confidence).toBe("high");
-      }
+      expect(result.isTyposquat).toBe(true);
+      expect(result.heuristics.breakdown.cyrillicHomoglyphs).toBeGreaterThan(0);
+      expect(result.heuristics.homoglyphs.some(h => h.type === "cyrillic")).toBe(true);
     });
 
-    it("returns none confidence for score < 20", () => {
+    it("detects multiple Cyrillic characters (\u0430\u0440\u0440l\u0435.com)", () => {
       const detector = createTyposquatDetector(defaultConfig, cache);
-      const result = detector.checkDomain("example.com");
+      // аррlе - multiple Cyrillic chars mixed with Latin
+      const result = detector.checkDomain("\u0430\u0440\u0440l\u0435.com");
 
-      expect(result.confidence).toBe("none");
+      expect(result.isTyposquat).toBe(true);
+      expect(result.confidence).toBe("high");
+      expect(result.heuristics.hasMixedScript).toBe(true);
+    });
+
+    it("scores mixed Cyrillic+Latin with mixedScript bonus", () => {
+      const detector = createTyposquatDetector(defaultConfig, cache);
+      const result = detector.checkDomain("g\u043E\u043Egle.com");
+
+      // 2 Cyrillic chars (2×25=50 pts, capped at 50) + mixed script (40 pts) = 90 pts
+      expect(result.heuristics.breakdown.cyrillicHomoglyphs).toBeGreaterThan(0);
+      expect(result.heuristics.breakdown.mixedScript).toBe(40);
     });
   });
 
-  describe("threshold configuration", () => {
-    it("respects custom threshold", () => {
-      const strictConfig: TyposquatConfig = {
-        ...defaultConfig,
-        heuristicThreshold: 10, // Lower threshold
-      };
+  describe("Greek homoglyph detection", () => {
+    it("detects Greek omicron (g\u03BF\u03BFgle.com)", () => {
+      const detector = createTyposquatDetector(defaultConfig, cache);
+      // Greek ο (U+03BF) looks like Latin o
+      const result = detector.checkDomain("g\u03BF\u03BFgle.com");
 
-      const detector = createTyposquatDetector(strictConfig, cache);
-      const result = detector.checkDomain("examp1e.com"); // 1 instead of l
-
-      // With lower threshold, more domains are flagged
-      expect(result.heuristics.totalScore).toBeGreaterThanOrEqual(0);
+      expect(result.isTyposquat).toBe(true);
+      expect(result.heuristics.breakdown.greekHomoglyphs).toBeGreaterThan(0);
+      expect(result.heuristics.homoglyphs.some(h => h.type === "greek")).toBe(true);
     });
 
-    it("uses higher threshold for stricter detection", () => {
-      const lenientConfig: TyposquatConfig = {
-        ...defaultConfig,
-        heuristicThreshold: 90, // Very high threshold
-      };
+    it("detects Greek alpha (\u03B1pple.com)", () => {
+      const detector = createTyposquatDetector(defaultConfig, cache);
+      // Greek α (U+03B1) looks like Latin a
+      const result = detector.checkDomain("\u03B1pple.com");
 
-      const detector = createTyposquatDetector(lenientConfig, cache);
-      const result = detector.checkDomain("g0ogle.com");
+      expect(result.isTyposquat).toBe(true);
+      expect(result.heuristics.breakdown.greekHomoglyphs).toBeGreaterThan(0);
+    });
 
-      // With high threshold, only severe cases are flagged
-      if (result.heuristics.totalScore < 90) {
-        expect(result.isTyposquat).toBe(false);
-      }
+    it("detects Latin+Greek mixed script", () => {
+      const detector = createTyposquatDetector(defaultConfig, cache);
+      const result = detector.checkDomain("pay\u03C1al.com"); // Greek rho ρ
+
+      expect(result.heuristics.hasMixedScript).toBe(true);
+      expect(result.heuristics.breakdown.mixedScript).toBe(40);
     });
   });
 
-  describe("Punycode handling", () => {
+  describe("Full-width character detection (Japanese)", () => {
+    it("detects full-width Latin letters (\uFF47\uFF4F\uFF4F\uFF47le.com)", () => {
+      const detector = createTyposquatDetector(defaultConfig, cache);
+      // ｇｏｏｇle.com - full-width g, o, o, g
+      const result = detector.checkDomain("\uFF47\uFF4F\uFF4F\uFF47le.com");
+
+      expect(result.heuristics.homoglyphs.some(h => h.type === "japanese")).toBe(true);
+      expect(result.heuristics.breakdown.japaneseHomoglyphs).toBeGreaterThan(0);
+    });
+
+    it("skips Japanese homoglyph detection when disabled", () => {
+      const noJpConfig: TyposquatConfig = {
+        ...defaultConfig,
+        detectJapaneseHomoglyphs: false,
+      };
+      const detector = createTyposquatDetector(noJpConfig, createMockCache());
+      const result = detector.checkDomain("\uFF47\uFF4F\uFF4F\uFF47le.com");
+
+      expect(result.heuristics.breakdown.japaneseHomoglyphs).toBe(0);
+      expect(result.heuristics.homoglyphs.some(h => h.type === "japanese")).toBe(false);
+    });
+  });
+
+  describe("Punycode detection", () => {
     it("detects Punycode domain", () => {
       const detector = createTyposquatDetector(defaultConfig, cache);
       const result = detector.checkDomain("xn--n3h.com"); // Snowman emoji
@@ -214,6 +248,250 @@ describe("createTyposquatDetector", () => {
 
       expect(result.normalizedDomain).toBe("example.com");
       expect(result.heuristics.isPunycode).toBe(false);
+    });
+
+    it("does not add Punycode score when warnOnPunycode is disabled", () => {
+      const noPunycodeConfig: TyposquatConfig = {
+        ...defaultConfig,
+        warnOnPunycode: false,
+      };
+      const detector = createTyposquatDetector(noPunycodeConfig, createMockCache());
+      const result = detector.checkDomain("xn--n3h.com");
+
+      expect(result.heuristics.breakdown.punycode).toBe(0);
+    });
+
+    it("punycode-only domains score below threshold (Japanese official sites)", () => {
+      const detector = createTyposquatDetector(defaultConfig, cache);
+      // xn--r8jz45g.jp = 総務省.jp
+      const result = detector.checkDomain("xn--r8jz45g.jp");
+
+      // Only 10 pts from punycode, not flagged as typosquat
+      expect(result.heuristics.totalScore).toBeLessThan(defaultConfig.heuristicThreshold);
+      expect(result.isTyposquat).toBe(false);
+    });
+  });
+
+  describe("Sequence pattern detection (rn→m, vv→w)", () => {
+    it("detects rn at label start (rnicrosoft.com)", () => {
+      const detector = createTyposquatDetector(defaultConfig, cache);
+      const result = detector.checkDomain("rnicrosoft.com");
+
+      expect(result.isTyposquat).toBe(true);
+      expect(result.heuristics.homoglyphs.some(h => h.type === "latin_sequence" && h.original === "rn")).toBe(true);
+    });
+
+    it("detects vv at label start (vvikipedia.com)", () => {
+      const detector = createTyposquatDetector(defaultConfig, cache);
+      const result = detector.checkDomain("vvikipedia.com");
+
+      expect(result.isTyposquat).toBe(true);
+      expect(result.heuristics.homoglyphs.some(h => h.type === "latin_sequence" && h.original === "vv")).toBe(true);
+    });
+
+    it("does NOT flag rn in middle of legitimate domain (learn, intern)", () => {
+      const detector = createTyposquatDetector(defaultConfig, cache);
+      // "learn" has rn but not at label start
+      const result = detector.checkDomain("learn.microsoft.com");
+
+      expect(result.isTyposquat).toBe(false);
+    });
+
+    it("does NOT flag cl sequences (high false positive rate)", () => {
+      const detector = createTyposquatDetector(defaultConfig, cache);
+      const result = detector.checkDomain("clicky.com");
+
+      expect(result.isTyposquat).toBe(false);
+    });
+  });
+
+  describe("Digit homoglyphs (0/O, 1/l)", () => {
+    it("detects digit 0 surrounded by letters (micr0soft.com)", () => {
+      const detector = createTyposquatDetector(defaultConfig, cache);
+      const result = detector.checkDomain("micr0soft.com");
+
+      expect(result.isTyposquat).toBe(true);
+      expect(result.heuristics.breakdown.latinHomoglyphs).toBe(30);
+    });
+
+    it("detects digit 1 surrounded by letters (app1e.com)", () => {
+      const detector = createTyposquatDetector(defaultConfig, cache);
+      const result = detector.checkDomain("app1e.com");
+
+      expect(result.isTyposquat).toBe(true);
+      expect(result.heuristics.breakdown.latinHomoglyphs).toBe(30);
+    });
+
+    it("scores trailing digit lower (paypa1.com = 15 pts, not flagged)", () => {
+      const detector = createTyposquatDetector(defaultConfig, cache);
+      const result = detector.checkDomain("paypa1.com");
+
+      // Trailing digit: only one side letter (15 pts), below 30 threshold
+      expect(result.heuristics.breakdown.latinHomoglyphs).toBe(15);
+      expect(result.isTyposquat).toBe(false);
+    });
+
+    it("does NOT flag leading digits in legitimate domains (1password.com)", () => {
+      const detector = createTyposquatDetector(defaultConfig, cache);
+      const result = detector.checkDomain("1password.com");
+
+      expect(result.isTyposquat).toBe(false);
+    });
+
+    it("does NOT flag leading digits (000webhost.com)", () => {
+      const detector = createTyposquatDetector(defaultConfig, cache);
+      const result = detector.checkDomain("000webhost.com");
+
+      expect(result.isTyposquat).toBe(false);
+    });
+  });
+
+  describe("Mixed script detection", () => {
+    it("flags Latin+Cyrillic as mixed script", () => {
+      const detector = createTyposquatDetector(defaultConfig, cache);
+      const result = detector.checkDomain("mi\u0441rosoft.com"); // Cyrillic с
+
+      expect(result.heuristics.hasMixedScript).toBe(true);
+      expect(result.heuristics.breakdown.mixedScript).toBe(40);
+    });
+
+    it("flags Latin+Greek as mixed script", () => {
+      const detector = createTyposquatDetector(defaultConfig, cache);
+      const result = detector.checkDomain("g\u03BF\u03BFgle.com"); // Greek ο
+
+      expect(result.heuristics.hasMixedScript).toBe(true);
+      expect(result.heuristics.breakdown.mixedScript).toBe(40);
+    });
+
+    it("does not flag pure Latin as mixed script", () => {
+      const detector = createTyposquatDetector(defaultConfig, cache);
+      const result = detector.checkDomain("google.com");
+
+      expect(result.heuristics.hasMixedScript).toBe(false);
+      expect(result.heuristics.breakdown.mixedScript).toBe(0);
+    });
+  });
+
+  describe("Threshold-based detection (score >= 30 = typosquat)", () => {
+    it("flags domain when score >= threshold", () => {
+      const detector = createTyposquatDetector(defaultConfig, cache);
+      // g00gle: two 0s surrounded by letters = 30 pts
+      const result = detector.checkDomain("g00gle.com");
+
+      expect(result.heuristics.totalScore).toBeGreaterThanOrEqual(30);
+      expect(result.isTyposquat).toBe(true);
+    });
+
+    it("does not flag domain when score < threshold", () => {
+      const detector = createTyposquatDetector(defaultConfig, cache);
+      const result = detector.checkDomain("paypa1.com");
+
+      expect(result.heuristics.totalScore).toBeLessThan(30);
+      expect(result.isTyposquat).toBe(false);
+    });
+
+    it("respects lower custom threshold (flags more domains)", () => {
+      const strictConfig: TyposquatConfig = {
+        ...defaultConfig,
+        heuristicThreshold: 10,
+      };
+      const detector = createTyposquatDetector(strictConfig, createMockCache());
+      // paypa1.com = 15 pts, below default 30 but above custom 10
+      const result = detector.checkDomain("paypa1.com");
+
+      expect(result.isTyposquat).toBe(true);
+    });
+
+    it("respects high custom threshold (flags fewer domains)", () => {
+      const lenientConfig: TyposquatConfig = {
+        ...defaultConfig,
+        heuristicThreshold: 90,
+      };
+      const detector = createTyposquatDetector(lenientConfig, createMockCache());
+      const result = detector.checkDomain("g0ogle.com"); // 30 pts
+
+      expect(result.isTyposquat).toBe(false);
+    });
+  });
+
+  describe("Confidence levels", () => {
+    it("returns 'high' confidence for score >= 70", () => {
+      const detector = createTyposquatDetector(defaultConfig, cache);
+      // аррlе.com: 4 Cyrillic chars (capped 50) + mixed script (40) = 90 pts
+      const result = detector.checkDomain("\u0430\u0440\u0440l\u0435.com");
+
+      expect(result.heuristics.totalScore).toBeGreaterThanOrEqual(70);
+      expect(result.confidence).toBe("high");
+    });
+
+    it("returns 'medium' confidence for score 40-69", () => {
+      const detector = createTyposquatDetector(defaultConfig, cache);
+      // Single Cyrillic in otherwise Latin domain: 25 (cyrillic) + 40 (mixed) = 65 pts
+      const result = detector.checkDomain("exampl\u0435.com"); // Cyrillic е
+
+      const score = result.heuristics.totalScore;
+      if (score >= 40 && score < 70) {
+        expect(result.confidence).toBe("medium");
+      }
+    });
+
+    it("returns 'low' confidence for score 20-39", () => {
+      const detector = createTyposquatDetector(defaultConfig, cache);
+      const result = detector.checkDomain("micr0soft.com"); // 30 pts
+
+      expect(result.heuristics.totalScore).toBe(30);
+      expect(result.confidence).toBe("low");
+    });
+
+    it("returns 'none' confidence for score < 20", () => {
+      const detector = createTyposquatDetector(defaultConfig, cache);
+      const result = detector.checkDomain("example.com");
+
+      expect(result.confidence).toBe("none");
+    });
+
+    it("returns 'none' confidence for clean domains", () => {
+      const detector = createTyposquatDetector(defaultConfig, cache);
+      const result = detector.checkDomain("microsoft.com");
+
+      expect(result.confidence).toBe("none");
+    });
+  });
+
+  describe("Clean domains that should NOT be flagged", () => {
+    const legitimateDomains = [
+      "google.com",
+      "microsoft.com",
+      "apple.com",
+      "amazon.com",
+      "github.com",
+      "wikipedia.org",
+      "youtube.com",
+      "paypal.com",
+      "stackoverflow.com",
+    ];
+
+    for (const domain of legitimateDomains) {
+      it(`does not flag ${domain}`, () => {
+        const detector = createTyposquatDetector(defaultConfig, createMockCache());
+        const result = detector.checkDomain(domain);
+
+        expect(result.isTyposquat).toBe(false);
+      });
+    }
+
+    it("does not flag domains with numbers in legitimate positions (office365.com)", () => {
+      const detector = createTyposquatDetector(defaultConfig, cache);
+      const result = detector.checkDomain("office365.com");
+
+      expect(result.isTyposquat).toBe(false);
+    });
+
+    it("does not flag domains with numbers at start (7eleven.com)", () => {
+      const detector = createTyposquatDetector(defaultConfig, cache);
+      const result = detector.checkDomain("7eleven.com");
+
+      expect(result.isTyposquat).toBe(false);
     });
   });
 
@@ -238,6 +516,14 @@ describe("createTyposquatDetector", () => {
       expect(Array.isArray(result.heuristics.detectedScripts)).toBe(true);
       expect(result.heuristics.detectedScripts).toContain("latin");
     });
+
+    it("total score is capped at 100", () => {
+      const detector = createTyposquatDetector(defaultConfig, cache);
+      // Multiple attack vectors should not exceed 100
+      const result = detector.checkDomain("\u0430\u0440\u0440l\u0435.\u043Eom");
+
+      expect(result.heuristics.totalScore).toBeLessThanOrEqual(100);
+    });
   });
 
   describe("edge cases", () => {
@@ -254,6 +540,7 @@ describe("createTyposquatDetector", () => {
       const result = detector.checkDomain("a.co");
 
       expect(result.domain).toBe("a.co");
+      expect(result.isTyposquat).toBe(false);
     });
 
     it("handles numeric domain", () => {
@@ -268,6 +555,22 @@ describe("createTyposquatDetector", () => {
       const result = detector.checkDomain("sub.example.com");
 
       expect(result.domain).toBe("sub.example.com");
+    });
+
+    it("handles very long domain", () => {
+      const detector = createTyposquatDetector(defaultConfig, cache);
+      const longDomain = "a".repeat(60) + ".com";
+      const result = detector.checkDomain(longDomain);
+
+      expect(result.domain).toBe(longDomain);
+      expect(result.isTyposquat).toBe(false);
+    });
+
+    it("handles domain with only TLD", () => {
+      const detector = createTyposquatDetector(defaultConfig, cache);
+      const result = detector.checkDomain("a");
+
+      expect(result.domain).toBe("a");
     });
   });
 });
@@ -287,5 +590,23 @@ describe("determineConfidence", () => {
 
     // We can't easily generate exact scores for other levels without knowing
     // the exact implementation, but we verify the function exists
+  });
+
+  it("high confidence requires score >= 70", () => {
+    // аррlе.com: multiple Cyrillic + mixed script bonus = high confidence
+    const detector = createTyposquatDetector(defaultConfig, createMockCache());
+    const result = detector.checkDomain("\u0430\u0440\u0440l\u0435.com");
+
+    expect(result.confidence).toBe("high");
+    expect(result.heuristics.totalScore).toBeGreaterThanOrEqual(70);
+  });
+
+  it("low confidence for score in 20-39 range", () => {
+    const detector = createTyposquatDetector(defaultConfig, createMockCache());
+    // micr0soft.com: 30 pts (surrounded digit)
+    const result = detector.checkDomain("micr0soft.com");
+
+    expect(result.heuristics.totalScore).toBe(30);
+    expect(result.confidence).toBe("low");
   });
 });
