@@ -1,5 +1,5 @@
 import { useState } from "preact/hooks";
-import { ThemeContext, useTheme, useThemeState } from "../../lib/theme";
+import { ThemeContext, useThemeState } from "../../lib/theme";
 import { ErrorBoundary, NotificationBanner, Sidebar, useNotifications } from "../../components";
 import { SkeletonDashboard } from "../../components/Skeleton";
 import { DashboardHeader } from "./components/DashboardHeader";
@@ -16,8 +16,7 @@ import { SettingsTab } from "./views/SettingsTab";
 import { ServicesTab } from "./views";
 
 function DashboardContent() {
-  const { colors, isDark } = useTheme();
-  const styles = createDashboardStyles(colors, isDark);
+  const styles = createDashboardStyles();
 
   const [activeTab, setActiveTab] = useState<TabType>(getInitialTab);
 

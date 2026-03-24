@@ -21,7 +21,7 @@ export function Skeleton({
         width,
         height,
         borderRadius,
-        background: `linear-gradient(90deg, ${colors.border} 25%, ${colors.backgroundHover} 50%, ${colors.border} 75%)`,
+        background: `linear-gradient(90deg, ${colors.border} 25%, ${colors.bgTertiary} 50%, ${colors.border} 75%)`,
         backgroundSize: "200% 100%",
         animation: "skeleton-shimmer 1.5s ease-in-out infinite",
         ...style,
@@ -63,7 +63,7 @@ export function SkeletonCard() {
         padding: 16,
         borderRadius: 8,
         border: `1px solid ${colors.border}`,
-        background: colors.background,
+        background: colors.bgPrimary,
       }}
     >
       <Skeleton height={20} width="40%" style={{ marginBottom: 12 }} />
@@ -91,7 +91,7 @@ export function SkeletonTable({ rows = 5 }: { rows?: number }) {
           gap: 16,
           padding: 12,
           borderBottom: `1px solid ${colors.border}`,
-          background: colors.backgroundHover,
+          background: colors.bgTertiary,
         }}
       >
         <Skeleton height={14} />
@@ -130,7 +130,7 @@ export function SkeletonChart({ height = 200 }: { height?: number }) {
         height,
         borderRadius: 8,
         border: `1px solid ${colors.border}`,
-        background: colors.background,
+        background: colors.bgPrimary,
         display: "flex",
         alignItems: "flex-end",
         justifyContent: "space-around",
@@ -170,14 +170,6 @@ export function SkeletonStatsGrid() {
 export function SkeletonDashboard() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-      <style>
-        {`
-          @keyframes skeleton-shimmer {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
-          }
-        `}
-      </style>
       <SkeletonChart height={250} />
       <SkeletonTable rows={5} />
     </div>

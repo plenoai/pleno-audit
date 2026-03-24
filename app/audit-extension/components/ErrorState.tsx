@@ -129,7 +129,7 @@ export function ErrorState({
               fontSize: fontSize.base,
               fontWeight: 500,
               color: "#fff",
-              background: colors.primary,
+              background: colors.interactive,
               border: "none",
               borderRadius: 8,
               cursor: "pointer",
@@ -184,7 +184,7 @@ export function ErrorState({
             style={{
               fontSize: fontSize.xs,
               color: colors.textSecondary,
-              background: colors.backgroundHover,
+              background: colors.bgTertiary,
               padding: 12,
               borderRadius: 6,
               overflow: "auto",

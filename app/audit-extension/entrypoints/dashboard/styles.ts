@@ -1,14 +1,17 @@
-import type { ThemeColors } from "../../lib/theme";
+/**
+ * Dashboard layout styles — CSS variable based
+ * Colors are resolved by CSS variables, no JS color objects needed.
+ */
 
-export function createDashboardStyles(colors: ThemeColors, isDark: boolean) {
+export function createDashboardStyles() {
   return {
     wrapper: {
       display: "flex",
       flexDirection: "column" as const,
       minHeight: "100vh",
       fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-      color: colors.textPrimary,
-      background: colors.bgSecondary,
+      color: "var(--foreground)",
+      background: "var(--secondary)",
     },
     body: {
       display: "flex",
@@ -25,8 +28,8 @@ export function createDashboardStyles(colors: ThemeColors, isDark: boolean) {
       position: "sticky" as const,
       top: 0,
       zIndex: 10,
-      background: colors.bgPrimary,
-      borderBottom: `1px solid ${colors.border}`,
+      background: "var(--background)",
+      borderBottom: "1px solid var(--border)",
       padding: "12px 24px",
     },
     headerTop: {
@@ -43,7 +46,7 @@ export function createDashboardStyles(colors: ThemeColors, isDark: boolean) {
       gap: "12px",
     },
     subtitle: {
-      color: colors.textSecondary,
+      color: "var(--muted-foreground)",
       fontSize: "13px",
       marginTop: "4px",
     },
@@ -87,7 +90,7 @@ export function createDashboardStyles(colors: ThemeColors, isDark: boolean) {
     },
     chartLabel: {
       fontSize: "12px",
-      color: colors.textSecondary,
+      color: "var(--muted-foreground)",
       width: "100px",
       overflow: "hidden",
       textOverflow: "ellipsis",
@@ -95,27 +98,27 @@ export function createDashboardStyles(colors: ThemeColors, isDark: boolean) {
     },
     chartBarInner: {
       height: "20px",
-      background: colors.interactive,
+      background: "var(--primary)",
       borderRadius: "4px",
       minWidth: "4px",
     },
     chartValue: {
       fontSize: "12px",
-      color: colors.textSecondary,
+      color: "var(--muted-foreground)",
       minWidth: "40px",
     },
     code: {
       fontSize: "12px",
       fontFamily: "monospace",
       flex: 1,
-      color: colors.textPrimary,
+      color: "var(--foreground)",
     },
     link: {
-      color: isDark ? "#60a5fa" : "#0070f3",
+      color: "var(--info)",
       fontSize: "12px",
     },
     emptyText: {
-      color: colors.textMuted,
+      color: "var(--muted)",
       textAlign: "center" as const,
       padding: "24px",
     },
