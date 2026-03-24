@@ -5,10 +5,10 @@
  * Direct calls may return undefined if Service Worker is not fully initialized.
  *
  * @example
- * // ❌ Bad - may return undefined
+ * // Bad - may return undefined
  * const data = await chrome.runtime.sendMessage({ type: "GET_DATA" });
  *
- * // ✅ Good - ensures Service Worker is ready first
+ * // Good - ensures Service Worker is ready first
  * const data = await sendMessage<DataType>({ type: "GET_DATA" });
  */
 

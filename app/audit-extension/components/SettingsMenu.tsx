@@ -3,9 +3,7 @@ import { useTheme } from "../lib/theme";
 import { ThemeToggle } from "./ThemeToggle";
 import {
   createLogger,
-  DEFAULT_BLOCKING_CONFIG,
   DEFAULT_NOTIFICATION_CONFIG,
-  type BlockingConfig,
   type NotificationConfig,
 } from "@libztbs/extension-runtime";
 
@@ -27,7 +25,6 @@ export function SettingsMenu({ onClearData, onExport }: Props) {
   const { colors } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const [retentionDays, setRetentionDays] = useState<number | null>(null);
-  const [blockingConfig, setBlockingConfig] = useState<BlockingConfig | null>(null);
   const [notificationConfig, setNotificationConfig] = useState<NotificationConfig | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -63,19 +60,6 @@ export function SettingsMenu({ onClearData, onExport }: Props) {
   }, [isOpen, retentionDays]);
 
   useEffect(() => {
-    if (isOpen && blockingConfig === null) {
-      chrome.runtime.sendMessage({ type: "GET_BLOCKING_CONFIG" })
-        .then((config) => {
-          setBlockingConfig(config ?? DEFAULT_BLOCKING_CONFIG);
-        })
-        .catch((error) => {
-          setBlockingConfig(DEFAULT_BLOCKING_CONFIG);
-          reportOperationError("保護機能設定の読み込みに失敗しました。", error);
-        });
-    }
-  }, [isOpen, blockingConfig]);
-
-  useEffect(() => {
     if (isOpen && notificationConfig === null) {
       chrome.runtime.sendMessage({ type: "GET_NOTIFICATION_CONFIG" })
         .then((config) => {
@@ -102,25 +86,6 @@ export function SettingsMenu({ onClearData, onExport }: Props) {
     }).catch((error) => {
       setRetentionDays(previous);
       reportOperationError("データ保持設定の保存に失敗しました。", error);
-    });
-  }
-
-  function handleBlockingToggle() {
-    if (!blockingConfig) return;
-    const previous = blockingConfig;
-    const nextEnabled = !blockingConfig.enabled;
-    const newConfig = {
-      ...blockingConfig,
-      enabled: nextEnabled,
-      userConsentGiven: nextEnabled ? true : blockingConfig.userConsentGiven,
-    };
-    setBlockingConfig(newConfig);
-    chrome.runtime.sendMessage({
-      type: "SET_BLOCKING_CONFIG",
-      data: newConfig,
-    }).catch((error) => {
-      setBlockingConfig(previous);
-      reportOperationError("保護機能設定の保存に失敗しました。", error);
     });
   }
 
@@ -195,79 +160,6 @@ export function SettingsMenu({ onClearData, onExport }: Props) {
 
           <div style={{ padding: "12px", borderBottom: `1px solid ${colors.border}` }}>
             <div style={{ fontSize: "11px", color: colors.textSecondary, marginBottom: "8px", fontWeight: 500 }}>
-              データ保持期間
-            </div>
-            {retentionDays !== null ? (
-              <div>
-                <div style={{ fontSize: "12px", color: colors.textPrimary, marginBottom: "4px" }}>
-                  {formatRetentionDays(retentionDays)}
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="365"
-                  step="1"
-                  value={retentionDays}
-                  onChange={(e) => handleRetentionChange(parseInt((e.target as HTMLInputElement).value, 10))}
-                  style={{ width: "100%" }}
-                />
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10px", color: colors.textMuted, marginTop: "2px" }}>
-                  <span>無期限</span>
-                  <span>1年</span>
-                </div>
-              </div>
-            ) : (
-              <div style={{ fontSize: "12px", color: colors.textSecondary }}>読み込み中...</div>
-            )}
-          </div>
-
-          <div style={{ padding: "12px", borderBottom: `1px solid ${colors.border}` }}>
-            <div style={{ fontSize: "11px", color: colors.textSecondary, marginBottom: "8px", fontWeight: 500 }}>
-              保護機能
-            </div>
-            {blockingConfig !== null ? (
-              <div>
-                <button
-                  onClick={handleBlockingToggle}
-                  aria-pressed={blockingConfig.enabled}
-                  aria-label={`リスクブロック: ${blockingConfig.enabled ? "有効" : "無効"}`}
-                  style={{
-                    width: "100%",
-                    padding: "8px 12px",
-                    background: blockingConfig.enabled ? colors.status.success.bg : colors.bgSecondary,
-                    border: `1px solid ${blockingConfig.enabled ? colors.status.success.text : colors.border}`,
-                    borderRadius: "6px",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    fontSize: "12px",
-                    color: blockingConfig.enabled ? colors.status.success.text : colors.textPrimary,
-                    transition: "all 0.15s",
-                  }}
-                >
-                  <span>リスクブロック</span>
-                  <span style={{
-                    fontSize: "10px",
-                    padding: "2px 6px",
-                    borderRadius: "4px",
-                    background: blockingConfig.enabled ? colors.status.success.text : colors.textMuted,
-                    color: colors.bgPrimary,
-                  }}>
-                    {blockingConfig.enabled ? "ON" : "OFF"}
-                  </span>
-                </button>
-                <div style={{ fontSize: "10px", color: colors.textMuted, marginTop: "6px", lineHeight: 1.4 }}>
-                  タイポスクワット、NRDログイン、機密データ送信を検出時にブロック
-                </div>
-              </div>
-            ) : (
-              <div style={{ fontSize: "12px", color: colors.textSecondary }}>読み込み中...</div>
-            )}
-          </div>
-
-          <div style={{ padding: "12px", borderBottom: `1px solid ${colors.border}` }}>
-            <div style={{ fontSize: "11px", color: colors.textSecondary, marginBottom: "8px", fontWeight: 500 }}>
               通知
             </div>
             {notificationConfig !== null ? (
@@ -304,6 +196,34 @@ export function SettingsMenu({ onClearData, onExport }: Props) {
                 </button>
                 <div style={{ fontSize: "10px", color: colors.textMuted, marginTop: "6px", lineHeight: 1.4 }}>
                   重大なセキュリティイベントを通知
+                </div>
+              </div>
+            ) : (
+              <div style={{ fontSize: "12px", color: colors.textSecondary }}>読み込み中...</div>
+            )}
+          </div>
+
+          <div style={{ padding: "12px", borderBottom: `1px solid ${colors.border}` }}>
+            <div style={{ fontSize: "11px", color: colors.textSecondary, marginBottom: "8px", fontWeight: 500 }}>
+              データ保持期間
+            </div>
+            {retentionDays !== null ? (
+              <div>
+                <div style={{ fontSize: "12px", color: colors.textPrimary, marginBottom: "4px" }}>
+                  {formatRetentionDays(retentionDays)}
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="365"
+                  step="1"
+                  value={retentionDays}
+                  onChange={(e) => handleRetentionChange(parseInt((e.target as HTMLInputElement).value, 10))}
+                  style={{ width: "100%" }}
+                />
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10px", color: colors.textMuted, marginTop: "2px" }}>
+                  <span>無期限</span>
+                  <span>1年</span>
                 </div>
               </div>
             ) : (

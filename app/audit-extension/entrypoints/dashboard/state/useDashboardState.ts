@@ -5,24 +5,22 @@ import type { DetectedService } from "@libztbs/types";
 import { createLogger } from "@libztbs/extension-runtime";
 import { filterNRDServices, filterLoginServices, filterTyposquatServices, filterAIServices } from "@libztbs/detectors";
 import type { Notification } from "../../../components/NotificationBanner";
-import type { Period, TabType } from "../types";
+import type { TabType } from "../types";
 
 interface TotalCounts {
   violations: number;
   networkRequests: number;
 }
-import { getPeriodMs, getStatusBadge } from "../utils";
+import { getStatusBadge } from "../utils";
 
 const logger = createLogger("dashboard-state");
 
 interface UseDashboardStateOptions {
-  period: Period;
   addNotification: (notification: Omit<Notification, "id" | "timestamp">) => string;
   setActiveTab: (tab: TabType) => void;
 }
 
 export function useDashboardState({
-  period,
   addNotification,
   setActiveTab,
 }: UseDashboardStateOptions) {
@@ -42,10 +40,6 @@ export function useDashboardState({
   const loadData = useCallback(async () => {
     setIsRefreshing(true);
     try {
-      const cutoffMs = Date.now() - getPeriodMs(period);
-      const sinceISO = period !== "all" ? new Date(cutoffMs).toISOString() : undefined;
-      const sinceTs = period !== "all" ? cutoffMs : undefined;
-
       const safeMessage = async <T,>(msg: object, fallback: T): Promise<T> => {
         try {
           return (await chrome.runtime.sendMessage(msg)) ?? fallback;
@@ -62,11 +56,11 @@ export function useDashboardState({
         storageResult,
       ] = await Promise.all([
         safeMessage(
-          { type: "GET_CSP_REPORTS", data: { type: "csp-violation", since: sinceISO, limit: 500 } },
+          { type: "GET_CSP_REPORTS", data: { type: "csp-violation", limit: 500 } },
           { reports: [], total: 0 }
         ),
         safeMessage(
-          { type: "GET_NETWORK_REQUESTS", data: { since: sinceTs, limit: 500 } },
+          { type: "GET_NETWORK_REQUESTS", data: { limit: 500 } },
           { requests: [], total: 0 }
         ),
         chrome.storage.local.get(["services", "serviceConnections", "extensionConnections"]).catch((error) => {
@@ -122,7 +116,7 @@ export function useDashboardState({
       setLoading(false);
       setIsRefreshing(false);
     }
-  }, [period]);
+  }, []);
 
   useEffect(() => {
     loadData();

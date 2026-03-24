@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "preact/hooks";
+import { Globe } from "lucide-preact";
 import { createLogger } from "@libztbs/extension-runtime";
 import { useTheme } from "../../../lib/theme";
 import { Badge, Button } from "../../../components";
@@ -356,7 +357,7 @@ export function ServiceTab() {
                           alt=""
                         />
                       ) : isDomain ? (
-                        <span style={{ fontSize: "14px", flexShrink: 0 }}>🌐</span>
+                        <Globe size={14} style={{ flexShrink: 0 }} />
                       ) : icon ? (
                         <img
                           src={icon}

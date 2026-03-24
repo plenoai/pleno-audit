@@ -1,4 +1,5 @@
 import { useState, useEffect } from "preact/hooks";
+import { Lock } from "lucide-preact";
 import type { EnterpriseStatus } from "@libztbs/extension-runtime";
 import { useTheme } from "../../../lib/theme";
 import { Badge } from "../../../components";
@@ -109,7 +110,7 @@ export function EnterprisePolicyStatus() {
             <span style={styles.label}>設定ロック</span>
             <span style={styles.value}>
               {status.settingsLocked ? (
-                <Badge variant="danger" size="sm">🔒 ロック</Badge>
+                <Badge variant="danger" size="sm"><Lock size={10} /> ロック</Badge>
               ) : (
                 <Badge variant="success" size="sm">解除</Badge>
               )}

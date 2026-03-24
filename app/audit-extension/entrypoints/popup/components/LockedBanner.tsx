@@ -1,3 +1,4 @@
+import { Lock } from "lucide-preact";
 import { useTheme } from "../../../lib/theme";
 
 interface LockedBannerProps {
@@ -28,7 +29,7 @@ export function LockedBanner({ message = "この設定は組織によって管�
 
   return (
     <div style={style}>
-      <span style={iconStyle}>🔒</span>
+      <Lock size={12} />
       <span style={textStyle}>{message}</span>
     </div>
   );

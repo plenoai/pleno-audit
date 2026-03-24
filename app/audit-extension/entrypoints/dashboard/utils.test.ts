@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getPeriodMs, getStatusBadge, resolveTabFromHash, truncate } from "./utils";
+import { getStatusBadge, resolveTabFromHash, truncate } from "./utils";
 
 describe("truncate", () => {
   it("truncates long strings with ellipsis", () => {
@@ -17,28 +17,6 @@ describe("truncate", () => {
   it("returns empty string for falsy input", () => {
     expect(truncate(undefined as unknown as string, 5)).toBe("");
     expect(truncate(null as unknown as string, 5)).toBe("");
-  });
-});
-
-describe("getPeriodMs", () => {
-  it("returns correct ms for 1h", () => {
-    expect(getPeriodMs("1h")).toBe(3_600_000);
-  });
-
-  it("returns correct ms for 24h", () => {
-    expect(getPeriodMs("24h")).toBe(86_400_000);
-  });
-
-  it("returns correct ms for 7d", () => {
-    expect(getPeriodMs("7d")).toBe(604_800_000);
-  });
-
-  it("returns correct ms for 30d", () => {
-    expect(getPeriodMs("30d")).toBe(2_592_000_000);
-  });
-
-  it("returns MAX_SAFE_INTEGER for all", () => {
-    expect(getPeriodMs("all")).toBe(Number.MAX_SAFE_INTEGER);
   });
 });
 

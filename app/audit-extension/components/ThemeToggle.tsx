@@ -1,4 +1,5 @@
-import type { CSSProperties } from "preact/compat";
+import type { CSSProperties, FunctionComponent } from "preact/compat";
+import { Sun, Moon, Monitor } from "lucide-preact";
 import { useTheme, type ThemeMode } from "../lib/theme";
 
 const styles: Record<string, CSSProperties> = {
@@ -16,10 +17,10 @@ const styles: Record<string, CSSProperties> = {
   },
 };
 
-const modeIcons: Record<ThemeMode, string> = {
-  light: "☀️",
-  dark: "🌙",
-  system: "💻",
+const modeIcons: Record<ThemeMode, FunctionComponent<{ size: number }>> = {
+  light: Sun,
+  dark: Moon,
+  system: Monitor,
 };
 
 const modeLabels: Record<ThemeMode, string> = {
@@ -33,6 +34,7 @@ export function ThemeToggle() {
 
   const modes: ThemeMode[] = ["light", "dark", "system"];
   const nextMode = modes[(modes.indexOf(mode) + 1) % modes.length];
+  const Icon = modeIcons[mode];
 
   return (
     <button
@@ -45,7 +47,9 @@ export function ThemeToggle() {
       onClick={() => setMode(nextMode)}
       title={`テーマ: ${modeLabels[mode]} → ${modeLabels[nextMode]}`}
     >
-      <span style={{ width: "16px", textAlign: "center" }}>{modeIcons[mode]}</span>
+      <span style={{ width: "16px", display: "flex", justifyContent: "center" }}>
+        <Icon size={14} />
+      </span>
       {modeLabels[mode]}
     </button>
   );

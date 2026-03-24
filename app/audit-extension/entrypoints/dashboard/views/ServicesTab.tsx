@@ -1,4 +1,5 @@
 import { useMemo, useState } from "preact/hooks";
+import { Globe } from "lucide-preact";
 import type { DetectedService } from "@libztbs/types";
 import { Badge, Button, SearchInput } from "../../../components";
 import { FilteredTab } from "../components/FilteredTab";
@@ -111,7 +112,7 @@ export function ServicesTab({ services, nrdServices, loginServices, typosquatSer
                   style={{ width: "16px", height: "16px", borderRadius: "2px", flexShrink: 0 }}
                 />
               ) : (
-                <span style={{ width: "16px", height: "16px", flexShrink: 0, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "12px", color: colors.textMuted }}>🌐</span>
+                <Globe size={12} style={{ flexShrink: 0, color: colors.textMuted }} />
               )}
               <code style={{ fontSize: "12px" }}>{s.domain}</code>
             </div>

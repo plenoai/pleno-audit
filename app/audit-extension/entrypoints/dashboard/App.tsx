@@ -8,7 +8,7 @@ import { useDashboardActions } from "./state/useDashboardActions";
 import { useDashboardNavigation } from "./state/useDashboardNavigation";
 import { useDashboardState } from "./state/useDashboardState";
 import { createDashboardStyles } from "./styles";
-import type { Period, TabType } from "./types";
+import type { TabType } from "./types";
 import { getInitialTab } from "./utils";
 import { ExtensionsTab } from "./views/ExtensionsTab";
 import { ServicesTab } from "./views";
@@ -17,13 +17,11 @@ function DashboardContent() {
   const { colors, isDark } = useTheme();
   const styles = createDashboardStyles(colors, isDark);
 
-  const [period, setPeriod] = useState<Period>("24h");
   const [activeTab, setActiveTab] = useState<TabType>(getInitialTab);
 
   const { notifications, addNotification, dismissNotification } = useNotifications();
 
   const dashboard = useDashboardState({
-    period,
     addNotification,
     setActiveTab,
   });
@@ -60,8 +58,6 @@ function DashboardContent() {
           styles={styles}
           status={dashboard.status}
           lastUpdated={dashboard.lastUpdated}
-          period={period}
-          onPeriodChange={setPeriod}
           isRefreshing={dashboard.isRefreshing}
           onRefresh={dashboard.loadData}
           onClearData={handleClearData}
