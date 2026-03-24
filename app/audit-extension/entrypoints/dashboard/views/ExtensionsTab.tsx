@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "preact/hooks";
-import { Badge, Button, SearchInput, Select } from "../../../components";
+import { Badge, SearchInput } from "../../../components";
 import { FilteredTab } from "../components/FilteredTab";
 import { useTabFilter } from "../hooks/useTabFilter";
 import { useTheme } from "../../../lib/theme";
@@ -28,9 +28,11 @@ interface ExtensionInfo {
 export function ExtensionsTab() {
   const { colors, isDark } = useTheme();
   const { searchQuery, setSearchQuery, filters, setFilter } = useTabFilter({
-    critical: false,
-    high: false,
-    tag: "",
+    external_update: false,
+    not_removable: false,
+    disabled: false,
+    admin: false,
+    all_urls: false,
   });
   const [extensions, setExtensions] = useState<ExtensionInfo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,32 +69,25 @@ export function ExtensionsTab() {
     })();
   }, []);
 
-  const criticalCount = useMemo(
-    () => extensions.filter((e) => getPermissionRiskLevel(e.permissions, e.hostPermissions) === "critical").length,
-    [extensions]
-  );
-  const highCount = useMemo(
-    () => extensions.filter((e) => getPermissionRiskLevel(e.permissions, e.hostPermissions) === "high").length,
-    [extensions]
-  );
+  const tagCounts = useMemo(() => {
+    const counts = { external_update: 0, not_removable: 0, disabled: 0, admin: 0, all_urls: 0 };
+    for (const ext of extensions) {
+      if (ext.updateUrl && !ext.updateUrl.includes("google.com")) counts.external_update++;
+      if (!ext.mayDisable) counts.not_removable++;
+      if (!ext.enabled) counts.disabled++;
+      if (ext.installType === "admin") counts.admin++;
+      if (ext.hostPermissions.some((p) => p === "<all_urls>" || p === "*://*/*" || p === "http://*/*" || p === "https://*/*")) counts.all_urls++;
+    }
+    return counts;
+  }, [extensions]);
 
   const filtered = useMemo(() => {
     let result = extensions;
-    if (filters.critical) result = result.filter((e) => getPermissionRiskLevel(e.permissions, e.hostPermissions) === "critical");
-    if (filters.high) result = result.filter((e) => {
-      const level = getPermissionRiskLevel(e.permissions, e.hostPermissions);
-      return level === "high" || level === "critical";
-    });
-    if (filters.tag) {
-      result = result.filter((ext) => {
-        if (filters.tag === "external_update") return ext.updateUrl != null && !ext.updateUrl.includes("google.com");
-        if (filters.tag === "not_removable") return !ext.mayDisable;
-        if (filters.tag === "disabled") return !ext.enabled;
-        if (filters.tag === "admin") return ext.installType === "admin";
-        if (filters.tag === "all_urls") return ext.hostPermissions.some((p) => p === "<all_urls>" || p === "*://*/*" || p === "http://*/*" || p === "https://*/*");
-        return true;
-      });
-    }
+    if (filters.external_update) result = result.filter((ext) => ext.updateUrl != null && !ext.updateUrl.includes("google.com"));
+    if (filters.not_removable) result = result.filter((ext) => !ext.mayDisable);
+    if (filters.disabled) result = result.filter((ext) => !ext.enabled);
+    if (filters.admin) result = result.filter((ext) => ext.installType === "admin");
+    if (filters.all_urls) result = result.filter((ext) => ext.hostPermissions.some((p) => p === "<all_urls>" || p === "*://*/*" || p === "http://*/*" || p === "https://*/*"));
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       result = result.filter(
@@ -104,7 +99,7 @@ export function ExtensionsTab() {
       );
     }
     return result;
-  }, [extensions, searchQuery, filters.critical, filters.high, filters.tag]);
+  }, [extensions, searchQuery, filters.external_update, filters.not_removable, filters.disabled, filters.admin, filters.all_urls]);
 
   const toggleExpand = (id: string) => {
     setExpandedIds((prev) => {
@@ -184,32 +179,21 @@ export function ExtensionsTab() {
       filterBar={
         <>
           <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="拡張機能名、権限で検索..." />
-          <Button
-            variant={filters.critical ? "primary" : "secondary"}
-            size="sm"
-            onClick={() => setFilter("critical", !filters.critical)}
-          >
-            重大 ({criticalCount})
-          </Button>
-          <Button
-            variant={filters.high ? "primary" : "secondary"}
-            size="sm"
-            onClick={() => setFilter("high", !filters.high)}
-          >
-            高リスク ({highCount})
-          </Button>
-          <Select
-            value={filters.tag}
-            onChange={(v) => setFilter("tag", v)}
-            options={[
-              { value: "external_update", label: "外部更新" },
-              { value: "not_removable", label: "削除不可" },
-              { value: "disabled", label: "無効" },
-              { value: "admin", label: "管理者" },
-              { value: "all_urls", label: "<all_urls>" },
-            ]}
-            placeholder="タグ"
-          />
+          <Badge variant="danger" active={filters.external_update} onClick={() => setFilter("external_update", !filters.external_update)}>
+            外部更新 ({tagCounts.external_update})
+          </Badge>
+          <Badge variant="warning" active={filters.not_removable} onClick={() => setFilter("not_removable", !filters.not_removable)}>
+            削除不可 ({tagCounts.not_removable})
+          </Badge>
+          <Badge variant="info" active={filters.disabled} onClick={() => setFilter("disabled", !filters.disabled)}>
+            無効 ({tagCounts.disabled})
+          </Badge>
+          <Badge variant="warning" active={filters.admin} onClick={() => setFilter("admin", !filters.admin)}>
+            管理者 ({tagCounts.admin})
+          </Badge>
+          <Badge variant="danger" active={filters.all_urls} onClick={() => setFilter("all_urls", !filters.all_urls)}>
+            &lt;all_urls&gt; ({tagCounts.all_urls})
+          </Badge>
         </>
       }
       columns={[

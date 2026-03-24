@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "preact/hooks";
 import type { AlertSeverity, AlertCategory } from "@libztbs/alerts";
-import { Badge, Button, SearchInput } from "../../../components";
+import { Badge, SearchInput } from "../../../components";
 import { FilteredTab } from "../components/FilteredTab";
 import { useTabFilter } from "../hooks/useTabFilter";
 import { truncate } from "../utils";
@@ -145,14 +145,14 @@ export function AlertsTab() {
             placeholder="タイトル・ドメインで検索..."
           />
           {severityButtons.map((b) => (
-            <Button
+            <Badge
               key={b.key}
-              variant={filters[b.key] ? "primary" : "secondary"}
-              size="sm"
+              variant={severityVariant[b.key]}
+              active={filters[b.key]}
               onClick={() => setFilter(b.key, !filters[b.key])}
             >
               {b.label} ({counts[b.key] ?? 0})
-            </Button>
+            </Badge>
           ))}
         </>
       }

@@ -8,6 +8,8 @@ interface BadgeProps {
   variant?: BadgeVariant;
   size?: "sm" | "md";
   dot?: boolean;
+  active?: boolean;
+  onClick?: () => void;
 }
 
 function getVariantStyles(colors: ThemeColors): Record<BadgeVariant, CSSProperties> {
@@ -40,7 +42,7 @@ function getVariantStyles(colors: ThemeColors): Record<BadgeVariant, CSSProperti
   };
 }
 
-export function Badge({ children, variant = "default", size = "sm", dot = false }: BadgeProps) {
+export function Badge({ children, variant = "default", size = "sm", dot = false, active, onClick }: BadgeProps) {
   const { colors } = useTheme();
   const variantStyles = getVariantStyles(colors);
 
@@ -63,18 +65,39 @@ export function Badge({ children, variant = "default", size = "sm", dot = false 
     ? { padding: "0px 5px", fontSize: "9px", lineHeight: "1.4" }
     : { padding: "1px 6px", fontSize: "10px", lineHeight: "1.3" };
 
+  const isClickable = onClick != null;
+  const isActive = active ?? false;
+
+  const style: CSSProperties = {
+    display: "inline-flex",
+    alignItems: "center",
+    verticalAlign: "middle",
+    borderRadius: "9999px",
+    fontWeight: 500,
+    ...sizeStyles,
+    ...(isActive ? variantStyles[variant] : isClickable ? variantStyles.default : variantStyles[variant]),
+    ...(isClickable ? { cursor: "pointer", userSelect: "none" } : {}),
+  };
+
+  if (isClickable) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        style={{
+          ...style,
+          background: isActive ? variantStyles[variant].background : variantStyles.default.background,
+          color: isActive ? variantStyles[variant].color : variantStyles.default.color,
+          border: isActive ? variantStyles[variant].border : variantStyles.default.border,
+        }}
+      >
+        {children}
+      </button>
+    );
+  }
+
   return (
-    <span
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        verticalAlign: "middle",
-        borderRadius: "9999px",
-        fontWeight: 500,
-        ...sizeStyles,
-        ...variantStyles[variant],
-      }}
-    >
+    <span style={style}>
       {children}
     </span>
   );

@@ -1,7 +1,7 @@
 import { useMemo, useState } from "preact/hooks";
 import { Globe } from "lucide-preact";
 import type { DetectedService } from "@libztbs/types";
-import { Badge, Button, SearchInput } from "../../../components";
+import { Badge, SearchInput } from "../../../components";
 import { FilteredTab } from "../components/FilteredTab";
 import { useTabFilter } from "../hooks/useTabFilter";
 import { truncate } from "../utils";
@@ -166,34 +166,18 @@ export function ServicesTab({ services, nrdServices, loginServices, typosquatSer
       filterBar={
         <>
           <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="ドメインで検索..." />
-          <Button
-            variant={filters.nrd ? "primary" : "secondary"}
-            size="sm"
-            onClick={() => setFilter("nrd", !filters.nrd)}
-          >
+          <Badge variant="danger" active={filters.nrd} onClick={() => setFilter("nrd", !filters.nrd)}>
             NRD ({nrdServices.length})
-          </Button>
-          <Button
-            variant={filters.login ? "primary" : "secondary"}
-            size="sm"
-            onClick={() => setFilter("login", !filters.login)}
-          >
+          </Badge>
+          <Badge variant="warning" active={filters.login} onClick={() => setFilter("login", !filters.login)}>
             ログイン ({loginServices.length})
-          </Button>
-          <Button
-            variant={filters.typosquat ? "primary" : "secondary"}
-            size="sm"
-            onClick={() => setFilter("typosquat", !filters.typosquat)}
-          >
+          </Badge>
+          <Badge variant="danger" active={filters.typosquat} onClick={() => setFilter("typosquat", !filters.typosquat)}>
             Typosquat ({typosquatServices.length})
-          </Button>
-          <Button
-            variant={filters.ai ? "primary" : "secondary"}
-            size="sm"
-            onClick={() => setFilter("ai", !filters.ai)}
-          >
+          </Badge>
+          <Badge variant="info" active={filters.ai} onClick={() => setFilter("ai", !filters.ai)}>
             AI ({aiServices.length})
-          </Button>
+          </Badge>
         </>
       }
       columns={[
