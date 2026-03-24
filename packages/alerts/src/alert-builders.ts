@@ -29,6 +29,20 @@ import type {
   CanvasFingerprintAlertDetails,
   WebGLFingerprintAlertDetails,
   AudioFingerprintAlertDetails,
+  DynamicCodeExecutionAlertDetails,
+  FullscreenPhishingAlertDetails,
+  ClipboardReadAlertDetails,
+  GeolocationAccessAlertDetails,
+  WebSocketConnectionAlertDetails,
+  WebRTCConnectionAlertDetails,
+  BroadcastChannelAlertDetails,
+  SendBeaconAlertDetails,
+  MediaCaptureAlertDetails,
+  NotificationPhishingAlertDetails,
+  CredentialAPIAlertDetails,
+  DeviceSensorAlertDetails,
+  DeviceEnumerationAlertDetails,
+  StorageExfiltrationAlertDetails,
 } from "./types.js";
 
 export interface CreateAlertInput {
@@ -403,6 +417,7 @@ export interface DataExfiltrationAlertParams {
   bodySize: number;
   method: string;
   initiator: string;
+  sensitiveDataTypes?: string[];
 }
 
 const DATA_EXFILTRATION_ALERT_DEFINITION: AlertDefinition<
@@ -413,12 +428,29 @@ const DATA_EXFILTRATION_ALERT_DEFINITION: AlertDefinition<
   detailsType: "data_exfiltration",
   build: (params, helpers) => {
     const sizeKB = Math.round(params.bodySize / 1024);
-    const severity = helpers.resolveSeverity([[sizeKB > 500, "critical"]], "high");
+    const hasSensitiveData = (params.sensitiveDataTypes?.length ?? 0) > 0;
+    const severity = helpers.resolveSeverity(
+      [
+        [hasSensitiveData, "critical"],
+        [sizeKB > 500, "critical"],
+      ],
+      "high"
+    );
+
+    const sensitiveLabel = hasSensitiveData
+      ? params.sensitiveDataTypes!.join(", ")
+      : null;
+    const title = hasSensitiveData
+      ? `機密データ送信検出: ${params.targetDomain}`
+      : `大量データ送信検出: ${params.targetDomain}`;
+    const description = hasSensitiveData
+      ? `${params.sourceDomain}から${params.targetDomain}に${sensitiveLabel}を含むデータを送信`
+      : `${params.sourceDomain}から${sizeKB}KBのデータを${params.targetDomain}に送信`;
 
     return {
       severity,
-      title: `大量データ送信検出: ${params.targetDomain}`,
-      description: `${params.sourceDomain}から${sizeKB}KBのデータを${params.targetDomain}に送信`,
+      title,
+      description,
       domain: params.targetDomain,
       details: {
         sourceDomain: params.sourceDomain,
@@ -427,6 +459,7 @@ const DATA_EXFILTRATION_ALERT_DEFINITION: AlertDefinition<
         sizeKB,
         method: params.method,
         initiator: params.initiator,
+        sensitiveDataTypes: params.sensitiveDataTypes,
       },
     };
   },
@@ -932,4 +965,482 @@ const AUDIO_FINGERPRINT_ALERT_DEFINITION: AlertDefinition<
 
 export const buildAudioFingerprintAlert = createAlertBuilder(
   AUDIO_FINGERPRINT_ALERT_DEFINITION
+);
+
+// ============================================================================
+// Dynamic Code Execution
+// ============================================================================
+
+export interface DynamicCodeExecutionAlertParams {
+  domain: string;
+  method: string;
+  codeLength: number;
+}
+
+const DYNAMIC_CODE_EXECUTION_ALERT_DEFINITION: AlertDefinition<
+  DynamicCodeExecutionAlertParams,
+  DynamicCodeExecutionAlertDetails
+> = {
+  category: "dynamic_code_execution",
+  detailsType: "dynamic_code_execution",
+  build: (params) => ({
+    severity: "high",
+    title: `動的コード実行検出: ${params.domain}`,
+    description: `${params.method}による動的コード実行（${params.codeLength}文字）`,
+    domain: params.domain,
+    details: {
+      domain: params.domain,
+      method: params.method,
+      codeLength: params.codeLength,
+    },
+  }),
+};
+
+export const buildDynamicCodeExecutionAlert = createAlertBuilder(
+  DYNAMIC_CODE_EXECUTION_ALERT_DEFINITION
+);
+
+// ============================================================================
+// Fullscreen Phishing
+// ============================================================================
+
+export interface FullscreenPhishingAlertParams {
+  domain: string;
+  element: string;
+}
+
+const FULLSCREEN_PHISHING_ALERT_DEFINITION: AlertDefinition<
+  FullscreenPhishingAlertParams,
+  FullscreenPhishingAlertDetails
+> = {
+  category: "fullscreen_phishing",
+  detailsType: "fullscreen_phishing",
+  build: (params) => ({
+    severity: "critical",
+    title: `フルスクリーンフィッシング検出: ${params.domain}`,
+    description: `${params.element}要素がフルスクリーン表示を要求`,
+    domain: params.domain,
+    details: {
+      domain: params.domain,
+      element: params.element,
+    },
+  }),
+};
+
+export const buildFullscreenPhishingAlert = createAlertBuilder(
+  FULLSCREEN_PHISHING_ALERT_DEFINITION
+);
+
+// ============================================================================
+// Clipboard Read
+// ============================================================================
+
+export interface ClipboardReadAlertParams {
+  domain: string;
+}
+
+const CLIPBOARD_READ_ALERT_DEFINITION: AlertDefinition<
+  ClipboardReadAlertParams,
+  ClipboardReadAlertDetails
+> = {
+  category: "clipboard_read",
+  detailsType: "clipboard_read",
+  build: (params) => ({
+    severity: "medium",
+    title: `クリップボード読み取り検出: ${params.domain}`,
+    description: "スクリプトがクリップボードの内容を読み取りました",
+    domain: params.domain,
+    details: {
+      domain: params.domain,
+    },
+  }),
+};
+
+export const buildClipboardReadAlert = createAlertBuilder(
+  CLIPBOARD_READ_ALERT_DEFINITION
+);
+
+// ============================================================================
+// Geolocation Access
+// ============================================================================
+
+export interface GeolocationAccessAlertParams {
+  domain: string;
+  method: string;
+  highAccuracy: boolean;
+}
+
+const GEOLOCATION_ACCESS_ALERT_DEFINITION: AlertDefinition<
+  GeolocationAccessAlertParams,
+  GeolocationAccessAlertDetails
+> = {
+  category: "geolocation_access",
+  detailsType: "geolocation_access",
+  build: (params, helpers) => {
+    const severity = helpers.resolveSeverity(
+      [[params.highAccuracy, "high"]],
+      "medium"
+    );
+
+    return {
+      severity,
+      title: `位置情報アクセス検出: ${params.domain}`,
+      description: `${params.method}${params.highAccuracy ? "（高精度）" : ""}で位置情報を取得`,
+      domain: params.domain,
+      details: {
+        domain: params.domain,
+        method: params.method,
+        highAccuracy: params.highAccuracy,
+      },
+    };
+  },
+};
+
+export const buildGeolocationAccessAlert = createAlertBuilder(
+  GEOLOCATION_ACCESS_ALERT_DEFINITION
+);
+
+// ============================================================================
+// WebSocket Connection
+// ============================================================================
+
+export interface WebSocketConnectionAlertParams {
+  domain: string;
+  hostname: string;
+  isExternal: boolean;
+}
+
+const WEBSOCKET_CONNECTION_ALERT_DEFINITION: AlertDefinition<
+  WebSocketConnectionAlertParams,
+  WebSocketConnectionAlertDetails
+> = {
+  category: "websocket_connection",
+  detailsType: "websocket_connection",
+  build: (params, helpers) => {
+    const severity = helpers.resolveSeverity(
+      [[params.isExternal, "high"]],
+      "medium"
+    );
+
+    return {
+      severity,
+      title: `WebSocket接続検出: ${params.hostname}`,
+      description: params.isExternal
+        ? `外部ホスト${params.hostname}へのWebSocket接続`
+        : `${params.hostname}へのWebSocket接続`,
+      domain: params.domain,
+      details: {
+        domain: params.domain,
+        hostname: params.hostname,
+        isExternal: params.isExternal,
+      },
+    };
+  },
+};
+
+export const buildWebSocketConnectionAlert = createAlertBuilder(
+  WEBSOCKET_CONNECTION_ALERT_DEFINITION
+);
+
+// ============================================================================
+// WebRTC Connection
+// ============================================================================
+
+export interface WebRTCConnectionAlertParams {
+  domain: string;
+}
+
+const WEBRTC_CONNECTION_ALERT_DEFINITION: AlertDefinition<
+  WebRTCConnectionAlertParams,
+  WebRTCConnectionAlertDetails
+> = {
+  category: "webrtc_connection",
+  detailsType: "webrtc_connection",
+  build: (params) => ({
+    severity: "medium",
+    title: `WebRTC接続検出: ${params.domain}`,
+    description: "WebRTCピア接続が作成されました（IP漏洩リスク）",
+    domain: params.domain,
+    details: {
+      domain: params.domain,
+    },
+  }),
+};
+
+export const buildWebRTCConnectionAlert = createAlertBuilder(
+  WEBRTC_CONNECTION_ALERT_DEFINITION
+);
+
+// ============================================================================
+// BroadcastChannel
+// ============================================================================
+
+export interface BroadcastChannelAlertParams {
+  domain: string;
+  channelName: string;
+}
+
+const BROADCAST_CHANNEL_ALERT_DEFINITION: AlertDefinition<
+  BroadcastChannelAlertParams,
+  BroadcastChannelAlertDetails
+> = {
+  category: "broadcast_channel",
+  detailsType: "broadcast_channel",
+  build: (params) => ({
+    severity: "medium",
+    title: `BroadcastChannel検出: ${params.domain}`,
+    description: `チャネル「${params.channelName}」によるタブ間通信`,
+    domain: params.domain,
+    details: {
+      domain: params.domain,
+      channelName: params.channelName,
+    },
+  }),
+};
+
+export const buildBroadcastChannelAlert = createAlertBuilder(
+  BROADCAST_CHANNEL_ALERT_DEFINITION
+);
+
+// ============================================================================
+// Send Beacon (Covert Exfiltration)
+// ============================================================================
+
+export interface SendBeaconAlertParams {
+  domain: string;
+  url: string;
+  dataSize: number;
+}
+
+const SEND_BEACON_ALERT_DEFINITION: AlertDefinition<
+  SendBeaconAlertParams,
+  SendBeaconAlertDetails
+> = {
+  category: "send_beacon",
+  detailsType: "send_beacon",
+  build: (params, helpers) => {
+    const severity = helpers.resolveSeverity(
+      [[params.dataSize > 1024, "high"]],
+      "medium"
+    );
+
+    return {
+      severity,
+      title: `Beacon送信検出: ${params.domain}`,
+      description: `sendBeaconで${params.dataSize}バイトのデータを送信`,
+      domain: params.domain,
+      details: {
+        domain: params.domain,
+        url: params.url,
+        dataSize: params.dataSize,
+      },
+    };
+  },
+};
+
+export const buildSendBeaconAlert = createAlertBuilder(
+  SEND_BEACON_ALERT_DEFINITION
+);
+
+// ============================================================================
+// Media Capture
+// ============================================================================
+
+export interface MediaCaptureAlertParams {
+  domain: string;
+  method: string;
+  audio: boolean;
+  video: boolean;
+}
+
+const MEDIA_CAPTURE_ALERT_DEFINITION: AlertDefinition<
+  MediaCaptureAlertParams,
+  MediaCaptureAlertDetails
+> = {
+  category: "media_capture",
+  detailsType: "media_capture",
+  build: (params, helpers) => {
+    const isScreenCapture = params.method === "getDisplayMedia";
+    const severity = helpers.resolveSeverity(
+      [[isScreenCapture, "critical"]],
+      "high"
+    );
+
+    const mediaTypes = [
+      params.video ? (isScreenCapture ? "画面" : "カメラ") : "",
+      params.audio ? "マイク" : "",
+    ].filter(Boolean).join("・");
+
+    return {
+      severity,
+      title: `メディアキャプチャ検出: ${params.domain}`,
+      description: `${mediaTypes}へのアクセスを要求`,
+      domain: params.domain,
+      details: {
+        domain: params.domain,
+        method: params.method,
+        audio: params.audio,
+        video: params.video,
+      },
+    };
+  },
+};
+
+export const buildMediaCaptureAlert = createAlertBuilder(
+  MEDIA_CAPTURE_ALERT_DEFINITION
+);
+
+// ============================================================================
+// Notification Phishing
+// ============================================================================
+
+export interface NotificationPhishingAlertParams {
+  domain: string;
+  title: string;
+}
+
+const NOTIFICATION_PHISHING_ALERT_DEFINITION: AlertDefinition<
+  NotificationPhishingAlertParams,
+  NotificationPhishingAlertDetails
+> = {
+  category: "notification_phishing",
+  detailsType: "notification_phishing",
+  build: (params) => ({
+    severity: "high",
+    title: `通知フィッシング検出: ${params.domain}`,
+    description: `偽の通知「${params.title}」を表示`,
+    domain: params.domain,
+    details: {
+      domain: params.domain,
+      title: params.title,
+    },
+  }),
+};
+
+export const buildNotificationPhishingAlert = createAlertBuilder(
+  NOTIFICATION_PHISHING_ALERT_DEFINITION
+);
+
+// ============================================================================
+// Credential API
+// ============================================================================
+
+export interface CredentialAPIAlertParams {
+  domain: string;
+  method: string;
+}
+
+const CREDENTIAL_API_ALERT_DEFINITION: AlertDefinition<
+  CredentialAPIAlertParams,
+  CredentialAPIAlertDetails
+> = {
+  category: "credential_api",
+  detailsType: "credential_api",
+  build: (params) => ({
+    severity: "high",
+    title: `認証情報API検出: ${params.domain}`,
+    description: `Credential Management APIの${params.method}が呼び出されました`,
+    domain: params.domain,
+    details: {
+      domain: params.domain,
+      method: params.method,
+    },
+  }),
+};
+
+export const buildCredentialAPIAlert = createAlertBuilder(
+  CREDENTIAL_API_ALERT_DEFINITION
+);
+
+// ============================================================================
+// Device Sensor
+// ============================================================================
+
+export interface DeviceSensorAlertParams {
+  domain: string;
+  sensorType: string;
+}
+
+const DEVICE_SENSOR_ALERT_DEFINITION: AlertDefinition<
+  DeviceSensorAlertParams,
+  DeviceSensorAlertDetails
+> = {
+  category: "device_sensor",
+  detailsType: "device_sensor",
+  build: (params) => ({
+    severity: "medium",
+    title: `デバイスセンサー検出: ${params.domain}`,
+    description: `${params.sensorType}イベントのリスナーが登録されました`,
+    domain: params.domain,
+    details: {
+      domain: params.domain,
+      sensorType: params.sensorType,
+    },
+  }),
+};
+
+export const buildDeviceSensorAlert = createAlertBuilder(
+  DEVICE_SENSOR_ALERT_DEFINITION
+);
+
+// ============================================================================
+// Device Enumeration
+// ============================================================================
+
+export interface DeviceEnumerationAlertParams {
+  domain: string;
+}
+
+const DEVICE_ENUMERATION_ALERT_DEFINITION: AlertDefinition<
+  DeviceEnumerationAlertParams,
+  DeviceEnumerationAlertDetails
+> = {
+  category: "device_enumeration",
+  detailsType: "device_enumeration",
+  build: (params) => ({
+    severity: "medium",
+    title: `デバイス列挙検出: ${params.domain}`,
+    description: "接続されたメディアデバイスが列挙されました",
+    domain: params.domain,
+    details: {
+      domain: params.domain,
+    },
+  }),
+};
+
+export const buildDeviceEnumerationAlert = createAlertBuilder(
+  DEVICE_ENUMERATION_ALERT_DEFINITION
+);
+
+// ============================================================================
+// Storage Exfiltration
+// ============================================================================
+
+export interface StorageExfiltrationAlertParams {
+  domain: string;
+  storageType: string;
+  accessCount: number;
+}
+
+const STORAGE_EXFILTRATION_ALERT_DEFINITION: AlertDefinition<
+  StorageExfiltrationAlertParams,
+  StorageExfiltrationAlertDetails
+> = {
+  category: "storage_exfiltration",
+  detailsType: "storage_exfiltration",
+  build: (params) => ({
+    severity: "high",
+    title: `ストレージ大量アクセス検出: ${params.domain}`,
+    description: `${params.storageType}に短時間で${params.accessCount}回アクセス`,
+    domain: params.domain,
+    details: {
+      domain: params.domain,
+      storageType: params.storageType,
+      accessCount: params.accessCount,
+    },
+  }),
+};
+
+export const buildStorageExfiltrationAlert = createAlertBuilder(
+  STORAGE_EXFILTRATION_ALERT_DEFINITION
 );

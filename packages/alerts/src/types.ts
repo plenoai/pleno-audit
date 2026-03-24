@@ -36,7 +36,21 @@ export type AlertCategory =
   | "suspicious_download" // Suspicious file download
   | "canvas_fingerprint" // Canvas fingerprinting detected
   | "webgl_fingerprint" // WebGL fingerprinting detected
-  | "audio_fingerprint"; // AudioContext fingerprinting detected
+  | "audio_fingerprint" // AudioContext fingerprinting detected
+  | "dynamic_code_execution" // Dynamic code execution (eval, Function)
+  | "fullscreen_phishing" // Fullscreen phishing attempt
+  | "clipboard_read" // Clipboard read attempt
+  | "geolocation_access" // Geolocation API access
+  | "websocket_connection" // Suspicious WebSocket connection
+  | "webrtc_connection" // WebRTC connection (potential data leak)
+  | "broadcast_channel" // BroadcastChannel covert communication
+  | "send_beacon" // navigator.sendBeacon covert exfiltration
+  | "media_capture" // getUserMedia/getDisplayMedia access
+  | "notification_phishing" // Notification API phishing
+  | "credential_api" // Credential Management API access
+  | "device_sensor" // Device sensor access (motion/orientation)
+  | "device_enumeration" // Media device enumeration
+  | "storage_exfiltration"; // localStorage/sessionStorage mass access
 
 /**
  * Alert status
@@ -91,7 +105,21 @@ export type AlertDetails =
   | SuspiciousDownloadAlertDetails
   | CanvasFingerprintAlertDetails
   | WebGLFingerprintAlertDetails
-  | AudioFingerprintAlertDetails;
+  | AudioFingerprintAlertDetails
+  | DynamicCodeExecutionAlertDetails
+  | FullscreenPhishingAlertDetails
+  | SendBeaconAlertDetails
+  | MediaCaptureAlertDetails
+  | NotificationPhishingAlertDetails
+  | CredentialAPIAlertDetails
+  | DeviceSensorAlertDetails
+  | DeviceEnumerationAlertDetails
+  | StorageExfiltrationAlertDetails
+  | ClipboardReadAlertDetails
+  | GeolocationAccessAlertDetails
+  | WebSocketConnectionAlertDetails
+  | WebRTCConnectionAlertDetails
+  | BroadcastChannelAlertDetails;
 
 export interface NRDAlertDetails {
   type: "nrd";
@@ -168,6 +196,7 @@ export interface DataExfiltrationAlertDetails {
   sizeKB: number;
   method: string;
   initiator: string;
+  sensitiveDataTypes?: string[];
 }
 
 export interface CredentialTheftAlertDetails {
@@ -280,6 +309,94 @@ export interface AudioFingerprintAlertDetails {
   domain: string;
   contextCount: number;
   sampleRate?: number;
+}
+
+export interface SendBeaconAlertDetails {
+  type: "send_beacon";
+  domain: string;
+  url: string;
+  dataSize: number;
+}
+
+export interface MediaCaptureAlertDetails {
+  type: "media_capture";
+  domain: string;
+  method: string;
+  audio: boolean;
+  video: boolean;
+}
+
+export interface NotificationPhishingAlertDetails {
+  type: "notification_phishing";
+  domain: string;
+  title: string;
+}
+
+export interface StorageExfiltrationAlertDetails {
+  type: "storage_exfiltration";
+  domain: string;
+  storageType: string;
+  accessCount: number;
+}
+
+export interface CredentialAPIAlertDetails {
+  type: "credential_api";
+  domain: string;
+  method: string;
+}
+
+export interface DeviceSensorAlertDetails {
+  type: "device_sensor";
+  domain: string;
+  sensorType: string;
+}
+
+export interface DeviceEnumerationAlertDetails {
+  type: "device_enumeration";
+  domain: string;
+}
+
+export interface DynamicCodeExecutionAlertDetails {
+  type: "dynamic_code_execution";
+  domain: string;
+  method: string;
+  codeLength: number;
+}
+
+export interface FullscreenPhishingAlertDetails {
+  type: "fullscreen_phishing";
+  domain: string;
+  element: string;
+}
+
+export interface ClipboardReadAlertDetails {
+  type: "clipboard_read";
+  domain: string;
+}
+
+export interface GeolocationAccessAlertDetails {
+  type: "geolocation_access";
+  domain: string;
+  method: string;
+  highAccuracy: boolean;
+}
+
+export interface WebSocketConnectionAlertDetails {
+  type: "websocket_connection";
+  domain: string;
+  hostname: string;
+  isExternal: boolean;
+}
+
+export interface WebRTCConnectionAlertDetails {
+  type: "webrtc_connection";
+  domain: string;
+}
+
+export interface BroadcastChannelAlertDetails {
+  type: "broadcast_channel";
+  domain: string;
+  channelName: string;
 }
 
 /**

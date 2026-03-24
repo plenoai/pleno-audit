@@ -62,10 +62,18 @@ export async function updateService(
     const isNewDomain = !storage.services[domain];
     const existing = storage.services[domain] || createDefaultService(domain);
 
-    storage.services[domain] = {
+    const merged = {
       ...existing,
       ...update,
     };
+
+    if (update.sensitiveDataDetected && existing.sensitiveDataDetected) {
+      merged.sensitiveDataDetected = [
+        ...new Set([...existing.sensitiveDataDetected, ...update.sensitiveDataDetected]),
+      ];
+    }
+
+    storage.services[domain] = merged;
 
     await saveStorage({ services: storage.services });
 

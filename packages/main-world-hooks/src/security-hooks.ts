@@ -209,6 +209,27 @@ export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecuri
     });
   }
 
+  // ===== Storage Exfiltration (localStorage/sessionStorage mass access) =====
+  for (const [storageType, storage] of [["localStorage", localStorage], ["sessionStorage", sessionStorage]] as const) {
+    if (!storage) continue;
+    let accessCount = 0;
+    let accessResetTime = Date.now();
+    const originalGetItem = storage.getItem.bind(storage);
+    storage.getItem = function (key: string) {
+      const now = Date.now();
+      if (now - accessResetTime > 3000) { accessCount = 0; accessResetTime = now; }
+      if (++accessCount === 10) {
+        emitSecurityEvent("__STORAGE_EXFILTRATION_DETECTED__", {
+          storageType,
+          accessCount,
+          timestamp: now,
+          pageUrl: window.location.href,
+        });
+      }
+      return originalGetItem(key);
+    };
+  }
+
   // ===== Suspicious Download =====
   const originalCreateObjectURL = URL.createObjectURL;
   URL.createObjectURL = function (blob: Blob | MediaSource) {

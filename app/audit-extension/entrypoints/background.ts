@@ -196,6 +196,7 @@ const securityEventHandlers = createSecurityEventHandlers({
   getAlertManager: backgroundAlerts.getAlertManager,
   extractDomainFromUrl: backgroundUtils.extractDomainFromUrl,
   checkDataTransferPolicy: backgroundAlerts.checkDataTransferPolicy,
+  updateService: backgroundStorage.updateService,
   logger,
 });
 
@@ -401,6 +402,14 @@ handleNetworkInspection: (data, sender) => networkSecurityInspector.handleNetwor
     handleAudioFingerprint: (data, sender) => securityEventHandlers.handleAudioFingerprint(data as AudioFingerprintData, sender),
     handleBroadcastChannel: (data, sender) => securityEventHandlers.handleBroadcastChannel(data as Record<string, unknown>, sender),
     handleWebRTCConnection: (data, sender) => securityEventHandlers.handleWebRTCConnection(data as Record<string, unknown>, sender),
+    handleSendBeacon: (data, sender) => securityEventHandlers.handleSendBeacon(data as Record<string, unknown>, sender),
+    handleMediaCapture: (data, sender) => securityEventHandlers.handleMediaCapture(data as Record<string, unknown>, sender),
+    handleNotificationPhishing: (data, sender) => securityEventHandlers.handleNotificationPhishing(data as Record<string, unknown>, sender),
+    handleCredentialAPI: (data, sender) => securityEventHandlers.handleCredentialAPI(data as Record<string, unknown>, sender),
+    handleDeviceSensor: (data, sender) => securityEventHandlers.handleDeviceSensor(data as Record<string, unknown>, sender),
+    handleDeviceEnumeration: (data, sender) => securityEventHandlers.handleDeviceEnumeration(data as Record<string, unknown>, sender),
+    handleStorageExfiltration: (data, sender) => securityEventHandlers.handleStorageExfiltration(data as Record<string, unknown>, sender),
+    getAlerts: (options) => backgroundAlerts.getAlertManager().getAlerts(options),
     getCSPReports: cspReportingService.getCSPReports,
     generateCSPPolicy: cspReportingService.generateCSPPolicy,
     generateCSPPolicyByDomain: cspReportingService.generateCSPPolicyByDomain,

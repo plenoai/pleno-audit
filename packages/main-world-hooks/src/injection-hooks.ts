@@ -79,6 +79,70 @@ export function initInjectionHooks(emitSecurityEvent: SharedHookUtils["emitSecur
     };
   }
 
+  // navigator.sendBeacon (covert exfiltration channel)
+  if (navigator.sendBeacon) {
+    const originalSendBeacon = navigator.sendBeacon.bind(navigator);
+    navigator.sendBeacon = function (url: string | URL, data?: BodyInit | null): boolean {
+      emitSecurityEvent("__SEND_BEACON_DETECTED__", {
+        url: String(url),
+        dataSize: data ? new Blob([data as BlobPart]).size : 0,
+        timestamp: Date.now(),
+        pageUrl: location.href,
+      });
+      return originalSendBeacon(url, data);
+    };
+  }
+
+  // getUserMedia / getDisplayMedia (media capture)
+  if (navigator.mediaDevices) {
+    if (navigator.mediaDevices.getUserMedia) {
+      const originalGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+      navigator.mediaDevices.getUserMedia = function (constraints?: MediaStreamConstraints) {
+        emitSecurityEvent("__MEDIA_CAPTURE_DETECTED__", {
+          method: "getUserMedia",
+          audio: !!constraints?.audio,
+          video: !!constraints?.video,
+          timestamp: Date.now(),
+          pageUrl: location.href,
+        });
+        return originalGetUserMedia(constraints);
+      };
+    }
+    if (navigator.mediaDevices.getDisplayMedia) {
+      const originalGetDisplayMedia = navigator.mediaDevices.getDisplayMedia.bind(navigator.mediaDevices);
+      navigator.mediaDevices.getDisplayMedia = function (constraints?: DisplayMediaStreamOptions) {
+        emitSecurityEvent("__MEDIA_CAPTURE_DETECTED__", {
+          method: "getDisplayMedia",
+          audio: !!constraints?.audio,
+          video: true,
+          timestamp: Date.now(),
+          pageUrl: location.href,
+        });
+        return originalGetDisplayMedia(constraints);
+      };
+    }
+  }
+
+  // Notification API (phishing)
+  if (typeof Notification !== "undefined") {
+    const OriginalNotification = Notification;
+    // @ts-expect-error -- monkey-patching Notification constructor
+    window.Notification = function (title: string, options?: NotificationOptions) {
+      emitSecurityEvent("__NOTIFICATION_PHISHING_DETECTED__", {
+        title,
+        body: options?.body?.substring(0, 200) ?? "",
+        timestamp: Date.now(),
+        pageUrl: location.href,
+      });
+      return new OriginalNotification(title, options);
+    } as unknown as typeof Notification;
+    Object.setPrototypeOf(window.Notification, OriginalNotification);
+    Object.defineProperty(window.Notification, "permission", {
+      get: () => OriginalNotification.permission,
+    });
+    window.Notification.requestPermission = OriginalNotification.requestPermission.bind(OriginalNotification);
+  }
+
   // geolocation
   if (navigator.geolocation) {
     const originalGetCurrentPosition = navigator.geolocation.getCurrentPosition.bind(navigator.geolocation);
@@ -109,6 +173,51 @@ export function initInjectionHooks(emitSecurityEvent: SharedHookUtils["emitSecur
         pageUrl: location.href,
       });
       return originalWatchPosition(success, error ?? undefined, options);
+    };
+  }
+
+  // Credential Management API (phishing/harvesting)
+  if (navigator.credentials?.get) {
+    const originalCredentialsGet = navigator.credentials.get.bind(navigator.credentials);
+    navigator.credentials.get = function (options?: CredentialRequestOptions) {
+      emitSecurityEvent("__CREDENTIAL_API_DETECTED__", {
+        method: "get",
+        hasPassword: !!options?.password,
+        hasFederated: !!options?.federated,
+        timestamp: Date.now(),
+        pageUrl: location.href,
+      });
+      return originalCredentialsGet(options);
+    };
+  }
+
+  // DeviceMotion / DeviceOrientation (sensor fingerprinting)
+  const originalAddEventListener = EventTarget.prototype.addEventListener;
+  const sensorEvents = new Set(["devicemotion", "deviceorientation"]);
+  EventTarget.prototype.addEventListener = function (
+    type: string,
+    listener: EventListenerOrEventListenerObject | null,
+    options?: boolean | AddEventListenerOptions,
+  ) {
+    if (sensorEvents.has(type)) {
+      emitSecurityEvent("__DEVICE_SENSOR_ACCESSED__", {
+        sensorType: type,
+        timestamp: Date.now(),
+        pageUrl: location.href,
+      });
+    }
+    return originalAddEventListener.call(this, type, listener, options);
+  };
+
+  // navigator.mediaDevices.enumerateDevices (device fingerprinting)
+  if (navigator.mediaDevices?.enumerateDevices) {
+    const originalEnumerateDevices = navigator.mediaDevices.enumerateDevices.bind(navigator.mediaDevices);
+    navigator.mediaDevices.enumerateDevices = function () {
+      emitSecurityEvent("__DEVICE_ENUMERATION_DETECTED__", {
+        timestamp: Date.now(),
+        pageUrl: location.href,
+      });
+      return originalEnumerateDevices();
     };
   }
 }

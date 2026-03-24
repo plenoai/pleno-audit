@@ -33,10 +33,12 @@ function createMockDeps(): Pick<
   | "getKnownExtensions"
   | "getServiceConnections"
   | "getExtensionConnections"
+  | "getAlerts"
 > {
   return {
     logger: { debug: vi.fn(), warn: vi.fn(), error: vi.fn() },
     getServices: vi.fn<() => Promise<DetectedService[]>>().mockResolvedValue([]),
+    getAlerts: vi.fn().mockResolvedValue([]),
     getCSPReports: vi.fn().mockResolvedValue({ reports: [] }),
     getNetworkRequests: vi.fn().mockResolvedValue({ requests: [] }),
     getExtensionStats: vi.fn().mockResolvedValue(null),

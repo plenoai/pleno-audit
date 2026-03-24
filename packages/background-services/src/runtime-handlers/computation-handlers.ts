@@ -22,7 +22,8 @@ type ServiceTag =
   | { type: "login" }
   | { type: "privacy"; url: string }
   | { type: "tos"; url: string }
-  | { type: "cookie"; count: number };
+  | { type: "cookie"; count: number }
+  | { type: "sensitive_data"; dataTypes: string[] };
 
 type ServiceSource =
   | { type: "domain"; domain: string; service: DetectedService }
@@ -58,6 +59,7 @@ function extractTags(service: DetectedService): ServiceTag[] {
   if (service.privacyPolicyUrl) tags.push({ type: "privacy", url: service.privacyPolicyUrl });
   if (service.termsOfServiceUrl) tags.push({ type: "tos", url: service.termsOfServiceUrl });
   if (service.cookies.length > 0) tags.push({ type: "cookie", count: service.cookies.length });
+  if (service.sensitiveDataDetected?.length) tags.push({ type: "sensitive_data", dataTypes: service.sensitiveDataDetected });
   return tags;
 }
 
@@ -104,15 +106,34 @@ export function createComputationHandlers(
       "GET_POPUP_EVENTS",
       {
         execute: async () => {
-          const services = await deps.getServices();
-          const alerts = extractPostureAlerts(services);
+          const [services, securityAlerts] = await Promise.all([
+            deps.getServices(),
+            deps.getAlerts({ limit: 200 }),
+          ]);
+
+          const postureAlerts = extractPostureAlerts(services);
+          const realtimeAlerts: EventItem[] = securityAlerts.map((a) => ({
+            id: a.id,
+            category: a.category,
+            severity: a.severity,
+            title: a.title,
+            domain: a.domain,
+            timestamp: a.timestamp,
+          }));
+
+          const seenIds = new Set(postureAlerts.map((a) => a.id));
+          const merged = [...postureAlerts];
+          for (const a of realtimeAlerts) {
+            if (!seenIds.has(a.id)) merged.push(a);
+          }
+          merged.sort((a, b) => b.timestamp - a.timestamp);
 
           const counts: Record<string, number> = {};
-          for (const a of alerts) {
+          for (const a of merged) {
             counts[a.severity] = (counts[a.severity] || 0) + 1;
           }
 
-          return { events: alerts, counts, total: alerts.length };
+          return { events: merged, counts, total: merged.length };
         },
         fallback: () => ({ events: [], counts: {}, total: 0 }),
       },

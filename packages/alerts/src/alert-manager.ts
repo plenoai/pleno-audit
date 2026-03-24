@@ -35,6 +35,20 @@ import type {
   CanvasFingerprintAlertParams,
   WebGLFingerprintAlertParams,
   AudioFingerprintAlertParams,
+  DynamicCodeExecutionAlertParams,
+  FullscreenPhishingAlertParams,
+  ClipboardReadAlertParams,
+  GeolocationAccessAlertParams,
+  WebSocketConnectionAlertParams,
+  WebRTCConnectionAlertParams,
+  BroadcastChannelAlertParams,
+  SendBeaconAlertParams,
+  MediaCaptureAlertParams,
+  NotificationPhishingAlertParams,
+  CredentialAPIAlertParams,
+  DeviceSensorAlertParams,
+  DeviceEnumerationAlertParams,
+  StorageExfiltrationAlertParams,
 } from "./alert-builders.js";
 import {
   buildNRDAlert,
@@ -57,6 +71,20 @@ import {
   buildCanvasFingerprintAlert,
   buildWebGLFingerprintAlert,
   buildAudioFingerprintAlert,
+  buildDynamicCodeExecutionAlert,
+  buildFullscreenPhishingAlert,
+  buildClipboardReadAlert,
+  buildGeolocationAccessAlert,
+  buildWebSocketConnectionAlert,
+  buildWebRTCConnectionAlert,
+  buildBroadcastChannelAlert,
+  buildSendBeaconAlert,
+  buildMediaCaptureAlert,
+  buildNotificationPhishingAlert,
+  buildCredentialAPIAlert,
+  buildDeviceSensorAlert,
+  buildDeviceEnumerationAlert,
+  buildStorageExfiltrationAlert,
 } from "./alert-builders.js";
 
 /**
@@ -366,6 +394,90 @@ export function createAlertManager(
     return createOptionalAlert(buildAudioFingerprintAlert(params));
   }
 
+  async function alertDynamicCodeExecution(
+    params: DynamicCodeExecutionAlertParams
+  ): Promise<SecurityAlert | null> {
+    return createOptionalAlert(buildDynamicCodeExecutionAlert(params));
+  }
+
+  async function alertFullscreenPhishing(
+    params: FullscreenPhishingAlertParams
+  ): Promise<SecurityAlert | null> {
+    return createOptionalAlert(buildFullscreenPhishingAlert(params));
+  }
+
+  async function alertClipboardRead(
+    params: ClipboardReadAlertParams
+  ): Promise<SecurityAlert | null> {
+    return createOptionalAlert(buildClipboardReadAlert(params));
+  }
+
+  async function alertGeolocationAccess(
+    params: GeolocationAccessAlertParams
+  ): Promise<SecurityAlert | null> {
+    return createOptionalAlert(buildGeolocationAccessAlert(params));
+  }
+
+  async function alertWebSocketConnection(
+    params: WebSocketConnectionAlertParams
+  ): Promise<SecurityAlert | null> {
+    return createOptionalAlert(buildWebSocketConnectionAlert(params));
+  }
+
+  async function alertWebRTCConnection(
+    params: WebRTCConnectionAlertParams
+  ): Promise<SecurityAlert | null> {
+    return createOptionalAlert(buildWebRTCConnectionAlert(params));
+  }
+
+  async function alertBroadcastChannel(
+    params: BroadcastChannelAlertParams
+  ): Promise<SecurityAlert | null> {
+    return createOptionalAlert(buildBroadcastChannelAlert(params));
+  }
+
+  async function alertSendBeacon(
+    params: SendBeaconAlertParams
+  ): Promise<SecurityAlert | null> {
+    return createOptionalAlert(buildSendBeaconAlert(params));
+  }
+
+  async function alertMediaCapture(
+    params: MediaCaptureAlertParams
+  ): Promise<SecurityAlert | null> {
+    return createOptionalAlert(buildMediaCaptureAlert(params));
+  }
+
+  async function alertNotificationPhishing(
+    params: NotificationPhishingAlertParams
+  ): Promise<SecurityAlert | null> {
+    return createOptionalAlert(buildNotificationPhishingAlert(params));
+  }
+
+  async function alertCredentialAPI(
+    params: CredentialAPIAlertParams
+  ): Promise<SecurityAlert | null> {
+    return createOptionalAlert(buildCredentialAPIAlert(params));
+  }
+
+  async function alertDeviceSensor(
+    params: DeviceSensorAlertParams
+  ): Promise<SecurityAlert | null> {
+    return createOptionalAlert(buildDeviceSensorAlert(params));
+  }
+
+  async function alertDeviceEnumeration(
+    params: DeviceEnumerationAlertParams
+  ): Promise<SecurityAlert | null> {
+    return createOptionalAlert(buildDeviceEnumerationAlert(params));
+  }
+
+  async function alertStorageExfiltration(
+    params: StorageExfiltrationAlertParams
+  ): Promise<SecurityAlert | null> {
+    return createOptionalAlert(buildStorageExfiltrationAlert(params));
+  }
+
   async function updateAlertStatus(
     alertId: string,
     status: AlertStatus
@@ -429,6 +541,20 @@ export function createAlertManager(
     alertCanvasFingerprint,
     alertWebGLFingerprint,
     alertAudioFingerprint,
+    alertDynamicCodeExecution,
+    alertFullscreenPhishing,
+    alertClipboardRead,
+    alertGeolocationAccess,
+    alertWebSocketConnection,
+    alertWebRTCConnection,
+    alertBroadcastChannel,
+    alertSendBeacon,
+    alertMediaCapture,
+    alertNotificationPhishing,
+    alertCredentialAPI,
+    alertDeviceSensor,
+    alertDeviceEnumeration,
+    alertStorageExfiltration,
     updateAlertStatus,
     getAlerts,
     getAlertCount,

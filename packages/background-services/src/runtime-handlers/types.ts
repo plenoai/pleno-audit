@@ -14,6 +14,7 @@ import type {
   NetworkMonitorConfig,
   NotificationConfig,
 } from "@libztbs/extension-runtime";
+import type { SecurityAlert, AlertStatus } from "@libztbs/alerts";
 
 export type RuntimeMessage = {
   type?: string;
@@ -99,6 +100,15 @@ handleNetworkInspection: (data: unknown, sender: chrome.runtime.MessageSender) =
   handleAudioFingerprint: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
   handleBroadcastChannel: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
   handleWebRTCConnection: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
+  handleSendBeacon: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
+  handleMediaCapture: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
+  handleNotificationPhishing: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
+  handleCredentialAPI: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
+  handleDeviceSensor: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
+  handleDeviceEnumeration: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
+  handleStorageExfiltration: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
+
+  getAlerts: (options?: { limit?: number; status?: AlertStatus[] }) => Promise<SecurityAlert[]>;
 
   getServices: () => Promise<DetectedService[]>;
 

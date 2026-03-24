@@ -67,6 +67,13 @@ export default defineContentScript({
       "__AUDIO_FINGERPRINT_DETECTED__",
       "__BROADCAST_CHANNEL_DETECTED__",
       "__WEBRTC_CONNECTION_DETECTED__",
+      "__SEND_BEACON_DETECTED__",
+      "__MEDIA_CAPTURE_DETECTED__",
+      "__NOTIFICATION_PHISHING_DETECTED__",
+      "__CREDENTIAL_API_DETECTED__",
+      "__DEVICE_SENSOR_ACCESSED__",
+      "__DEVICE_ENUMERATION_DETECTED__",
+      "__STORAGE_EXFILTRATION_DETECTED__",
     ];
 
     const signal = abortController.signal;

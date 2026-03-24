@@ -22,6 +22,7 @@ function getServiceTags(s: DetectedService): { label: string; variant: "danger" 
   if (s.typosquatResult?.isTyposquat) tags.push({ label: "Typosquat", variant: "danger" });
   if (s.hasLoginPage) tags.push({ label: "ログイン", variant: "warning" });
   if (s.aiDetected?.hasAIActivity) tags.push({ label: "AI", variant: "info" });
+  if (s.sensitiveDataDetected?.includes("email")) tags.push({ label: "Email", variant: "warning" });
   return tags;
 }
 

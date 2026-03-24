@@ -70,6 +70,8 @@ export interface DetectedService {
     totalScore: number;
     checkedAt: number;
   };
+  /** ネットワーク通信で検出された機密データの種類（email, credit_card等） */
+  sensitiveDataDetected?: string[];
   aiDetected?: {
     hasAIActivity: boolean;
     lastActivityAt: number;

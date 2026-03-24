@@ -108,5 +108,33 @@ export function createSecurityAsyncHandlers(
       execute: (message, sender) => deps.handleWebRTCConnection(message.data, sender),
       fallback: () => ({ success: false }),
     }],
+    ["SEND_BEACON_DETECTED", {
+      execute: (message, sender) => deps.handleSendBeacon(message.data, sender),
+      fallback: () => ({ success: false }),
+    }],
+    ["MEDIA_CAPTURE_DETECTED", {
+      execute: (message, sender) => deps.handleMediaCapture(message.data, sender),
+      fallback: () => ({ success: false }),
+    }],
+    ["NOTIFICATION_PHISHING_DETECTED", {
+      execute: (message, sender) => deps.handleNotificationPhishing(message.data, sender),
+      fallback: () => ({ success: false }),
+    }],
+    ["CREDENTIAL_API_DETECTED", {
+      execute: (message, sender) => deps.handleCredentialAPI(message.data, sender),
+      fallback: () => ({ success: false }),
+    }],
+    ["DEVICE_SENSOR_ACCESSED", {
+      execute: (message, sender) => deps.handleDeviceSensor(message.data, sender),
+      fallback: () => ({ success: false }),
+    }],
+    ["DEVICE_ENUMERATION_DETECTED", {
+      execute: (message, sender) => deps.handleDeviceEnumeration(message.data, sender),
+      fallback: () => ({ success: false }),
+    }],
+    ["STORAGE_EXFILTRATION_DETECTED", {
+      execute: (message, sender) => deps.handleStorageExfiltration(message.data, sender),
+      fallback: () => ({ success: false }),
+    }],
   ];
 }
