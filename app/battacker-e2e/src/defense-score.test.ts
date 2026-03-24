@@ -3423,6 +3423,8 @@ test.describe("Defense Score (MAIN World Attacks)", () => {
     });
     // Wait for extension content scripts to inject
     await ctx.page.waitForTimeout(2000);
+
+    // Extension hooks are now active on the test page
   });
 
   test.afterAll(async () => {
@@ -3520,7 +3522,8 @@ test.describe("Defense Score (MAIN World Attacks)", () => {
           const dashboardUrl = `chrome-extension://${extensionId}/dashboard.html`;
           const dashPage = await ctx.context.newPage();
           await dashPage.goto(dashboardUrl, { waitUntil: "domcontentloaded" });
-          await dashPage.waitForTimeout(2000);
+          // Wait longer for security-bridge async batch processing to complete
+          await dashPage.waitForTimeout(5000);
 
           const result = await dashPage.evaluate(async () => {
             try {
@@ -3601,6 +3604,76 @@ test.describe("Defense Score (MAIN World Attacks)", () => {
       // Just log, don't fail - we're measuring, not asserting
       const status = result.blocked ? "BLOCKED" : "PASSED";
       console.log(`  [${status}] ${attack.id}: ${result.details.substring(0, 70)}`);
+    });
+  }
+});
+
+// ============================================================================
+// Domain Risk Detection Tests (disabled: runs in separate context, skews alert collection)
+// ============================================================================
+
+test.describe.skip("Domain Risk Detection (Typosquat)", () => {
+  let ctx: TestContext;
+
+  test.beforeAll(async () => {
+    ctx = await setupBrowser();
+    await ctx.page.goto(`http://127.0.0.1:${ctx.serverPort}/test-page.html`, {
+      waitUntil: "domcontentloaded",
+    });
+    await ctx.page.waitForTimeout(2000);
+  });
+
+  test.afterAll(async () => {
+    if (ctx?.context) await ctx.context.close();
+    if (ctx?.server) ctx.server.close();
+  });
+
+  const typosquatDomains = [
+    { domain: "g\u043e\u043egle.com", description: "Cyrillic о in google", expectDetected: true },
+    { domain: "g\u03bfogle.com", description: "Greek omicron in google", expectDetected: true },
+    { domain: "rnicrosoft.com", description: "rn→m sequence pattern", expectDetected: true },
+    { domain: "xn--ggle-55da.com", description: "Punycode IDN homograph", expectDetected: true },
+    { domain: "example.com", description: "Legitimate domain", expectDetected: false },
+    { domain: "github.com", description: "Legitimate domain", expectDetected: false },
+  ];
+
+  for (const { domain, description, expectDetected } of typosquatDomains) {
+    test(`typosquat/${domain}: ${description}`, async () => {
+      // Use dashboard page to send CHECK_TYPOSQUAT (has chrome.runtime access)
+      const sw = ctx.context.serviceWorkers().find((w) => w.url().includes("background"));
+      const extensionId = sw?.url().split("/")[2];
+      if (!extensionId) { console.log("  No extension ID found"); return; }
+
+      const dashPage = await ctx.context.newPage();
+      await dashPage.goto(`chrome-extension://${extensionId}/dashboard.html`, { waitUntil: "domcontentloaded" });
+      await dashPage.waitForTimeout(1000);
+
+      // Send CHECK_TYPOSQUAT and query alerts
+      const result = await dashPage.evaluate(async (d: string) => {
+        // Send typosquat check
+        const checkResult = await chrome.runtime.sendMessage({ type: "CHECK_TYPOSQUAT", data: { domain: d } });
+        // Wait for processing
+        await new Promise((r) => setTimeout(r, 500));
+        // Get alerts
+        const events = await chrome.runtime.sendMessage({ type: "GET_POPUP_EVENTS" });
+        return { checkResult, events };
+      }, domain).catch((e: Error) => ({ checkResult: null, events: null, error: e.message }));
+
+      const events = (result as { events?: { events?: Array<{ category: string; domain?: string }> } })?.events;
+      const typosquatAlerts = (events?.events ?? []).filter((e) => e.category === "typosquat" && e.domain === domain);
+      const detected = typosquatAlerts.length > 0;
+
+      const status = detected ? "[DETECTED]" : "[  CLEAN ]";
+      console.log(`  ${status} ${domain}: ${description} (${typosquatAlerts.length} alerts)`);
+
+      if (expectDetected && !detected) {
+        console.log(`    WARNING: Expected typosquat detection but none found`);
+      }
+      if (!expectDetected && detected) {
+        console.log(`    WARNING: False positive! Clean domain flagged as typosquat`);
+      }
+
+      await dashPage.close();
     });
   }
 });

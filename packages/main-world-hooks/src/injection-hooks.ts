@@ -464,8 +464,7 @@ export function initInjectionHooks(emitSecurityEvent: SharedHookUtils["emitSecur
   // Bulk observe() calls on many elements is a pattern used for scroll/visibility tracking surveillance.
   if (typeof IntersectionObserver !== "undefined") {
     const OriginalIntersectionObserver = IntersectionObserver;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- intentional monkey-patch of IntersectionObserver
-    (window as any).IntersectionObserver = function (
+    const HookedIO = function (
       this: unknown,
       callback: IntersectionObserverCallback,
       options?: IntersectionObserverInit,
@@ -476,7 +475,6 @@ export function initInjectionHooks(emitSecurityEvent: SharedHookUtils["emitSecur
       const originalObserve = instance.observe.bind(instance);
       instance.observe = function (target: Element) {
         observedCount++;
-        // Bulk surveillance heuristic: more than 5 elements observed by the same observer
         if (!emitted && observedCount > 5) {
           emitted = true;
           emitSecurityEvent("__INTERSECTION_OBSERVER_DETECTED__", {
@@ -487,7 +485,6 @@ export function initInjectionHooks(emitSecurityEvent: SharedHookUtils["emitSecur
         }
         return originalObserve(target);
       };
-      // Emit on first instantiation to record baseline usage
       emitSecurityEvent("__INTERSECTION_OBSERVER_DETECTED__", {
         observedCount: 0,
         timestamp: Date.now(),
@@ -495,6 +492,8 @@ export function initInjectionHooks(emitSecurityEvent: SharedHookUtils["emitSecur
       });
       return instance;
     } as unknown as typeof IntersectionObserver;
-    (window as any).IntersectionObserver.prototype = OriginalIntersectionObserver.prototype;
+    HookedIO.prototype = OriginalIntersectionObserver.prototype;
+    // Use same pattern as MessageChannel/ResizeObserver which works
+    window.IntersectionObserver = HookedIO;
   }
 }
