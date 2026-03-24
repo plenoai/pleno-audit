@@ -8,7 +8,7 @@
 /**
  * Policy rule action
  */
-export type PolicyAction = "allow" | "block" | "warn";
+export type PolicyAction = "allow" | "warn";
 
 /**
  * Policy rule match type
@@ -56,7 +56,7 @@ export interface AIPolicyRule {
   action: PolicyAction;
   /** AI provider (openai, anthropic, google, etc.) */
   provider?: string;
-  /** Block specific data types in prompts */
+  /** Warn on specific data types in prompts */
   blockedDataTypes?: string[];
   priority: number;
 }
@@ -72,7 +72,7 @@ export interface DataTransferPolicyRule {
   action: PolicyAction;
   /** Max size in KB */
   maxSizeKB?: number;
-  /** Blocked destination patterns */
+  /** Warned destination patterns */
   blockedDestinations?: string[];
   /** Allowed destination patterns (whitelist) */
   allowedDestinations?: string[];
@@ -124,9 +124,9 @@ export const POLICY_TEMPLATES = {
   blockSocialMedia: {
     id: "block-social-media",
     enabled: false,
-    name: "ソーシャルメディアをブロック",
-    description: "社内でのソーシャルメディア利用を制限",
-    action: "block" as PolicyAction,
+    name: "ソーシャルメディアを警告",
+    description: "社内でのソーシャルメディア利用を警告",
+    action: "warn" as PolicyAction,
     matchType: "suffix" as PolicyMatchType,
     pattern: "",
     priority: 100,
@@ -138,9 +138,9 @@ export const POLICY_TEMPLATES = {
   blockFileSharing: {
     id: "block-file-sharing",
     enabled: false,
-    name: "外部ファイル共有をブロック",
-    description: "未承認のファイル共有サービスを制限",
-    action: "block" as PolicyAction,
+    name: "外部ファイル共有を警告",
+    description: "未承認のファイル共有サービスを警告",
+    action: "warn" as PolicyAction,
     patterns: [
       "dropbox.com",
       "wetransfer.com",
@@ -162,8 +162,8 @@ export const POLICY_TEMPLATES = {
   blockUnauthorizedAI: {
     id: "block-unauthorized-ai",
     enabled: false,
-    name: "未承認AIサービスをブロック",
-    description: "企業が承認していないAIサービスへのアクセスを制限",
+    name: "未承認AIサービスを警告",
+    description: "企業が承認していないAIサービスへのアクセスを警告",
     action: "warn" as PolicyAction,
     blockedDataTypes: ["credentials", "pii", "api_key"],
     priority: 100,

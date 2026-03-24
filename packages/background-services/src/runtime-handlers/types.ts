@@ -3,15 +3,12 @@ import type { AIMonitorConfig, CapturedAIPrompt } from "@libztbs/ai-detector";
 import type { NRDConfig } from "@libztbs/nrd";
 import type { TyposquatConfig } from "@libztbs/typosquat";
 import type {
-  CSPConfig,
   CSPGenerationOptions,
   CSPViolation,
 } from "@libztbs/csp";
 import type {
   DetectionConfig,
-  DoHMonitorConfig,
   EnterpriseStatus,
-  NetworkMonitorConfig,
   NotificationConfig,
 } from "@libztbs/extension-runtime";
 import type { SecurityAlert, AlertStatus } from "@libztbs/alerts";
@@ -52,14 +49,11 @@ export interface LoggerLike {
 }
 
 export interface RuntimeHandlerFallbacks {
-  cspConfig: CSPConfig;
   detectionConfig: DetectionConfig;
   aiMonitorConfig: AIMonitorConfig;
   nrdConfig: NRDConfig;
   typosquatConfig: TyposquatConfig;
-  networkMonitorConfig: NetworkMonitorConfig;
   notificationConfig: NotificationConfig;
-  doHMonitorConfig: DoHMonitorConfig;
 }
 
 export interface RuntimeHandlerDependencies {
@@ -122,8 +116,6 @@ handleNetworkInspection: (data: unknown, sender: chrome.runtime.MessageSender) =
   generateCSPPolicy: (options?: Partial<CSPGenerationOptions>) => unknown;
   generateCSPPolicyByDomain: (options?: Partial<CSPGenerationOptions>) => unknown;
   saveGeneratedCSPPolicy: (result: unknown) => Promise<void>;
-  getCSPConfig: () => Promise<CSPConfig>;
-  setCSPConfig: (config: Partial<CSPConfig>) => Promise<{ success: boolean }>;
   clearCSPData: () => { success: boolean };
   clearAllData: () => Promise<{ success: boolean }>;
 
@@ -161,8 +153,6 @@ handleNetworkInspection: (data: unknown, sender: chrome.runtime.MessageSender) =
   }) => Promise<unknown>;
   getExtensionRequests: (options?: { limit?: number; offset?: number }) => Promise<unknown>;
   getExtensionStats: () => Promise<unknown>;
-  getNetworkMonitorConfig: () => Promise<NetworkMonitorConfig>;
-  setNetworkMonitorConfig: (config: NetworkMonitorConfig) => Promise<{ success: boolean }>;
   getAllExtensionRisks: () => Promise<unknown[]>;
   getExtensionRiskAnalysis: (extensionId: string) => Promise<unknown>;
   analyzeExtensionRisks: () => Promise<void>;
@@ -170,11 +160,6 @@ handleNetworkInspection: (data: unknown, sender: chrome.runtime.MessageSender) =
   getNotificationConfig: () => Promise<NotificationConfig>;
   setNotificationConfig: (
     config: Partial<NotificationConfig>,
-  ) => Promise<{ success: boolean }>;
-
-  getDoHMonitorConfig: () => Promise<DoHMonitorConfig>;
-  setDoHMonitorConfig: (
-    config: Partial<DoHMonitorConfig>,
   ) => Promise<{ success: boolean }>;
 
   getServiceConnections: () => Promise<Record<string, string[]>>;

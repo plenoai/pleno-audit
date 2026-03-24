@@ -4,34 +4,8 @@
 import type { DetectedService } from "@libztbs/types";
 import type { AIMonitorConfig } from "@libztbs/ai-detector";
 import type { NRDConfig } from "@libztbs/nrd";
-import type { CSPConfig, CSPReport, GeneratedCSPByDomain } from "@libztbs/csp";
+import type { CSPReport, GeneratedCSPByDomain } from "@libztbs/csp";
 import type { PolicyConfig, SecurityAlert } from "@libztbs/alerts";
-
-// Forecast config removed - enterprise feature
-
-/**
- * Network Monitor Config - 全ネットワークリクエスト監視設定
- * CSPと並ぶコア機能として、全リクエストを記録しposture（態勢）を可視化
- */
-export interface NetworkMonitorConfig {
-  enabled: boolean;
-  /** 全リクエストをキャプチャ（trueの場合、拡張機能以外も監視） */
-  captureAllRequests: boolean;
-  /** 自身の拡張機能を除外 */
-  excludeOwnExtension: boolean;
-  /** 除外するドメイン */
-  excludedDomains: string[];
-  /** 除外する拡張機能ID */
-  excludedExtensions: string[];
-}
-
-export const DEFAULT_NETWORK_MONITOR_CONFIG: NetworkMonitorConfig = {
-  enabled: true,
-  captureAllRequests: true,
-  excludeOwnExtension: true,
-  excludedDomains: [],
-  excludedExtensions: [],
-};
 
 /** リクエストの発信元タイプ */
 export type InitiatorType = "extension" | "page" | "browser" | "unknown";
@@ -66,20 +40,12 @@ export interface DetectionConfig {
   enableNRD: boolean;
   enableTyposquat: boolean;
   enableAI: boolean;
-  enablePrivacy: boolean;
-  enableTos: boolean;
-  enableLogin: boolean;
-  enableExtension: boolean;
 }
 
 export const DEFAULT_DETECTION_CONFIG: DetectionConfig = {
   enableNRD: false,
   enableTyposquat: true,
   enableAI: true,
-  enablePrivacy: true,
-  enableTos: true,
-  enableLogin: true,
-  enableExtension: true,
 };
 
 
@@ -88,12 +54,10 @@ export const DEFAULT_DETECTION_CONFIG: DetectionConfig = {
  */
 export interface NotificationConfig {
   enabled: boolean; // 通知全体の有効/無効
-  severityFilter: ("critical" | "high" | "medium" | "low" | "info")[]; // 通知する重大度
 }
 
 export const DEFAULT_NOTIFICATION_CONFIG: NotificationConfig = {
   enabled: false, // デフォルト無効
-  severityFilter: ["critical", "high"],
 };
 
 /**
@@ -125,13 +89,6 @@ export type DoHDetectionMethod =
   | "url-path"
   | "dns-param";
 
-export type DoHAction = "detect" | "alert" | "block";
-
-export interface DoHMonitorConfig {
-  action: DoHAction;
-  maxStoredRequests: number;
-}
-
 export interface DoHRequestRecord {
   id: string;
   timestamp: number;
@@ -140,7 +97,6 @@ export interface DoHRequestRecord {
   method: string;
   detectionMethod: DoHDetectionMethod;
   initiator?: string;
-  blocked: boolean;
 }
 
 export interface StorageData {
@@ -151,13 +107,9 @@ export interface StorageData {
   /** Alert: セキュリティアラート履歴（永続化） */
   alerts?: SecurityAlert[];
 
-  cspConfig?: CSPConfig;
   generatedCSPPolicy?: GeneratedCSPByDomain;
   aiMonitorConfig?: AIMonitorConfig;
   nrdConfig?: NRDConfig;
-  /** ネットワーク監視設定 */
-  networkMonitorConfig?: NetworkMonitorConfig;
-  doHMonitorConfig?: DoHMonitorConfig;
   detectionConfig?: DetectionConfig;
   notificationConfig?: NotificationConfig;
   alertCooldown?: AlertCooldownData;
@@ -200,11 +152,6 @@ export interface EnterpriseManagedConfig {
     enableNRD?: boolean;
     enableTyposquat?: boolean;
     enableAI?: boolean;
-    enablePrivacy?: boolean;
-    enableTos?: boolean;
-    enableLogin?: boolean;
-    enableExtension?: boolean;
-    enableBlocking?: boolean;
     enableNotifications?: boolean;
   };
   reporting?: EnterpriseReportingConfig;
@@ -220,7 +167,6 @@ export interface EnterpriseStatus {
 
 export type {
   DetectedService,
-  CSPConfig,
   CSPReport,
   GeneratedCSPByDomain,
   AIMonitorConfig,

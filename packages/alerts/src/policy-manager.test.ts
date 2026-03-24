@@ -49,82 +49,90 @@ describe("createPolicyManager", () => {
       expect(result.allowed).toBe(true);
     });
 
-    it("blocks domain with exact match rule", () => {
+    it("warns on domain with exact match rule (observe-only)", () => {
       const rule: DomainPolicyRule = {
         id: "rule1",
-        name: "Block malicious.com",
+        name: "Warn malicious.com",
         enabled: true,
         priority: 1,
         pattern: "malicious.com",
         matchType: "exact",
-        action: "block",
+        action: "warn",
       };
       const pm = createPolicyManager(createTestConfig({ domainRules: [rule] }));
       const result = pm.checkDomain("malicious.com");
-      expect(result.allowed).toBe(false);
+      expect(result.allowed).toBe(true);
       expect(result.violations).toHaveLength(1);
-      expect(result.violations[0].action).toBe("block");
+      expect(result.violations[0].action).toBe("warn");
     });
 
-    it("blocks domain with suffix match rule", () => {
+    it("warns on domain with suffix match rule (observe-only)", () => {
       const rule: DomainPolicyRule = {
         id: "rule1",
-        name: "Block example.com and subdomains",
+        name: "Warn example.com and subdomains",
         enabled: true,
         priority: 1,
         pattern: "example.com",
         matchType: "suffix",
-        action: "block",
+        action: "warn",
       };
       const pm = createPolicyManager(createTestConfig({ domainRules: [rule] }));
       // suffix match includes exact match and .{pattern}
-      expect(pm.checkDomain("example.com").allowed).toBe(false);
-      expect(pm.checkDomain("sub.example.com").allowed).toBe(false);
+      expect(pm.checkDomain("example.com").allowed).toBe(true);
+      expect(pm.checkDomain("example.com").violations).toHaveLength(1);
+      expect(pm.checkDomain("sub.example.com").allowed).toBe(true);
+      expect(pm.checkDomain("sub.example.com").violations).toHaveLength(1);
       expect(pm.checkDomain("notexample.com").allowed).toBe(true);
+      expect(pm.checkDomain("notexample.com").violations).toHaveLength(0);
     });
 
-    it("blocks domain with prefix match rule", () => {
+    it("warns on domain with prefix match rule (observe-only)", () => {
       const rule: DomainPolicyRule = {
         id: "rule1",
-        name: "Block test-* domains",
+        name: "Warn test-* domains",
         enabled: true,
         priority: 1,
         pattern: "test-",
         matchType: "prefix",
-        action: "block",
+        action: "warn",
       };
       const pm = createPolicyManager(createTestConfig({ domainRules: [rule] }));
-      expect(pm.checkDomain("test-site.com").allowed).toBe(false);
+      expect(pm.checkDomain("test-site.com").allowed).toBe(true);
+      expect(pm.checkDomain("test-site.com").violations).toHaveLength(1);
       expect(pm.checkDomain("mytest.com").allowed).toBe(true);
+      expect(pm.checkDomain("mytest.com").violations).toHaveLength(0);
     });
 
-    it("blocks domain with contains match rule", () => {
+    it("warns on domain with contains match rule (observe-only)", () => {
       const rule: DomainPolicyRule = {
         id: "rule1",
-        name: "Block domains containing phishing",
+        name: "Warn domains containing phishing",
         enabled: true,
         priority: 1,
         pattern: "phishing",
         matchType: "contains",
-        action: "block",
+        action: "warn",
       };
       const pm = createPolicyManager(createTestConfig({ domainRules: [rule] }));
-      expect(pm.checkDomain("my-phishing-site.com").allowed).toBe(false);
+      expect(pm.checkDomain("my-phishing-site.com").allowed).toBe(true);
+      expect(pm.checkDomain("my-phishing-site.com").violations).toHaveLength(1);
     });
 
-    it("blocks domain with regex match rule", () => {
+    it("warns on domain with regex match rule (observe-only)", () => {
       const rule: DomainPolicyRule = {
         id: "rule1",
-        name: "Block numeric domains",
+        name: "Warn numeric domains",
         enabled: true,
         priority: 1,
         pattern: "^[0-9]+\\.com$",
         matchType: "regex",
-        action: "block",
+        action: "warn",
       };
       const pm = createPolicyManager(createTestConfig({ domainRules: [rule] }));
-      expect(pm.checkDomain("12345.com").allowed).toBe(false);
+      expect(pm.checkDomain("12345.com").allowed).toBe(true);
+      expect(pm.checkDomain("12345.com").violations).toHaveLength(1);
       expect(pm.checkDomain("abc123.com").allowed).toBe(true);
+      expect(pm.checkDomain("abc123.com").violations).toHaveLength(0);
     });
 
     it("handles invalid regex gracefully", () => {
@@ -135,7 +143,7 @@ describe("createPolicyManager", () => {
         priority: 1,
         pattern: "[invalid",
         matchType: "regex",
-        action: "block",
+        action: "warn",
       };
       const pm = createPolicyManager(createTestConfig({ domainRules: [rule] }));
       expect(pm.checkDomain("test.com").allowed).toBe(true);
@@ -149,7 +157,7 @@ describe("createPolicyManager", () => {
         priority: 1,
         pattern: "blocked.com",
         matchType: "exact",
-        action: "block",
+        action: "warn",
       };
       const pm = createPolicyManager(createTestConfig({ domainRules: [rule] }));
       expect(pm.checkDomain("blocked.com").allowed).toBe(true);
@@ -190,12 +198,12 @@ describe("createPolicyManager", () => {
           priority: 10,
           pattern: "test.com",
           matchType: "exact",
-          action: "block",
+          action: "warn",
         },
       ];
       const pm = createPolicyManager(createTestConfig({ domainRules: rules }));
       const result = pm.checkDomain("test.com");
-      expect(result.allowed).toBe(false);
+      expect(result.allowed).toBe(true);
       expect(result.violations[0].ruleId).toBe("high");
     });
   });
@@ -206,20 +214,23 @@ describe("createPolicyManager", () => {
       expect(pm.checkTool("blocked.tool.com").allowed).toBe(true);
     });
 
-    it("blocks tool matching pattern", () => {
+    it("warns on tool matching pattern (observe-only)", () => {
       const rule: ToolPolicyRule = {
         id: "rule1",
-        name: "Block AI tools",
+        name: "Warn AI tools",
         enabled: true,
         priority: 1,
         patterns: ["openai.com", "anthropic.com"],
         category: "ai",
-        action: "block",
+        action: "warn",
       };
       const pm = createPolicyManager(createTestConfig({ toolRules: [rule] }));
-      expect(pm.checkTool("api.openai.com").allowed).toBe(false);
-      expect(pm.checkTool("claude.anthropic.com").allowed).toBe(false);
+      expect(pm.checkTool("api.openai.com").allowed).toBe(true);
+      expect(pm.checkTool("api.openai.com").violations).toHaveLength(1);
+      expect(pm.checkTool("claude.anthropic.com").allowed).toBe(true);
+      expect(pm.checkTool("claude.anthropic.com").violations).toHaveLength(1);
       expect(pm.checkTool("google.com").allowed).toBe(true);
+      expect(pm.checkTool("google.com").violations).toHaveLength(0);
     });
   });
 
@@ -229,50 +240,53 @@ describe("createPolicyManager", () => {
       expect(pm.checkAIService({ domain: "openai.com" }).allowed).toBe(true);
     });
 
-    it("blocks by provider", () => {
+    it("warns by provider (observe-only)", () => {
       const rule: AIPolicyRule = {
         id: "rule1",
-        name: "Block OpenAI",
+        name: "Warn OpenAI",
         enabled: true,
         priority: 1,
         provider: "openai",
-        action: "block",
+        action: "warn",
       };
       const pm = createPolicyManager(createTestConfig({ aiRules: [rule] }));
       const result = pm.checkAIService({ domain: "api.openai.com", provider: "openai" });
-      expect(result.allowed).toBe(false);
+      expect(result.allowed).toBe(true);
+      expect(result.violations).toHaveLength(1);
       expect(result.violations[0].matchedPattern).toBe("provider:openai");
     });
 
-    it("blocks by data types", () => {
+    it("warns by data types (observe-only)", () => {
       const rule: AIPolicyRule = {
         id: "rule1",
-        name: "Block credentials in AI",
+        name: "Warn credentials in AI",
         enabled: true,
         priority: 1,
         blockedDataTypes: ["credentials", "pii"],
-        action: "block",
+        action: "warn",
       };
       const pm = createPolicyManager(createTestConfig({ aiRules: [rule] }));
       const result = pm.checkAIService({
         domain: "openai.com",
         dataTypes: ["credentials"],
       });
-      expect(result.allowed).toBe(false);
+      expect(result.allowed).toBe(true);
+      expect(result.violations).toHaveLength(1);
       expect(result.violations[0].matchedPattern).toContain("data:");
     });
 
-    it("blocks all AI when no specific rules", () => {
+    it("warns all AI when no specific rules (observe-only)", () => {
       const rule: AIPolicyRule = {
         id: "rule1",
-        name: "Block all AI",
+        name: "Warn all AI",
         enabled: true,
         priority: 1,
-        action: "block",
+        action: "warn",
       };
       const pm = createPolicyManager(createTestConfig({ aiRules: [rule] }));
       const result = pm.checkAIService({ domain: "any-ai.com" });
-      expect(result.allowed).toBe(false);
+      expect(result.allowed).toBe(true);
+      expect(result.violations).toHaveLength(1);
       expect(result.violations[0].matchedPattern).toBe("all_ai");
     });
   });
@@ -283,46 +297,52 @@ describe("createPolicyManager", () => {
       expect(pm.checkDataTransfer({ destination: "external.com", sizeKB: 1000 }).allowed).toBe(true);
     });
 
-    it("blocks by size limit", () => {
+    it("warns by size limit (observe-only)", () => {
       const rule: DataTransferPolicyRule = {
         id: "rule1",
-        name: "Block large transfers",
+        name: "Warn large transfers",
         enabled: true,
         priority: 1,
         maxSizeKB: 100,
-        action: "block",
+        action: "warn",
       };
       const pm = createPolicyManager(createTestConfig({ dataTransferRules: [rule] }));
       expect(pm.checkDataTransfer({ destination: "any.com", sizeKB: 50 }).allowed).toBe(true);
-      expect(pm.checkDataTransfer({ destination: "any.com", sizeKB: 150 }).allowed).toBe(false);
+      expect(pm.checkDataTransfer({ destination: "any.com", sizeKB: 50 }).violations).toHaveLength(0);
+      expect(pm.checkDataTransfer({ destination: "any.com", sizeKB: 150 }).allowed).toBe(true);
+      expect(pm.checkDataTransfer({ destination: "any.com", sizeKB: 150 }).violations).toHaveLength(1);
     });
 
-    it("blocks by destination", () => {
+    it("warns by destination (observe-only)", () => {
       const rule: DataTransferPolicyRule = {
         id: "rule1",
-        name: "Block external transfers",
+        name: "Warn external transfers",
         enabled: true,
         priority: 1,
         blockedDestinations: ["external.com", "suspicious.io"],
-        action: "block",
+        action: "warn",
       };
       const pm = createPolicyManager(createTestConfig({ dataTransferRules: [rule] }));
-      expect(pm.checkDataTransfer({ destination: "data.external.com", sizeKB: 10 }).allowed).toBe(false);
+      expect(pm.checkDataTransfer({ destination: "data.external.com", sizeKB: 10 }).allowed).toBe(true);
+      expect(pm.checkDataTransfer({ destination: "data.external.com", sizeKB: 10 }).violations).toHaveLength(1);
       expect(pm.checkDataTransfer({ destination: "internal.com", sizeKB: 10 }).allowed).toBe(true);
+      expect(pm.checkDataTransfer({ destination: "internal.com", sizeKB: 10 }).violations).toHaveLength(0);
     });
 
-    it("blocks destinations not in whitelist", () => {
+    it("warns on destinations not in whitelist (observe-only)", () => {
       const rule: DataTransferPolicyRule = {
         id: "rule1",
         name: "Whitelist only",
         enabled: true,
         priority: 1,
         allowedDestinations: ["trusted.com", "internal.org"],
-        action: "block",
+        action: "warn",
       };
       const pm = createPolicyManager(createTestConfig({ dataTransferRules: [rule] }));
       expect(pm.checkDataTransfer({ destination: "api.trusted.com", sizeKB: 10 }).allowed).toBe(true);
-      expect(pm.checkDataTransfer({ destination: "external.com", sizeKB: 10 }).allowed).toBe(false);
+      expect(pm.checkDataTransfer({ destination: "api.trusted.com", sizeKB: 10 }).violations).toHaveLength(0);
+      expect(pm.checkDataTransfer({ destination: "external.com", sizeKB: 10 }).allowed).toBe(true);
+      expect(pm.checkDataTransfer({ destination: "external.com", sizeKB: 10 }).violations).toHaveLength(1);
     });
   });
 
@@ -336,9 +356,10 @@ describe("createPolicyManager", () => {
         priority: 1,
         pattern: "blocked.com",
         matchType: "exact",
-        action: "block",
+        action: "warn",
       });
-      expect(pm.checkDomain("blocked.com").allowed).toBe(false);
+      expect(pm.checkDomain("blocked.com").allowed).toBe(true);
+      expect(pm.checkDomain("blocked.com").violations).toHaveLength(1);
     });
 
     it("adds tool rule", () => {
@@ -350,9 +371,10 @@ describe("createPolicyManager", () => {
         priority: 1,
         patterns: ["blocked.tool.com"],
         category: "other",
-        action: "block",
+        action: "warn",
       });
-      expect(pm.checkTool("blocked.tool.com").allowed).toBe(false);
+      expect(pm.checkTool("blocked.tool.com").allowed).toBe(true);
+      expect(pm.checkTool("blocked.tool.com").violations).toHaveLength(1);
     });
 
     it("adds AI rule", () => {
@@ -363,9 +385,10 @@ describe("createPolicyManager", () => {
         enabled: true,
         priority: 1,
         provider: "openai",
-        action: "block",
+        action: "warn",
       });
-      expect(pm.checkAIService({ domain: "api.openai.com", provider: "openai" }).allowed).toBe(false);
+      expect(pm.checkAIService({ domain: "api.openai.com", provider: "openai" }).allowed).toBe(true);
+      expect(pm.checkAIService({ domain: "api.openai.com", provider: "openai" }).violations).toHaveLength(1);
     });
 
     it("adds data transfer rule", () => {
@@ -376,9 +399,10 @@ describe("createPolicyManager", () => {
         enabled: true,
         priority: 1,
         maxSizeKB: 50,
-        action: "block",
+        action: "warn",
       });
-      expect(pm.checkDataTransfer({ destination: "any.com", sizeKB: 100 }).allowed).toBe(false);
+      expect(pm.checkDataTransfer({ destination: "any.com", sizeKB: 100 }).allowed).toBe(true);
+      expect(pm.checkDataTransfer({ destination: "any.com", sizeKB: 100 }).violations).toHaveLength(1);
     });
 
     it("removes rule", () => {
@@ -389,14 +413,14 @@ describe("createPolicyManager", () => {
         priority: 1,
         pattern: "blocked.com",
         matchType: "exact",
-        action: "block",
+        action: "warn",
       };
       const pm = createPolicyManager(createTestConfig({ domainRules: [rule] }));
-      expect(pm.checkDomain("blocked.com").allowed).toBe(false);
+      expect(pm.checkDomain("blocked.com").violations).toHaveLength(1);
 
       const removed = pm.removeRule("removable");
       expect(removed).toBe(true);
-      expect(pm.checkDomain("blocked.com").allowed).toBe(true);
+      expect(pm.checkDomain("blocked.com").violations).toHaveLength(0);
     });
 
     it("returns false when removing non-existent rule", () => {
@@ -412,16 +436,16 @@ describe("createPolicyManager", () => {
         priority: 1,
         pattern: "blocked.com",
         matchType: "exact",
-        action: "block",
+        action: "warn",
       };
       const pm = createPolicyManager(createTestConfig({ domainRules: [rule] }));
-      expect(pm.checkDomain("blocked.com").allowed).toBe(false);
+      expect(pm.checkDomain("blocked.com").violations).toHaveLength(1);
 
       pm.toggleRule("toggleable", false);
-      expect(pm.checkDomain("blocked.com").allowed).toBe(true);
+      expect(pm.checkDomain("blocked.com").violations).toHaveLength(0);
 
       pm.toggleRule("toggleable", true);
-      expect(pm.checkDomain("blocked.com").allowed).toBe(false);
+      expect(pm.checkDomain("blocked.com").violations).toHaveLength(1);
     });
 
     it("returns false when toggling non-existent rule", () => {
@@ -439,7 +463,7 @@ describe("createPolicyManager", () => {
         priority: 1,
         pattern: "test.com",
         matchType: "exact",
-        action: "block",
+        action: "warn",
       };
       const pm = createPolicyManager(createTestConfig({ domainRules: [rule] }));
       const result = pm.checkDomain("test.com");
@@ -462,11 +486,12 @@ describe("createPolicyManager", () => {
         priority: 1,
         pattern: "",
         matchType: "exact",
-        action: "block",
+        action: "warn",
       };
       const pm = createPolicyManager(createTestConfig({ domainRules: [rule] }));
       const result = pm.checkDomain("");
-      expect(result.allowed).toBe(false);
+      expect(result.allowed).toBe(true);
+      expect(result.violations).toHaveLength(1);
     });
 
     it("handles case-sensitive domain matching", () => {
@@ -477,11 +502,12 @@ describe("createPolicyManager", () => {
         priority: 1,
         pattern: "Example.com",
         matchType: "exact",
-        action: "block",
+        action: "warn",
       };
       const pm = createPolicyManager(createTestConfig({ domainRules: [rule] }));
-      // Pattern matching is case-sensitive
-      expect(pm.checkDomain("Example.com").allowed).toBe(false);
+      // Pattern matching is case-insensitive
+      expect(pm.checkDomain("Example.com").allowed).toBe(true);
+      expect(pm.checkDomain("Example.com").violations).toHaveLength(1);
     });
 
     it("multiple violations from different rules", () => {
@@ -531,7 +557,7 @@ describe("createPolicyManager", () => {
         priority: 1,
         patterns: ["blocked.com"],
         category: "other",
-        action: "block",
+        action: "warn",
       };
       const pm = createPolicyManager(createTestConfig({ toolRules: [rule] }));
       const resultNull = pm.checkTool(null as unknown as string);
@@ -543,11 +569,11 @@ describe("createPolicyManager", () => {
     it("handles AI check with partial provider match", () => {
       const rule: AIPolicyRule = {
         id: "rule1",
-        name: "Block OpenAI",
+        name: "Warn OpenAI",
         enabled: true,
         priority: 1,
         provider: "openai",
-        action: "block",
+        action: "warn",
       };
       const pm = createPolicyManager(createTestConfig({ aiRules: [rule] }));
       const result = pm.checkAIService({ domain: "api.openai.com" });
@@ -557,42 +583,45 @@ describe("createPolicyManager", () => {
     it("handles data transfer at exact size boundary", () => {
       const rule: DataTransferPolicyRule = {
         id: "rule1",
-        name: "Block large transfers",
+        name: "Warn large transfers",
         enabled: true,
         priority: 1,
         maxSizeKB: 100,
-        action: "block",
+        action: "warn",
       };
       const pm = createPolicyManager(createTestConfig({ dataTransferRules: [rule] }));
       expect(pm.checkDataTransfer({ destination: "any.com", sizeKB: 100 }).allowed).toBe(true);
-      expect(pm.checkDataTransfer({ destination: "any.com", sizeKB: 101 }).allowed).toBe(false);
+      expect(pm.checkDataTransfer({ destination: "any.com", sizeKB: 100 }).violations).toHaveLength(0);
+      expect(pm.checkDataTransfer({ destination: "any.com", sizeKB: 101 }).allowed).toBe(true);
+      expect(pm.checkDataTransfer({ destination: "any.com", sizeKB: 101 }).violations).toHaveLength(1);
     });
 
     it("handles multiple AI data types match", () => {
       const rule: AIPolicyRule = {
         id: "rule1",
-        name: "Block sensitive data",
+        name: "Warn sensitive data",
         enabled: true,
         priority: 1,
         blockedDataTypes: ["credentials", "pii", "financial"],
-        action: "block",
+        action: "warn",
       };
       const pm = createPolicyManager(createTestConfig({ aiRules: [rule] }));
       const result = pm.checkAIService({
         domain: "openai.com",
         dataTypes: ["credentials", "pii"],
       });
-      expect(result.allowed).toBe(false);
+      expect(result.allowed).toBe(true);
+      expect(result.violations).toHaveLength(1);
     });
 
     it("allows when AI check has only non-blocked data types", () => {
       const rule: AIPolicyRule = {
         id: "rule1",
-        name: "Block sensitive data",
+        name: "Warn sensitive data",
         enabled: true,
         priority: 1,
         blockedDataTypes: ["credentials", "financial"],
-        action: "block",
+        action: "warn",
       };
       const pm = createPolicyManager(createTestConfig({ aiRules: [rule] }));
       const result = pm.checkAIService({

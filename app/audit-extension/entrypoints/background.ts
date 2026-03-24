@@ -4,7 +4,6 @@ import { DEFAULT_AI_MONITOR_CONFIG } from "@libztbs/ai-detector";
 import { DEFAULT_NRD_CONFIG } from "@libztbs/nrd";
 import { DEFAULT_TYPOSQUAT_CONFIG } from "@libztbs/typosquat";
 import type { CSPViolation } from "@libztbs/csp";
-import { DEFAULT_CSP_CONFIG } from "@libztbs/csp";
 import {
   startCookieMonitor,
   onCookieChange,
@@ -12,16 +11,12 @@ import {
   setStorage,
   clearAllStorage,
   createLogger,
-  DEFAULT_NETWORK_MONITOR_CONFIG,
   DEFAULT_DETECTION_CONFIG,
   DEFAULT_NOTIFICATION_CONFIG,
   createDoHMonitor,
   registerDoHMonitorListener,
-  DEFAULT_DOH_MONITOR_CONFIG,
   OperationGuard,
-  type NetworkMonitorConfig,
   type DoHMonitor,
-  type DoHMonitorConfig,
   type DoHRequestRecord,
 } from "@libztbs/extension-runtime";
 import { getSSOManager, getEnterpriseManager } from "@libztbs/extension-enterprise";
@@ -85,27 +80,6 @@ let doHMonitor: DoHMonitor | null = null;
 backgroundAlerts.registerNotificationClickHandler();
 
 // ============================================================================
-// DoH Monitor Config
-// ============================================================================
-
-async function getDoHMonitorConfig(): Promise<DoHMonitorConfig> {
-  const storage = await getStorage();
-  return storage.doHMonitorConfig || DEFAULT_DOH_MONITOR_CONFIG;
-}
-
-async function setDoHMonitorConfig(config: Partial<DoHMonitorConfig>): Promise<{ success: boolean }> {
-  const storage = await getStorage();
-  storage.doHMonitorConfig = { ...DEFAULT_DOH_MONITOR_CONFIG, ...storage.doHMonitorConfig, ...config };
-  await setStorage(storage);
-
-  if (doHMonitor) {
-    await doHMonitor.updateConfig(storage.doHMonitorConfig);
-  }
-
-  return { success: true };
-}
-
-// ============================================================================
 // Service Connection Tracking (通信先集約)
 // ============================================================================
 
@@ -135,14 +109,6 @@ const extensionNetworkService = createExtensionNetworkService({
 // ============================================================================
 // Extension Network Monitor
 // ============================================================================
-
-async function getNetworkMonitorConfig(): Promise<NetworkMonitorConfig> {
-  return extensionNetworkService.getNetworkMonitorConfig();
-}
-
-async function setNetworkMonitorConfig(newConfig: NetworkMonitorConfig): Promise<{ success: boolean }> {
-  return extensionNetworkService.setNetworkMonitorConfig(newConfig);
-}
 
 async function initExtensionMonitor() {
   await extensionNetworkService.initExtensionMonitor();
@@ -210,8 +176,6 @@ const networkSecurityInspector = createNetworkSecurityInspector({
 
 const cspReportingService = createCSPReportingService({
   logger,
-  initStorage: backgroundStorage.initStorage,
-  saveStorage: async (data) => backgroundStorage.saveStorage(data),
 });
 
 const aiPromptMonitorService = createAIPromptMonitorService({
@@ -264,10 +228,7 @@ async function clearAllData(): Promise<{ success: boolean }> {
 
 // Main world hooks are enabled for detection, while heavy processing is shifted to async handlers.
 
-const handleDebugBridgeForward = createDebugBridgeHandler({
-  getDoHMonitorConfig,
-  setDoHMonitorConfig,
-});
+const handleDebugBridgeForward = createDebugBridgeHandler();
 
 function initializeDebugBridge(): void {
   if (!import.meta.env.DEV) {
@@ -276,8 +237,6 @@ function initializeDebugBridge(): void {
   void import("@libztbs/debug-bridge").then(({ initDebugBridge }) => {
     initDebugBridge({
       getNetworkRequests,
-      getNetworkMonitorConfig,
-      setNetworkMonitorConfig,
     });
   });
 }
@@ -361,14 +320,11 @@ function createRuntimeHandlerDependencies(): RuntimeHandlerDependencies {
   return {
     logger,
     fallbacks: {
-      cspConfig: DEFAULT_CSP_CONFIG,
       detectionConfig: DEFAULT_DETECTION_CONFIG,
       aiMonitorConfig: DEFAULT_AI_MONITOR_CONFIG,
       nrdConfig: DEFAULT_NRD_CONFIG,
       typosquatConfig: DEFAULT_TYPOSQUAT_CONFIG,
-      networkMonitorConfig: DEFAULT_NETWORK_MONITOR_CONFIG,
       notificationConfig: DEFAULT_NOTIFICATION_CONFIG,
-      doHMonitorConfig: DEFAULT_DOH_MONITOR_CONFIG,
     },
     handleDebugBridgeForward,
     getKnownExtensions,
@@ -414,8 +370,6 @@ handleNetworkInspection: (data, sender) => networkSecurityInspector.handleNetwor
     generateCSPPolicy: cspReportingService.generateCSPPolicy,
     generateCSPPolicyByDomain: cspReportingService.generateCSPPolicyByDomain,
     saveGeneratedCSPPolicy: cspReportingService.saveGeneratedCSPPolicy,
-    getCSPConfig: cspReportingService.getCSPConfig,
-    setCSPConfig: cspReportingService.setCSPConfig,
     clearCSPData: cspReportingService.clearCSPData,
     clearAllData,
     getSSOManager,
@@ -434,8 +388,6 @@ handleNetworkInspection: (data, sender) => networkSecurityInspector.handleNetwor
     getNetworkRequests,
     getExtensionRequests,
     getExtensionStats,
-    getNetworkMonitorConfig,
-    setNetworkMonitorConfig,
     getAllExtensionRisks,
     getExtensionRiskAnalysis,
     analyzeExtensionRisks,
@@ -443,8 +395,6 @@ handleNetworkInspection: (data, sender) => networkSecurityInspector.handleNetwor
     getExtensionConnections: connectionTracker.getExtensionConnections,
     getNotificationConfig: backgroundConfig.getNotificationConfig,
     setNotificationConfig: backgroundConfig.setNotificationConfig,
-    getDoHMonitorConfig,
-    setDoHMonitorConfig,
   };
 }
 
@@ -531,23 +481,12 @@ export default defineBackground(() => {
   });
 
   // Initialize DoH Monitor
-  doHMonitor = createDoHMonitor(DEFAULT_DOH_MONITOR_CONFIG);
+  doHMonitor = createDoHMonitor();
   doHMonitor.start().catch((err) => logger.error("Failed to start DoH monitor:", err));
 
   doHMonitor.onRequest(async (record: DoHRequestRecord) => {
     try {
       logger.debug("DoH request detected:", record.domain);
-
-      const config = await getDoHMonitorConfig();
-      if (config.action === "alert" || config.action === "block") {
-        await chrome.notifications.create(`doh-${record.id}`, {
-          type: "basic",
-          iconUrl: "icon-128.png",
-          title: "DoH Traffic Detected",
-          message: `DNS over HTTPS request to ${record.domain} (${record.detectionMethod})`,
-          priority: 0,
-        });
-      }
     } catch (error) {
       logger.error("Failed to handle DoH request:", error);
     }

@@ -1,6 +1,5 @@
 import {
   analyzeInstalledExtension,
-  DEFAULT_DETECTION_CONFIG,
   type ExtensionRiskAnalysis,
 } from "@libztbs/extension-runtime";
 import {
@@ -14,13 +13,6 @@ import { getExtensionInitiatedRequests } from "./requests.js";
 
 export async function analyzeExtensionRisks(context: ExtensionNetworkContext): Promise<void> {
   try {
-    const storage = await context.deps.getStorage();
-    const detectionConfig = storage.detectionConfig || DEFAULT_DETECTION_CONFIG;
-
-    if (!detectionConfig.enableExtension) {
-      return;
-    }
-
     const requests = await getExtensionInitiatedRequests(context);
     if (requests.length === 0) return;
 

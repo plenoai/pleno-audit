@@ -6,13 +6,11 @@ import type {
   LoginDetectedDetails,
 } from "@libztbs/types";
 import type { CookieBannerResult, DetectionResult } from "@libztbs/detectors";
-import type { CSPConfig } from "@libztbs/csp";
 import type { DetectionConfig, NotificationConfig } from "@libztbs/extension-runtime";
 import type { PolicyConfig } from "@libztbs/alerts";
 
 export interface StorageData {
   services: Record<string, DetectedService>;
-  cspConfig: CSPConfig;
   detectionConfig: DetectionConfig;
   notificationConfig: NotificationConfig;
   policyConfig: PolicyConfig;

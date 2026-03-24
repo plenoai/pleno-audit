@@ -40,12 +40,10 @@ export {
 // Re-export types from storage-types
 export type {
   DetectedService,
-  CSPConfig,
   CSPReport,
   GeneratedCSPByDomain,
   AIMonitorConfig,
   ExtensionRequestRecord,
-  NetworkMonitorConfig,
   NetworkRequestRecord,
   InitiatorType,
   DetectionConfig,
@@ -55,7 +53,6 @@ export type {
 export {
   DEFAULT_DETECTION_CONFIG,
   DEFAULT_NOTIFICATION_CONFIG,
-  DEFAULT_NETWORK_MONITOR_CONFIG,
 } from "./storage-types.js";
 
 // Extension Stats Analyzer
@@ -135,14 +132,12 @@ export {
   registerDoHMonitorListener,
   clearDoHCallbacks,
   detectDoHRequest,
-  DEFAULT_DOH_MONITOR_CONFIG,
+  MAX_STORED_DOH_REQUESTS,
   DOH_URL_PATTERNS,
   type DoHMonitor,
 } from "./doh-monitor.js";
 
 export type {
-  DoHAction,
-  DoHMonitorConfig,
   DoHRequestRecord,
   DoHDetectionMethod,
 } from "./storage-types.js";

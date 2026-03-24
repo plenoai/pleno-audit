@@ -61,26 +61,6 @@
           "type": "boolean",
           "description": "Enable AI service detection and monitoring"
         },
-        "enablePrivacy": {
-          "type": "boolean",
-          "description": "Enable privacy policy detection"
-        },
-        "enableTos": {
-          "type": "boolean",
-          "description": "Enable terms of service detection"
-        },
-        "enableLogin": {
-          "type": "boolean",
-          "description": "Enable login detection"
-        },
-        "enableExtension": {
-          "type": "boolean",
-          "description": "Enable extension monitoring"
-        },
-        "enableBlocking": {
-          "type": "boolean",
-          "description": "Enable blocking features (requires user consent in non-enterprise)"
-        },
         "enableNotifications": {
           "type": "boolean",
           "description": "Enable browser notifications for security alerts"

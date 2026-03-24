@@ -1,4 +1,4 @@
-import type { CSPConfig, CSPGenerationOptions } from "@libztbs/csp";
+import type { CSPGenerationOptions } from "@libztbs/csp";
 import type { AsyncHandlerEntry, RuntimeHandlerDependencies } from "./types.js";
 
 export function createCspHandlers(
@@ -41,14 +41,6 @@ export function createCspHandlers(
         }
       },
       fallback: () => null,
-    }],
-    ["GET_CSP_CONFIG", {
-      execute: () => deps.getCSPConfig(),
-      fallback: () => deps.fallbacks.cspConfig,
-    }],
-    ["SET_CSP_CONFIG", {
-      execute: (message) => deps.setCSPConfig(message.data as Partial<CSPConfig>),
-      fallback: () => ({ success: false }),
     }],
     ["CLEAR_CSP_DATA", {
       execute: () => deps.clearCSPData(),

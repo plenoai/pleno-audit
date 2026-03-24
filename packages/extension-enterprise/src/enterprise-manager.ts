@@ -211,10 +211,6 @@ class EnterpriseManager {
       enableNRD: managed.enableNRD ?? userConfig.enableNRD,
       enableTyposquat: managed.enableTyposquat ?? userConfig.enableTyposquat,
       enableAI: managed.enableAI ?? userConfig.enableAI,
-      enablePrivacy: managed.enablePrivacy ?? userConfig.enablePrivacy,
-      enableTos: managed.enableTos ?? userConfig.enableTos,
-      enableLogin: managed.enableLogin ?? userConfig.enableLogin,
-      enableExtension: managed.enableExtension ?? userConfig.enableExtension,
     };
   }
 

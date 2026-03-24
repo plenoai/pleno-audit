@@ -5,7 +5,6 @@
  */
 
 import type {
-  NetworkMonitorConfig,
   NetworkRequestRecord,
   DashboardStats,
   SuspiciousPattern,
@@ -13,7 +12,6 @@ import type {
 
 // Re-export for convenience
 export type {
-  NetworkMonitorConfig,
   NetworkRequestRecord,
 };
 
@@ -32,8 +30,6 @@ export interface ExtensionInfo {
  * Network Monitor 内部状態
  */
 export interface NetworkMonitorState {
-  config: NetworkMonitorConfig;
-  configCacheKey: string;
   ownExtensionId: string;
   knownExtensions: Map<string, ExtensionInfo>;
   callbacks: Array<(request: NetworkRequestRecord) => void>;
@@ -45,8 +41,6 @@ export interface NetworkMonitorState {
   dnrCallCount: number;
   dnrQuotaWindowStart: number;
   dnrRuleToExtensionMap: Map<number, string>;
-  excludedDomains: Set<string>;
-  excludedExtensions: Set<string>;
   /** webRequestで検出済みのリクエストを追跡 (extensionId:tabId → 直近タイムスタンプ) */
   recentWebRequestHits: Map<string, number>;
 }

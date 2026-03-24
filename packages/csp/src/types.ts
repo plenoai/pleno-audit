@@ -96,18 +96,6 @@ export interface SecurityRecommendation {
   suggestion: string;
 }
 
-// ============================================================================
-// CSP Configuration
-// ============================================================================
-
-/** CSP収集設定 */
-export interface CSPConfig {
-  enabled: boolean;
-  collectNetworkRequests: boolean;
-  collectCSPViolations: boolean;
-  maxStoredReports: number;
-}
-
 /** CSPポリシー生成オプション */
 export interface CSPGenerationOptions {
   strictMode: boolean;

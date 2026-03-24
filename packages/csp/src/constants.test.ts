@@ -3,7 +3,7 @@ import {
   INITIATOR_TO_DIRECTIVE,
   STRICT_DIRECTIVES,
   REQUIRED_DIRECTIVES,
-  DEFAULT_CSP_CONFIG,
+  MAX_STORED_CSP_REPORTS,
 } from "./constants.js";
 
 describe("INITIATOR_TO_DIRECTIVE", () => {
@@ -154,29 +154,10 @@ describe("REQUIRED_DIRECTIVES", () => {
   });
 });
 
-describe("DEFAULT_CSP_CONFIG", () => {
-  it("is enabled by default", () => {
-    expect(DEFAULT_CSP_CONFIG.enabled).toBe(true);
-  });
-
-  it("collects network requests by default", () => {
-    expect(DEFAULT_CSP_CONFIG.collectNetworkRequests).toBe(true);
-  });
-
-  it("collects CSP violations by default", () => {
-    expect(DEFAULT_CSP_CONFIG.collectCSPViolations).toBe(true);
-  });
-
-  it("has reasonable max stored reports", () => {
-    expect(DEFAULT_CSP_CONFIG.maxStoredReports).toBe(1000);
-    expect(DEFAULT_CSP_CONFIG.maxStoredReports).toBeGreaterThan(0);
-  });
-
-  it("has all required config fields", () => {
-    expect(DEFAULT_CSP_CONFIG).toHaveProperty("enabled");
-    expect(DEFAULT_CSP_CONFIG).toHaveProperty("collectNetworkRequests");
-    expect(DEFAULT_CSP_CONFIG).toHaveProperty("collectCSPViolations");
-    expect(DEFAULT_CSP_CONFIG).toHaveProperty("maxStoredReports");
+describe("MAX_STORED_CSP_REPORTS", () => {
+  it("has reasonable value", () => {
+    expect(MAX_STORED_CSP_REPORTS).toBe(1000);
+    expect(MAX_STORED_CSP_REPORTS).toBeGreaterThan(0);
   });
 });
 

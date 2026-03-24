@@ -1,12 +1,11 @@
 import type {
-  CSPConfig,
   CSPGenerationOptions,
   CSPReport,
   CSPViolation,
   GeneratedCSPPolicy,
   NetworkRequest,
 } from "@libztbs/csp";
-import { CSPAnalyzer, DEFAULT_CSP_CONFIG, type GeneratedCSPByDomain } from "@libztbs/csp";
+import { CSPAnalyzer, type GeneratedCSPByDomain } from "@libztbs/csp";
 import { resolveEventTimestamp } from "./event-timestamp.js";
 
 interface MessageSenderLike {
@@ -24,18 +23,11 @@ interface CSPServiceLogger {
 
 interface CreateCSPReportingServiceParams {
   logger: CSPServiceLogger;
-  initStorage: () => Promise<{ cspConfig?: CSPConfig }>;
-  saveStorage: (data: { cspConfig: CSPConfig }) => Promise<void>;
 }
 
 export function createCSPReportingService(params: CreateCSPReportingServiceParams) {
   let cspGenerationTimer: ReturnType<typeof setTimeout> | null = null;
   const reports: CSPReport[] = [];
-
-  async function getCSPConfig(): Promise<CSPConfig> {
-    const storage = await params.initStorage();
-    return storage.cspConfig || DEFAULT_CSP_CONFIG;
-  }
 
   async function saveGeneratedCSPPolicy(result: GeneratedCSPByDomain) {
     await chrome.storage.local.set({ generatedCSPPolicy: result });
@@ -141,12 +133,6 @@ export function createCSPReportingService(params: CreateCSPReportingServiceParam
     data: Omit<CSPViolation, "type"> & { type?: string },
     sender: MessageSenderLike
   ): Promise<{ success: boolean; reason?: string }> {
-    const config = await getCSPConfig();
-
-    if (!config.enabled || !config.collectCSPViolations) {
-      return { success: false, reason: "Disabled" };
-    }
-
     const pageUrl = sender.tab?.url || data.pageUrl;
     const timestamp = resolveEventTimestamp(data.timestamp, {
       logger: params.logger,
@@ -177,12 +163,6 @@ export function createCSPReportingService(params: CreateCSPReportingServiceParam
     data: Omit<NetworkRequest, "type"> & { type?: string },
     sender: MessageSenderLike
   ): Promise<{ success: boolean; reason?: string }> {
-    const config = await getCSPConfig();
-
-    if (!config.enabled || !config.collectNetworkRequests) {
-      return { success: false, reason: "Disabled" };
-    }
-
     const pageUrl = sender.tab?.url || data.pageUrl;
     const timestamp = resolveEventTimestamp(data.timestamp, {
       logger: params.logger,
@@ -203,15 +183,6 @@ export function createCSPReportingService(params: CreateCSPReportingServiceParam
     return { success: true };
   }
 
-  async function setCSPConfig(
-    newConfig: Partial<CSPConfig>
-  ): Promise<{ success: boolean }> {
-    const current = await getCSPConfig();
-    const updated = { ...current, ...newConfig };
-    await params.saveStorage({ cspConfig: updated });
-    return { success: true };
-  }
-
   function clearCSPData(): { success: boolean } {
     reports.length = 0;
     return { success: true };
@@ -224,8 +195,6 @@ export function createCSPReportingService(params: CreateCSPReportingServiceParam
     generateCSPPolicy,
     generateCSPPolicyByDomain,
     saveGeneratedCSPPolicy,
-    getCSPConfig,
-    setCSPConfig,
     clearCSPData,
   };
 }

@@ -3,8 +3,6 @@ import type { DebugBridgeDeps, DebugHandler, DebugHandlerResult } from "./types.
 import { getSnapshot } from "./snapshot.js";
 import { getStorageKeys, getStorageValue, setStorageValue, clearStorage } from "./storage.js";
 import { getServices, getService, clearServices } from "./services.js";
-import { getDoHConfig, setDoHConfig } from "./doh.js";
-import { getNetworkConfig, setNetworkConfig } from "./network.js";
 import { openTab } from "./tabs.js";
 
 export type DebugHandlerRegistry = Record<string, DebugHandler>;
@@ -29,15 +27,6 @@ export function createDebugHandlers(logger: Logger, deps?: DebugBridgeDeps): Deb
     DEBUG_SERVICES_GET: async (data) => getService(data as { domain: string }),
     DEBUG_SERVICES_CLEAR: async () => clearServices(),
     DEBUG_TAB_OPEN: async (data) => openTab(data as { url: string }),
-    DEBUG_DOH_CONFIG_GET: async () => getDoHConfig(),
-    DEBUG_DOH_CONFIG_SET: async (data) =>
-      setDoHConfig(data as { action?: string; maxStoredRequests?: number }),
-    DEBUG_NETWORK_CONFIG_GET: async () => getNetworkConfig(deps),
-    DEBUG_NETWORK_CONFIG_SET: async (data) =>
-      setNetworkConfig(
-        data as { enabled?: boolean; captureAllRequests?: boolean; excludeOwnExtension?: boolean },
-        deps
-      ),
     DEBUG_NETWORK_REQUESTS_GET: async (data) => {
       const params = data as { limit?: number; initiatorType?: string };
       if (!deps?.getNetworkRequests) {

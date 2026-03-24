@@ -9,7 +9,8 @@
 
 import type { NetworkRequestRecord } from "@libztbs/extension-runtime";
 import { createLogger } from "@libztbs/extension-runtime";
-import { state, ensureConfigCachesCurrent } from "./state.js";
+import { state, excludedExtensions } from "./state.js";
+import { EXCLUDE_OWN_EXTENSION } from "./constants.js";
 import {
   EXTENSION_ID_PATTERN,
   DNR_RULE_ID_BASE,
@@ -110,9 +111,7 @@ async function resolveTabUrl(tabId: number): Promise<string | null> {
  * DNRマッチルールをチェック
  */
 export async function checkMatchedDNRRules(): Promise<NetworkRequestRecord[]> {
-  ensureConfigCachesCurrent();
-
-  if (!state.dnrRulesRegistered || !state.config.enabled) {
+  if (!state.dnrRulesRegistered) {
     return [];
   }
 
@@ -156,7 +155,7 @@ export async function checkMatchedDNRRules(): Promise<NetworkRequestRecord[]> {
 
       const extensionId = state.dnrRuleToExtensionMap.get(ruleId);
       if (!extensionId) continue;
-      if (state.excludedExtensions.has(extensionId)) continue;
+      if (excludedExtensions.has(extensionId)) continue;
 
       if (
         isAlreadyCoveredByWebRequest(
@@ -346,9 +345,9 @@ export async function restoreDNRMapping(): Promise<boolean> {
         }
 
         if (
-          (state.config.excludeOwnExtension &&
+          (EXCLUDE_OWN_EXTENSION &&
             extensionId === state.ownExtensionId) ||
-          state.excludedExtensions.has(extensionId)
+          excludedExtensions.has(extensionId)
         ) {
           needsReconciliation = true;
           continue;

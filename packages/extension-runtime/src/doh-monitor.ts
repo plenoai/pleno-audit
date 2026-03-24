@@ -7,18 +7,14 @@
 
 import { createLogger } from "./logger.js";
 import type {
-  DoHAction,
   DoHDetectionMethod,
-  DoHMonitorConfig,
   DoHRequestRecord,
 } from "./storage-types.js";
 
 const logger = createLogger("doh-monitor");
 
-export const DEFAULT_DOH_MONITOR_CONFIG: DoHMonitorConfig = {
-  action: "detect",
-  maxStoredRequests: 1000,
-};
+/** DoHリクエストの最大保持数 */
+export const MAX_STORED_DOH_REQUESTS = 1000;
 
 /**
  * DoHリクエストを検出するためのURLパターン
@@ -31,13 +27,8 @@ export const DOH_URL_PATTERNS = [
 ];
 
 // グローバル状態
-let globalConfig: DoHMonitorConfig = DEFAULT_DOH_MONITOR_CONFIG;
 let globalCallbacks: ((request: DoHRequestRecord) => void)[] = [];
 let isListenerRegistered = false;
-let isBlockingRuleRegistered = false;
-
-// declarativeNetRequest用のルールID
-const DOH_BLOCK_RULE_ID = 9999;
 
 /**
  * グローバルコールバックをクリア
@@ -101,54 +92,6 @@ export function detectDoHRequest(
 }
 
 /**
- * DoHブロッキングルールを有効化
- */
-async function enableDoHBlocking(): Promise<void> {
-  if (isBlockingRuleRegistered) return;
-
-  try {
-    await chrome.declarativeNetRequest.updateDynamicRules({
-      addRules: [
-        {
-          id: DOH_BLOCK_RULE_ID,
-          priority: 1,
-          action: { type: chrome.declarativeNetRequest.RuleActionType.BLOCK },
-          condition: {
-            urlFilter: "*/dns-query*",
-            resourceTypes: [
-              chrome.declarativeNetRequest.ResourceType.XMLHTTPREQUEST,
-              chrome.declarativeNetRequest.ResourceType.OTHER,
-            ],
-          },
-        },
-      ],
-      removeRuleIds: [DOH_BLOCK_RULE_ID],
-    });
-    isBlockingRuleRegistered = true;
-    logger.info("DoH blocking rule enabled");
-  } catch (error) {
-    logger.error("Failed to enable DoH blocking:", error);
-  }
-}
-
-/**
- * DoHブロッキングルールを無効化
- */
-async function disableDoHBlocking(): Promise<void> {
-  if (!isBlockingRuleRegistered) return;
-
-  try {
-    await chrome.declarativeNetRequest.updateDynamicRules({
-      removeRuleIds: [DOH_BLOCK_RULE_ID],
-    });
-    isBlockingRuleRegistered = false;
-    logger.info("DoH blocking rule disabled");
-  } catch (error) {
-    logger.error("Failed to disable DoH blocking:", error);
-  }
-}
-
-/**
  * webRequestヘッダーリスナーのハンドラー
  */
 function handleBeforeSendHeaders(
@@ -166,7 +109,6 @@ function handleBeforeSendHeaders(
     method: details.method,
     detectionMethod: method,
     initiator: details.initiator,
-    blocked: globalConfig.action === "block",
   };
 
   logger.debug("DoH request detected:", {
@@ -211,57 +153,28 @@ export interface DoHMonitor {
   start(): Promise<void>;
   stop(): Promise<void>;
   onRequest(callback: (request: DoHRequestRecord) => void): void;
-  updateConfig(config: Partial<DoHMonitorConfig>): Promise<void>;
-  getConfig(): DoHMonitorConfig;
 }
 
 /**
  * DoH Monitorを作成
  */
-export function createDoHMonitor(config: DoHMonitorConfig): DoHMonitor {
-  globalConfig = { ...config };
-
+export function createDoHMonitor(): DoHMonitor {
   return {
     async start() {
       if (!isListenerRegistered) {
         registerDoHMonitorListener();
       }
 
-      if (globalConfig.action === "block") {
-        await enableDoHBlocking();
-      }
-
       logger.info("DoH monitor started");
     },
 
     async stop() {
-      globalConfig = { ...globalConfig, action: "detect" };
       clearDoHCallbacks();
-      await disableDoHBlocking();
       logger.info("DoH monitor stopped");
     },
 
     onRequest(callback) {
       globalCallbacks.push(callback);
-    },
-
-    async updateConfig(newConfig) {
-      const prevAction = globalConfig.action;
-      globalConfig = { ...globalConfig, ...newConfig };
-
-      if (newConfig.action !== undefined && newConfig.action !== prevAction) {
-        if (newConfig.action === "block") {
-          await enableDoHBlocking();
-        } else {
-          await disableDoHBlocking();
-        }
-      }
-
-      logger.debug("DoH monitor config updated:", globalConfig);
-    },
-
-    getConfig() {
-      return { ...globalConfig };
     },
   };
 }

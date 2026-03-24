@@ -2,10 +2,8 @@ import { createExtensionNetworkState } from "./state.js";
 import type { ExtensionNetworkService, ExtensionNetworkServiceDeps } from "./types.js";
 import { getNetworkRequests, getExtensionRequests } from "./requests.js";
 import {
-  getNetworkMonitorConfig,
   initExtensionMonitor,
   stopExtensionMonitor,
-  setNetworkMonitorConfig,
   checkDNRMatchesHandler,
   getKnownExtensions,
 } from "./monitor.js";
@@ -41,8 +39,6 @@ export function createExtensionNetworkService(
   };
 
   return {
-    getNetworkMonitorConfig: () => getNetworkMonitorConfig(context),
-    setNetworkMonitorConfig: (config) => setNetworkMonitorConfig(context, config),
     initExtensionMonitor: () => initExtensionMonitor(context),
     stopExtensionMonitor: () => stopExtensionMonitor(context),
     checkDNRMatchesHandler: () => checkDNRMatchesHandler(context),

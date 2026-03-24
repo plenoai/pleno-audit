@@ -7,7 +7,11 @@
 
 import { createLogger } from "@libztbs/extension-runtime";
 import type { NetworkRequestRecord } from "@libztbs/extension-runtime";
-import { state, ensureConfigCachesCurrent } from "./state.js";
+import { state, excludedExtensions, excludedDomains } from "./state.js";
+import {
+  CAPTURE_ALL_REQUESTS,
+  EXCLUDE_OWN_EXTENSION,
+} from "./constants.js";
 import {
   classifyWebRequest,
   type RequestClassificationContext,
@@ -41,10 +45,10 @@ export function emitRecord(record: NetworkRequestRecord): void {
 function buildClassificationContext(): RequestClassificationContext {
   return {
     ownExtensionId: state.ownExtensionId,
-    excludeOwnExtension: state.config.excludeOwnExtension,
-    excludedExtensions: state.excludedExtensions,
-    excludedDomains: state.excludedDomains,
-    captureAllRequests: state.config.captureAllRequests,
+    excludeOwnExtension: EXCLUDE_OWN_EXTENSION,
+    excludedExtensions,
+    excludedDomains,
+    captureAllRequests: CAPTURE_ALL_REQUESTS,
     resolveExtensionName: (extensionId) =>
       state.knownExtensions.get(extensionId)?.name,
   };
@@ -57,10 +61,6 @@ function buildClassificationContext(): RequestClassificationContext {
 export function handleWebRequest(
   details: chrome.webRequest.OnBeforeRequestDetails,
 ): chrome.webRequest.BlockingResponse | undefined {
-  ensureConfigCachesCurrent();
-
-  if (!state.config.enabled) return;
-
   const result = classifyWebRequest(
     details,
     buildClassificationContext(),

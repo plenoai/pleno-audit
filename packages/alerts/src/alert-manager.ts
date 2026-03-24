@@ -176,8 +176,8 @@ const DEFAULT_RULES: AlertRule[] = [
     condition: { type: "always" },
     severity: "critical",
     actions: [
-      { id: "block", label: "ブロック", type: "block" },
       { id: "report", label: "報告", type: "report" },
+      { id: "dismiss", label: "無視", type: "dismiss" },
     ],
   },
 ];
@@ -191,7 +191,6 @@ export function createAlertManager(
     showNotifications: true,
     playSound: false,
     rules: [],
-    severityFilter: ["critical", "high"],
   },
   store?: AlertStore
 ) {
@@ -216,20 +215,8 @@ export function createAlertManager(
     );
   }
 
-  function shouldCreateAlert(severity: AlertSeverity): boolean {
-    if (!config.enabled) {
-      return false;
-    }
-
-    const severityOrder: AlertSeverity[] = ["critical", "high", "medium", "low", "info"];
-    const minSeverityIndex = Math.min(
-      ...config.severityFilter.map((severityFilterItem) =>
-        severityOrder.indexOf(severityFilterItem)
-      )
-    );
-    const alertSeverityIndex = severityOrder.indexOf(severity);
-
-    return alertSeverityIndex <= minSeverityIndex;
+  function shouldCreateAlert(_severity: AlertSeverity): boolean {
+    return config.enabled;
   }
 
   function notifyListeners(alert: SecurityAlert): void {

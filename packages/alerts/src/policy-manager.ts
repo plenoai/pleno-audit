@@ -114,17 +114,10 @@ export function createPolicyManager(config: PolicyConfig = DEFAULT_POLICY_CONFIG
           target: domain,
           timestamp: Date.now(),
         });
-
-        // If block rule matches, stop checking
-        if (rule.action === "block") {
-          return { allowed: false, violations };
-        }
       }
     }
 
-    // Check if blocked by highest priority rule
-    const hasBlockViolation = violations.some((v) => v.action === "block");
-    return { allowed: !hasBlockViolation, violations };
+    return { allowed: true, violations };
   }
 
   /**
@@ -153,15 +146,10 @@ export function createPolicyManager(config: PolicyConfig = DEFAULT_POLICY_CONFIG
           target: domain,
           timestamp: Date.now(),
         });
-
-        if (rule.action === "block") {
-          return { allowed: false, violations };
-        }
       }
     }
 
-    const hasBlockViolation = violations.some((v) => v.action === "block");
-    return { allowed: !hasBlockViolation, violations };
+    return { allowed: true, violations };
   }
 
   /**
@@ -222,15 +210,10 @@ export function createPolicyManager(config: PolicyConfig = DEFAULT_POLICY_CONFIG
           target: params.domain,
           timestamp: Date.now(),
         });
-
-        if (rule.action === "block") {
-          return { allowed: false, violations };
-        }
       }
     }
 
-    const hasBlockViolation = violations.some((v) => v.action === "block");
-    return { allowed: !hasBlockViolation, violations };
+    return { allowed: true, violations };
   }
 
   /**
@@ -285,15 +268,10 @@ export function createPolicyManager(config: PolicyConfig = DEFAULT_POLICY_CONFIG
           target: params.destination,
           timestamp: Date.now(),
         });
-
-        if (rule.action === "block") {
-          return { allowed: false, violations };
-        }
       }
     }
 
-    const hasBlockViolation = violations.some((v) => v.action === "block");
-    return { allowed: !hasBlockViolation, violations };
+    return { allowed: true, violations };
   }
 
   /**

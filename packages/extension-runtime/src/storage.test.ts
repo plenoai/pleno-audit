@@ -24,7 +24,7 @@ vi.mock("@libztbs/detectors", () => ({
 }));
 
 vi.mock("@libztbs/csp", () => ({
-  DEFAULT_CSP_CONFIG: { enabled: true, reportOnly: false },
+  MAX_STORED_CSP_REPORTS: 1000,
 }));
 
 import {
@@ -53,17 +53,6 @@ describe("storage", () => {
 
       expect(result.services).toEqual({});
       expect(result.alerts).toEqual([]);
-      expect(result.networkMonitorConfig).toEqual({
-        enabled: true,
-        captureAllRequests: true,
-        excludeOwnExtension: true,
-        excludedDomains: [],
-        excludedExtensions: [],
-      });
-      expect(result.doHMonitorConfig).toEqual({
-        action: "detect",
-        maxStoredRequests: 1000,
-      });
     });
 
     it("returns stored values when available", async () => {
@@ -78,16 +67,6 @@ describe("storage", () => {
       expect(result.alerts).toEqual(alerts);
     });
 
-    it("merges stored and default configs", async () => {
-      const cspConfig = { enabled: false, reportOnly: true };
-
-      mockStorageGet.mockResolvedValue({ cspConfig });
-
-      const result = await getStorage();
-
-      expect(result.cspConfig).toEqual(cspConfig);
-    });
-
     it("fetches all storage keys", async () => {
       await getStorage();
 
@@ -96,11 +75,9 @@ describe("storage", () => {
           "services",
           "policyConfig",
           "alerts",
-          "cspConfig",
+          "generatedCSPPolicy",
           "aiMonitorConfig",
           "nrdConfig",
-          "networkMonitorConfig",
-          "doHMonitorConfig",
           "detectionConfig",
           "notificationConfig",
           "alertCooldown",
@@ -152,14 +129,6 @@ describe("storage", () => {
       expect(result).toEqual([]);
     });
 
-    it("returns default config for cspConfig", async () => {
-      mockStorageGet.mockResolvedValue({});
-
-      const result = await getStorageKey("cspConfig");
-
-      expect(result).toEqual({ enabled: true, reportOnly: false });
-    });
-
     it("returns default config for aiMonitorConfig", async () => {
       mockStorageGet.mockResolvedValue({});
 
@@ -174,19 +143,6 @@ describe("storage", () => {
       });
     });
 
-    it("returns default config for networkMonitorConfig", async () => {
-      mockStorageGet.mockResolvedValue({});
-
-      const result = await getStorageKey("networkMonitorConfig");
-
-      expect(result).toEqual({
-        enabled: true,
-        captureAllRequests: true,
-        excludeOwnExtension: true,
-        excludedDomains: [],
-        excludedExtensions: [],
-      });
-    });
   });
 
   describe("getServiceCount", () => {

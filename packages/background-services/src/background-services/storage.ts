@@ -1,4 +1,3 @@
-import { DEFAULT_CSP_CONFIG } from "@libztbs/csp";
 import {
   DEFAULT_DETECTION_CONFIG,
   DEFAULT_NOTIFICATION_CONFIG,
@@ -22,14 +21,12 @@ export function queueStorageOperation<T>(
 export async function initStorage(): Promise<StorageData> {
   const result = await chrome.storage.local.get([
     "services",
-    "cspConfig",
     "detectionConfig",
     "notificationConfig",
     "policyConfig",
   ]) as Partial<StorageData>;
   return {
     services: result.services || ({} as Record<string, DetectedService>),
-    cspConfig: result.cspConfig || DEFAULT_CSP_CONFIG,
     detectionConfig: result.detectionConfig || DEFAULT_DETECTION_CONFIG,
     notificationConfig: result.notificationConfig || DEFAULT_NOTIFICATION_CONFIG,
     policyConfig: result.policyConfig || DEFAULT_POLICY_CONFIG,

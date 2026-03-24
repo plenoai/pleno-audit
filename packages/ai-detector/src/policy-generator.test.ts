@@ -43,7 +43,7 @@ describe("createPolicyGenerator", () => {
       const unknownRule = result.rules.find((r) => r.id === "ai-unknown-provider");
       expect(unknownRule).toBeDefined();
       expect(unknownRule?.severity).toBe("high");
-      expect(unknownRule?.action).toBe("alert");
+      expect(unknownRule?.action).toBe("warn");
       expect(unknownRule?.category).toBe("ai_usage");
     });
 
@@ -127,7 +127,7 @@ describe("createPolicyGenerator", () => {
       const regionalRule = result.rules.find((r) => r.id === "ai-regional-provider");
       expect(regionalRule).toBeDefined();
       expect(regionalRule?.severity).toBe("medium");
-      expect(regionalRule?.action).toBe("log");
+      expect(regionalRule?.action).toBe("allow");
     });
 
     it("includes multiple domains in reason for unknown providers", () => {
@@ -163,7 +163,7 @@ describe("createPolicyGenerator", () => {
       const credRule = result.rules.find((r) => r.id === "dlp-credentials");
       expect(credRule).toBeDefined();
       expect(credRule?.severity).toBe("critical");
-      expect(credRule?.action).toBe("block");
+      expect(credRule?.action).toBe("warn");
       expect(credRule?.category).toBe("data_protection");
     });
 
@@ -202,7 +202,7 @@ describe("createPolicyGenerator", () => {
       const piiRule = result.rules.find((r) => r.id === "dlp-pii");
       expect(piiRule).toBeDefined();
       expect(piiRule?.severity).toBe("medium");
-      expect(piiRule?.action).toBe("alert");
+      expect(piiRule?.action).toBe("warn");
       expect(piiRule?.reason).toContain("2ドメイン");
     });
 
@@ -238,7 +238,7 @@ describe("createPolicyGenerator", () => {
       const extRule = result.rules.find((r) => r.id === "ext-ext-critical");
       expect(extRule).toBeDefined();
       expect(extRule?.severity).toBe("critical");
-      expect(extRule?.action).toBe("alert");
+      expect(extRule?.action).toBe("warn");
       expect(extRule?.category).toBe("extension");
     });
 
@@ -369,7 +369,7 @@ describe("createPolicyGenerator", () => {
       const typosquatRule = result.rules.find((r) => r.id === "domain-typosquat");
       expect(typosquatRule).toBeDefined();
       expect(typosquatRule?.severity).toBe("critical");
-      expect(typosquatRule?.action).toBe("block");
+      expect(typosquatRule?.action).toBe("warn");
     });
 
     it("includes all typosquat domains in condition", () => {
@@ -414,8 +414,7 @@ describe("createPolicyGenerator", () => {
         ],
       };
       const result = generator.generate(input);
-      expect(result.summary.byActionCount.alert).toBeGreaterThan(0);
-      expect(result.summary.byActionCount.block).toBeGreaterThan(0);
+      expect(result.summary.byActionCount.warn).toBeGreaterThan(0);
     });
 
     it("counts high priority rules", () => {

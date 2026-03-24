@@ -14,7 +14,6 @@
  */
 
 import type {
-  NetworkMonitorConfig,
   NetworkRequestRecord,
 } from "@libztbs/extension-runtime";
 import {
@@ -25,8 +24,8 @@ import {
 } from "@libztbs/extension-runtime";
 
 // Internal modules
-import { state, applyConfig, clearGlobalCallbacks } from "./state.js";
-import { EXTENSION_ID_PATTERN } from "./constants.js";
+import { state, excludedExtensions, clearGlobalCallbacks } from "./state.js";
+import { CAPTURE_ALL_REQUESTS } from "./constants.js";
 import { registerNetworkMonitorListener } from "./web-request.js";
 import {
   registerDNRRulesForExtensions,
@@ -59,16 +58,14 @@ const logger = createLogger("network-monitor");
  * Network Monitorを作成
  */
 export function createNetworkMonitor(
-  config: NetworkMonitorConfig,
   ownExtensionId: string
 ): import("./types.js").NetworkMonitor {
-  applyConfig(config);
   state.ownExtensionId = ownExtensionId;
 
   function handleInstalled(info: chrome.management.ExtensionInfo): void {
     if (info.type !== "extension") return;
     if (info.id === ownExtensionId) return;
-    if (state.excludedExtensions.has(info.id)) return;
+    if (excludedExtensions.has(info.id)) return;
 
     refreshExtensionList().catch((error) => {
       logger.debug("Failed to refresh extension list on install", error);
@@ -89,18 +86,13 @@ export function createNetworkMonitor(
 
   return {
     async start() {
-      if (!state.config.enabled) {
-        logger.debug("Network monitor disabled by config");
-        return;
-      }
-
       if (!state.listenerRegistered) {
         registerNetworkMonitorListener();
       }
 
       await refreshExtensionList();
       logger.info(
-        `Network monitor started: capturing ${state.config.captureAllRequests ? "all" : "extension"} requests`
+        `Network monitor started: capturing ${CAPTURE_ALL_REQUESTS ? "all" : "extension"} requests`
       );
 
       let mappingRestored = false;
@@ -120,7 +112,7 @@ export function createNetworkMonitor(
         const otherExtensionIds = Array.from(getKnownExtensions().keys()).filter(
           (extensionId) =>
             extensionId !== ownExtensionId &&
-            !state.excludedExtensions.has(extensionId)
+            !excludedExtensions.has(extensionId)
         );
         await registerDNRRulesForExtensions(otherExtensionIds);
       }
@@ -132,7 +124,6 @@ export function createNetworkMonitor(
         chrome.management.onUninstalled.removeListener(handleUninstalled);
         state.managementListenersRegistered = false;
       }
-      applyConfig({ ...state.config, enabled: false });
       clearGlobalCallbacks();
       await clearDNRRules();
     },

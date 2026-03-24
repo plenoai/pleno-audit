@@ -40,7 +40,6 @@ export function getAlertManager(state: BackgroundServiceState): AlertManager {
       showNotifications: true,
       playSound: false,
       rules: [],
-      severityFilter: ["critical", "high"],
     });
 
     state.alertManager.subscribe((alert: SecurityAlert) => {
@@ -97,11 +96,6 @@ export async function showChromeNotification(state: BackgroundServiceState, aler
 
     if (!notificationConfig.enabled) {
       state.logger?.debug("Notification disabled, skipping:", alert.title);
-      return;
-    }
-
-    if (!notificationConfig.severityFilter.includes(alert.severity)) {
-      state.logger?.debug("Notification filtered by severity:", alert.severity);
       return;
     }
 

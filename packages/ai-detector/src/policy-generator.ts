@@ -43,7 +43,7 @@ export type PolicyCategory =
 /**
  * ポリシーアクション
  */
-export type AIPolicyAction = "alert" | "warn" | "block" | "log";
+export type AIPolicyAction = "allow" | "warn";
 
 /**
  * ポリシー条件
@@ -186,7 +186,7 @@ function generateAIPolicies(usageData: AIUsageData[]): PolicyRule[] {
       description: `未承認のAIサービスへのアクセスが${unknownProviders.length}件検出されました`,
       category: "ai_usage",
       severity: "high",
-      action: "alert",
+      action: "warn",
       condition: {
         type: "ai_provider",
         value: ["unknown"],
@@ -232,7 +232,7 @@ function generateAIPolicies(usageData: AIUsageData[]): PolicyRule[] {
       description: "海外地域のAIサービス利用を監視",
       category: "ai_usage",
       severity: "medium",
-      action: "log",
+      action: "allow",
       condition: {
         type: "ai_provider",
         value: ["deepseek", "moonshot", "zhipu", "baidu", "alibaba"],
@@ -269,7 +269,7 @@ function generateDLPPolicies(detections: DLPDetectionData[]): PolicyRule[] {
       description: "APIキー、パスワード等の外部送信をブロック",
       category: "data_protection",
       severity: "critical",
-      action: "block",
+      action: "warn",
       condition: {
         type: "data_classification",
         value: "credentials",
@@ -318,7 +318,7 @@ function generateDLPPolicies(detections: DLPDetectionData[]): PolicyRule[] {
       description: "メールアドレス、電話番号等のPII送信を監視",
       category: "data_protection",
       severity: "medium",
-      action: "alert",
+      action: "warn",
       condition: {
         type: "data_classification",
         value: "pii",
@@ -352,7 +352,7 @@ function generateExtensionPolicies(risks: ExtensionRiskData[]): PolicyRule[] {
         description: ext.flags.slice(0, 2).join(", ") || "高リスク検出",
         category: "extension",
         severity: ext.riskLevel === "critical" ? "critical" : "high",
-        action: "alert",
+        action: "warn",
         condition: {
           type: "extension_id",
           value: ext.extensionId,
@@ -406,7 +406,7 @@ function generateDomainPolicies(visits: DomainVisitData[]): PolicyRule[] {
       description: "偽装ドメインへのアクセスをブロック",
       category: "domain",
       severity: "critical",
-      action: "block",
+      action: "warn",
       condition: {
         type: "domain",
         value: typosquatDomains.map((v) => v.domain),
@@ -468,10 +468,8 @@ function createSummary(
   };
 
   const byActionCount: Record<AIPolicyAction, number> = {
-    alert: 0,
+    allow: 0,
     warn: 0,
-    block: 0,
-    log: 0,
   };
 
   let highPriorityCount = 0;

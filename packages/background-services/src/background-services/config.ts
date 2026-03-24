@@ -5,7 +5,6 @@ import {
   type DetectionConfig,
   type NotificationConfig,
 } from "@libztbs/extension-runtime";
-import type { BackgroundServiceState } from "./state.js";
 
 const logger = createLogger("background-config");
 
@@ -46,4 +45,3 @@ export async function setNotificationConfig(
     return { success: false };
   }
 }
-

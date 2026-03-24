@@ -233,14 +233,13 @@ describe("createAlertManager", () => {
         showNotifications: false,
         playSound: false,
         rules: [],
-        severityFilter: ["critical"],
       };
       const manager = createAlertManager(config);
       expect(manager).toBeDefined();
     });
 
     it("does not create alert when disabled", async () => {
-      const manager = createAlertManager({ enabled: false, showNotifications: false, playSound: false, rules: [], severityFilter: ["critical", "high"] });
+      const manager = createAlertManager({ enabled: false, showNotifications: false, playSound: false, rules: [] });
       const alert = await manager.alertNRD({
         domain: "test.com",
         domainAge: 5,
@@ -251,14 +250,13 @@ describe("createAlertManager", () => {
     });
   });
 
-  describe("severity filtering", () => {
-    it("creates alert when severity matches filter", async () => {
+  describe("alert creation when enabled", () => {
+    it("creates alert for any severity when enabled", async () => {
       const manager = createAlertManager({
         enabled: true,
         showNotifications: false,
         playSound: false,
         rules: [],
-        severityFilter: ["high"], // Only high to allow high severity alerts
       });
       const alert = await manager.alertNRD({
         domain: "test.com",
@@ -269,13 +267,12 @@ describe("createAlertManager", () => {
       expect(alert).not.toBeNull();
     });
 
-    it("creates critical alert with default filter", async () => {
+    it("creates critical alert when enabled", async () => {
       const manager = createAlertManager({
         enabled: true,
         showNotifications: false,
         playSound: false,
         rules: [],
-        severityFilter: ["critical", "high"], // Default - allows critical (min)
       });
       // Typosquat with high confidence is "critical"
       const alert = await manager.alertTyposquat({
@@ -286,24 +283,6 @@ describe("createAlertManager", () => {
       });
       expect(alert).not.toBeNull();
     });
-
-    it("does not create alert when severity below filter", async () => {
-      const manager = createAlertManager({
-        enabled: true,
-        showNotifications: false,
-        playSound: false,
-        rules: [],
-        severityFilter: ["critical"],
-      });
-      // NRD with high confidence is "high" severity, not "critical"
-      const alert = await manager.alertNRD({
-        domain: "test.com",
-        domainAge: 5,
-        registrationDate: null,
-        confidence: "high",
-      });
-      expect(alert).toBeNull();
-    });
   });
 
   describe("alertNRD", () => {
@@ -313,7 +292,7 @@ describe("createAlertManager", () => {
         showNotifications: false,
         playSound: false,
         rules: [],
-        severityFilter: ["high"],
+
       });
       const alert = await manager.alertNRD({
         domain: "suspicious.xyz",
@@ -334,7 +313,7 @@ describe("createAlertManager", () => {
         showNotifications: false,
         playSound: false,
         rules: [],
-        severityFilter: ["medium"],
+
       });
       const alert = await manager.alertNRD({
         domain: "test.com",
@@ -352,7 +331,7 @@ describe("createAlertManager", () => {
         showNotifications: false,
         playSound: false,
         rules: [],
-        severityFilter: ["high"],
+
       });
       const alert = await manager.alertNRD({
         domain: "test.com",
@@ -371,7 +350,7 @@ describe("createAlertManager", () => {
         showNotifications: false,
         playSound: false,
         rules: [],
-        severityFilter: ["critical"],
+
       });
       const alert = await manager.alertTyposquat({
         domain: "g00gle.com",
@@ -390,7 +369,7 @@ describe("createAlertManager", () => {
         showNotifications: false,
         playSound: false,
         rules: [],
-        severityFilter: ["high"],
+
       });
       const alert = await manager.alertTyposquat({
         domain: "gogle.com",
@@ -406,7 +385,7 @@ describe("createAlertManager", () => {
         showNotifications: false,
         playSound: false,
         rules: [],
-        severityFilter: ["critical"],
+
       });
       const alert = await manager.alertTyposquat({
         domain: "example.com",
@@ -424,7 +403,7 @@ describe("createAlertManager", () => {
         showNotifications: false,
         playSound: false,
         rules: [],
-        severityFilter: ["critical"],
+
       });
       const alert = await manager.alertAISensitive({
         domain: "chat.openai.com",
@@ -441,7 +420,7 @@ describe("createAlertManager", () => {
         showNotifications: false,
         playSound: false,
         rules: [],
-        severityFilter: ["high"],
+
       });
       const alert = await manager.alertAISensitive({
         domain: "chat.openai.com",
@@ -459,7 +438,7 @@ describe("createAlertManager", () => {
         showNotifications: false,
         playSound: false,
         rules: [],
-        severityFilter: ["high"],
+
       });
       const alert = await manager.alertShadowAI({
         domain: "unknown-ai.com",
@@ -479,7 +458,7 @@ describe("createAlertManager", () => {
         showNotifications: false,
         playSound: false,
         rules: [],
-        severityFilter: ["medium"],
+
       });
       const alert = await manager.alertShadowAI({
         domain: "deepseek.com",
@@ -500,7 +479,7 @@ describe("createAlertManager", () => {
         showNotifications: false,
         playSound: false,
         rules: [],
-        severityFilter: ["critical"],
+
       });
       const alert = await manager.alertExtension({
         extensionId: "abc123",
@@ -521,7 +500,7 @@ describe("createAlertManager", () => {
         showNotifications: false,
         playSound: false,
         rules: [],
-        severityFilter: ["low"],
+
       });
       const alert = await manager.alertExtension({
         extensionId: "xyz789",
@@ -543,7 +522,7 @@ describe("createAlertManager", () => {
         showNotifications: false,
         playSound: false,
         rules: [],
-        severityFilter: ["critical"],
+
       });
       const alert = await manager.alertDataExfiltration({
         sourceDomain: "internal.company.com",
@@ -561,7 +540,7 @@ describe("createAlertManager", () => {
         showNotifications: false,
         playSound: false,
         rules: [],
-        severityFilter: ["high"],
+
       });
       const alert = await manager.alertDataExfiltration({
         sourceDomain: "internal.company.com",
@@ -581,7 +560,7 @@ describe("createAlertManager", () => {
         showNotifications: false,
         playSound: false,
         rules: [],
-        severityFilter: ["critical"],
+
       });
       const alert = await manager.alertCredentialTheft({
         sourceDomain: "mysite.com",
@@ -601,7 +580,7 @@ describe("createAlertManager", () => {
         showNotifications: false,
         playSound: false,
         rules: [],
-        severityFilter: ["high"],
+
       });
       const alert = await manager.alertCredentialTheft({
         sourceDomain: "mysite.com",
@@ -623,7 +602,7 @@ describe("createAlertManager", () => {
         showNotifications: false,
         playSound: false,
         rules: [],
-        severityFilter: ["high"],
+
       });
       const alert = await manager.alertSupplyChainRisk({
         pageDomain: "mysite.com",
@@ -644,7 +623,7 @@ describe("createAlertManager", () => {
         showNotifications: false,
         playSound: false,
         rules: [],
-        severityFilter: ["medium"],
+
       });
       const alert = await manager.alertSupplyChainRisk({
         pageDomain: "mysite.com",
@@ -667,7 +646,7 @@ describe("createAlertManager", () => {
         showNotifications: false,
         playSound: false,
         rules: [],
-        severityFilter: ["high"],
+
       });
       const alert = await manager.alertCompliance({
         pageDomain: "suspicious.com",
@@ -688,7 +667,7 @@ describe("createAlertManager", () => {
         showNotifications: false,
         playSound: false,
         rules: [],
-        severityFilter: ["medium"],
+
       });
       const alert = await manager.alertCompliance({
         pageDomain: "site.com",
@@ -708,7 +687,7 @@ describe("createAlertManager", () => {
         showNotifications: false,
         playSound: false,
         rules: [],
-        severityFilter: ["high"],
+
       });
       const alert = await manager.alertCompliance({
         pageDomain: "compliant.com",
@@ -724,25 +703,25 @@ describe("createAlertManager", () => {
   });
 
   describe("alertPolicyViolation", () => {
-    it("creates high alert for block action", async () => {
+    it("creates medium alert for warn action (observe-only)", async () => {
       const manager = createAlertManager({
         enabled: true,
         showNotifications: false,
         playSound: false,
         rules: [],
-        severityFilter: ["high"],
+
       });
       const alert = await manager.alertPolicyViolation({
         domain: "blocked.com",
         ruleId: "rule-1",
-        ruleName: "Block Social Media",
+        ruleName: "Warn Social Media",
         ruleType: "domain",
-        action: "block",
+        action: "warn",
         matchedPattern: "*.social.com",
         target: "social.com",
       });
-      expect(alert?.severity).toBe("high");
-      expect(alert?.title).toContain("ブロック");
+      expect(alert?.severity).toBe("medium");
+      expect(alert?.title).toContain("警告");
     });
 
     it("creates medium alert for warn action", async () => {
@@ -751,7 +730,7 @@ describe("createAlertManager", () => {
         showNotifications: false,
         playSound: false,
         rules: [],
-        severityFilter: ["medium"],
+
       });
       const alert = await manager.alertPolicyViolation({
         domain: "warned.com",
@@ -772,7 +751,7 @@ describe("createAlertManager", () => {
         showNotifications: false,
         playSound: false,
         rules: [],
-        severityFilter: ["high"],
+
       });
       const alert = await manager.alertPolicyViolation({
         domain: "allowed.com",
@@ -794,7 +773,7 @@ describe("createAlertManager", () => {
         showNotifications: false,
         playSound: false,
         rules: [],
-        severityFilter: ["high"],
+
       });
       const alert = await manager.alertNRD({
         domain: "test.com",
@@ -813,7 +792,7 @@ describe("createAlertManager", () => {
         showNotifications: false,
         playSound: false,
         rules: [],
-        severityFilter: ["high"],
+
       });
       await manager.alertNRD({ domain: "a.com", domainAge: 1, registrationDate: null, confidence: "high" });
       await manager.alertNRD({ domain: "b.com", domainAge: 2, registrationDate: null, confidence: "high" });
@@ -829,7 +808,7 @@ describe("createAlertManager", () => {
         showNotifications: false,
         playSound: false,
         rules: [],
-        severityFilter: ["high"],
+
       }, store);
       const alert = await manager.alertNRD({ domain: "a.com", domainAge: 1, registrationDate: null, confidence: "high" });
       await manager.updateAlertStatus(alert!.id, "resolved");
@@ -846,7 +825,7 @@ describe("createAlertManager", () => {
         showNotifications: false,
         playSound: false,
         rules: [],
-        severityFilter: ["high"],
+
       });
       const listener = vi.fn();
       manager.subscribe(listener);
@@ -861,7 +840,7 @@ describe("createAlertManager", () => {
         showNotifications: false,
         playSound: false,
         rules: [],
-        severityFilter: ["high"],
+
       });
       const listener = vi.fn();
       const unsubscribe = manager.subscribe(listener);
@@ -876,7 +855,7 @@ describe("createAlertManager", () => {
         showNotifications: false,
         playSound: false,
         rules: [],
-        severityFilter: ["high"],
+
       });
       const errorListener = vi.fn(() => {
         throw new Error("Listener error");
@@ -896,7 +875,7 @@ describe("createAlertManager", () => {
         showNotifications: false,
         playSound: false,
         rules: [],
-        severityFilter: ["high"],
+
       });
       await manager.alertNRD({ domain: "a.com", domainAge: 1, registrationDate: null, confidence: "high" });
       await manager.alertNRD({ domain: "b.com", domainAge: 2, registrationDate: null, confidence: "high" });
@@ -910,7 +889,7 @@ describe("createAlertManager", () => {
         showNotifications: false,
         playSound: false,
         rules: [],
-        severityFilter: ["high"],
+
       });
       await manager.alertNRD({ domain: "a.com", domainAge: 1, registrationDate: null, confidence: "high" });
       await manager.alertNRD({ domain: "b.com", domainAge: 2, registrationDate: null, confidence: "high" });
@@ -924,7 +903,7 @@ describe("createAlertManager", () => {
         showNotifications: false,
         playSound: false,
         rules: [],
-        severityFilter: ["high"],
+
       });
       const alert1 = await manager.alertNRD({ domain: "a.com", domainAge: 1, registrationDate: null, confidence: "high" });
       await manager.alertNRD({ domain: "b.com", domainAge: 2, registrationDate: null, confidence: "high" });

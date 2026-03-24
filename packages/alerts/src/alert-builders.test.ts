@@ -528,21 +528,21 @@ describe("buildComplianceAlert", () => {
 });
 
 describe("buildPolicyViolationAlert", () => {
-  it("builds high alert for block action", () => {
+  it("builds medium alert for warn action", () => {
     const params: PolicyViolationAlertParams = {
       domain: "example.com",
       ruleId: "rule-1",
-      ruleName: "Block Malicious Sites",
+      ruleName: "Warn Malicious Sites",
       ruleType: "domain",
-      action: "block",
+      action: "warn",
       matchedPattern: "*.malicious.com",
       target: "evil.malicious.com",
     };
     const alert = buildPolicyViolationAlert(params);
 
     expect(alert).not.toBeNull();
-    expect(alert!.severity).toBe("high");
-    expect(alert!.title).toContain("ブロック");
+    expect(alert!.severity).toBe("medium");
+    expect(alert!.title).toContain("警告");
   });
 
   it("returns null for allow action", () => {

@@ -5,8 +5,6 @@
  * CSPはブラウザのセキュリティ機構であり、SASE/CASBの概念には含まれない。
  */
 
-import type { CSPConfig } from "./types.js";
-
 // ============================================================================
 // CSP Directive Mapping（CSPディレクティブマッピング）
 // ----------------------------------------------------------------------------
@@ -63,15 +61,8 @@ export const REQUIRED_DIRECTIVES = [
 ];
 
 // ============================================================================
-// CSP Collection Configuration（CSP収集設定）
-// ----------------------------------------------------------------------------
-// CSP違反とネットワークリクエストの収集に関するデフォルト設定。
+// CSP Collection Constants（CSP収集定数）
 // ============================================================================
 
-/** CSP収集のデフォルト設定 */
-export const DEFAULT_CSP_CONFIG: CSPConfig = {
-  enabled: true,
-  collectNetworkRequests: true,
-  collectCSPViolations: true,
-  maxStoredReports: 1000,
-};
+/** CSPレポートの最大保持数 */
+export const MAX_STORED_CSP_REPORTS = 1000;

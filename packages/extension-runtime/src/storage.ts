@@ -3,33 +3,26 @@
  */
 import type {
   StorageData,
-  CSPConfig,
   DetectedService,
   AIMonitorConfig,
   DetectionConfig,
 } from "./storage-types.js";
 import {
   DEFAULT_DETECTION_CONFIG,
-  DEFAULT_NETWORK_MONITOR_CONFIG,
   DEFAULT_NOTIFICATION_CONFIG,
 } from "./storage-types.js";
 import type { NRDConfig } from "@libztbs/nrd";
 import { DEFAULT_NRD_CONFIG } from "@libztbs/nrd";
-import { DEFAULT_CSP_CONFIG } from "@libztbs/csp";
 import { DEFAULT_AI_MONITOR_CONFIG } from "@libztbs/ai-detector";
-import { DEFAULT_DOH_MONITOR_CONFIG } from "./doh-monitor.js";
 import { getBrowserAPI } from "./browser-adapter.js";
 
 const STORAGE_KEYS = [
   "services",
   "policyConfig",
   "alerts",
-  "cspConfig",
   "generatedCSPPolicy",
   "aiMonitorConfig",
   "nrdConfig",
-  "networkMonitorConfig",
-  "doHMonitorConfig",
   "detectionConfig",
   "notificationConfig",
   "alertCooldown",
@@ -54,16 +47,9 @@ export async function getStorage(): Promise<StorageData> {
     services: (result.services as Record<string, DetectedService>) || {},
     policyConfig: result.policyConfig as StorageData["policyConfig"],
     alerts: (result.alerts as StorageData["alerts"]) || [],
-    cspConfig: (result.cspConfig as CSPConfig) || DEFAULT_CSP_CONFIG,
     aiMonitorConfig:
       (result.aiMonitorConfig as AIMonitorConfig) || DEFAULT_AI_MONITOR_CONFIG,
     nrdConfig: (result.nrdConfig as NRDConfig) || DEFAULT_NRD_CONFIG,
-    networkMonitorConfig:
-      (result.networkMonitorConfig as StorageData["networkMonitorConfig"]) ||
-      DEFAULT_NETWORK_MONITOR_CONFIG,
-    doHMonitorConfig:
-      (result.doHMonitorConfig as StorageData["doHMonitorConfig"]) ||
-      DEFAULT_DOH_MONITOR_CONFIG,
     detectionConfig:
       (result.detectionConfig as DetectionConfig) || DEFAULT_DETECTION_CONFIG,
     notificationConfig:
@@ -86,11 +72,8 @@ export async function getStorageKey<K extends StorageKey>(
   const defaults: StorageData = {
     services: {},
     alerts: [],
-    cspConfig: DEFAULT_CSP_CONFIG,
     aiMonitorConfig: DEFAULT_AI_MONITOR_CONFIG,
     nrdConfig: DEFAULT_NRD_CONFIG,
-    networkMonitorConfig: DEFAULT_NETWORK_MONITOR_CONFIG,
-    doHMonitorConfig: DEFAULT_DOH_MONITOR_CONFIG,
     detectionConfig: DEFAULT_DETECTION_CONFIG,
     notificationConfig: DEFAULT_NOTIFICATION_CONFIG,
     alertCooldown: {},
@@ -124,11 +107,8 @@ export async function clearAllStorage(options?: { preserveTheme?: boolean }): Pr
   const defaultSettings: Partial<StorageData> = {
     services: {},
     alerts: [],
-    cspConfig: DEFAULT_CSP_CONFIG,
     aiMonitorConfig: DEFAULT_AI_MONITOR_CONFIG,
     nrdConfig: DEFAULT_NRD_CONFIG,
-    networkMonitorConfig: DEFAULT_NETWORK_MONITOR_CONFIG,
-    doHMonitorConfig: DEFAULT_DOH_MONITOR_CONFIG,
     detectionConfig: DEFAULT_DETECTION_CONFIG,
     notificationConfig: DEFAULT_NOTIFICATION_CONFIG,
     alertCooldown: {},

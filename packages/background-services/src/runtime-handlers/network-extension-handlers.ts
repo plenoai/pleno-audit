@@ -1,4 +1,3 @@
-import type { NetworkMonitorConfig } from "@libztbs/extension-runtime";
 import type { AsyncHandlerEntry, RuntimeHandlerDependencies } from "./types.js";
 
 export function createNetworkAndExtensionHandlers(
@@ -21,14 +20,6 @@ export function createNetworkAndExtensionHandlers(
     ["GET_EXTENSION_STATS", {
       execute: () => deps.getExtensionStats(),
       fallback: () => ({ byExtension: {}, byDomain: {}, total: 0 }),
-    }],
-    ["GET_NETWORK_MONITOR_CONFIG", {
-      execute: () => deps.getNetworkMonitorConfig(),
-      fallback: () => deps.fallbacks.networkMonitorConfig,
-    }],
-    ["SET_NETWORK_MONITOR_CONFIG", {
-      execute: (message) => deps.setNetworkMonitorConfig(message.data as NetworkMonitorConfig),
-      fallback: () => ({ success: false }),
     }],
     ["GET_ALL_EXTENSION_RISKS", {
       execute: () => deps.getAllExtensionRisks(),

@@ -173,12 +173,12 @@ describe("createPageAnalysisHandler", () => {
     });
   });
 
-  it("検出が無効化されている場合はupdateServiceに該当フィールドを含めない", async () => {
+  it("login/privacyは常に検出される", async () => {
     const deps = createMockDeps({
       initStorage: vi.fn<() => Promise<StorageData>>().mockResolvedValue({
         services: {},
           cspConfig: {} as StorageData["cspConfig"],
-        detectionConfig: { ...DEFAULT_DETECTION_CONFIG, enableLogin: false, enablePrivacy: false },
+        detectionConfig: DEFAULT_DETECTION_CONFIG,
         notificationConfig: {} as StorageData["notificationConfig"],
         policyConfig: {} as StorageData["policyConfig"],
       }),
@@ -191,10 +191,11 @@ describe("createPageAnalysisHandler", () => {
       privacy: { found: true, url: "https://example.com/privacy", method: "link_text" },
     }));
 
-    // loginとprivacyは無効なのでfaviconUrlのみ
     expect(deps.updateService).toHaveBeenCalledTimes(1);
     expect(deps.updateService).toHaveBeenCalledWith("example.com", {
       faviconUrl: "https://example.com/favicon.ico",
+      hasLoginPage: true,
+      privacyPolicyUrl: "https://example.com/privacy",
     });
   });
 });

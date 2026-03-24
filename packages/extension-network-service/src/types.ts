@@ -3,7 +3,6 @@ import type {
   CooldownManager,
   DetectionConfig,
   ExtensionRiskAnalysis,
-  NetworkMonitorConfig,
   NetworkRequestRecord,
 } from "@libztbs/extension-runtime";
 import type { NetworkMonitor } from "./network-monitor/types.js";
@@ -13,12 +12,10 @@ export interface ExtensionNetworkServiceDeps {
   logger: LoggerLike;
   getStorage: () => Promise<{
     alertCooldown?: Record<string, number>;
-    networkMonitorConfig?: NetworkMonitorConfig;
     detectionConfig?: DetectionConfig;
   }>;
   setStorage: (data: {
     alertCooldown?: Record<string, number>;
-    networkMonitorConfig?: NetworkMonitorConfig;
   }) => Promise<void>;
   getAlertManager: () => AlertManager;
   getRuntimeId: () => string;
@@ -27,8 +24,6 @@ export interface ExtensionNetworkServiceDeps {
 }
 
 export interface ExtensionNetworkService {
-  getNetworkMonitorConfig: () => Promise<NetworkMonitorConfig>;
-  setNetworkMonitorConfig: (config: NetworkMonitorConfig) => Promise<{ success: boolean }>;
   initExtensionMonitor: () => Promise<void>;
   stopExtensionMonitor: () => Promise<void>;
   checkDNRMatchesHandler: () => Promise<void>;

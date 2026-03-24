@@ -1,14 +1,7 @@
-import type { DoHMonitorConfig } from "@libztbs/extension-runtime";
-
 interface DebugBridgeResponse {
   success: boolean;
   data?: unknown;
   error?: string;
-}
-
-interface DebugBridgeHandlerDependencies {
-  getDoHMonitorConfig: () => Promise<DoHMonitorConfig>;
-  setDoHMonitorConfig: (config: Partial<DoHMonitorConfig>) => Promise<{ success: boolean }>;
 }
 
 type DebugHandler = (data: unknown) => Promise<DebugBridgeResponse>;
@@ -20,9 +13,7 @@ function normalizeUrl(rawUrl: string): string {
   return `https://${rawUrl}`;
 }
 
-export function createDebugBridgeHandler(
-  deps: DebugBridgeHandlerDependencies,
-): (type: string, data: unknown) => Promise<DebugBridgeResponse> {
+export function createDebugBridgeHandler(): (type: string, data: unknown) => Promise<DebugBridgeResponse> {
   const handlers = new Map<string, DebugHandler>([
     ["DEBUG_TAB_OPEN", async (rawData) => {
       const params = rawData as { url: string };
@@ -33,15 +24,6 @@ export function createDebugBridgeHandler(
       const url = normalizeUrl(params.url.trim());
       const tab = await chrome.tabs.create({ url, active: true });
       return { success: true, data: { tabId: tab.id, url: tab.url || url } };
-    }],
-    ["DEBUG_DOH_CONFIG_GET", async () => {
-      const config = await deps.getDoHMonitorConfig();
-      return { success: true, data: config };
-    }],
-    ["DEBUG_DOH_CONFIG_SET", async (rawData) => {
-      const params = rawData as Partial<DoHMonitorConfig>;
-      await deps.setDoHMonitorConfig(params);
-      return { success: true };
     }],
   ]);
 

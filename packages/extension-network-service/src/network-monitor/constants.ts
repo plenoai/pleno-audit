@@ -4,6 +4,22 @@
  * DNR関連定数とその意図を明確にするコメント
  */
 
+// ============================================================================
+// Network Monitor 設定定数
+// ============================================================================
+
+/** 全リクエストをキャプチャ（拡張機能以外も監視） */
+export const CAPTURE_ALL_REQUESTS = true;
+
+/** 自身の拡張機能を除外 */
+export const EXCLUDE_OWN_EXTENSION = true;
+
+/** 除外するドメイン（空＝除外なし） */
+export const EXCLUDED_DOMAINS: readonly string[] = [];
+
+/** 除外する拡張機能ID（空＝除外なし） */
+export const EXCLUDED_EXTENSIONS: readonly string[] = [];
+
 /**
  * 拡張機能IDのパターン（32文字の小文字英字）
  */

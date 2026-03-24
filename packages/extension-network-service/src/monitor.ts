@@ -1,7 +1,5 @@
-import {
-  DEFAULT_NETWORK_MONITOR_CONFIG,
-  type NetworkMonitorConfig,
-  type NetworkRequestRecord,
+import type {
+  NetworkRequestRecord,
 } from "@libztbs/extension-runtime";
 import { createNetworkMonitor } from "./network-monitor/index.js";
 import type { ExtensionNetworkContext } from "./types.js";
@@ -9,30 +7,13 @@ import type { ExtensionNetworkContext } from "./types.js";
 /** バッファの最大サイズ */
 const MAX_REQUEST_BUFFER_SIZE = 5000;
 
-export async function getNetworkMonitorConfig(
-  context: ExtensionNetworkContext
-): Promise<NetworkMonitorConfig> {
-  const storage = await context.deps.getStorage();
-  const storedConfig = storage.networkMonitorConfig ?? {};
-  const sanitizedStored = Object.fromEntries(
-    Object.entries(storedConfig).filter(([, value]) => value !== undefined)
-  );
-  return {
-    ...DEFAULT_NETWORK_MONITOR_CONFIG,
-    ...sanitizedStored,
-  };
-}
-
 export async function initExtensionMonitor(context: ExtensionNetworkContext): Promise<void> {
   if (context.state.extensionMonitor) {
     context.deps.logger.debug("Extension monitor already started");
     return;
   }
 
-  const networkConfig = await getNetworkMonitorConfig(context);
-  if (!networkConfig.enabled) return;
-
-  context.state.extensionMonitor = createNetworkMonitor(networkConfig, context.deps.getRuntimeId());
+  context.state.extensionMonitor = createNetworkMonitor(context.deps.getRuntimeId());
 
   context.state.extensionMonitor.onRequest((record) => {
     const networkRecord = record as NetworkRequestRecord;
@@ -57,29 +38,6 @@ export async function stopExtensionMonitor(context: ExtensionNetworkContext): Pr
   await context.state.extensionMonitor.stop();
   context.state.extensionMonitor = null;
 }
-
-export async function setNetworkMonitorConfig(
-  context: ExtensionNetworkContext,
-  newConfig: NetworkMonitorConfig
-): Promise<{ success: boolean }> {
-  try {
-    await context.deps.setStorage({ networkMonitorConfig: newConfig });
-
-    if (context.state.extensionMonitor) {
-      await stopExtensionMonitor(context);
-    }
-
-    if (newConfig.enabled) {
-      await initExtensionMonitor(context);
-    }
-
-    return { success: true };
-  } catch (error) {
-    context.deps.logger.error("Error setting network monitor config:", error);
-    return { success: false };
-  }
-}
-
 
 export async function checkDNRMatchesHandler(context: ExtensionNetworkContext): Promise<void> {
   if (!context.state.extensionMonitor) {

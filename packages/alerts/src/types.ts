@@ -239,7 +239,7 @@ export interface PolicyViolationAlertDetails {
   ruleId: string;
   ruleName: string;
   ruleType: "domain" | "tool" | "ai" | "data_transfer";
-  action: "allow" | "block" | "warn";
+  action: "allow" | "warn";
   matchedPattern: string;
   target: string;
 }
@@ -405,7 +405,7 @@ export interface BroadcastChannelAlertDetails {
 export interface AlertAction {
   id: string;
   label: string;
-  type: "block" | "investigate" | "dismiss" | "report" | "custom";
+  type: "investigate" | "dismiss" | "report" | "custom";
   url?: string;
 }
 
@@ -440,7 +440,6 @@ export interface AlertConfig {
   showNotifications: boolean;
   playSound: boolean;
   rules: AlertRule[];
-  severityFilter: AlertSeverity[];
 }
 
 /**
@@ -451,7 +450,6 @@ export const DEFAULT_ALERT_CONFIG: AlertConfig = {
   showNotifications: true,
   playSound: false,
   rules: [],
-  severityFilter: ["critical", "high"],
 };
 
 /**
@@ -478,8 +476,8 @@ export const DEFAULT_ALERT_RULES: AlertRule[] = [
     condition: { type: "always" },
     severity: "critical",
     actions: [
-      { id: "block", label: "ブロック", type: "block" },
       { id: "report", label: "報告", type: "report" },
+      { id: "dismiss", label: "無視", type: "dismiss" },
     ],
   },
   {

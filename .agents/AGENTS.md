@@ -67,6 +67,8 @@ pnpm --filter @pleno-audit/debugger start browser open example.com
 pnpm --filter @pleno-audit/debugger start status
 ```
 
+実装完了後は必ず `pnpm build` でビルド確認すること。
+
 ## Prodct Policy
 
 ### 外部通信禁止

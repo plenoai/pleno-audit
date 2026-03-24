@@ -1,7 +1,7 @@
 import type { AlertManager } from "@libztbs/alerts";
 import type { CookieInfo, DetectedService } from "@libztbs/types";
 import type { Logger } from "@libztbs/extension-runtime";
-import { DEFAULT_DETECTION_CONFIG, queryExistingCookies } from "@libztbs/extension-runtime";
+import { queryExistingCookies } from "@libztbs/extension-runtime";
 import type { PageAnalysis, StorageData } from "./types.js";
 
 export interface PageAnalysisDependencies {
@@ -17,7 +17,6 @@ export function createPageAnalysisHandler(deps: PageAnalysisDependencies) {
   return async (analysis: PageAnalysis) => {
   const { domain, login, privacy, tos, cookiePolicy, cookieBanner, faviconUrl } = analysis;
   const storage = await deps.initStorage();
-  const detectionConfig = storage.detectionConfig || DEFAULT_DETECTION_CONFIG;
   const isNewDomain = !storage.services[domain];
 
   // Batch all service field updates into a single write
@@ -29,15 +28,15 @@ export function createPageAnalysisHandler(deps: PageAnalysisDependencies) {
 
   const hasLoginForm = login.hasPasswordInput || login.isLoginUrl;
 
-  if (detectionConfig.enableLogin && hasLoginForm) {
+  if (hasLoginForm) {
     serviceUpdate.hasLoginPage = true;
   }
 
-  if (detectionConfig.enablePrivacy && privacy.found && privacy.url) {
+  if (privacy.found && privacy.url) {
     serviceUpdate.privacyPolicyUrl = privacy.url;
   }
 
-  if (detectionConfig.enableTos && tos.found && tos.url) {
+  if (tos.found && tos.url) {
     serviceUpdate.termsOfServiceUrl = tos.url;
   }
 

@@ -649,7 +649,7 @@ export interface PolicyViolationAlertParams {
   ruleId: string;
   ruleName: string;
   ruleType: "domain" | "tool" | "ai" | "data_transfer";
-  action: "allow" | "block" | "warn";
+  action: "allow" | "warn";
   matchedPattern: string;
   target: string;
 }
@@ -672,8 +672,8 @@ const POLICY_VIOLATION_ALERT_DEFINITION: AlertDefinition<
       return null;
     }
 
-    const severity = helpers.resolveSeverity([[params.action === "block", "high"]], "medium");
-    const actionLabel = params.action === "block" ? "ブロック" : "警告";
+    const severity: AlertSeverity = "medium";
+    const actionLabel = "警告";
     const ruleTypeLabel = RULE_TYPE_LABELS[params.ruleType] || params.ruleType;
 
     return {

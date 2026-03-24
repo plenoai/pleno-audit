@@ -1,32 +1,16 @@
 import { useState, useRef, useEffect } from "preact/hooks";
 import { useTheme } from "../lib/theme";
 import { ThemeToggle } from "./ThemeToggle";
-import {
-  createLogger,
-  DEFAULT_NOTIFICATION_CONFIG,
-  type NotificationConfig,
-} from "@libztbs/extension-runtime";
 
 interface Props {
   onClearData: () => void;
   onExport?: () => void;
 }
 
-const logger = createLogger("settings-menu");
-
 export function SettingsMenu({ onClearData, onExport }: Props) {
   const { colors } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
-  const [notificationConfig, setNotificationConfig] = useState<NotificationConfig | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-
-  function reportOperationError(message: string, error: unknown): void {
-    logger.warn({
-      event: "SETTINGS_MENU_OPERATION_FAILED",
-      data: { message },
-      error,
-    });
-  }
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -37,34 +21,6 @@ export function SettingsMenu({ onClearData, onExport }: Props) {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  useEffect(() => {
-    if (isOpen && notificationConfig === null) {
-      chrome.runtime.sendMessage({ type: "GET_NOTIFICATION_CONFIG" })
-        .then((config) => {
-          setNotificationConfig(config ?? DEFAULT_NOTIFICATION_CONFIG);
-        })
-        .catch((error) => {
-          setNotificationConfig(DEFAULT_NOTIFICATION_CONFIG);
-          reportOperationError("通知設定の読み込みに失敗しました。", error);
-        });
-    }
-  }, [isOpen, notificationConfig]);
-
-  function handleNotificationToggle() {
-    if (!notificationConfig) return;
-
-    const previous = notificationConfig;
-    const newConfig = { ...notificationConfig, enabled: !notificationConfig.enabled };
-    setNotificationConfig(newConfig);
-    chrome.runtime.sendMessage({
-      type: "SET_NOTIFICATION_CONFIG",
-      data: newConfig,
-    }).catch((error) => {
-      setNotificationConfig(previous);
-      reportOperationError("通知設定の保存に失敗しました。", error);
-    });
-  }
 
   return (
     <div ref={menuRef} style={{ position: "relative" }}>
@@ -83,18 +39,9 @@ export function SettingsMenu({ onClearData, onExport }: Props) {
           color: colors.textSecondary,
           fontSize: "16px",
         }}
-        title="設定"
+        title="メニュー"
       >
-        <svg
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="3" />
           <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
         </svg>
@@ -120,85 +67,15 @@ export function SettingsMenu({ onClearData, onExport }: Props) {
             <ThemeToggle />
           </div>
 
-          <div style={{ padding: "12px", borderBottom: `1px solid ${colors.border}` }}>
-            <div style={{ fontSize: "11px", color: colors.textSecondary, marginBottom: "8px", fontWeight: 500 }}>
-              通知
-            </div>
-            {notificationConfig !== null ? (
-              <div>
-                <button
-                  onClick={handleNotificationToggle}
-                  aria-pressed={notificationConfig.enabled}
-                  aria-label={`デスクトップ通知: ${notificationConfig.enabled ? "有効" : "無効"}`}
-                  style={{
-                    width: "100%",
-                    padding: "8px 12px",
-                    background: notificationConfig.enabled ? colors.status.info.bg : colors.bgSecondary,
-                    border: `1px solid ${notificationConfig.enabled ? colors.status.info.text : colors.border}`,
-                    borderRadius: "6px",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    fontSize: "12px",
-                    color: notificationConfig.enabled ? colors.status.info.text : colors.textPrimary,
-                    transition: "all 0.15s",
-                  }}
-                >
-                  <span>デスクトップ通知</span>
-                  <span style={{
-                    fontSize: "10px",
-                    padding: "2px 6px",
-                    borderRadius: "4px",
-                    background: notificationConfig.enabled ? colors.status.info.text : colors.textMuted,
-                    color: colors.bgPrimary,
-                  }}>
-                    {notificationConfig.enabled ? "ON" : "OFF"}
-                  </span>
-                </button>
-                <div style={{ fontSize: "10px", color: colors.textMuted, marginTop: "6px", lineHeight: 1.4 }}>
-                  重大なセキュリティイベントを通知
-                </div>
-              </div>
-            ) : (
-              <div style={{ fontSize: "12px", color: colors.textSecondary }}>読み込み中...</div>
-            )}
-          </div>
-
           {onExport && (
             <div style={{ padding: "4px", borderBottom: `1px solid ${colors.border}` }}>
               <button
                 className="hover-bg"
-                onClick={() => {
-                  setIsOpen(false);
-                  onExport();
-                }}
-                style={{
-                  width: "100%",
-                  padding: "8px 12px",
-                  background: "transparent",
-                  border: "none",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  fontSize: "13px",
-                  color: colors.textPrimary,
-                  borderRadius: "4px",
-                  textAlign: "left",
-                }}
+                onClick={() => { setIsOpen(false); onExport(); }}
+                style={{ width: "100%", padding: "8px 12px", background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", color: colors.textPrimary, borderRadius: "4px", textAlign: "left" }}
               >
                 <span style={{ width: "16px", display: "flex", justifyContent: "center" }}>
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                     <polyline points="7 10 12 15 17 10" />
                     <line x1="12" y1="15" x2="12" y2="3" />
@@ -212,36 +89,11 @@ export function SettingsMenu({ onClearData, onExport }: Props) {
           <div style={{ padding: "4px" }}>
             <button
               className="hover-bg"
-              onClick={() => {
-                setIsOpen(false);
-                onClearData();
-              }}
-              style={{
-                width: "100%",
-                padding: "8px 12px",
-                background: "transparent",
-                border: "none",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                fontSize: "13px",
-                color: colors.status.danger.text,
-                borderRadius: "4px",
-                textAlign: "left",
-              }}
+              onClick={() => { setIsOpen(false); onClearData(); }}
+              style={{ width: "100%", padding: "8px 12px", background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", color: colors.status.danger.text, borderRadius: "4px", textAlign: "left" }}
             >
               <span style={{ width: "16px", display: "flex", justifyContent: "center" }}>
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="3 6 5 6 21 6" />
                   <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
                 </svg>
@@ -251,7 +103,6 @@ export function SettingsMenu({ onClearData, onExport }: Props) {
           </div>
         </div>
       )}
-
     </div>
   );
 }

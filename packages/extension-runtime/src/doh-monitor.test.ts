@@ -3,7 +3,6 @@ import {
   detectDoHRequest,
   createDoHMonitor,
   clearDoHCallbacks,
-  DEFAULT_DOH_MONITOR_CONFIG,
 } from "./doh-monitor.js";
 
 describe("detectDoHRequest", () => {
@@ -109,30 +108,26 @@ describe("createDoHMonitor", () => {
   });
 
   describe("lifecycle", () => {
-    it("creates monitor with default config", () => {
-      const monitor = createDoHMonitor(DEFAULT_DOH_MONITOR_CONFIG);
-      expect(monitor.getConfig()).toEqual(DEFAULT_DOH_MONITOR_CONFIG);
+    it("creates monitor", () => {
+      const monitor = createDoHMonitor();
+      expect(monitor).toBeDefined();
+      expect(monitor.start).toBeDefined();
+      expect(monitor.stop).toBeDefined();
+      expect(monitor.onRequest).toBeDefined();
     });
 
-    it("updates config correctly", () => {
-      const monitor = createDoHMonitor(DEFAULT_DOH_MONITOR_CONFIG);
-      monitor.updateConfig({ action: "alert" });
-      expect(monitor.getConfig().action).toBe("alert");
-      expect(monitor.getConfig().maxStoredRequests).toBe(1000);
-    });
-
-    it("stops monitor and clears callbacks", () => {
-      const monitor = createDoHMonitor(DEFAULT_DOH_MONITOR_CONFIG);
+    it("stops monitor and clears callbacks", async () => {
+      const monitor = createDoHMonitor();
       const callback = vi.fn();
       monitor.onRequest(callback);
-      monitor.stop();
-      expect(monitor.getConfig().action).toBe("detect");
+      await monitor.stop();
+      // After stop, globalCallbacks should be cleared
     });
   });
 
   describe("callback management", () => {
     it("registers callbacks", () => {
-      const monitor = createDoHMonitor(DEFAULT_DOH_MONITOR_CONFIG);
+      const monitor = createDoHMonitor();
       const callback1 = vi.fn();
       const callback2 = vi.fn();
       monitor.onRequest(callback1);
@@ -140,41 +135,27 @@ describe("createDoHMonitor", () => {
       // Callbacks are stored but we can't easily test invocation without chrome mock
     });
 
-    it("clears callbacks on stop", () => {
-      const monitor = createDoHMonitor(DEFAULT_DOH_MONITOR_CONFIG);
+    it("clears callbacks on stop", async () => {
+      const monitor = createDoHMonitor();
       const callback = vi.fn();
       monitor.onRequest(callback);
-      monitor.stop();
+      await monitor.stop();
       // After stop, globalCallbacks should be cleared
     });
   });
 
   describe("Service Worker lifecycle simulation", () => {
-    it("handles multiple createDoHMonitor calls (SW restart scenario)", () => {
-      // Simulate first SW lifecycle
-      const monitor1 = createDoHMonitor(DEFAULT_DOH_MONITOR_CONFIG);
-      monitor1.updateConfig({ maxStoredRequests: 500 });
-
-      // Simulate SW restart - creates new monitor
-      const monitor2 = createDoHMonitor(DEFAULT_DOH_MONITOR_CONFIG);
-
-      // Config should be reset to default (this is the expected behavior)
-      // The actual config persistence should be handled by storage
-      expect(monitor2.getConfig().maxStoredRequests).toBe(1000);
-    });
-
     it("clearDoHCallbacks removes all registered callbacks", () => {
-      const monitor = createDoHMonitor(DEFAULT_DOH_MONITOR_CONFIG);
+      const monitor = createDoHMonitor();
       monitor.onRequest(vi.fn());
       monitor.onRequest(vi.fn());
 
       clearDoHCallbacks();
 
       // After clearing, new monitor should have clean state
-      const newMonitor = createDoHMonitor(DEFAULT_DOH_MONITOR_CONFIG);
-      // No way to verify callback count without exposing internals
-      // but this tests the API doesn't throw
-      expect(newMonitor.getConfig().action).toBe("detect");
+      const newMonitor = createDoHMonitor();
+      // This tests the API doesn't throw
+      expect(newMonitor).toBeDefined();
     });
   });
 });

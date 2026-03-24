@@ -6,7 +6,6 @@ export type {
   GeneratedCSPPolicy,
   CSPStatistics,
   SecurityRecommendation,
-  CSPConfig,
   CSPGenerationOptions,
   CSPViolationDetails,
   NetworkRequestDetails,
@@ -17,7 +16,7 @@ export {
   INITIATOR_TO_DIRECTIVE,
   STRICT_DIRECTIVES,
   REQUIRED_DIRECTIVES,
-  DEFAULT_CSP_CONFIG,
+  MAX_STORED_CSP_REPORTS,
 } from "./constants.js";
 
 // Analyzer
