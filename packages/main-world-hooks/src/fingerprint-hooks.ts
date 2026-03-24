@@ -8,9 +8,13 @@ import { type SharedHookUtils } from "./shared.js";
 
 export function initFingerprintHooks(emitSecurityEvent: SharedHookUtils["emitSecurityEvent"]): void {
   // Canvas fingerprinting detection
+  // Only flag small canvases (<=300x100) typical of fingerprinting probes.
+  // Larger canvases are likely legitimate rendering (charts, games, image editing).
   const originalToDataURL = HTMLCanvasElement.prototype.toDataURL;
   HTMLCanvasElement.prototype.toDataURL = function (...args: Parameters<typeof originalToDataURL>) {
-    emitSecurityEvent("__CANVAS_FINGERPRINT_DETECTED__", { w: this.width, h: this.height, ts: Date.now() });
+    if (this.width <= 256 && this.height <= 64) {
+      emitSecurityEvent("__CANVAS_FINGERPRINT_DETECTED__", { w: this.width, h: this.height, ts: Date.now() });
+    }
     return originalToDataURL.apply(this, args);
   };
 

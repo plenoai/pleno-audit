@@ -54,7 +54,7 @@ export default defineContentScript({
       "__XSS_DETECTED__",
       "__DOM_SCRAPING_DETECTED__",
       "__SUSPICIOUS_DOWNLOAD_DETECTED__",
-      "__WEBSOCKET_CONNECTION_DETECTED__",
+      // WebSocket monitoring removed (high false positive rate on legitimate apps)
       "__WORKER_CREATED__",
       "__SHARED_WORKER_CREATED__",
       "__SERVICE_WORKER_REGISTERED__",

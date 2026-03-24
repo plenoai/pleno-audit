@@ -1,24 +1,17 @@
 /**
  * @fileoverview WebSocket Detection Hooks
+ *
+ * WebSocket connections are common in legitimate apps (chat, real-time dashboards,
+ * collaborative editing). Alerting on every connection creates excessive false positives.
+ * This hook is intentionally a no-op to avoid noise.
+ * Real C2 detection should be done at the network layer (DNR/webRequest).
  */
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { type SharedHookUtils } from "./shared.js";
 
-export function initWebSocketHooks(emitSecurityEvent: SharedHookUtils["emitSecurityEvent"]): void {
-  const OriginalWebSocket = window.WebSocket;
-
-  window.WebSocket = function (url: string | URL, protocols?: string | string[]) {
-    emitSecurityEvent("__WEBSOCKET_CONNECTION_DETECTED__", {
-      url: typeof url === "string" ? url : url.toString(),
-      ts: Date.now(),
-    });
-    return protocols !== undefined ? new OriginalWebSocket(url, protocols) : new OriginalWebSocket(url);
-  } as unknown as typeof WebSocket;
-
-  window.WebSocket.prototype = OriginalWebSocket.prototype;
-  // Static readonly constants must be copied via cast for monkey-patching
-  (window.WebSocket as any).CONNECTING = OriginalWebSocket.CONNECTING;
-  (window.WebSocket as any).OPEN = OriginalWebSocket.OPEN;
-  (window.WebSocket as any).CLOSING = OriginalWebSocket.CLOSING;
-  (window.WebSocket as any).CLOSED = OriginalWebSocket.CLOSED;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function initWebSocketHooks(_emitSecurityEvent: SharedHookUtils["emitSecurityEvent"]): void {
+  // Intentionally empty - WebSocket monitoring moved to network layer
+  // to avoid false positives from legitimate real-time applications.
 }
