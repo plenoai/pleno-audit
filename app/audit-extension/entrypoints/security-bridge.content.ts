@@ -51,30 +51,22 @@ export default defineContentScript({
       "__NETWORK_INSPECTION_REQUEST__",
       "__CLIPBOARD_HIJACK_DETECTED__",
       "__COOKIE_ACCESS_DETECTED__",
-      "__XSS_DETECTED__",
+      // XSS via innerHTML removed (prototype modification triggers anti-tamper SDKs)
       "__DOM_SCRAPING_DETECTED__",
       "__SUSPICIOUS_DOWNLOAD_DETECTED__",
-      // WebSocket monitoring removed (high false positive rate on legitimate apps)
       "__WORKER_CREATED__",
       "__SHARED_WORKER_CREATED__",
       "__SERVICE_WORKER_REGISTERED__",
-      "__DYNAMIC_CODE_EXECUTION_DETECTED__",
+      // eval/Function hooks removed (anti-tamper compatibility)
       "__FULLSCREEN_PHISHING_DETECTED__",
-      // Clipboard read removed (browser permission dialog handles this)
-      // Geolocation removed (browser permission dialog handles this)
       "__CANVAS_FINGERPRINT_DETECTED__",
       "__WEBGL_FINGERPRINT_DETECTED__",
       "__AUDIO_FINGERPRINT_DETECTED__",
-      // BroadcastChannel removed (tab sync is normal behavior)
       "__WEBRTC_CONNECTION_DETECTED__",
       "__SEND_BEACON_DETECTED__",
-      // Media capture removed (browser permission dialog handles this)
-      // Notification removed (browser permission dialog handles this)
-      // Credential API removed (browser autofill UI handles this)
-      "__DEVICE_SENSOR_ACCESSED__",
       "__DEVICE_ENUMERATION_DETECTED__",
       "__STORAGE_EXFILTRATION_DETECTED__",
-      "__PROTOTYPE_POLLUTION_DETECTED__",
+      // Prototype pollution hooks removed (anti-tamper compatibility)
       "__DNS_PREFETCH_LEAK_DETECTED__",
       "__FORM_HIJACK_DETECTED__",
       "__CSS_KEYLOGGING_DETECTED__",
@@ -82,9 +74,7 @@ export default defineContentScript({
       "__FETCH_EXFILTRATION_DETECTED__",
       "__WASM_EXECUTION_DETECTED__",
       "__EXECCOMMAND_DETECTED__",
-      "__CLIPBOARD_EVENT_SNIFFING_DETECTED__",
-      "__DRAG_EVENT_SNIFFING_DETECTED__",
-      "__SELECTION_SNIFFING_DETECTED__",
+      // addEventListener hooks removed (anti-tamper compatibility)
     ];
 
     const signal = abortController.signal;

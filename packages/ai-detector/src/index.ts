@@ -9,6 +9,7 @@
 export type {
   InferredProvider,
   AIDetectionMethod,
+  RawAICapture,
   CapturedAIPrompt,
   AIPromptContent,
   AIResponseContent,
@@ -26,6 +27,7 @@ export {
   extractModel,
   extractResponseContent,
   inferProviderFromResponse,
+  parseRawAICapture,
 } from "./detector.js";
 
 // PII Analyzer

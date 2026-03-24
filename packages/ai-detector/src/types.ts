@@ -18,7 +18,23 @@ export type AIDetectionMethod =
 // AI Prompt/Response Capture（プロンプト/レスポンスキャプチャ）
 // ============================================================================
 
-/** キャプチャしたAIプロンプト */
+/** Main worldからのraw AIキャプチャデータ（未パース） */
+export interface RawAICapture {
+  id: string;
+  timestamp: number;
+  pageUrl: string;
+  apiEndpoint: string;
+  method: string;
+  /** リクエストボディの生文字列サンプル（最大10KB） */
+  rawRequestBody?: string;
+  /** レスポンスボディの生文字列サンプル（最大10KB） */
+  rawResponseBody?: string;
+  /** レスポンスのContent-Type */
+  rawResponseContentType?: string;
+  responseTimestamp?: number;
+}
+
+/** キャプチャしたAIプロンプト（background側でパース済み） */
 export interface CapturedAIPrompt {
   id: string;
   timestamp: number;

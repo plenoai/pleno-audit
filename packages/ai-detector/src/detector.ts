@@ -5,6 +5,8 @@ import type {
   InferredProvider,
   AIPromptContent,
   AIResponseContent,
+  RawAICapture,
+  CapturedAIPrompt,
 } from "./types.js";
 
 const TRUNCATE_SIZE = 10000; // 10KB
@@ -372,4 +374,41 @@ export function inferProviderFromResponse(text: string): InferredProvider {
 function truncateString(str: string, maxLength: number): string {
   if (str.length <= maxLength) return str;
   return str.substring(0, maxLength);
+}
+
+// ============================================================================
+// Raw Capture Parsing (called in background, NOT in main world)
+// ============================================================================
+
+/**
+ * Main worldから受け取ったraw AIキャプチャデータをパースし、CapturedAIPromptに変換。
+ * AIリクエストでない場合はnullを返す。
+ */
+export function parseRawAICapture(raw: RawAICapture): CapturedAIPrompt | null {
+  const body = raw.rawRequestBody;
+  if (!body || !isAIRequestBody(body)) return null;
+
+  const prompt = extractPromptContent(body);
+  if (!prompt) return null;
+
+  const model = extractModel(body);
+
+  const result: CapturedAIPrompt = {
+    id: raw.id,
+    timestamp: raw.timestamp,
+    pageUrl: raw.pageUrl,
+    apiEndpoint: raw.apiEndpoint,
+    method: raw.method,
+    prompt,
+    model,
+    responseTimestamp: raw.responseTimestamp,
+  };
+
+  if (raw.rawResponseBody) {
+    const contentType = raw.rawResponseContentType || "";
+    const isStreaming = contentType.includes("text/event-stream") || contentType.includes("application/x-ndjson");
+    result.response = extractResponseContent(raw.rawResponseBody, isStreaming);
+  }
+
+  return result;
 }

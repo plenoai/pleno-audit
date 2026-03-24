@@ -1,66 +1,34 @@
 /**
  * @fileoverview Injection Detection Hooks
  *
- * eval, Function constructor, requestFullscreen, clipboard read, geolocation の検出。
+ * requestFullscreen, sendBeacon, WASM, device enumeration の検出。
+ *
+ * === Main World Invariant ===
+ * このファイルは MAIN world で実行される。
+ * 停止する可能性のある複雑な処理は一切行わない。
+ * イベントをフックし、軽量なメタデータのみを queueMicrotask 経由で emit する。
+ *
+ * === Anti-Tamper Compatibility ===
+ * 以下のフックは銀行セキュリティSDK（ZCB等）の改ざん検知に引っかかるため除去:
+ * - window.eval — CSP script-src violation で代替検出可能
+ * - window.Function — 同上
+ * - EventTarget.prototype.addEventListener — プロトタイプ改変は検出対象
  */
 
 import { type SharedHookUtils } from "./shared.js";
 
+function deferEmit(emitSecurityEvent: SharedHookUtils["emitSecurityEvent"], name: string, data: Record<string, unknown>): void {
+  queueMicrotask(() => emitSecurityEvent(name, data));
+}
+
 export function initInjectionHooks(emitSecurityEvent: SharedHookUtils["emitSecurityEvent"]): void {
-  // eval() — deduplicated, skip trivial/JSON-like code
-  const originalEval = window.eval;
-  const evalSeen = new Set<string>();
-  window.eval = function (this: unknown, code: string) {
-    if (typeof code === "string" && code.length > 0) {
-      const key = code.substring(0, 100);
-      if (!evalSeen.has(key)) {
-        evalSeen.add(key);
-        // Skip short JSON-like strings (common in webpack/frameworks)
-        const isShortJson = code.length < 50 && /^\s*[\[{]/.test(code);
-        if (!isShortJson) {
-          emitSecurityEvent("__DYNAMIC_CODE_EXECUTION_DETECTED__", {
-            method: "eval",
-            codeLength: code.length,
-            codeSample: code.substring(0, 200),
-            timestamp: Date.now(),
-            pageUrl: location.href,
-          });
-        }
-      }
-    }
-    return originalEval.call(this as any, code);
-  } as typeof eval;
-
-  // Function constructor — deduplicated
-  const OriginalFunction = window.Function;
-  const funcSeen = new Set<string>();
-  window.Function = function (this: unknown, ...args: string[]) {
-    const body = args.length > 0 ? args[args.length - 1] : "";
-    if (typeof body === "string" && body.length > 0) {
-      const key = body.substring(0, 100);
-      if (!funcSeen.has(key)) {
-        funcSeen.add(key);
-        emitSecurityEvent("__DYNAMIC_CODE_EXECUTION_DETECTED__", {
-          method: "Function",
-          codeLength: body.length,
-          codeSample: body.substring(0, 200),
-          argCount: args.length,
-          timestamp: Date.now(),
-          pageUrl: location.href,
-        });
-      }
-    }
-    return OriginalFunction.apply(this as any, args);
-  } as FunctionConstructor;
-  (window.Function as any).prototype = OriginalFunction.prototype;
-
   // requestFullscreen - only alert on non-media elements (video/canvas fullscreen is normal)
   const originalRequestFullscreen = Element.prototype.requestFullscreen;
   const FULLSCREEN_SAFE_TAGS = new Set(["VIDEO", "CANVAS", "IFRAME"]);
   if (originalRequestFullscreen) {
     Element.prototype.requestFullscreen = function (options?: FullscreenOptions) {
       if (!FULLSCREEN_SAFE_TAGS.has(this.tagName)) {
-        emitSecurityEvent("__FULLSCREEN_PHISHING_DETECTED__", {
+        deferEmit(emitSecurityEvent, "__FULLSCREEN_PHISHING_DETECTED__", {
           element: this.tagName,
           elementId: this.id || null,
           className: this.className || null,
@@ -76,7 +44,7 @@ export function initInjectionHooks(emitSecurityEvent: SharedHookUtils["emitSecur
   if (el.webkitRequestFullscreen) {
     const originalWebkitFullscreen = el.webkitRequestFullscreen;
     el.webkitRequestFullscreen = function () {
-      emitSecurityEvent("__FULLSCREEN_PHISHING_DETECTED__", {
+      deferEmit(emitSecurityEvent, "__FULLSCREEN_PHISHING_DETECTED__", {
         element: this.tagName,
         elementId: (this as Element).id || null,
         timestamp: Date.now(),
@@ -86,132 +54,34 @@ export function initInjectionHooks(emitSecurityEvent: SharedHookUtils["emitSecur
     };
   }
 
-  // clipboard.readText - browser already requires permission grant
-  // Removed to avoid false positives on text editors/paste functionality
-
   // navigator.sendBeacon (covert exfiltration channel)
-  // Only alert on large payloads (>1KB) to avoid false positives from analytics
+  // Only alert on large payloads. Use lightweight size estimation (no Blob allocation).
   if (navigator.sendBeacon) {
     const originalSendBeacon = navigator.sendBeacon.bind(navigator);
     navigator.sendBeacon = function (url: string | URL, data?: BodyInit | null): boolean {
-      const dataSize = data ? new Blob([data as BlobPart]).size : 0;
-      if (dataSize > 1024) {
-        emitSecurityEvent("__SEND_BEACON_DETECTED__", {
-          url: String(url),
-          dataSize,
-          timestamp: Date.now(),
-          pageUrl: location.href,
-        });
+      if (data != null) {
+        let estimatedSize = 0;
+        if (typeof data === "string") estimatedSize = data.length;
+        else if (data instanceof ArrayBuffer) estimatedSize = data.byteLength;
+        else if (data instanceof Blob) estimatedSize = data.size;
+        if (estimatedSize > 1024) {
+          deferEmit(emitSecurityEvent, "__SEND_BEACON_DETECTED__", {
+            url: String(url),
+            dataSize: estimatedSize,
+            timestamp: Date.now(),
+            pageUrl: location.href,
+          });
+        }
       }
       return originalSendBeacon(url, data);
     };
   }
 
-  // getUserMedia / getDisplayMedia - browser already requires permission grant
-  // Removed to avoid false positives on video call apps (Zoom, Teams, Meet)
-
-  // Notification API - browser already requires permission grant, no need for extension alert
-  // Removed to avoid false positives on chat/email apps
-
-  // geolocation - browser already shows permission dialog, no need for extension alert
-  // Removed to avoid false positives on map/weather apps
-
-  // Credential Management API - browser autofill UI handles this
-  // Removed to avoid false positives on login pages using browser autofill
-
-  // DeviceMotion / DeviceOrientation (sensor fingerprinting)
-  const originalAddEventListener = EventTarget.prototype.addEventListener;
-  const sensorEvents = new Set(["devicemotion", "deviceorientation"]);
-  const sensorSeen = new Set<string>();
-  // Clipboard event sniffing (copy/cut/paste) — only emit on rapid succession (>10 in 5s)
-  const clipboardSniffEvents = new Set(["copy", "cut", "paste"]);
-  // Drag-and-drop data theft (dragstart/drop) — only emit on rapid succession (>10 in 5s)
-  const dragSniffEvents = new Set(["dragstart", "drop"]);
-  // Selection API keylogging (selectionchange) — only emit on rapid succession (>10 in 5s)
-  const selectionSniffEvents = new Set(["selectionchange"]);
-
-  // Rate-limiting state for sniff events: only alert on rapid bursts (>10 registrations in 5s)
-  const SNIFF_BURST_WINDOW_MS = 5000;
-  const SNIFF_BURST_THRESHOLD = 10;
-  let clipboardSniffCount = 0; let clipboardSniffWindowStart = 0; let clipboardSniffEmitted = false;
-  let dragSniffCount = 0; let dragSniffWindowStart = 0; let dragSniffEmitted = false;
-  let selectionSniffCount = 0; let selectionSniffWindowStart = 0; let selectionSniffEmitted = false;
-
-  function checkSniffBurst(
-    now: number,
-    count: number,
-    windowStart: number,
-    emitted: boolean,
-  ): { count: number; windowStart: number; emitted: boolean; shouldEmit: boolean } {
-    if (now - windowStart > SNIFF_BURST_WINDOW_MS) {
-      count = 0;
-      windowStart = now;
-      emitted = false;
-    }
-    count++;
-    const shouldEmit = !emitted && count > SNIFF_BURST_THRESHOLD;
-    return { count, windowStart, emitted: emitted || shouldEmit, shouldEmit };
-  }
-
-  EventTarget.prototype.addEventListener = function (
-    type: string,
-    listener: EventListenerOrEventListenerObject | null,
-    options?: boolean | AddEventListenerOptions,
-  ) {
-    if (sensorEvents.has(type)) {
-      if (!sensorSeen.has(type)) {
-        sensorSeen.add(type);
-        emitSecurityEvent("__DEVICE_SENSOR_ACCESSED__", {
-          sensorType: type,
-          timestamp: Date.now(),
-          pageUrl: location.href,
-        });
-      }
-    } else if (clipboardSniffEvents.has(type)) {
-      const now = Date.now();
-      const result = checkSniffBurst(now, clipboardSniffCount, clipboardSniffWindowStart, clipboardSniffEmitted);
-      clipboardSniffCount = result.count; clipboardSniffWindowStart = result.windowStart; clipboardSniffEmitted = result.emitted;
-      if (result.shouldEmit) {
-        emitSecurityEvent("__CLIPBOARD_EVENT_SNIFFING_DETECTED__", {
-          eventType: type,
-          burstCount: clipboardSniffCount,
-          timestamp: now,
-          pageUrl: location.href,
-        });
-      }
-    } else if (dragSniffEvents.has(type)) {
-      const now = Date.now();
-      const result = checkSniffBurst(now, dragSniffCount, dragSniffWindowStart, dragSniffEmitted);
-      dragSniffCount = result.count; dragSniffWindowStart = result.windowStart; dragSniffEmitted = result.emitted;
-      if (result.shouldEmit) {
-        emitSecurityEvent("__DRAG_EVENT_SNIFFING_DETECTED__", {
-          eventType: type,
-          burstCount: dragSniffCount,
-          timestamp: now,
-          pageUrl: location.href,
-        });
-      }
-    } else if (selectionSniffEvents.has(type)) {
-      const now = Date.now();
-      const result = checkSniffBurst(now, selectionSniffCount, selectionSniffWindowStart, selectionSniffEmitted);
-      selectionSniffCount = result.count; selectionSniffWindowStart = result.windowStart; selectionSniffEmitted = result.emitted;
-      if (result.shouldEmit) {
-        emitSecurityEvent("__SELECTION_SNIFFING_DETECTED__", {
-          eventType: type,
-          burstCount: selectionSniffCount,
-          timestamp: now,
-          pageUrl: location.href,
-        });
-      }
-    }
-    return originalAddEventListener.call(this, type, listener, options);
-  };
-
   // navigator.mediaDevices.enumerateDevices (device fingerprinting)
   if (navigator.mediaDevices?.enumerateDevices) {
     const originalEnumerateDevices = navigator.mediaDevices.enumerateDevices.bind(navigator.mediaDevices);
     navigator.mediaDevices.enumerateDevices = function () {
-      emitSecurityEvent("__DEVICE_ENUMERATION_DETECTED__", {
+      deferEmit(emitSecurityEvent, "__DEVICE_ENUMERATION_DETECTED__", {
         timestamp: Date.now(),
         pageUrl: location.href,
       });
@@ -220,9 +90,6 @@ export function initInjectionHooks(emitSecurityEvent: SharedHookUtils["emitSecur
   }
 
   // ===== WebAssembly Instantiation Detection =====
-  // Only alert for large modules (>1MB) to avoid false positives from legitimate WASM usage.
-  // Small WASM modules are common in normal web apps (e.g., image codecs, crypto primitives).
-  // Large modules >1MB are a strong signal of obfuscated exploit payloads or covert computation.
   const WASM_SIZE_THRESHOLD = 1024 * 1024; // 1MB
   if (typeof WebAssembly !== "undefined") {
     if (typeof WebAssembly.instantiate === "function") {
@@ -239,7 +106,7 @@ export function initInjectionHooks(emitSecurityEvent: SharedHookUtils["emitSecur
               : (bufferSourceOrModule as ArrayBufferView).byteLength)
           : null;
         if (byteLength !== null && byteLength > WASM_SIZE_THRESHOLD) {
-          emitSecurityEvent("__WASM_EXECUTION_DETECTED__", {
+          deferEmit(emitSecurityEvent, "__WASM_EXECUTION_DETECTED__", {
             method: "instantiate",
             isBinary,
             byteLength,
@@ -259,7 +126,7 @@ export function initInjectionHooks(emitSecurityEvent: SharedHookUtils["emitSecur
           ? bytes.byteLength
           : (bytes as ArrayBufferView).byteLength;
         if (byteLength > WASM_SIZE_THRESHOLD) {
-          emitSecurityEvent("__WASM_EXECUTION_DETECTED__", {
+          deferEmit(emitSecurityEvent, "__WASM_EXECUTION_DETECTED__", {
             method: "compile",
             isBinary: true,
             byteLength,
@@ -270,8 +137,6 @@ export function initInjectionHooks(emitSecurityEvent: SharedHookUtils["emitSecur
         return originalCompile(bytes);
       };
     }
-
-    // instantiateStreaming/compileStreaming: byte size not known upfront — skip to avoid false positives.
   }
 
 }

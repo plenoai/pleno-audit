@@ -3,6 +3,12 @@
  *
  * Supply Chain, Credential Theft, Clipboard Hijack, Cookie Access,
  * XSS/DOM Scraping, Suspicious Download の検出フック。
+ *
+ * === Main World Invariant ===
+ * このファイルは MAIN world で実行される。
+ * 停止する可能性のある複雑な処理（regex, JSON.parse, Blob生成等）は一切行わない。
+ * イベントをフックし、軽量なメタデータのみを queueMicrotask 経由で emit する。
+ * 重い解析は background 側で行う。
  */
 
 import { type SharedHookUtils } from "./shared.js";
@@ -28,14 +34,13 @@ const CRYPTO_PATTERNS: Record<string, RegExp> = {
   ripple: /^r[0-9a-zA-Z]{24,34}$/,
 };
 
-const XSS_PATTERNS = [
-  /<script[^>]*>[^<]+/i,
-  /javascript:\s*[^"'\s]/i,
-  /on(error|load)\s*=\s*["'][^"']*eval/i,
-  /<iframe[^>]*src\s*=\s*["']?javascript:/i,
-];
-
 const SUSPICIOUS_EXTENSIONS = [".exe", ".msi", ".bat", ".ps1", ".cmd", ".scr", ".vbs", ".js", ".jar", ".dll"];
+
+// ===== Helpers =====
+
+function deferEmit(emitSecurityEvent: SharedHookUtils["emitSecurityEvent"], name: string, data: Record<string, unknown>): void {
+  queueMicrotask(() => emitSecurityEvent(name, data));
+}
 
 // ===== Supply Chain Risk =====
 
@@ -65,7 +70,7 @@ function checkSupplyChainRisk(
   if (!hasIntegrity && isCDN) {
     const risks = ["cdn_without_sri"];
     if (!hasCrossorigin) risks.push("missing_crossorigin");
-    emitSecurityEvent("__SUPPLY_CHAIN_RISK_DETECTED__", {
+    deferEmit(emitSecurityEvent, "__SUPPLY_CHAIN_RISK_DETECTED__", {
       url, resourceType, hasIntegrity: false, hasCrossorigin, isCDN, risks, timestamp: Date.now(),
     });
   }
@@ -132,7 +137,7 @@ export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecuri
         const risks: string[] = [];
         if (!isSecure) risks.push("insecure_protocol");
         if (isCrossOrigin) risks.push("cross_origin");
-        emitSecurityEvent("__CREDENTIAL_THEFT_DETECTED__", {
+        deferEmit(emitSecurityEvent, "__CREDENTIAL_THEFT_DETECTED__", {
           formAction: actionUrl.href, targetDomain: actionUrl.hostname,
           method: (form.method || "GET").toUpperCase(), isSecure, isCrossOrigin,
           fieldType, risks, timestamp: Date.now(),
@@ -149,7 +154,7 @@ export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecuri
     navigator.clipboard.writeText = function (text: string) {
       for (const [type, pattern] of Object.entries(CRYPTO_PATTERNS)) {
         if (pattern.test(text)) {
-          emitSecurityEvent("__CLIPBOARD_HIJACK_DETECTED__", {
+          deferEmit(emitSecurityEvent, "__CLIPBOARD_HIJACK_DETECTED__", {
             text: text.substring(0, 20) + "...", cryptoType: type, fullLength: text.length, timestamp: Date.now(),
           });
           break;
@@ -164,7 +169,7 @@ export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecuri
   const originalExecCommand = document.execCommand.bind(document);
   document.execCommand = function (commandId: string, showUI?: boolean, value?: string): boolean {
     if (SENSITIVE_EXEC_COMMANDS.has(commandId.toLowerCase())) {
-      emitSecurityEvent("__EXECCOMMAND_DETECTED__", {
+      deferEmit(emitSecurityEvent, "__EXECCOMMAND_DETECTED__", {
         command: commandId.toLowerCase(),
         timestamp: Date.now(),
         pageUrl: window.location.href,
@@ -174,8 +179,6 @@ export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecuri
   };
 
   // ===== Cookie Access =====
-  // Alert only on high-frequency access (5+ reads within 3000ms) to reduce false positives
-  // from normal sites that legitimately read cookies on page load or user interaction.
   let cookieAccessCount = 0;
   let cookieAccessWindowStart = 0;
   let cookieAccessEmitted = false;
@@ -194,7 +197,7 @@ export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecuri
           cookieAccessCount++;
           if (!cookieAccessEmitted && cookieAccessCount >= 5) {
             cookieAccessEmitted = true;
-            emitSecurityEvent("__COOKIE_ACCESS_DETECTED__", { timestamp: now, readCount: cookieAccessCount, pageUrl: window.location.href });
+            deferEmit(emitSecurityEvent, "__COOKIE_ACCESS_DETECTED__", { timestamp: now, readCount: cookieAccessCount, pageUrl: window.location.href });
           }
           return originalGet.call(document);
         },
@@ -206,8 +209,7 @@ export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecuri
     /* ignore */
   }
 
-  // ===== XSS / DOM Scraping =====
-  // Threshold raised from 50 to 300 calls/5s to avoid false positives from normal SPA frameworks.
+  // ===== DOM Scraping (querySelectorAll threshold) =====
   let qsaCount = 0;
   let qsaResetTime = Date.now();
   const originalQSA = document.querySelectorAll.bind(document);
@@ -215,27 +217,17 @@ export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecuri
     const now = Date.now();
     if (now - qsaResetTime > 5000) { qsaCount = 0; qsaResetTime = now; }
     if (++qsaCount === 300) {
-      emitSecurityEvent("__DOM_SCRAPING_DETECTED__", { selector, callCount: qsaCount, timestamp: now });
+      deferEmit(emitSecurityEvent, "__DOM_SCRAPING_DETECTED__", { selector, callCount: qsaCount, timestamp: now });
     }
     return originalQSA(selector);
   } as typeof document.querySelectorAll;
 
-  const innerHTMLDesc = Object.getOwnPropertyDescriptor(Element.prototype, "innerHTML");
-  if (innerHTMLDesc?.set) {
-    Object.defineProperty(Element.prototype, "innerHTML", {
-      get: innerHTMLDesc.get,
-      set(value: string) {
-        if (typeof value === "string" && XSS_PATTERNS.some((p) => p.test(value))) {
-          emitSecurityEvent("__XSS_DETECTED__", { type: "innerHTML", payloadPreview: value.substring(0, 100), timestamp: Date.now() });
-        }
-        return innerHTMLDesc.set!.call(this, value);
-      },
-      configurable: true,
-    });
-  }
+  // ===== XSS Detection (innerHTML) =====
+  // REMOVED: Element.prototype.innerHTML setter hook.
+  // Modifying Element.prototype triggers anti-tamper detection in banking security SDKs (e.g. ZCB).
+  // XSS detection is handled via CSP violation events instead.
 
   // ===== Storage Exfiltration (localStorage/sessionStorage mass access) =====
-  // Threshold raised from 10 to 50 calls/3s to avoid false positives from normal SPA state hydration.
   for (const [storageType, storage] of [["localStorage", localStorage], ["sessionStorage", sessionStorage]] as const) {
     if (!storage) continue;
     let accessCount = 0;
@@ -245,11 +237,8 @@ export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecuri
       const now = Date.now();
       if (now - accessResetTime > 3000) { accessCount = 0; accessResetTime = now; }
       if (++accessCount === 50) {
-        emitSecurityEvent("__STORAGE_EXFILTRATION_DETECTED__", {
-          storageType,
-          accessCount,
-          timestamp: now,
-          pageUrl: window.location.href,
+        deferEmit(emitSecurityEvent, "__STORAGE_EXFILTRATION_DETECTED__", {
+          storageType, accessCount, timestamp: now, pageUrl: window.location.href,
         });
       }
       return originalGetItem(key);
@@ -257,47 +246,10 @@ export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecuri
   }
 
   // ===== Prototype Pollution Detection =====
-  try {
-    const originalDefineProperty = Object.defineProperty;
-    Object.defineProperty = function <T>(
-      obj: T,
-      prop: PropertyKey,
-      descriptor: PropertyDescriptor & ThisType<unknown>,
-    ): T {
-      if (obj === Object.prototype || obj === Array.prototype || obj === Function.prototype) {
-        emitSecurityEvent("__PROTOTYPE_POLLUTION_DETECTED__", {
-          target: obj === Object.prototype ? "Object.prototype" : obj === Array.prototype ? "Array.prototype" : "Function.prototype",
-          property: String(prop),
-          method: "Object.defineProperty",
-          timestamp: Date.now(),
-          pageUrl: window.location.href,
-        });
-      }
-      return originalDefineProperty.call(Object, obj, prop, descriptor) as T;
-    };
-  } catch {
-    /* ignore */
-  }
-
-  // Intercept __proto__ assignments via a setter on Object.prototype itself is not feasible;
-  // instead hook Object.setPrototypeOf as it's the programmatic equivalent.
-  try {
-    const originalSetPrototypeOf = Object.setPrototypeOf;
-    Object.setPrototypeOf = function (obj: object, proto: object | null): object {
-      if (proto === null || proto === Object.prototype || proto === Array.prototype) {
-        emitSecurityEvent("__PROTOTYPE_POLLUTION_DETECTED__", {
-          target: "Object.setPrototypeOf",
-          property: "__proto__",
-          method: "Object.setPrototypeOf",
-          timestamp: Date.now(),
-          pageUrl: window.location.href,
-        });
-      }
-      return originalSetPrototypeOf.call(Object, obj, proto);
-    };
-  } catch {
-    /* ignore */
-  }
+  // REMOVED: Object.defineProperty / Object.setPrototypeOf hooks.
+  // Replacing Object.defineProperty is the most invasive global modification possible —
+  // it triggers anti-tamper detection in banking security SDKs (e.g. ZCB/GLOBAL-PROTECT).
+  // Prototype pollution is better detected via periodic integrity checks in background.
 
   // ===== DNS Prefetch / Link Injection Detection =====
   const PREFETCH_RELS = new Set(["dns-prefetch", "preconnect", "prefetch", "preload", "prerender"]);
@@ -317,22 +269,15 @@ export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecuri
           /* ignore */
         }
         if (isExternal) {
-          // Skip same-site preconnects (e.g., cdn.example.com preconnected from example.com)
           try {
             const linkHost = new URL(href, window.location.origin).hostname;
             const pageHost = window.location.hostname;
-            // Simple same-site check: share the last two domain parts
-            const linkParts = linkHost.split(".");
-            const pageParts = pageHost.split(".");
-            const linkBase = linkParts.slice(-2).join(".");
-            const pageBase = pageParts.slice(-2).join(".");
-            if (linkBase === pageBase) continue; // same-site, skip
+            const linkBase = linkHost.split(".").slice(-2).join(".");
+            const pageBase = pageHost.split(".").slice(-2).join(".");
+            if (linkBase === pageBase) continue;
           } catch { /* ignore */ }
-          emitSecurityEvent("__DNS_PREFETCH_LEAK_DETECTED__", {
-            rel,
-            href,
-            timestamp: Date.now(),
-            pageUrl: window.location.href,
+          deferEmit(emitSecurityEvent, "__DNS_PREFETCH_LEAK_DETECTED__", {
+            rel, href, timestamp: Date.now(), pageUrl: window.location.href,
           });
         }
       }
@@ -367,7 +312,7 @@ export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecuri
               : null;
             const isOriginChange = currentAction !== null && newAction.origin !== currentAction.origin;
             if (isOriginChange) {
-              emitSecurityEvent("__FORM_HIJACK_DETECTED__", {
+              deferEmit(emitSecurityEvent, "__FORM_HIJACK_DETECTED__", {
                 originalAction: this.action,
                 newAction: value,
                 targetDomain: newAction.hostname,
@@ -389,8 +334,6 @@ export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecuri
   }
 
   // ===== CSS Keylogging Detection =====
-  // Detects dynamically injected <style> elements using input[value] selectors
-  // combined with background-image URLs to exfiltrate keystrokes.
   const cssKeyloggingObserver = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
       for (const node of mutation.addedNodes) {
@@ -398,9 +341,9 @@ export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecuri
         const el = node as Element;
         if (el.tagName !== "STYLE") continue;
         const cssText = el.textContent || "";
-        // Detect input[value attribute selectors paired with background-image: url(
-        if (/input\[value/i.test(cssText) && /background-image\s*:\s*url\s*\(/i.test(cssText)) {
-          emitSecurityEvent("__CSS_KEYLOGGING_DETECTED__", {
+        // Lightweight string check instead of regex
+        if (cssText.includes("input[value") && cssText.includes("background-image")) {
+          deferEmit(emitSecurityEvent, "__CSS_KEYLOGGING_DETECTED__", {
             sampleRule: cssText.substring(0, 200),
             timestamp: Date.now(),
             pageUrl: window.location.href,
@@ -424,7 +367,6 @@ export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecuri
   else document.addEventListener("DOMContentLoaded", startCSSKeyloggingObserving, { once: true });
 
   // ===== DOM Clobbering Detection =====
-  // Named HTML elements (id/name attributes) can shadow built-in window globals.
   const DANGEROUS_GLOBAL_NAMES = new Set([
     "location", "history", "document", "navigator", "window", "parent", "top", "self",
     "frames", "opener", "close", "closed", "stop", "focus", "blur", "open", "alert",
@@ -441,9 +383,8 @@ export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecuri
         for (const attrName of ["id", "name"]) {
           const attrValue = el.getAttribute(attrName);
           if (!attrValue) continue;
-          // Detect dangerous global name clobbering OR form/embed/object with any id/name
           if (DANGEROUS_GLOBAL_NAMES.has(attrValue)) {
-            emitSecurityEvent("__DOM_CLOBBERING_DETECTED__", {
+            deferEmit(emitSecurityEvent, "__DOM_CLOBBERING_DETECTED__", {
               attributeName: attrName,
               attributeValue: attrValue,
               tagName: el.tagName,
@@ -470,13 +411,11 @@ export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecuri
   else document.addEventListener("DOMContentLoaded", startDomClobberingObserving, { once: true });
 
   // ===== Fetch Exfiltration Detection =====
-  // Detects cross-origin fetch() calls with a large body payload (> 10KB).
-  // The no-cors-only check was removed: embedded widgets, analytics, and fonts all use no-cors
-  // legitimately. Large body payloads (>10KB) are a reliable signal of bulk data exfiltration.
-  // emitSecurityEvent uses CustomEvent internally, NOT fetch — no infinite loop risk.
+  // No async function wrapper — transparent pass-through.
+  // Body size calculation removed from hot path; emit only cross-origin flag.
   const FETCH_BODY_THRESHOLD = 10 * 1024; // 10KB
   const originalFetch = window.fetch;
-  window.fetch = async function (
+  window.fetch = function (
     input: RequestInfo | URL,
     init?: RequestInit,
   ): Promise<Response> {
@@ -495,27 +434,21 @@ export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecuri
       }
 
       if (isCrossOrigin && init?.body != null) {
-        // Cross-origin fetch with a large body — potential bulk exfiltration
-        let bodySize = 0;
-        try {
-          const body = init.body;
-          if (typeof body === "string") {
-            bodySize = body.length;
-          } else if (body instanceof Blob) {
-            bodySize = body.size;
-          } else if (body instanceof ArrayBuffer) {
-            bodySize = body.byteLength;
-          }
-          // FormData/URLSearchParams: cannot determine size easily; skip to avoid false positives
-        } catch {
-          /* ignore */
+        // Defer body size estimation — only use lightweight checks
+        const body = init.body;
+        let estimatedSize = 0;
+        if (typeof body === "string") {
+          estimatedSize = body.length;
+        } else if (body instanceof ArrayBuffer) {
+          estimatedSize = body.byteLength;
         }
-        if (bodySize >= FETCH_BODY_THRESHOLD) {
-          emitSecurityEvent("__FETCH_EXFILTRATION_DETECTED__", {
+        // Blob.size and FormData iteration are avoided in hot path
+        if (estimatedSize >= FETCH_BODY_THRESHOLD) {
+          deferEmit(emitSecurityEvent, "__FETCH_EXFILTRATION_DETECTED__", {
             url,
             mode: init?.mode ?? "cors",
             reason: "cross_origin_large_body",
-            bodySize,
+            bodySize: estimatedSize,
             timestamp: Date.now(),
             pageUrl: window.location.href,
           });
@@ -536,7 +469,7 @@ export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecuri
   ]);
   URL.createObjectURL = function (blob: Blob | MediaSource) {
     if (blob instanceof Blob && SUSPICIOUS_MIME_TYPES.has(blob.type)) {
-      emitSecurityEvent("__SUSPICIOUS_DOWNLOAD_DETECTED__", { type: "blob", size: blob.size, mimeType: blob.type, timestamp: Date.now() });
+      deferEmit(emitSecurityEvent, "__SUSPICIOUS_DOWNLOAD_DETECTED__", { type: "blob", size: blob.size, mimeType: blob.type, timestamp: Date.now() });
     }
     return originalCreateObjectURL.call(this, blob);
   };
@@ -548,7 +481,7 @@ export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecuri
       const href = target.href || "";
       const download = target.download || "";
       if (href.startsWith("blob:") || href.startsWith("data:")) {
-        emitSecurityEvent("__SUSPICIOUS_DOWNLOAD_DETECTED__", {
+        deferEmit(emitSecurityEvent, "__SUSPICIOUS_DOWNLOAD_DETECTED__", {
           type: href.startsWith("blob:") ? "blob_link" : "data_url", filename: download, timestamp: Date.now(),
         });
         return;
@@ -556,7 +489,7 @@ export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecuri
       const filename = download || href.split("/").pop() || "";
       const ext = "." + filename.split(".").pop()!.toLowerCase();
       if (SUSPICIOUS_EXTENSIONS.includes(ext)) {
-        emitSecurityEvent("__SUSPICIOUS_DOWNLOAD_DETECTED__", {
+        deferEmit(emitSecurityEvent, "__SUSPICIOUS_DOWNLOAD_DETECTED__", {
           type: "suspicious_extension", filename, extension: ext, url: href, timestamp: Date.now(),
         });
       }
