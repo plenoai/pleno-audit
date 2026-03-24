@@ -20,6 +20,7 @@ import {
   createDoHMonitor,
   registerDoHMonitorListener,
   DEFAULT_DOH_MONITOR_CONFIG,
+  OperationGuard,
   type NetworkMonitorConfig,
   type DoHMonitor,
   type DoHMonitorConfig,
@@ -38,6 +39,7 @@ import {
   runAsyncMessageHandler as runAsyncMessageHandlerModule,
   type RuntimeMessage,
   type RuntimeHandlerDependencies,
+  createConnectionTracker,
   createDebugBridgeHandler,
   createDomainRiskService,
   createNetworkSecurityInspector,
@@ -109,100 +111,19 @@ async function setDoHMonitorConfig(config: Partial<DoHMonitorConfig>): Promise<{
 // Service Connection Tracking (通信先集約)
 // ============================================================================
 
-/** 通信先の集約バッファ（バッチ書き込み用） */
-let pendingConnections = new Map<string, Set<string>>();
-let pendingExtensionConnections = new Map<string, Set<string>>();
-/** 書き込みチェーン — read-modify-write の競合を防止 */
-let connectionWriteChain: Promise<void> = Promise.resolve();
-
-/** URLからドメインを安全に抽出 */
-function extractDomainFromUrl(url: string): string | null {
-  try {
-    return new URL(url).hostname;
-  } catch {
-    return null;
-  }
-}
-
-/** バッファをchrome.storage.localにフラッシュ（チェーン内で実行） */
-async function flushConnectionsBatch(
-  serviceBatch: Map<string, Set<string>>,
-  extensionBatch: Map<string, Set<string>>,
-): Promise<void> {
-  const storage = await chrome.storage.local.get(["serviceConnections", "extensionConnections"]);
-  const connections: Record<string, string[]> =
-    (storage.serviceConnections as Record<string, string[]>) || {};
-  const extConnections: Record<string, string[]> =
-    (storage.extensionConnections as Record<string, string[]>) || {};
-
-  for (const [source, destSet] of serviceBatch) {
-    const existing = new Set(connections[source] || []);
-    for (const dest of destSet) {
-      existing.add(dest);
-    }
-    connections[source] = [...existing];
-  }
-
-  for (const [extKey, destSet] of extensionBatch) {
-    const existing = new Set(extConnections[extKey] || []);
-    for (const dest of destSet) {
-      existing.add(dest);
-    }
-    extConnections[extKey] = [...existing];
-  }
-
-  await chrome.storage.local.set({ serviceConnections: connections, extensionConnections: extConnections });
-}
-
-/** バッファをスワップしてチェーンに投入 */
-function flushServiceConnections(): void {
-  if (pendingConnections.size === 0 && pendingExtensionConnections.size === 0) return;
-
-  const serviceBatch = pendingConnections;
-  const extensionBatch = pendingExtensionConnections;
-  pendingConnections = new Map();
-  pendingExtensionConnections = new Map();
-
-  connectionWriteChain = connectionWriteChain
-    .then(() => flushConnectionsBatch(serviceBatch, extensionBatch))
-    .catch((error) => {
-      logger.error("Failed to flush connections:", error);
-    });
-}
-
-/** ネットワークリクエストから通信先を集約 */
-function trackServiceConnection(record: {
-  initiator: string | null;
-  initiatorType: string;
-  domain: string;
-  extensionId?: string;
-  extensionName?: string;
-}): void {
-  if (!record.initiator) return;
-
-  if (record.initiatorType === "page") {
-    const sourceDomain = extractDomainFromUrl(record.initiator);
-    if (!sourceDomain || sourceDomain === record.domain) return;
-
-    let destSet = pendingConnections.get(sourceDomain);
-    if (!destSet) {
-      destSet = new Set();
-      pendingConnections.set(sourceDomain, destSet);
-    }
-    destSet.add(record.domain);
-  } else if (record.initiatorType === "extension" && record.extensionId) {
-    const extKey = record.extensionId;
-
-    let destSet = pendingExtensionConnections.get(extKey);
-    if (!destSet) {
-      destSet = new Set();
-      pendingExtensionConnections.set(extKey, destSet);
-    }
-    destSet.add(record.domain);
-  } else {
-    return;
-  }
-}
+const connectionTracker = createConnectionTracker({
+  logger,
+  getConnections: async () => {
+    const storage = await chrome.storage.local.get(["serviceConnections", "extensionConnections"]);
+    return {
+      serviceConnections: (storage.serviceConnections as Record<string, string[]>) || {},
+      extensionConnections: (storage.extensionConnections as Record<string, string[]>) || {},
+    };
+  },
+  setConnections: async (data) => {
+    await chrome.storage.local.set(data);
+  },
+});
 
 const extensionNetworkService = createExtensionNetworkService({
   logger,
@@ -210,7 +131,7 @@ const extensionNetworkService = createExtensionNetworkService({
   setStorage,
   getAlertManager: backgroundAlerts.getAlertManager,
   getRuntimeId: () => chrome.runtime.id,
-  onNetworkRequest: trackServiceConnection,
+  onNetworkRequest: connectionTracker.track,
 });
 
 // ============================================================================
@@ -311,21 +232,6 @@ const domainRiskService = createDomainRiskService({
   updateService: backgroundStorage.updateService,
   getAlertManager: backgroundAlerts.getAlertManager,
 });
-
-class OperationGuard<T> {
-  private pending: Promise<T> | null = null;
-
-  async run(operation: () => Promise<T>): Promise<T> {
-    if (this.pending) return this.pending;
-
-    this.pending = operation();
-    try {
-      return await this.pending;
-    } finally {
-      this.pending = null;
-    }
-  }
-}
 
 const clearAllDataGuard = new OperationGuard<{ success: boolean }>();
 
@@ -530,14 +436,8 @@ handleNetworkInspection: (data, sender) => networkSecurityInspector.handleNetwor
     getAllExtensionRisks,
     getExtensionRiskAnalysis,
     analyzeExtensionRisks,
-    getServiceConnections: async () => {
-      const storage = await chrome.storage.local.get("serviceConnections");
-      return (storage.serviceConnections as Record<string, string[]>) || {};
-    },
-    getExtensionConnections: async () => {
-      const storage = await chrome.storage.local.get("extensionConnections");
-      return (storage.extensionConnections as Record<string, string[]>) || {};
-    },
+    getServiceConnections: connectionTracker.getServiceConnections,
+    getExtensionConnections: connectionTracker.getExtensionConnections,
     getDataRetentionConfig: backgroundConfig.getDataRetentionConfig,
     setDataRetentionConfig: backgroundConfig.setDataRetentionConfig,
     cleanupOldData: backgroundConfig.cleanupOldData,
@@ -575,7 +475,7 @@ export default defineBackground(() => {
 
   chrome.alarms.onAlarm.addListener((alarm) => {
     // アラーム処理のたびに通信先バッファをフラッシュ（MV3 SW停止前に確実に永続化）
-    flushServiceConnections();
+    connectionTracker.flush();
 
     const handler = alarmHandlers.get(alarm.name);
     if (handler) {

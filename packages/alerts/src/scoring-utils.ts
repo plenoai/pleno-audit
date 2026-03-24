@@ -66,3 +66,29 @@ export function scoreToExtensionRiskLevel(score: number): ExtensionRiskLevel {
   if (score >= RISK_SCORE_THRESHOLDS.LOW) return "low";
   return "safe";
 }
+
+// ============================================================================
+// Status Badge
+// ============================================================================
+
+export type StatusBadgeVariant = "danger" | "warning" | "info" | "success";
+
+export interface StatusBadge {
+  variant: StatusBadgeVariant;
+  label: string;
+  dot: boolean;
+}
+
+/**
+ * セキュリティ脅威メトリクスからステータスバッジを判定
+ */
+export function getStatusBadge(
+  nrdCount: number,
+  violationCount: number,
+  aiCount: number,
+): StatusBadge {
+  if (nrdCount > 0) return { variant: "danger", label: "要対応", dot: false };
+  if (violationCount > 50) return { variant: "warning", label: "注意", dot: false };
+  if (aiCount > 0) return { variant: "info", label: "監視中", dot: false };
+  return { variant: "success", label: "正常", dot: true };
+}

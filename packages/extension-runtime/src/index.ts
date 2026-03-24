@@ -98,6 +98,8 @@ export {
   analyzeInstalledExtension,
   type PermissionRiskCategory,
   type PermissionRisk,
+  type PermissionRiskLevel,
+  getPermissionRiskLevel,
   type ExtensionRiskAnalysis,
   type NetworkRisk,
   type RiskFlag,
@@ -165,3 +167,15 @@ export type {
   EnterprisePolicyConfig,
   EnterpriseReportingConfig,
 } from "./storage-types.js";
+
+// Operation Guard
+export { OperationGuard } from "./operation-guard.js";
+
+// Event Queue
+export {
+  createEventQueue,
+  type EventQueue,
+  type EventQueueConfig,
+  type EventQueueDeps,
+  type RuntimeEvent,
+} from "./event-queue.js";

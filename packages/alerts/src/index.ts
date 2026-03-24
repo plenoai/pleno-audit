@@ -83,7 +83,10 @@ export {
 export {
   scoreToRiskLevel5,
   scoreToExtensionRiskLevel,
+  getStatusBadge,
   RISK_SCORE_THRESHOLDS,
   type RiskLevel5,
   type ExtensionRiskLevel,
+  type StatusBadge,
+  type StatusBadgeVariant,
 } from "./scoring-utils.js";

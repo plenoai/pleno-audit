@@ -4,7 +4,7 @@ import { FilteredTab } from "../components/FilteredTab";
 import { useTabFilter } from "../hooks/useTabFilter";
 import { useTheme } from "../../../lib/theme";
 import { truncate } from "../utils";
-import { createLogger } from "@libztbs/extension-runtime";
+import { createLogger, getPermissionRiskLevel, DANGEROUS_PERMISSIONS, type PermissionRiskLevel } from "@libztbs/extension-runtime";
 
 const logger = createLogger("extensions-tab");
 
@@ -24,22 +24,7 @@ interface ExtensionInfo {
   icons?: { size: number; url: string }[];
 }
 
-type RiskLevel = "critical" | "high" | "medium" | "low";
-
-const criticalPermissions = ["debugger", "nativeMessaging", "proxy", "webRequestBlocking"];
-const highRiskPermissions = ["cookies", "history", "tabs", "webNavigation", "webRequest", "management", "downloads", "clipboardRead", "clipboardWrite"];
-const mediumRiskPermissions = ["storage", "activeTab", "contextMenus", "notifications", "alarms"];
-
-function getPermissionRiskLevel(permissions: string[], hostPermissions: string[]): RiskLevel {
-  const allPermissions = [...permissions, ...hostPermissions];
-  const hasAllUrls = hostPermissions.some(
-    (p) => p === "<all_urls>" || p === "*://*/*" || p === "http://*/*" || p === "https://*/*"
-  );
-  if (allPermissions.some((p) => criticalPermissions.includes(p)) || hasAllUrls) return "critical";
-  if (allPermissions.some((p) => highRiskPermissions.includes(p))) return "high";
-  if (allPermissions.some((p) => mediumRiskPermissions.includes(p))) return "medium";
-  return "low";
-}
+type RiskLevel = PermissionRiskLevel;
 
 const riskBadgeVariant: Record<RiskLevel, string> = { critical: "danger", high: "warning", medium: "info", low: "success" };
 const riskLabel: Record<RiskLevel, string> = { critical: "重大", high: "高", medium: "中", low: "低" };
@@ -196,7 +181,8 @@ export function ExtensionsTab() {
             const allPerms = [...ext.permissions, ...ext.hostPermissions];
             const tags: { label: string; variant: "danger" | "warning" | "info" | "success" }[] = [];
             for (const p of allPerms) {
-              if (criticalPermissions.includes(p)) tags.push({ label: p, variant: "danger" });
+              const risk = DANGEROUS_PERMISSIONS.find((d) => d.permission === p);
+              if (risk?.severity === "critical") tags.push({ label: p, variant: "danger" });
             }
             const hasAllUrls = ext.hostPermissions.some(
               (p) => p === "<all_urls>" || p === "*://*/*" || p === "http://*/*" || p === "https://*/*"

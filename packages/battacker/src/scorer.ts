@@ -7,7 +7,7 @@ import type {
 } from "./types.js";
 import { CATEGORY_WEIGHTS, scoreToGrade } from "./types.js";
 
-const SEVERITY_SCORES = {
+export const SEVERITY_SCORES: Record<string, number> = {
   critical: 30,
   high: 20,
   medium: 10,

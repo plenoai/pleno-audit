@@ -12,6 +12,9 @@
     "battacker": "npx tsx src/battacker-scan.ts",
     "comparison": "npx tsx src/comparison-report.ts"
   },
+  "dependencies": {
+    "@libztbs/battacker": "workspace:*"
+  },
   "devDependencies": {
     "@playwright/test": "^1.58.2",
     "playwright": "^1.58.2",

@@ -59,6 +59,16 @@
       "files": ["app/audit-extension/public/api-hooks.js"],
       "rules": { "no-restricted-globals": "off" }
     },
+    // Main-world hooks - security detection hooks that intentionally reference browser APIs
+    {
+      "files": ["packages/main-world-hooks/src/**/*"],
+      "rules": { "no-restricted-globals": "off" }
+    },
+    // Main-world hooks build script - console is intentional for build output
+    {
+      "files": ["packages/main-world-hooks/build.mjs"],
+      "rules": { "no-console": "off" }
+    },
     // Landing page website (separate from extension)
     {
       "files": ["app/website/**/*"],

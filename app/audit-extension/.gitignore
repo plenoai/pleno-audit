@@ -1,1 +1,5 @@
 .wxt-dev
+
+# Built from @libztbs/main-world-hooks (pnpm --filter @libztbs/main-world-hooks run build:hooks)
+public/api-hooks.js
+public/hooks/

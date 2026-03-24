@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import type { CSPReport, CSPViolation, NetworkRequest } from "@libztbs/csp";
+import { extractDirectives, computeDirectiveStats, computeDomainViolationStats } from "@libztbs/csp";
 import type { DetectedService } from "@libztbs/types";
 import { createLogger } from "@libztbs/extension-runtime";
+import { filterNRDServices, filterLoginServices, filterTyposquatServices, filterAIServices } from "@libztbs/detectors";
 import type { Notification } from "../../../components/NotificationBanner";
 import type { Period, TabType } from "../types";
 
@@ -152,52 +154,17 @@ export function useDashboardState({
     [reports]
   );
 
-  const directives = useMemo(
-    () => Array.from(new Set(violations.map((v) => v.directive))).sort(),
-    [violations]
+  const directives = useMemo(() => extractDirectives(violations), [violations]);
+  const directiveStats = useMemo(() => computeDirectiveStats(violations), [violations]);
+  const { domainStats, domainViolationMeta } = useMemo(
+    () => computeDomainViolationStats(violations),
+    [violations],
   );
 
-  const directiveStats = useMemo(() => {
-    const stats: Record<string, number> = {};
-    for (const v of violations) stats[v.directive || "unknown"] = (stats[v.directive || "unknown"] ?? 0) + 1;
-    return Object.entries(stats)
-      .sort((a, b) => b[1] - a[1])
-      .map(([label, value]) => ({ label, value }));
-  }, [violations]);
-
-  const { domainStats, domainViolationMeta } = useMemo(() => {
-    const stats: Record<string, { count: number; lastSeen: number }> = {};
-    for (const v of violations) {
-      try {
-        const domain = new URL(v.blockedURL).hostname;
-        const ts = new Date(v.timestamp).getTime();
-        const existing = stats[domain];
-        if (existing) {
-          existing.count++;
-          if (ts > existing.lastSeen) existing.lastSeen = ts;
-        } else {
-          stats[domain] = { count: 1, lastSeen: ts };
-        }
-      } catch {
-        // invalid URL
-      }
-    }
-    const domainStats = Object.entries(stats)
-      .sort((a, b) => b[1].count - a[1].count)
-      .map(([label, { count }]) => ({ label, value: count }));
-    return { domainStats, domainViolationMeta: stats };
-  }, [violations]);
-
-  const nrdServices = useMemo(() => services.filter((s) => s.nrdResult?.isNRD), [services]);
-  const loginServices = useMemo(() => services.filter((s) => s.hasLoginPage), [services]);
-  const typosquatServices = useMemo(
-    () => services.filter((s) => s.typosquatResult?.isTyposquat),
-    [services]
-  );
-  const aiServices = useMemo(
-    () => services.filter((s) => s.aiDetected?.hasAIActivity),
-    [services]
-  );
+  const nrdServices = useMemo(() => filterNRDServices(services), [services]);
+  const loginServices = useMemo(() => filterLoginServices(services), [services]);
+  const typosquatServices = useMemo(() => filterTyposquatServices(services), [services]);
+  const aiServices = useMemo(() => filterAIServices(services), [services]);
 
   const status = useMemo(
     () => getStatusBadge(nrdServices.length, violations.length, aiServices.length),

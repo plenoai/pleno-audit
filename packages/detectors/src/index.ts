@@ -65,3 +65,36 @@ export { createLoginDetector } from "./login-detector.js";
 // Favicon Detection
 export type { FaviconRequest } from "./favicon-detector.js";
 export { findFaviconUrl, findFavicons } from "./favicon-detector.js";
+
+// Security Detection Patterns
+export {
+  SENSITIVE_INPUT_TYPES,
+  SENSITIVE_FIELD_NAMES,
+  hasSensitiveField,
+  CRYPTO_ADDRESS_PATTERNS,
+  detectCryptoAddress,
+  XSS_PATTERNS,
+  containsXSSPattern,
+  SUSPICIOUS_FILE_EXTENSIONS,
+  isSuspiciousFileExtension,
+  KNOWN_CDN_DOMAINS,
+  isKnownCDN,
+} from "./security-patterns.js";
+
+// Service Filters
+export {
+  filterNRDServices,
+  filterLoginServices,
+  filterTyposquatServices,
+  filterAIServices,
+} from "./service-filters.js";
+
+// Service Explorer
+export {
+  buildServiceIndex,
+  queryServiceIndex,
+  type FilterCategory,
+  type ServiceIndex,
+  type ServiceQuery,
+  type ServiceQueryResult,
+} from "./service-explorer.js";
