@@ -148,5 +148,21 @@ export function createSecurityAsyncHandlers(
       execute: (message, sender) => deps.handleFormHijack(message.data, sender),
       fallback: () => ({ success: false }),
     }],
+    ["CSS_KEYLOGGING_DETECTED", {
+      execute: (message, sender) => deps.handleCSSKeylogging(message.data, sender),
+      fallback: () => ({ success: false }),
+    }],
+    ["PERFORMANCE_OBSERVER_DETECTED", {
+      execute: (message, sender) => deps.handlePerformanceObserver(message.data, sender),
+      fallback: () => ({ success: false }),
+    }],
+    ["POSTMESSAGE_EXFIL_DETECTED", {
+      execute: (message, sender) => deps.handlePostMessageExfil(message.data, sender),
+      fallback: () => ({ success: false }),
+    }],
+    ["DOM_CLOBBERING_DETECTED", {
+      execute: (message, sender) => deps.handleDOMClobbering(message.data, sender),
+      fallback: () => ({ success: false }),
+    }],
   ];
 }

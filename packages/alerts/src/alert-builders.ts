@@ -46,6 +46,10 @@ import type {
   PrototypePollutionAlertDetails,
   DNSPrefetchLeakAlertDetails,
   FormHijackAlertDetails,
+  CSSKeyloggingAlertDetails,
+  PerformanceObserverAlertDetails,
+  PostMessageExfilAlertDetails,
+  DOMClobberingAlertDetails,
 } from "./types.js";
 
 export interface CreateAlertInput {
@@ -1549,4 +1553,130 @@ const FORM_HIJACK_ALERT_DEFINITION: AlertDefinition<
 
 export const buildFormHijackAlert = createAlertBuilder(
   FORM_HIJACK_ALERT_DEFINITION
+);
+
+// ============================================================================
+// CSS Keylogging
+// ============================================================================
+
+export interface CSSKeyloggingAlertParams {
+  domain: string;
+  sampleRule: string;
+}
+
+const CSS_KEYLOGGING_ALERT_DEFINITION: AlertDefinition<
+  CSSKeyloggingAlertParams,
+  CSSKeyloggingAlertDetails
+> = {
+  category: "css_keylogging",
+  detailsType: "css_keylogging",
+  build: (params) => ({
+    severity: "critical",
+    title: `CSSキーロギング検出: ${params.domain}`,
+    description: "input[value]属性セレクタとbackground-imageを組み合わせたCSSキーロギングを検出",
+    domain: params.domain,
+    details: {
+      domain: params.domain,
+      sampleRule: params.sampleRule,
+    },
+  }),
+};
+
+export const buildCSSKeyloggingAlert = createAlertBuilder(
+  CSS_KEYLOGGING_ALERT_DEFINITION
+);
+
+// ============================================================================
+// PerformanceObserver Side Channel
+// ============================================================================
+
+export interface PerformanceObserverAlertParams {
+  domain: string;
+  entryType: string;
+}
+
+const PERFORMANCE_OBSERVER_ALERT_DEFINITION: AlertDefinition<
+  PerformanceObserverAlertParams,
+  PerformanceObserverAlertDetails
+> = {
+  category: "performance_observer",
+  detailsType: "performance_observer",
+  build: (params) => ({
+    severity: "medium",
+    title: `PerformanceObserverサイドチャネル検出: ${params.domain}`,
+    description: `PerformanceObserverが「${params.entryType}」エントリを監視しています（タイミング情報によるサイドチャネル攻撃の可能性）`,
+    domain: params.domain,
+    details: {
+      domain: params.domain,
+      entryType: params.entryType,
+    },
+  }),
+};
+
+export const buildPerformanceObserverAlert = createAlertBuilder(
+  PERFORMANCE_OBSERVER_ALERT_DEFINITION
+);
+
+// ============================================================================
+// postMessage Exfiltration
+// ============================================================================
+
+export interface PostMessageExfilAlertParams {
+  domain: string;
+  targetOrigin: string;
+}
+
+const POSTMESSAGE_EXFIL_ALERT_DEFINITION: AlertDefinition<
+  PostMessageExfilAlertParams,
+  PostMessageExfilAlertDetails
+> = {
+  category: "postmessage_exfil",
+  detailsType: "postmessage_exfil",
+  build: (params) => ({
+    severity: "high",
+    title: `postMessageクロスオリジン送信検出: ${params.domain}`,
+    description: `window.postMessageで別オリジン「${params.targetOrigin}」へデータを送信しています`,
+    domain: params.domain,
+    details: {
+      domain: params.domain,
+      targetOrigin: params.targetOrigin,
+    },
+  }),
+};
+
+export const buildPostMessageExfilAlert = createAlertBuilder(
+  POSTMESSAGE_EXFIL_ALERT_DEFINITION
+);
+
+// ============================================================================
+// DOM Clobbering
+// ============================================================================
+
+export interface DOMClobberingAlertParams {
+  domain: string;
+  attributeName: string;
+  attributeValue: string;
+}
+
+const DOM_CLOBBERING_ALERT_DEFINITION: AlertDefinition<
+  DOMClobberingAlertParams,
+  DOMClobberingAlertDetails
+> = {
+  category: "dom_clobbering",
+  detailsType: "dom_clobbering",
+  build: (params) => ({
+    severity: "high",
+    title: `DOMクロッバリング検出: ${params.domain}`,
+    description: `${params.attributeName}="${params.attributeValue}"を持つ要素がグローバル変数を上書きする可能性があります`,
+    domain: params.domain,
+    details: {
+      domain: params.domain,
+      attributeName: params.attributeName,
+      attributeValue: params.attributeValue,
+    },
+  }),
+};
+
+export const buildDOMClobberingAlert = createAlertBuilder(
+  DOM_CLOBBERING_ALERT_DEFINITION
 );

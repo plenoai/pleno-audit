@@ -77,6 +77,10 @@ export default defineContentScript({
       "__PROTOTYPE_POLLUTION_DETECTED__",
       "__DNS_PREFETCH_LEAK_DETECTED__",
       "__FORM_HIJACK_DETECTED__",
+      "__CSS_KEYLOGGING_DETECTED__",
+      "__PERFORMANCE_OBSERVER_DETECTED__",
+      "__POSTMESSAGE_EXFIL_DETECTED__",
+      "__DOM_CLOBBERING_DETECTED__",
     ];
 
     const signal = abortController.signal;

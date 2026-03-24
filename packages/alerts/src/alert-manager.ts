@@ -52,6 +52,10 @@ import type {
   PrototypePollutionAlertParams,
   DNSPrefetchLeakAlertParams,
   FormHijackAlertParams,
+  CSSKeyloggingAlertParams,
+  PerformanceObserverAlertParams,
+  PostMessageExfilAlertParams,
+  DOMClobberingAlertParams,
 } from "./alert-builders.js";
 import {
   buildNRDAlert,
@@ -91,6 +95,10 @@ import {
   buildPrototypePollutionAlert,
   buildDNSPrefetchLeakAlert,
   buildFormHijackAlert,
+  buildCSSKeyloggingAlert,
+  buildPerformanceObserverAlert,
+  buildPostMessageExfilAlert,
+  buildDOMClobberingAlert,
 } from "./alert-builders.js";
 
 /**
@@ -489,6 +497,30 @@ export function createAlertManager(
     return createOptionalAlert(buildFormHijackAlert(params));
   }
 
+  async function alertCSSKeylogging(
+    params: CSSKeyloggingAlertParams
+  ): Promise<SecurityAlert | null> {
+    return createOptionalAlert(buildCSSKeyloggingAlert(params));
+  }
+
+  async function alertPerformanceObserver(
+    params: PerformanceObserverAlertParams
+  ): Promise<SecurityAlert | null> {
+    return createOptionalAlert(buildPerformanceObserverAlert(params));
+  }
+
+  async function alertPostMessageExfil(
+    params: PostMessageExfilAlertParams
+  ): Promise<SecurityAlert | null> {
+    return createOptionalAlert(buildPostMessageExfilAlert(params));
+  }
+
+  async function alertDOMClobbering(
+    params: DOMClobberingAlertParams
+  ): Promise<SecurityAlert | null> {
+    return createOptionalAlert(buildDOMClobberingAlert(params));
+  }
+
   async function updateAlertStatus(
     alertId: string,
     status: AlertStatus
@@ -569,6 +601,10 @@ export function createAlertManager(
     alertPrototypePollution,
     alertDNSPrefetchLeak,
     alertFormHijack,
+    alertCSSKeylogging,
+    alertPerformanceObserver,
+    alertPostMessageExfil,
+    alertDOMClobbering,
     updateAlertStatus,
     getAlerts,
     getAlertCount,

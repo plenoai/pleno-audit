@@ -351,6 +351,86 @@ export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecuri
     /* ignore */
   }
 
+  // ===== CSS Keylogging Detection =====
+  // Detects dynamically injected <style> elements using input[value] selectors
+  // combined with background-image URLs to exfiltrate keystrokes.
+  const cssKeyloggingObserver = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      for (const node of mutation.addedNodes) {
+        if ((node as Element).nodeType !== Node.ELEMENT_NODE) continue;
+        const el = node as Element;
+        if (el.tagName !== "STYLE") continue;
+        const cssText = el.textContent || "";
+        // Detect input[value attribute selectors paired with background-image: url(
+        if (/input\[value/i.test(cssText) && /background-image\s*:\s*url\s*\(/i.test(cssText)) {
+          emitSecurityEvent("__CSS_KEYLOGGING_DETECTED__", {
+            sampleRule: cssText.substring(0, 200),
+            timestamp: Date.now(),
+            pageUrl: window.location.href,
+          });
+        }
+      }
+    }
+  });
+
+  const startCSSKeyloggingObserving = () => {
+    if (document.head) cssKeyloggingObserver.observe(document.head, { childList: true, subtree: true });
+    if (document.body) {
+      cssKeyloggingObserver.observe(document.body, { childList: true, subtree: true });
+    } else {
+      document.addEventListener("DOMContentLoaded", () => {
+        if (document.body) cssKeyloggingObserver.observe(document.body, { childList: true, subtree: true });
+      }, { once: true });
+    }
+  };
+  if (document.body || document.head) startCSSKeyloggingObserving();
+  else document.addEventListener("DOMContentLoaded", startCSSKeyloggingObserving, { once: true });
+
+  // ===== DOM Clobbering Detection =====
+  // Named HTML elements (id/name attributes) can shadow built-in window globals.
+  const DANGEROUS_GLOBAL_NAMES = new Set([
+    "location", "history", "document", "navigator", "window", "parent", "top", "self",
+    "frames", "opener", "close", "closed", "stop", "focus", "blur", "open", "alert",
+    "confirm", "prompt", "print", "postMessage", "fetch", "XMLHttpRequest",
+    "eval", "Function", "Object", "Array", "String", "Number", "Boolean", "Symbol",
+    "undefined", "Infinity", "NaN", "isNaN", "isFinite", "parseInt", "parseFloat",
+    "encodeURI", "decodeURI", "encodeURIComponent", "decodeURIComponent",
+  ]);
+
+  const domClobberingObserver = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      for (const node of mutation.addedNodes) {
+        if ((node as Element).nodeType !== Node.ELEMENT_NODE) continue;
+        const el = node as Element;
+        for (const attrName of ["id", "name"]) {
+          const attrValue = el.getAttribute(attrName);
+          if (attrValue && DANGEROUS_GLOBAL_NAMES.has(attrValue)) {
+            emitSecurityEvent("__DOM_CLOBBERING_DETECTED__", {
+              attributeName: attrName,
+              attributeValue: attrValue,
+              tagName: el.tagName,
+              timestamp: Date.now(),
+              pageUrl: window.location.href,
+            });
+          }
+        }
+      }
+    }
+  });
+
+  const startDomClobberingObserving = () => {
+    if (document.head) domClobberingObserver.observe(document.head, { childList: true, subtree: true });
+    if (document.body) {
+      domClobberingObserver.observe(document.body, { childList: true, subtree: true });
+    } else {
+      document.addEventListener("DOMContentLoaded", () => {
+        if (document.body) domClobberingObserver.observe(document.body, { childList: true, subtree: true });
+      }, { once: true });
+    }
+  };
+  if (document.body || document.head) startDomClobberingObserving();
+  else document.addEventListener("DOMContentLoaded", startDomClobberingObserving, { once: true });
+
   // ===== Suspicious Download =====
   const originalCreateObjectURL = URL.createObjectURL;
   URL.createObjectURL = function (blob: Blob | MediaSource) {

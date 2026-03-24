@@ -219,4 +219,47 @@ export function initInjectionHooks(emitSecurityEvent: SharedHookUtils["emitSecur
       return originalEnumerateDevices();
     };
   }
+
+  // PerformanceObserver side channel (resource timing exfiltration)
+  if (typeof PerformanceObserver !== "undefined") {
+    const OriginalPerformanceObserver = PerformanceObserver;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- intentional monkey-patch of PerformanceObserver
+    (window as any).PerformanceObserver = function (this: unknown, callback: PerformanceObserverCallback) {
+      const instance = new OriginalPerformanceObserver(callback);
+      const originalObserve = instance.observe.bind(instance);
+      instance.observe = function (options?: PerformanceObserverInit) {
+        const entryTypes: string[] = options?.entryTypes ?? (options?.type ? [options.type] : []);
+        if (entryTypes.includes("resource") || entryTypes.includes("navigation")) {
+          emitSecurityEvent("__PERFORMANCE_OBSERVER_DETECTED__", {
+            entryType: entryTypes.join(","),
+            timestamp: Date.now(),
+            pageUrl: location.href,
+          });
+        }
+        return originalObserve(options);
+      };
+      return instance;
+    } as unknown as typeof PerformanceObserver;
+    (window as any).PerformanceObserver.prototype = OriginalPerformanceObserver.prototype;
+    (window as any).PerformanceObserver.supportedEntryTypes = OriginalPerformanceObserver.supportedEntryTypes;
+  }
+
+  // postMessage cross-origin exfiltration
+  const originalPostMessage = window.postMessage.bind(window);
+  window.postMessage = function (message: unknown, targetOriginOrOptions: string | WindowPostMessageOptions, transfer?: Transferable[]) {
+    const targetOrigin = typeof targetOriginOrOptions === "string"
+      ? targetOriginOrOptions
+      : (targetOriginOrOptions as WindowPostMessageOptions).targetOrigin ?? "*";
+    const isCrossOrigin = targetOrigin !== window.location.origin && targetOrigin !== "/";
+    if (isCrossOrigin) {
+      emitSecurityEvent("__POSTMESSAGE_EXFIL_DETECTED__", {
+        targetOrigin,
+        timestamp: Date.now(),
+        pageUrl: location.href,
+      });
+    }
+    return transfer !== undefined
+      ? originalPostMessage(message, targetOriginOrOptions as string, transfer)
+      : originalPostMessage(message, targetOriginOrOptions as string);
+  };
 }

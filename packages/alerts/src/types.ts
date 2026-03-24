@@ -53,7 +53,11 @@ export type AlertCategory =
   | "storage_exfiltration" // localStorage/sessionStorage mass access
   | "prototype_pollution" // Prototype pollution attack (Object.prototype modification)
   | "dns_prefetch_leak" // DNS prefetch covert channel via dynamic link injection
-  | "form_hijack"; // Form action hijacking
+  | "form_hijack" // Form action hijacking
+  | "css_keylogging" // CSS input[value] attribute selector keylogging
+  | "performance_observer" // PerformanceObserver resource timing side channel
+  | "postmessage_exfil" // postMessage cross-origin data exfiltration
+  | "dom_clobbering"; // DOM clobbering — named elements shadowing window globals
 
 /**
  * Alert status
@@ -125,7 +129,11 @@ export type AlertDetails =
   | BroadcastChannelAlertDetails
   | PrototypePollutionAlertDetails
   | DNSPrefetchLeakAlertDetails
-  | FormHijackAlertDetails;
+  | FormHijackAlertDetails
+  | CSSKeyloggingAlertDetails
+  | PerformanceObserverAlertDetails
+  | PostMessageExfilAlertDetails
+  | DOMClobberingAlertDetails;
 
 export interface NRDAlertDetails {
   type: "nrd";
@@ -426,6 +434,31 @@ export interface FormHijackAlertDetails {
   originalAction: string;
   newAction: string;
   targetDomain: string;
+}
+
+export interface CSSKeyloggingAlertDetails {
+  type: "css_keylogging";
+  domain: string;
+  sampleRule: string;
+}
+
+export interface PerformanceObserverAlertDetails {
+  type: "performance_observer";
+  domain: string;
+  entryType: string;
+}
+
+export interface PostMessageExfilAlertDetails {
+  type: "postmessage_exfil";
+  domain: string;
+  targetOrigin: string;
+}
+
+export interface DOMClobberingAlertDetails {
+  type: "dom_clobbering";
+  domain: string;
+  attributeName: string;
+  attributeValue: string;
 }
 
 /**

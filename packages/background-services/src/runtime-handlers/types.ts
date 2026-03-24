@@ -104,6 +104,10 @@ handleNetworkInspection: (data: unknown, sender: chrome.runtime.MessageSender) =
   handlePrototypePollution: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
   handleDNSPrefetchLeak: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
   handleFormHijack: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
+  handleCSSKeylogging: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
+  handlePerformanceObserver: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
+  handlePostMessageExfil: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
+  handleDOMClobbering: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
 
   getAlerts: (options?: { limit?: number; status?: AlertStatus[] }) => Promise<SecurityAlert[]>;
 

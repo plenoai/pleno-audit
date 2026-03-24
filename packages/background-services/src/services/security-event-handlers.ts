@@ -1007,5 +1007,99 @@ export function createSecurityEventHandlers(
 
       return { success: true };
     },
+
+    async handleCSSKeylogging(
+      data: { sampleRule?: string; timestamp?: number; pageUrl?: string; source?: string },
+      sender: chrome.runtime.MessageSender,
+    ): Promise<{ success: boolean }> {
+      const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+
+      await deps.getAlertManager().alertCSSKeylogging({
+        domain: pageDomain,
+        sampleRule: data.sampleRule ?? "",
+      });
+
+      deps.logger.warn({
+        event: "SECURITY_CSS_KEYLOGGING_DETECTED",
+        data: {
+          source: sourceLabel(data.source),
+          domain: pageDomain,
+          sampleRule: data.sampleRule,
+        },
+      });
+
+      return { success: true };
+    },
+
+    async handlePerformanceObserver(
+      data: { entryType?: string; timestamp?: number; pageUrl?: string; source?: string },
+      sender: chrome.runtime.MessageSender,
+    ): Promise<{ success: boolean }> {
+      const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+
+      await deps.getAlertManager().alertPerformanceObserver({
+        domain: pageDomain,
+        entryType: data.entryType ?? "resource",
+      });
+
+      deps.logger.warn({
+        event: "SECURITY_PERFORMANCE_OBSERVER_DETECTED",
+        data: {
+          source: sourceLabel(data.source),
+          domain: pageDomain,
+          entryType: data.entryType,
+        },
+      });
+
+      return { success: true };
+    },
+
+    async handlePostMessageExfil(
+      data: { targetOrigin?: string; timestamp?: number; pageUrl?: string; source?: string },
+      sender: chrome.runtime.MessageSender,
+    ): Promise<{ success: boolean }> {
+      const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+
+      await deps.getAlertManager().alertPostMessageExfil({
+        domain: pageDomain,
+        targetOrigin: data.targetOrigin ?? "",
+      });
+
+      deps.logger.warn({
+        event: "SECURITY_POSTMESSAGE_EXFIL_DETECTED",
+        data: {
+          source: sourceLabel(data.source),
+          domain: pageDomain,
+          targetOrigin: data.targetOrigin,
+        },
+      });
+
+      return { success: true };
+    },
+
+    async handleDOMClobbering(
+      data: { attributeName?: string; attributeValue?: string; timestamp?: number; pageUrl?: string; source?: string },
+      sender: chrome.runtime.MessageSender,
+    ): Promise<{ success: boolean }> {
+      const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+
+      await deps.getAlertManager().alertDOMClobbering({
+        domain: pageDomain,
+        attributeName: data.attributeName ?? "id",
+        attributeValue: data.attributeValue ?? "",
+      });
+
+      deps.logger.warn({
+        event: "SECURITY_DOM_CLOBBERING_DETECTED",
+        data: {
+          source: sourceLabel(data.source),
+          domain: pageDomain,
+          attributeName: data.attributeName,
+          attributeValue: data.attributeValue,
+        },
+      });
+
+      return { success: true };
+    },
   };
 }
