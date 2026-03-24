@@ -38,6 +38,11 @@ export function isAIRequestBody(body: unknown): boolean {
       return true;
     }
 
+    // ChatGPT Web形式: { action: "next", conversation_id: "..." }
+    if (isChatGPTConversation(obj)) {
+      return true;
+    }
+
     return false;
   } catch {
     return false;
@@ -75,6 +80,27 @@ function isGeminiContents(contents: unknown): boolean {
         (p: unknown) => p && typeof p === "object" && "text" in (p as object)
       )
   );
+}
+
+/**
+ * ChatGPT Web会話形式かどうかチェック
+ */
+function isChatGPTConversation(obj: Record<string, unknown>): boolean {
+  if (
+    typeof obj.action === "string" &&
+    ["next", "variant", "continue"].includes(obj.action) &&
+    typeof obj.conversation_id === "string"
+  ) {
+    return true;
+  }
+  if (
+    typeof obj.action === "string" &&
+    obj.action === "next" &&
+    Array.isArray(obj.messages)
+  ) {
+    return true;
+  }
+  return false;
 }
 
 // ============================================================================
