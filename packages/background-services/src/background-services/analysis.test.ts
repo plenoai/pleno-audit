@@ -198,4 +198,31 @@ describe("createPageAnalysisHandler", () => {
       privacyPolicyUrl: "https://example.com/privacy",
     });
   });
+
+  describe("localhost除外", () => {
+    const localDomains = ["localhost", "127.0.0.1", "127.0.1.1", "0.0.0.0", "[::1]", "dev.local", "app.localhost"];
+
+    for (const domain of localDomains) {
+      it(`${domain} ではcompliance alertを呼ばない`, async () => {
+        const deps = createMockDeps();
+        const handler = createPageAnalysisHandler(deps);
+
+        // Cookie policy/bannerなし = 通常なら違反
+        await handler(createBaseAnalysis({ domain, url: `http://${domain}` }));
+
+        const alertManager = deps.getAlertManager();
+        expect(alertManager.alertCompliance).not.toHaveBeenCalled();
+      });
+    }
+
+    it("通常ドメインではcompliance alertを呼ぶ", async () => {
+      const deps = createMockDeps();
+      const handler = createPageAnalysisHandler(deps);
+
+      await handler(createBaseAnalysis({ domain: "example.com" }));
+
+      const alertManager = deps.getAlertManager();
+      expect(alertManager.alertCompliance).toHaveBeenCalled();
+    });
+  });
 });

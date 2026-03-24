@@ -868,6 +868,67 @@ describe("createAlertManager", () => {
     });
   });
 
+  describe("alert dedup", () => {
+    it("merges alerts with same (category, domain, title) within window", async () => {
+      const manager = createAlertManager({
+        enabled: true,
+        showNotifications: false,
+        playSound: false,
+        rules: [],
+      });
+      // First alert
+      const alert1 = await manager.alertNRD({
+        domain: "test.com",
+        domainAge: 5,
+        registrationDate: null,
+        confidence: "high",
+      });
+      expect(alert1).not.toBeNull();
+      expect(alert1?.count).toBe(1);
+
+      // Second alert with same (category=nrd, domain=test.com, title) — should merge
+      const alert2 = await manager.alertNRD({
+        domain: "test.com",
+        domainAge: 5,
+        registrationDate: null,
+        confidence: "high",
+      });
+      // Returns existing alert (merged)
+      expect(alert2?.id).toBe(alert1?.id);
+
+      // Store should have 1 alert with count=2
+      const alerts = await manager.getAlerts();
+      expect(alerts.length).toBe(1);
+      expect(alerts[0].count).toBe(2);
+    });
+
+    it("does NOT merge alerts with different domains", async () => {
+      const manager = createAlertManager({
+        enabled: true,
+        showNotifications: false,
+        playSound: false,
+        rules: [],
+      });
+      await manager.alertNRD({ domain: "a.com", domainAge: 5, registrationDate: null, confidence: "high" });
+      await manager.alertNRD({ domain: "b.com", domainAge: 5, registrationDate: null, confidence: "high" });
+      const alerts = await manager.getAlerts();
+      expect(alerts.length).toBe(2);
+    });
+
+    it("does NOT merge alerts with different categories", async () => {
+      const manager = createAlertManager({
+        enabled: true,
+        showNotifications: false,
+        playSound: false,
+        rules: [],
+      });
+      await manager.alertNRD({ domain: "test.com", domainAge: 5, registrationDate: null, confidence: "high" });
+      await manager.alertTyposquat({ domain: "test.com", targetDomain: "test2.com", homoglyphCount: 1, confidence: "high" });
+      const alerts = await manager.getAlerts();
+      expect(alerts.length).toBe(2);
+    });
+  });
+
   describe("getAlerts and getAlertCount", () => {
     it("returns alerts with options", async () => {
       const manager = createAlertManager({
