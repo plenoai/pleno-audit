@@ -37,7 +37,7 @@ function createMockAlertManager(): AlertManager {
     alertDeviceSensor: vi.fn().mockResolvedValue(null),
     alertDeviceEnumeration: vi.fn().mockResolvedValue(null),
     alertStorageExfiltration: vi.fn().mockResolvedValue(null),
-    alertCompliance: vi.fn().mockResolvedValue(null),
+
     alertPerformanceObserver: vi.fn().mockResolvedValue(null),
     alertDOMClobbering: vi.fn().mockResolvedValue(null),
     alertIntersectionObserver: vi.fn().mockResolvedValue(null),

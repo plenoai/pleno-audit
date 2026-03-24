@@ -1,18 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
-import type { AlertManager } from "@libztbs/alerts";
 import { DEFAULT_DETECTION_CONFIG } from "@libztbs/extension-runtime";
 import { createPageAnalysisHandler } from "./analysis.js";
 import type { PageAnalysisDependencies } from "./analysis.js";
 import type { PageAnalysis, StorageData } from "./types.js";
 
 function createMockDeps(overrides?: Partial<PageAnalysisDependencies>): PageAnalysisDependencies {
-  const alertManager = {
-    alertCompliance: vi.fn().mockResolvedValue(null),
-  } as unknown as AlertManager;
-
   return {
     logger: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
-    getAlertManager: () => alertManager,
     initStorage: vi.fn<() => Promise<StorageData>>().mockResolvedValue({
       services: {},
       cspConfig: {} as StorageData["cspConfig"],
@@ -93,42 +87,6 @@ describe("createPageAnalysisHandler", () => {
     });
   });
 
-  it("違反がある場合にalertComplianceを呼ぶ", async () => {
-    const deps = createMockDeps();
-    const handler = createPageAnalysisHandler(deps);
-
-    // ログインフォームありでプライバシーポリシーなし → 違反
-    await handler(createBaseAnalysis({
-      login: { hasLoginForm: true, hasPasswordInput: true, isLoginUrl: false, formAction: "/login" },
-      privacy: { found: false, url: null, method: "url_pattern" },
-    }));
-
-    const alertManager = deps.getAlertManager();
-    expect(alertManager.alertCompliance).toHaveBeenCalledWith(
-      expect.objectContaining({
-        pageDomain: "example.com",
-        hasLoginForm: true,
-        hasPrivacyPolicy: false,
-      }),
-    );
-  });
-
-  it("cookiePolicyなしの場合にalertComplianceを呼ぶ", async () => {
-    const deps = createMockDeps();
-    const handler = createPageAnalysisHandler(deps);
-
-    // cookiePolicyがundefined → hasCookiePolicy=false → 違反
-    await handler(createBaseAnalysis());
-
-    const alertManager = deps.getAlertManager();
-    expect(alertManager.alertCompliance).toHaveBeenCalledWith(
-      expect.objectContaining({
-        pageDomain: "example.com",
-        hasCookiePolicy: false,
-      }),
-    );
-  });
-
   it("新規ドメインの場合にqueryExistingCookiesを呼ぶ", async () => {
     const deps = createMockDeps();
     const handler = createPageAnalysisHandler(deps);
@@ -199,30 +157,4 @@ describe("createPageAnalysisHandler", () => {
     });
   });
 
-  describe("localhost除外", () => {
-    const localDomains = ["localhost", "127.0.0.1", "127.0.1.1", "0.0.0.0", "[::1]", "dev.local", "app.localhost"];
-
-    for (const domain of localDomains) {
-      it(`${domain} ではcompliance alertを呼ばない`, async () => {
-        const deps = createMockDeps();
-        const handler = createPageAnalysisHandler(deps);
-
-        // Cookie policy/bannerなし = 通常なら違反
-        await handler(createBaseAnalysis({ domain, url: `http://${domain}` }));
-
-        const alertManager = deps.getAlertManager();
-        expect(alertManager.alertCompliance).not.toHaveBeenCalled();
-      });
-    }
-
-    it("通常ドメインではcompliance alertを呼ぶ", async () => {
-      const deps = createMockDeps();
-      const handler = createPageAnalysisHandler(deps);
-
-      await handler(createBaseAnalysis({ domain: "example.com" }));
-
-      const alertManager = deps.getAlertManager();
-      expect(alertManager.alertCompliance).toHaveBeenCalled();
-    });
-  });
 });

@@ -18,7 +18,7 @@ import type {
   DataExfiltrationAlertDetails,
   CredentialTheftAlertDetails,
   SupplyChainAlertDetails,
-  ComplianceAlertDetails,
+
   PolicyViolationAlertDetails,
   TrackingBeaconAlertDetails,
   ClipboardHijackAlertDetails,
@@ -589,78 +589,6 @@ const SUPPLY_CHAIN_ALERT_DEFINITION: AlertDefinition<
 };
 
 export const buildSupplyChainRiskAlert = createAlertBuilder(SUPPLY_CHAIN_ALERT_DEFINITION);
-
-export interface ComplianceAlertParams {
-  pageDomain: string;
-  hasPrivacyPolicy: boolean;
-  hasTermsOfService: boolean;
-  hasCookiePolicy: boolean;
-  hasCookieBanner: boolean;
-  isCookieBannerGDPRCompliant: boolean;
-  hasLoginForm: boolean;
-}
-
-const COMPLIANCE_ALERT_DEFINITION: AlertDefinition<
-  ComplianceAlertParams,
-  ComplianceAlertDetails
-> = {
-  category: "compliance",
-  detailsType: "compliance",
-  build: (params, helpers) => {
-    const violations: string[] = [];
-
-    if (params.hasLoginForm) {
-      if (!params.hasPrivacyPolicy) {
-        violations.push("missing_privacy_policy");
-      }
-      if (!params.hasTermsOfService) {
-        violations.push("missing_terms_of_service");
-      }
-    }
-
-    if (!params.hasCookiePolicy) {
-      violations.push("missing_cookie_policy");
-    }
-
-    if (!params.hasCookieBanner) {
-      violations.push("missing_cookie_banner");
-    }
-
-    if (params.hasCookieBanner && !params.isCookieBannerGDPRCompliant) {
-      violations.push("non_compliant_cookie_banner");
-    }
-
-    if (violations.length === 0) {
-      return null;
-    }
-
-    const hasLoginViolations =
-      params.hasLoginForm &&
-      (!params.hasPrivacyPolicy || !params.hasTermsOfService);
-    const severity = helpers.resolveSeverity([[hasLoginViolations, "high"]], "medium");
-
-    const violationDescriptions = helpers.translateViolations(violations);
-
-    return {
-      severity,
-      title: `コンプライアンス違反: ${params.pageDomain}`,
-      description: violationDescriptions.join(", "),
-      domain: params.pageDomain,
-      details: {
-        pageDomain: params.pageDomain,
-        hasPrivacyPolicy: params.hasPrivacyPolicy,
-        hasTermsOfService: params.hasTermsOfService,
-        hasCookiePolicy: params.hasCookiePolicy,
-        hasCookieBanner: params.hasCookieBanner,
-        isCookieBannerGDPRCompliant: params.isCookieBannerGDPRCompliant,
-        hasLoginForm: params.hasLoginForm,
-        violations,
-      },
-    };
-  },
-};
-
-export const buildComplianceAlert = createAlertBuilder(COMPLIANCE_ALERT_DEFINITION);
 
 export interface PolicyViolationAlertParams {
   domain: string;

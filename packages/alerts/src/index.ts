@@ -24,7 +24,7 @@ export type {
   ExtensionAlertDetails,
   LoginAlertDetails,
   PolicyAlertDetails,
-  ComplianceAlertDetails,
+
   PolicyViolationAlertDetails,
   DynamicCodeExecutionAlertDetails,
   FullscreenPhishingAlertDetails,

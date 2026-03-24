@@ -1,4 +1,3 @@
-import type { AlertManager } from "@libztbs/alerts";
 import type { CookieInfo, DetectedService } from "@libztbs/types";
 import type { Logger } from "@libztbs/extension-runtime";
 import { queryExistingCookies } from "@libztbs/extension-runtime";
@@ -6,7 +5,6 @@ import type { PageAnalysis, StorageData } from "./types.js";
 
 export interface PageAnalysisDependencies {
   logger: Logger;
-  getAlertManager: () => AlertManager;
   initStorage: () => Promise<StorageData>;
   updateService: (domain: string, update: Partial<DetectedService>) => Promise<void>;
   addCookieToService: (domain: string, cookie: CookieInfo) => Promise<void>;
@@ -43,36 +41,6 @@ export function createPageAnalysisHandler(deps: PageAnalysisDependencies) {
   // Single storage write for all service updates
   if (Object.keys(serviceUpdate).length > 0) {
     await deps.updateService(domain, serviceUpdate);
-  }
-
-  const hasPrivacyPolicy = privacy.found;
-  const hasTermsOfService = tos.found;
-  const hasCookiePolicy = cookiePolicy?.found ?? false;
-  const hasCookieBanner = cookieBanner?.found ?? false;
-  const isCookieBannerGDPRCompliant = cookieBanner?.isGDPRCompliant ?? false;
-
-  // Skip compliance checks for local/development environments
-  const isLocal = /^(localhost|127\.\d+\.\d+\.\d+|0\.0\.0\.0|\[::1\])$/.test(domain)
-    || domain.endsWith(".local")
-    || domain.endsWith(".localhost");
-
-  const hasViolations = !isLocal && (
-    (hasLoginForm && (!hasPrivacyPolicy || !hasTermsOfService)) ||
-    !hasCookiePolicy ||
-    !hasCookieBanner ||
-    (hasCookieBanner && !isCookieBannerGDPRCompliant)
-  );
-
-  if (hasViolations) {
-    await deps.getAlertManager().alertCompliance({
-      pageDomain: domain,
-      hasPrivacyPolicy,
-      hasTermsOfService,
-      hasCookiePolicy,
-      hasCookieBanner,
-      isCookieBannerGDPRCompliant,
-      hasLoginForm,
-    });
   }
 
   // Proactively query existing cookies for newly detected domains

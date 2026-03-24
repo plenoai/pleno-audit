@@ -175,11 +175,9 @@ test.describe("False-Positive Smoke Test", () => {
         : {};
 
     // Categorize alerts into actionable FPs vs accepted/non-hook signals
-    // - compliance: page analysis layer, not main-world hooks (test page lacks cookie policy)
     // - audio_fingerprint: dedup'd to 1/page, inherent for any AudioContext usage
     // - webrtc_connection: dedup'd to 1/page, inherent for any RTCPeerConnection usage
     const ACCEPTED_CATEGORIES = new Set([
-      "compliance",
       "audio_fingerprint",
       "webrtc_connection",
     ]);

@@ -52,7 +52,6 @@ export function createBackgroundServices(serviceLogger: Logger) {
   const analysis = {
     handlePageAnalysis: createPageAnalysisHandler({
       logger: state.logger,
-      getAlertManager: alerts.getAlertManager,
       initStorage: storage.initStorage,
       updateService: storage.updateService,
       addCookieToService: storage.addCookieToService,

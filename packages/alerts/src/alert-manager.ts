@@ -24,7 +24,7 @@ import type {
   DataExfiltrationAlertParams,
   CredentialTheftAlertParams,
   SupplyChainRiskAlertParams,
-  ComplianceAlertParams,
+
   PolicyViolationAlertParams,
   TrackingBeaconAlertParams,
   ClipboardHijackAlertParams,
@@ -81,7 +81,7 @@ import {
   buildDataExfiltrationAlert,
   buildCredentialTheftAlert,
   buildSupplyChainRiskAlert,
-  buildComplianceAlert,
+
   buildPolicyViolationAlert,
   buildTrackingBeaconAlert,
   buildClipboardHijackAlert,
@@ -381,12 +381,6 @@ export function createAlertManager(
     params: SupplyChainRiskAlertParams
   ): Promise<SecurityAlert | null> {
     return createOptionalAlert(buildSupplyChainRiskAlert(params));
-  }
-
-  async function alertCompliance(
-    params: ComplianceAlertParams
-  ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildComplianceAlert(params));
   }
 
   async function alertPolicyViolation(
@@ -711,7 +705,6 @@ export function createAlertManager(
     alertDataExfiltration,
     alertCredentialTheft,
     alertSupplyChainRisk,
-    alertCompliance,
     alertPolicyViolation,
     alertTrackingBeacon,
     alertClipboardHijack,

@@ -26,7 +26,6 @@ export type AlertCategory =
   | "extension" // Suspicious extension activity
   | "login" // Login on suspicious site
   | "policy" // Missing privacy/ToS policy
-  | "compliance" // GDPR/CCPA compliance violation
   | "policy_violation" // Enterprise policy violation
   | "tracking_beacon" // Tracking beacon detected
   | "clipboard_hijack" // Clipboard hijack attempt (crypto address)
@@ -118,7 +117,6 @@ export type AlertDetails =
   | ExtensionAlertDetails
   | LoginAlertDetails
   | PolicyAlertDetails
-  | ComplianceAlertDetails
   | PolicyViolationAlertDetails
   | TrackingBeaconAlertDetails
   | ClipboardHijackAlertDetails
@@ -264,18 +262,6 @@ export interface SupplyChainAlertDetails {
   hasCrossorigin: boolean;
   isCDN: boolean;
   risks: string[];
-}
-
-export interface ComplianceAlertDetails {
-  type: "compliance";
-  pageDomain: string;
-  hasPrivacyPolicy: boolean;
-  hasTermsOfService: boolean;
-  hasCookiePolicy: boolean;
-  hasCookieBanner: boolean;
-  isCookieBannerGDPRCompliant: boolean;
-  hasLoginForm: boolean;
-  violations: string[];
 }
 
 export interface PolicyViolationAlertDetails {

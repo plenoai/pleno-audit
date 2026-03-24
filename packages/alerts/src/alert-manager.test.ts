@@ -639,69 +639,6 @@ describe("createAlertManager", () => {
     });
   });
 
-  describe("alertCompliance", () => {
-    it("creates high alert for login without privacy policy", async () => {
-      const manager = createAlertManager({
-        enabled: true,
-        showNotifications: false,
-        playSound: false,
-        rules: [],
-
-      });
-      const alert = await manager.alertCompliance({
-        pageDomain: "suspicious.com",
-        hasPrivacyPolicy: false,
-        hasTermsOfService: true,
-        hasCookiePolicy: true,
-        hasCookieBanner: true,
-        isCookieBannerGDPRCompliant: true,
-        hasLoginForm: true,
-      });
-      expect(alert?.severity).toBe("high");
-      expect(alert?.description).toContain("プライバシーポリシーなし");
-    });
-
-    it("creates medium alert for missing cookie policy", async () => {
-      const manager = createAlertManager({
-        enabled: true,
-        showNotifications: false,
-        playSound: false,
-        rules: [],
-
-      });
-      const alert = await manager.alertCompliance({
-        pageDomain: "site.com",
-        hasPrivacyPolicy: true,
-        hasTermsOfService: true,
-        hasCookiePolicy: false,
-        hasCookieBanner: true,
-        isCookieBannerGDPRCompliant: true,
-        hasLoginForm: false,
-      });
-      expect(alert?.severity).toBe("medium");
-    });
-
-    it("does not create alert when compliant", async () => {
-      const manager = createAlertManager({
-        enabled: true,
-        showNotifications: false,
-        playSound: false,
-        rules: [],
-
-      });
-      const alert = await manager.alertCompliance({
-        pageDomain: "compliant.com",
-        hasPrivacyPolicy: true,
-        hasTermsOfService: true,
-        hasCookiePolicy: true,
-        hasCookieBanner: true,
-        isCookieBannerGDPRCompliant: true,
-        hasLoginForm: true,
-      });
-      expect(alert).toBeNull();
-    });
-  });
-
   describe("alertPolicyViolation", () => {
     it("creates medium alert for warn action (observe-only)", async () => {
       const manager = createAlertManager({

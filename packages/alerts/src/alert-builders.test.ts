@@ -13,7 +13,6 @@ import {
   buildDataExfiltrationAlert,
   buildCredentialTheftAlert,
   buildSupplyChainRiskAlert,
-  buildComplianceAlert,
   buildPolicyViolationAlert,
   buildTrackingBeaconAlert,
   buildClipboardHijackAlert,
@@ -28,7 +27,6 @@ import {
   type DataExfiltrationAlertParams,
   type CredentialTheftAlertParams,
   type SupplyChainRiskAlertParams,
-  type ComplianceAlertParams,
   type PolicyViolationAlertParams,
   type TrackingBeaconAlertParams,
   type ClipboardHijackAlertParams,
@@ -473,55 +471,6 @@ describe("buildSupplyChainRiskAlert", () => {
     const alert = buildSupplyChainRiskAlert(params);
 
     expect(alert.severity).toBe("medium");
-  });
-});
-
-describe("buildComplianceAlert", () => {
-  it("builds high alert for missing privacy on login form", () => {
-    const params: ComplianceAlertParams = {
-      pageDomain: "example.com",
-      hasPrivacyPolicy: false,
-      hasTermsOfService: true,
-      hasCookiePolicy: true,
-      hasCookieBanner: true,
-      isCookieBannerGDPRCompliant: true,
-      hasLoginForm: true,
-    };
-    const alert = buildComplianceAlert(params);
-
-    expect(alert).not.toBeNull();
-    expect(alert!.severity).toBe("high");
-  });
-
-  it("returns null for full compliance", () => {
-    const params: ComplianceAlertParams = {
-      pageDomain: "example.com",
-      hasPrivacyPolicy: true,
-      hasTermsOfService: true,
-      hasCookiePolicy: true,
-      hasCookieBanner: true,
-      isCookieBannerGDPRCompliant: true,
-      hasLoginForm: true,
-    };
-    const alert = buildComplianceAlert(params);
-
-    expect(alert).toBeNull();
-  });
-
-  it("detects non-compliant cookie banner", () => {
-    const params: ComplianceAlertParams = {
-      pageDomain: "example.com",
-      hasPrivacyPolicy: true,
-      hasTermsOfService: true,
-      hasCookiePolicy: true,
-      hasCookieBanner: true,
-      isCookieBannerGDPRCompliant: false,
-      hasLoginForm: false,
-    };
-    const alert = buildComplianceAlert(params);
-
-    expect(alert).not.toBeNull();
-    expect(alert!.description).toContain("GDPR非準拠バナー");
   });
 });
 
