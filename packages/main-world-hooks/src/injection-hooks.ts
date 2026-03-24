@@ -126,7 +126,6 @@ export function initInjectionHooks(emitSecurityEvent: SharedHookUtils["emitSecur
   // Notification API (phishing)
   if (typeof Notification !== "undefined") {
     const OriginalNotification = Notification;
-    // @ts-expect-error -- monkey-patching Notification constructor
     window.Notification = function (title: string, options?: NotificationOptions) {
       emitSecurityEvent("__NOTIFICATION_PHISHING_DETECTED__", {
         title,
@@ -182,8 +181,8 @@ export function initInjectionHooks(emitSecurityEvent: SharedHookUtils["emitSecur
     navigator.credentials.get = function (options?: CredentialRequestOptions) {
       emitSecurityEvent("__CREDENTIAL_API_DETECTED__", {
         method: "get",
-        hasPassword: !!options?.password,
-        hasFederated: !!options?.federated,
+        hasPassword: !!(options as Record<string, unknown>)?.password,
+        hasFederated: !!(options as Record<string, unknown>)?.federated,
         timestamp: Date.now(),
         pageUrl: location.href,
       });
