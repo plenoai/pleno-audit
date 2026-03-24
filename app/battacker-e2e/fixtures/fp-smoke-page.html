@@ -793,6 +793,81 @@
     }
 
     // ============================================================
+    // Pattern 29: Cookie access at boundary (4 reads, threshold ≥5)
+    // ============================================================
+    function cookieBoundary() {
+      // Wait for previous cookie window to expire (3s)
+      var c1 = document.cookie;
+      var c2 = document.cookie;
+      var c3 = document.cookie;
+      var c4 = document.cookie;
+      void c1; void c2; void c3; void c4;
+      record("Cookie Boundary", true, "4 cookie reads (threshold: >=5/3s)");
+    }
+
+    // ============================================================
+    // Pattern 30: localStorage.getItem at boundary (49 calls, threshold ==50)
+    // ============================================================
+    function storageBoundary() {
+      for (var i = 0; i < 49; i++) {
+        localStorage.getItem("__boundary_test_" + i);
+      }
+      record("Storage Boundary", true, "49 getItem calls (threshold: 50/3s)");
+    }
+
+    // ============================================================
+    // Pattern 31: querySelectorAll at boundary (299 calls, threshold ==300)
+    // ============================================================
+    function qsaBoundary() {
+      for (var i = 0; i < 299; i++) {
+        document.querySelectorAll("*");
+      }
+      record("QSA Boundary", true, "299 querySelectorAll calls (threshold: 300/5s)");
+    }
+
+    // ============================================================
+    // Pattern 32: Event listener at boundary (10 registrations, threshold >10)
+    // ============================================================
+    function eventListenerBoundary() {
+      function noop() {}
+      // Exactly 10 clipboard event registrations (threshold is >10, not >=10)
+      for (var i = 0; i < 10; i++) {
+        document.addEventListener("copy", noop);
+      }
+      for (var j = 0; j < 10; j++) {
+        document.removeEventListener("copy", noop);
+      }
+      record("Event Listener Boundary", true, "10 copy listeners (threshold: >10/5s)");
+    }
+
+    // ============================================================
+    // Pattern 33: sendBeacon at boundary (1024 bytes, threshold >1024)
+    // ============================================================
+    function sendBeaconBoundary() {
+      if (!navigator.sendBeacon) {
+        record("sendBeacon Boundary", true, "sendBeacon not available");
+        return;
+      }
+      // Create payload of exactly 1024 bytes
+      var payload = "x".repeat(1024);
+      navigator.sendBeacon("/api/v1/data", payload);
+      record("sendBeacon Boundary", true, "1024-byte payload (threshold: >1024)");
+    }
+
+    // ============================================================
+    // Pattern 34: Cross-origin fetch at boundary (10239 bytes, threshold ≥10240)
+    // ============================================================
+    function fetchBoundary() {
+      // 10239 bytes = 10KB - 1 byte (threshold is 10*1024 = 10240)
+      var body = "x".repeat(10239);
+      fetch("https://httpbin.org/post", {
+        method: "POST",
+        body: body,
+      }).catch(function () { /* expected CORS failure */ });
+      record("Fetch Boundary", true, "10239-byte cross-origin POST (threshold: >=10240)");
+    }
+
+    // ============================================================
     // Run all patterns on page load
     // ============================================================
     function runAll() {
@@ -829,6 +904,12 @@
       dynamicCDNScript();
       spaStateManagement();
       normalEventListeners();
+      cookieBoundary();
+      storageBoundary();
+      qsaBoundary();
+      eventListenerBoundary();
+      sendBeaconBoundary();
+      fetchBoundary();
 
       log("", "info");
       log("All patterns executed.", "info");
