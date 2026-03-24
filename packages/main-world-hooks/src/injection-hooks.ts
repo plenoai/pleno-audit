@@ -38,17 +38,20 @@ export function initInjectionHooks(emitSecurityEvent: SharedHookUtils["emitSecur
   } as FunctionConstructor;
   (window.Function as any).prototype = OriginalFunction.prototype;
 
-  // requestFullscreen
+  // requestFullscreen - only alert on non-media elements (video/canvas fullscreen is normal)
   const originalRequestFullscreen = Element.prototype.requestFullscreen;
+  const FULLSCREEN_SAFE_TAGS = new Set(["VIDEO", "CANVAS", "IFRAME"]);
   if (originalRequestFullscreen) {
     Element.prototype.requestFullscreen = function (options?: FullscreenOptions) {
-      emitSecurityEvent("__FULLSCREEN_PHISHING_DETECTED__", {
-        element: this.tagName,
-        elementId: this.id || null,
-        className: this.className || null,
-        timestamp: Date.now(),
-        pageUrl: location.href,
-      });
+      if (!FULLSCREEN_SAFE_TAGS.has(this.tagName)) {
+        emitSecurityEvent("__FULLSCREEN_PHISHING_DETECTED__", {
+          element: this.tagName,
+          elementId: this.id || null,
+          className: this.className || null,
+          timestamp: Date.now(),
+          pageUrl: location.href,
+        });
+      }
       return originalRequestFullscreen.call(this, options);
     };
   }
@@ -80,15 +83,19 @@ export function initInjectionHooks(emitSecurityEvent: SharedHookUtils["emitSecur
   }
 
   // navigator.sendBeacon (covert exfiltration channel)
+  // Only alert on large payloads (>1KB) to avoid false positives from analytics
   if (navigator.sendBeacon) {
     const originalSendBeacon = navigator.sendBeacon.bind(navigator);
     navigator.sendBeacon = function (url: string | URL, data?: BodyInit | null): boolean {
-      emitSecurityEvent("__SEND_BEACON_DETECTED__", {
-        url: String(url),
-        dataSize: data ? new Blob([data as BlobPart]).size : 0,
-        timestamp: Date.now(),
-        pageUrl: location.href,
-      });
+      const dataSize = data ? new Blob([data as BlobPart]).size : 0;
+      if (dataSize > 1024) {
+        emitSecurityEvent("__SEND_BEACON_DETECTED__", {
+          url: String(url),
+          dataSize,
+          timestamp: Date.now(),
+          pageUrl: location.href,
+        });
+      }
       return originalSendBeacon(url, data);
     };
   }
@@ -123,57 +130,11 @@ export function initInjectionHooks(emitSecurityEvent: SharedHookUtils["emitSecur
     }
   }
 
-  // Notification API (phishing)
-  if (typeof Notification !== "undefined") {
-    const OriginalNotification = Notification;
-    window.Notification = function (title: string, options?: NotificationOptions) {
-      emitSecurityEvent("__NOTIFICATION_PHISHING_DETECTED__", {
-        title,
-        body: options?.body?.substring(0, 200) ?? "",
-        timestamp: Date.now(),
-        pageUrl: location.href,
-      });
-      return new OriginalNotification(title, options);
-    } as unknown as typeof Notification;
-    Object.setPrototypeOf(window.Notification, OriginalNotification);
-    Object.defineProperty(window.Notification, "permission", {
-      get: () => OriginalNotification.permission,
-    });
-    window.Notification.requestPermission = OriginalNotification.requestPermission.bind(OriginalNotification);
-  }
+  // Notification API - browser already requires permission grant, no need for extension alert
+  // Removed to avoid false positives on chat/email apps
 
-  // geolocation
-  if (navigator.geolocation) {
-    const originalGetCurrentPosition = navigator.geolocation.getCurrentPosition.bind(navigator.geolocation);
-    navigator.geolocation.getCurrentPosition = function (
-      success: PositionCallback,
-      error?: PositionErrorCallback | null,
-      options?: PositionOptions,
-    ) {
-      emitSecurityEvent("__GEOLOCATION_ACCESSED__", {
-        method: "getCurrentPosition",
-        highAccuracy: options?.enableHighAccuracy || false,
-        timestamp: Date.now(),
-        pageUrl: location.href,
-      });
-      return originalGetCurrentPosition(success, error ?? undefined, options);
-    };
-
-    const originalWatchPosition = navigator.geolocation.watchPosition.bind(navigator.geolocation);
-    navigator.geolocation.watchPosition = function (
-      success: PositionCallback,
-      error?: PositionErrorCallback | null,
-      options?: PositionOptions,
-    ) {
-      emitSecurityEvent("__GEOLOCATION_ACCESSED__", {
-        method: "watchPosition",
-        highAccuracy: options?.enableHighAccuracy || false,
-        timestamp: Date.now(),
-        pageUrl: location.href,
-      });
-      return originalWatchPosition(success, error ?? undefined, options);
-    };
-  }
+  // geolocation - browser already shows permission dialog, no need for extension alert
+  // Removed to avoid false positives on map/weather apps
 
   // Credential Management API (phishing/harvesting)
   if (navigator.credentials?.get) {

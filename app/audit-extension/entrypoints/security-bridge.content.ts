@@ -61,7 +61,7 @@ export default defineContentScript({
       "__DYNAMIC_CODE_EXECUTION_DETECTED__",
       "__FULLSCREEN_PHISHING_DETECTED__",
       "__CLIPBOARD_READ_DETECTED__",
-      "__GEOLOCATION_ACCESSED__",
+      // Geolocation removed (browser permission dialog handles this)
       "__CANVAS_FINGERPRINT_DETECTED__",
       "__WEBGL_FINGERPRINT_DETECTED__",
       "__AUDIO_FINGERPRINT_DETECTED__",
@@ -69,7 +69,7 @@ export default defineContentScript({
       "__WEBRTC_CONNECTION_DETECTED__",
       "__SEND_BEACON_DETECTED__",
       "__MEDIA_CAPTURE_DETECTED__",
-      "__NOTIFICATION_PHISHING_DETECTED__",
+      // Notification removed (browser permission dialog handles this)
       "__CREDENTIAL_API_DETECTED__",
       "__DEVICE_SENSOR_ACCESSED__",
       "__DEVICE_ENUMERATION_DETECTED__",
