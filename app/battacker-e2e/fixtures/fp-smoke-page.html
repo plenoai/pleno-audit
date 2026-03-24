@@ -742,6 +742,57 @@
     }
 
     // ============================================================
+    // Pattern 26: Dynamic CDN script loading (supply chain risk test)
+    // Real websites dynamically load scripts from CDNs without SRI.
+    // This tests whether the supply chain hook fires on common patterns.
+    // NOTE: This WILL fire the supply chain hook (known CDN without SRI).
+    // This is a TRUE POSITIVE for supply chain risk, not a false positive.
+    // We document it here as an awareness test, not as a failure condition.
+    // ============================================================
+    function dynamicCDNScript() {
+      // We DON'T actually load CDN scripts in the test (would fail on localhost).
+      // Instead, document that this pattern would trigger and is expected.
+      record("Dynamic CDN Script", true, "Documented: CDN scripts without SRI trigger supply_chain (true positive)");
+    }
+
+    // ============================================================
+    // Pattern 27: Multiple localStorage writes (SPA state management)
+    // Storage exfiltration hook only monitors getItem, not setItem
+    // ============================================================
+    function spaStateManagement() {
+      for (var i = 0; i < 50; i++) {
+        localStorage.setItem("__fptest_state_" + i, JSON.stringify({ v: i, ts: Date.now() }));
+      }
+      // Cleanup
+      for (var j = 0; j < 50; j++) {
+        localStorage.removeItem("__fptest_state_" + j);
+      }
+      record("SPA State Management", true, "50 localStorage.setItem calls (setItem not hooked)");
+    }
+
+    // ============================================================
+    // Pattern 28: Rapid event listener registration (< 10 burst threshold)
+    // Clipboard/drag/selection sniffing requires >10 registrations in 5s
+    // ============================================================
+    function normalEventListeners() {
+      function noop() {}
+      // 5 clipboard event listeners (below 10 threshold)
+      for (var i = 0; i < 5; i++) {
+        document.addEventListener("copy", noop);
+      }
+      // 5 drag event listeners
+      for (var j = 0; j < 5; j++) {
+        document.addEventListener("dragstart", noop);
+      }
+      // Cleanup
+      for (var k = 0; k < 5; k++) {
+        document.removeEventListener("copy", noop);
+        document.removeEventListener("dragstart", noop);
+      }
+      record("Normal Event Listeners", true, "5 copy + 5 dragstart listeners (< 10 threshold)");
+    }
+
+    // ============================================================
     // Run all patterns on page load
     // ============================================================
     function runAll() {
@@ -775,6 +826,9 @@
       webglRendering();
       spaQuerySelector();
       dynamicIframe();
+      dynamicCDNScript();
+      spaStateManagement();
+      normalEventListeners();
 
       log("", "info");
       log("All patterns executed.", "info");
