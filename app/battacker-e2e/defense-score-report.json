@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-03-24T16:50:43.614Z",
+  "timestamp": "2026-03-24T22:02:14.152Z",
   "totalScore": 12,
   "grade": "F",
   "testsRun": 105,
@@ -163,7 +163,7 @@
       "category": "network",
       "severity": "high",
       "blocked": false,
-      "executionTime": 793.0999999996275,
+      "executionTime": 784.1000000014901,
       "details": "Beacon sent (status: 200)"
     },
     {
@@ -172,7 +172,7 @@
       "category": "network",
       "severity": "critical",
       "blocked": false,
-      "executionTime": 178.5,
+      "executionTime": 177.40000000223517,
       "details": "Exfiltration simulated (status: 200)"
     },
     {
@@ -181,7 +181,7 @@
       "category": "network",
       "severity": "critical",
       "blocked": false,
-      "executionTime": 186.30000000074506,
+      "executionTime": 556.6000000014901,
       "details": "C2 polling successful, received 275 bytes"
     },
     {
@@ -190,7 +190,7 @@
       "category": "network",
       "severity": "critical",
       "blocked": false,
-      "executionTime": 391,
+      "executionTime": 906.5999999977648,
       "details": "WebSocket C2 successful: 32 bytes"
     },
     {
@@ -199,7 +199,7 @@
       "category": "network",
       "severity": "critical",
       "blocked": false,
-      "executionTime": 376.40000000037253,
+      "executionTime": 186.5,
       "details": "Worker exfil successful (status: 200)"
     },
     {
@@ -208,7 +208,7 @@
       "category": "phishing",
       "severity": "high",
       "blocked": false,
-      "executionTime": 1,
+      "executionTime": 2,
       "details": "Clipboard hijack successful"
     },
     {
@@ -217,7 +217,7 @@
       "category": "phishing",
       "severity": "high",
       "blocked": false,
-      "executionTime": 0.599999999627471,
+      "executionTime": 0.8999999985098839,
       "details": "No stored credentials found"
     },
     {
@@ -226,7 +226,7 @@
       "category": "phishing",
       "severity": "medium",
       "blocked": true,
-      "executionTime": 1.3999999985098839,
+      "executionTime": 2.100000001490116,
       "details": "Notification permission denied"
     },
     {
@@ -235,7 +235,7 @@
       "category": "client-side",
       "severity": "critical",
       "blocked": false,
-      "executionTime": 0.2000000011175871,
+      "executionTime": 0.09999999776482582,
       "details": "XSS-like injection successful"
     },
     {
@@ -253,7 +253,7 @@
       "category": "client-side",
       "severity": "high",
       "blocked": false,
-      "executionTime": 0.19999999925494194,
+      "executionTime": 0.10000000149011612,
       "details": "Cookie access: 0 chars"
     },
     {
@@ -262,7 +262,7 @@
       "category": "download",
       "severity": "high",
       "blocked": false,
-      "executionTime": 0.7000000011175871,
+      "executionTime": 0.20000000298023224,
       "details": "Blob URL download link created"
     },
     {
@@ -271,7 +271,7 @@
       "category": "download",
       "severity": "high",
       "blocked": false,
-      "executionTime": 0.09999999962747097,
+      "executionTime": 0,
       "details": "Data URL download link created"
     },
     {
@@ -289,7 +289,7 @@
       "category": "persistence",
       "severity": "high",
       "blocked": false,
-      "executionTime": 21.90000000037253,
+      "executionTime": 21.099999997764826,
       "details": "IndexedDB data stash successful"
     },
     {
@@ -298,7 +298,7 @@
       "category": "persistence",
       "severity": "medium",
       "blocked": false,
-      "executionTime": 4.699999999254942,
+      "executionTime": 6.100000001490116,
       "details": "Cache API abuse successful"
     },
     {
@@ -307,7 +307,7 @@
       "category": "persistence",
       "severity": "low",
       "blocked": false,
-      "executionTime": 0.30000000074505806,
+      "executionTime": 0.19999999925494194,
       "details": "History state exfil successful"
     },
     {
@@ -316,7 +316,7 @@
       "category": "side-channel",
       "severity": "medium",
       "blocked": false,
-      "executionTime": 3,
+      "executionTime": 3.599999997764826,
       "details": "Canvas fingerprint: AA//9htOjoAAAABklEQVQDAKC1pKFTJqQDAAAAAElFTkSuQmCC"
     },
     {
@@ -325,7 +325,7 @@
       "category": "side-channel",
       "severity": "medium",
       "blocked": false,
-      "executionTime": 0.10000000149011612,
+      "executionTime": 0.5,
       "details": "Performance timing: 4 metrics collected"
     },
     {
@@ -334,7 +334,7 @@
       "category": "side-channel",
       "severity": "high",
       "blocked": false,
-      "executionTime": 0.6999999992549419,
+      "executionTime": 0.6000000014901161,
       "details": "BroadcastChannel leak successful"
     },
     {
@@ -343,7 +343,7 @@
       "category": "side-channel",
       "severity": "critical",
       "blocked": false,
-      "executionTime": 0.19999999925494194,
+      "executionTime": 0.10000000149011612,
       "details": "High-precision timer available - resolution 0.000000ms"
     },
     {
@@ -361,7 +361,7 @@
       "category": "fingerprinting",
       "severity": "high",
       "blocked": false,
-      "executionTime": 5.899999998509884,
+      "executionTime": 6.699999999254942,
       "details": "WebGL fingerprint: 6 params (GPU: ANGLE (Apple, ANGLE Metal Renderer: Apple M3, Unspecified Version))"
     },
     {
@@ -370,7 +370,7 @@
       "category": "fingerprinting",
       "severity": "high",
       "blocked": false,
-      "executionTime": 213.2999999988824,
+      "executionTime": 211.80000000074506,
       "details": "Audio fingerprint hash: 61496cbe"
     },
     {
@@ -379,7 +379,7 @@
       "category": "fingerprinting",
       "severity": "medium",
       "blocked": false,
-      "executionTime": 7.900000000372529,
+      "executionTime": 9.5,
       "details": "Font fingerprint: 10/10 fonts detected"
     },
     {
@@ -397,7 +397,7 @@
       "category": "fingerprinting",
       "severity": "medium",
       "blocked": false,
-      "executionTime": 0,
+      "executionTime": 0.09999999776482582,
       "details": "Navigator fingerprint: 6 properties collected"
     },
     {
@@ -407,7 +407,7 @@
       "severity": "high",
       "blocked": false,
       "executionTime": 200,
-      "details": "CPU mining: 3120060 h/s (624012 hashes)"
+      "details": "CPU mining: 3383680 h/s (676736 hashes)"
     },
     {
       "id": "cryptojacking-worker",
@@ -415,8 +415,8 @@
       "category": "cryptojacking",
       "severity": "critical",
       "blocked": false,
-      "executionTime": 201.90000000037253,
-      "details": "Worker mining: 4396165 h/s"
+      "executionTime": 201.69999999925494,
+      "details": "Worker mining: 4364975 h/s"
     },
     {
       "id": "cryptojacking-multi-worker",
@@ -424,8 +424,8 @@
       "category": "cryptojacking",
       "severity": "critical",
       "blocked": false,
-      "executionTime": 204,
-      "details": "Multi-worker mining: 4 workers, 14066550 h/s combined"
+      "executionTime": 202.59999999776483,
+      "details": "Multi-worker mining: 4 workers, 14313995 h/s combined"
     },
     {
       "id": "cryptojacking-wasm",
@@ -433,8 +433,8 @@
       "category": "cryptojacking",
       "severity": "high",
       "blocked": false,
-      "executionTime": 101.10000000149012,
-      "details": "WASM mining: 449610000 ops/s"
+      "executionTime": 101.29999999701977,
+      "details": "WASM mining: 454800000 ops/s"
     },
     {
       "id": "privacy-geolocation",
@@ -442,7 +442,7 @@
       "category": "privacy",
       "severity": "critical",
       "blocked": true,
-      "executionTime": 0.7999999988824129,
+      "executionTime": 2.300000000745058,
       "details": "Geolocation permission denied"
     },
     {
@@ -451,8 +451,8 @@
       "category": "privacy",
       "severity": "medium",
       "blocked": false,
-      "executionTime": 0.19999999925494194,
-      "details": "Battery: 95% (discharging)"
+      "executionTime": 0.10000000149011612,
+      "details": "Battery: 84% (charging)"
     },
     {
       "id": "privacy-motion",
@@ -460,7 +460,7 @@
       "category": "privacy",
       "severity": "high",
       "blocked": false,
-      "executionTime": 20.40000000037253,
+      "executionTime": 19.399999998509884,
       "details": "Motion data: x=undefined"
     },
     {
@@ -469,7 +469,7 @@
       "category": "privacy",
       "severity": "medium",
       "blocked": false,
-      "executionTime": 148.09999999962747,
+      "executionTime": 142.90000000223517,
       "details": "Media devices: 1 cameras, 1 mics"
     },
     {
@@ -478,7 +478,7 @@
       "category": "privacy",
       "severity": "low",
       "blocked": false,
-      "executionTime": 0.599999999627471,
+      "executionTime": 1.1000000014901161,
       "details": "Storage: 0.00MB used of 136.96GB"
     },
     {
@@ -487,7 +487,7 @@
       "category": "media",
       "severity": "critical",
       "blocked": false,
-      "executionTime": 3002.2999999988824,
+      "executionTime": 3001.5,
       "details": "Screen capture permission pending"
     },
     {
@@ -496,7 +496,7 @@
       "category": "media",
       "severity": "critical",
       "blocked": true,
-      "executionTime": 52.19999999925494,
+      "executionTime": 58.899999998509884,
       "details": "Audio capture blocked"
     },
     {
@@ -505,7 +505,7 @@
       "category": "media",
       "severity": "critical",
       "blocked": true,
-      "executionTime": 28.5,
+      "executionTime": 30.699999999254942,
       "details": "Media capture blocked"
     },
     {
@@ -514,7 +514,7 @@
       "category": "storage",
       "severity": "high",
       "blocked": false,
-      "executionTime": 0.2999999988824129,
+      "executionTime": 0.30000000074505806,
       "details": "localStorage exfil: 52 bytes"
     },
     {
@@ -523,7 +523,7 @@
       "category": "storage",
       "severity": "high",
       "blocked": false,
-      "executionTime": 0.19999999925494194,
+      "executionTime": 0.10000000149011612,
       "details": "sessionStorage exfil: 65 bytes"
     },
     {
@@ -532,7 +532,7 @@
       "category": "storage",
       "severity": "medium",
       "blocked": false,
-      "executionTime": 102.10000000149012,
+      "executionTime": 101.30000000074506,
       "details": "Storage event listener set (single-tab test)"
     },
     {
@@ -541,7 +541,7 @@
       "category": "storage",
       "severity": "medium",
       "blocked": false,
-      "executionTime": 1.299999998882413,
+      "executionTime": 1.300000000745058,
       "details": "Storage quota probe: 2048000 bytes stored"
     },
     {
@@ -550,7 +550,7 @@
       "category": "worker",
       "severity": "critical",
       "blocked": false,
-      "executionTime": 2.600000001490116,
+      "executionTime": 4.100000001490116,
       "details": "SharedWorker communication successful"
     },
     {
@@ -559,8 +559,8 @@
       "category": "worker",
       "severity": "critical",
       "blocked": true,
-      "executionTime": 0.7000000011175871,
-      "details": "Service Worker blocked: Failed to register a ServiceWorker: The URL protocol of the script ('blob:http://127.0.0.1:53956/856352db-7656-4e13-bbeb-86a7e90370cb') is not supported."
+      "executionTime": 0.6999999992549419,
+      "details": "Service Worker blocked: Failed to register a ServiceWorker: The URL protocol of the script ('blob:http://127.0.0.1:59253/3b4506c1-65e0-49c1-ad8e-fde8136b0ca2') is not supported."
     },
     {
       "id": "worker-spawning-chain",
@@ -568,7 +568,7 @@
       "category": "worker",
       "severity": "high",
       "blocked": false,
-      "executionTime": 4.5,
+      "executionTime": 5.799999997019768,
       "details": "Worker chain: depth 1"
     },
     {
@@ -577,7 +577,7 @@
       "category": "injection",
       "severity": "high",
       "blocked": true,
-      "executionTime": 10.700000001117587,
+      "executionTime": 10.400000002235174,
       "details": "Clipboard read blocked: Failed to execute 'readText' on 'Clipboard': Read permission denied."
     },
     {
@@ -586,7 +586,7 @@
       "category": "injection",
       "severity": "critical",
       "blocked": false,
-      "executionTime": 1.8999999985098839,
+      "executionTime": 1.4000000022351742,
       "details": "Fullscreen takeover successful"
     },
     {
@@ -595,7 +595,7 @@
       "category": "injection",
       "severity": "high",
       "blocked": false,
-      "executionTime": 0.599999999627471,
+      "executionTime": 0.29999999701976776,
       "details": "innerHTML injection: dangerous elements persisted"
     },
     {
@@ -613,7 +613,7 @@
       "category": "covert",
       "severity": "critical",
       "blocked": false,
-      "executionTime": 0.40000000037252903,
+      "executionTime": 0.5,
       "details": "Beacon API exfiltration successful"
     },
     {
@@ -622,7 +622,7 @@
       "category": "covert",
       "severity": "high",
       "blocked": false,
-      "executionTime": 102.59999999962747,
+      "executionTime": 102,
       "details": "DNS prefetch leak: covert channel established"
     },
     {
@@ -631,7 +631,7 @@
       "category": "covert",
       "severity": "critical",
       "blocked": true,
-      "executionTime": 3.099999999627471,
+      "executionTime": 16.899999998509884,
       "details": "WebTransport blocked: Opening handshake failed."
     },
     {
@@ -640,7 +640,7 @@
       "category": "covert",
       "severity": "critical",
       "blocked": false,
-      "executionTime": 3077.4000000003725,
+      "executionTime": 3073.099999997765,
       "details": "WebRTC DataChannel timed out"
     },
     {
@@ -649,8 +649,8 @@
       "category": "covert",
       "severity": "medium",
       "blocked": false,
-      "executionTime": 1079,
-      "details": "Image timing channel: avg 520ms"
+      "executionTime": 692.6999999992549,
+      "details": "Image timing channel: avg 231ms"
     },
     {
       "id": "advanced-form-submit-hijack",
@@ -658,7 +658,7 @@
       "category": "advanced",
       "severity": "high",
       "blocked": false,
-      "executionTime": 0.2999999988824129,
+      "executionTime": 0.5,
       "details": "Form submission hijacking successful"
     },
     {
@@ -676,7 +676,7 @@
       "category": "advanced",
       "severity": "medium",
       "blocked": false,
-      "executionTime": 175.09999999962747,
+      "executionTime": 176.60000000149012,
       "details": "Request header injection: custom headers sent"
     },
     {
@@ -685,7 +685,7 @@
       "category": "advanced",
       "severity": "high",
       "blocked": true,
-      "executionTime": 0.19999999925494194,
+      "executionTime": 0.29999999701976776,
       "details": "MutationObserver XSS blocked"
     },
     {
@@ -694,8 +694,8 @@
       "category": "advanced",
       "severity": "medium",
       "blocked": false,
-      "executionTime": 837.6999999992549,
-      "details": "CORS preflight timing: 838ms"
+      "executionTime": 496.30000000074506,
+      "details": "CORS preflight timing: 496ms"
     },
     {
       "id": "covert-css-keylogging",
@@ -703,7 +703,7 @@
       "category": "covert",
       "severity": "high",
       "blocked": false,
-      "executionTime": 53.5,
+      "executionTime": 53.600000001490116,
       "details": "CSS keylogging: 36 selector rules injected undetected (45 total rules in page)"
     },
     {
@@ -721,7 +721,7 @@
       "category": "injection",
       "severity": "high",
       "blocked": false,
-      "executionTime": 0.2000000011175871,
+      "executionTime": 0.20000000298023224,
       "details": "DOM clobbering: window.battacker_clobber_target shadowed (shallow=true, deep=true)"
     },
     {
@@ -730,7 +730,7 @@
       "category": "side-channel",
       "severity": "medium",
       "blocked": false,
-      "executionTime": 0.7000000011175871,
+      "executionTime": 0.8999999985098839,
       "details": "PerformanceObserver side-channel: 11 buffered resource entries exposed (observer captured 11)"
     },
     {
@@ -739,7 +739,7 @@
       "category": "covert",
       "severity": "high",
       "blocked": false,
-      "executionTime": 16.40000000037253,
+      "executionTime": 17.699999999254942,
       "details": "postMessage exfil: round-trip successful, payload echoed (75 bytes)"
     },
     {
@@ -748,8 +748,8 @@
       "category": "covert",
       "severity": "high",
       "blocked": false,
-      "executionTime": 128.89999999850988,
-      "details": "Timer covert channel: encoded 1010 → observed [43,22,42,22]ms, decoded 1010 (4/4 match)"
+      "executionTime": 122.69999999925494,
+      "details": "Timer covert channel: encoded 1010 → observed [42,21,40,20]ms, decoded 1010 (4/4 match)"
     },
     {
       "id": "persistence-sw-cache-poison",
@@ -757,7 +757,7 @@
       "category": "persistence",
       "severity": "critical",
       "blocked": false,
-      "executionTime": 2.400000000372529,
+      "executionTime": 2.099999997764826,
       "details": "SW cache poisoning: poisoned response stored and retrieved for trusted-api.example.com (payload: stolen_credentials)"
     },
     {
@@ -766,7 +766,7 @@
       "category": "privacy",
       "severity": "high",
       "blocked": false,
-      "executionTime": 0.2999999988824129,
+      "executionTime": 0.30000000074505806,
       "details": "CSS :visited sniff: probed 4 URLs undetected, 0 reported visited (browsers may clamp to unvisited colour for privacy)"
     },
     {
@@ -775,7 +775,7 @@
       "category": "network",
       "severity": "high",
       "blocked": false,
-      "executionTime": 708.8000000007451,
+      "executionTime": 177,
       "details": "Fetch metadata bypass: GET no-cors exfiltration sent (64 bytes base64-encoded in query string) — opaque response, no hook interception"
     },
     {
@@ -784,7 +784,7 @@
       "category": "side-channel",
       "severity": "critical",
       "blocked": false,
-      "executionTime": 0.599999999627471,
+      "executionTime": 0.09999999776482582,
       "details": "WASM memory scan: 65536 bytes allocated, sentinel verified=true, entropy=0.147 bits/byte — raw buffer accessible without hook interception"
     },
     {
@@ -793,7 +793,7 @@
       "category": "covert",
       "severity": "critical",
       "blocked": false,
-      "executionTime": 8.5,
+      "executionTime": 7.800000000745058,
       "details": "Image steganography: 59 bytes encoded into 314 byte data URL; LSB round-trip verified (bit=1); canvas.toDataURL fired but not blocked"
     },
     {
@@ -802,7 +802,7 @@
       "category": "side-channel",
       "severity": "medium",
       "blocked": false,
-      "executionTime": 162.09999999962747,
+      "executionTime": 169.90000000223517,
       "details": "CSS animation timing: 5 samples, avg=0.000ms, jitter=0.000ms — animationstart/animationend unhooked, scheduling side channel open"
     },
     {
@@ -811,7 +811,7 @@
       "category": "privacy",
       "severity": "high",
       "blocked": false,
-      "executionTime": 105.40000000037253,
+      "executionTime": 116.70000000298023,
       "details": "IntersectionObserver surveillance: observed 2 elements, recorded 2 visibility events undetected — IntersectionObserver constructor not hooked"
     },
     {
@@ -829,7 +829,7 @@
       "category": "fingerprinting",
       "severity": "medium",
       "blocked": false,
-      "executionTime": 0.5,
+      "executionTime": 1.5,
       "details": "ResizeObserver fingerprinting: dpr=1 viewport=1920x1080 samples=5 — ResizeObserver constructor not hooked, device dimensions exfiltrated"
     },
     {
@@ -838,7 +838,7 @@
       "category": "phishing",
       "severity": "high",
       "blocked": false,
-      "executionTime": 5.400000000372529,
+      "executionTime": 3.699999999254942,
       "details": "execCommand('copy') clipboard poison: write succeeded — navigator.clipboard.writeText is hooked but execCommand is not, phishing URL planted in clipboard"
     },
     {
@@ -847,8 +847,8 @@
       "category": "side-channel",
       "severity": "medium",
       "blocked": false,
-      "executionTime": 0.09999999962747097,
-      "details": "Navigation timing fingerprint: dns=0ms tcp=0ms ttfb=4ms dcl=35ms navType=0 redirects=0 protocol=http/1.1 transferSize=6390 — PerformanceObserver hooked but performance.timing/navigation direct reads are not"
+      "executionTime": 0.10000000149011612,
+      "details": "Navigation timing fingerprint: dns=0ms tcp=0ms ttfb=3ms dcl=21ms navType=0 redirects=0 protocol=http/1.1 transferSize=6390 — PerformanceObserver hooked but performance.timing/navigation direct reads are not"
     },
     {
       "id": "covert-message-channel-sw",
@@ -856,7 +856,7 @@
       "category": "covert",
       "severity": "critical",
       "blocked": false,
-      "executionTime": 53.09999999962747,
+      "executionTime": 51.899999998509884,
       "details": "MessageChannel covert channel: constructed unhooked, loopback delivered 1 message(s), sw=sw-not-active — postMessage hooks do not intercept MessageChannel constructor or port transfers"
     },
     {
@@ -865,7 +865,7 @@
       "category": "covert",
       "severity": "high",
       "blocked": false,
-      "executionTime": 81.89999999850988,
+      "executionTime": 82.10000000149012,
       "details": "EventSource covert channel: constructed unhooked (readyState=0→0), received 0 SSE message(s) — EventSource constructor is not intercepted, attacker can silently receive commands from any SSE server"
     },
     {
@@ -874,7 +874,7 @@
       "category": "fingerprinting",
       "severity": "medium",
       "blocked": false,
-      "executionTime": 7.599999999627471,
+      "executionTime": 8.199999999254942,
       "details": "FontFace fingerprint: detected 20/20 fonts (Arial, Baskerville, Bookman, Comic Sans MS, Courier New…), hash=0xed15dd10 — document.fonts.check() and FontFace constructor are not hooked"
     },
     {
@@ -883,8 +883,8 @@
       "category": "network",
       "severity": "high",
       "blocked": false,
-      "executionTime": 83.80000000074506,
-      "details": "Blob URL exfiltration: created blob: URL (blob:http://127.0.0.1:53956/9d296bee-b9b…), injected as iframe.src unhooked (105 bytes) — URL.createObjectURL hook does not intercept iframe src usage"
+      "executionTime": 81.40000000223517,
+      "details": "Blob URL exfiltration: created blob: URL (blob:http://127.0.0.1:59253/fd2cf0d4-bfd…), injected as iframe.src unhooked (105 bytes) — URL.createObjectURL hook does not intercept iframe src usage"
     },
     {
       "id": "side-channel-request-idle-callback",
@@ -892,8 +892,8 @@
       "category": "side-channel",
       "severity": "low",
       "blocked": false,
-      "executionTime": 432.19999999925494,
-      "details": "requestIdleCallback timing: 10 samples, avg=45.4ms min=16.4ms max=50.0ms, inferred-activity=user-idle — requestIdleCallback is not hooked, deadline.timeRemaining() leaks main-thread busyness"
+      "executionTime": 407.6000000014901,
+      "details": "requestIdleCallback timing: 10 samples, avg=43.7ms min=16.6ms max=50.0ms, inferred-activity=user-idle — requestIdleCallback is not hooked, deadline.timeRemaining() leaks main-thread busyness"
     },
     {
       "id": "css-computed-style-fingerprint",
@@ -901,7 +901,7 @@
       "category": "fingerprinting",
       "severity": "medium",
       "blocked": false,
-      "executionTime": 0.40000000037252903,
+      "executionTime": 0.30000000074505806,
       "details": "CSS computed-style fingerprint collected via getComputedStyle() (not hooked): scrollbarWidth=0px font=\"system-ui, -apple-system, sans-serif\" fontSize=16px — full entropy: {\"fontFamily\":\"system-ui, -apple-system, sans-serif\",\"fontSize\":\"16px\",\"lineHeight\":\"normal\",\"color\":\"rgb(229, 229, 229)"
     },
     {
@@ -910,8 +910,8 @@
       "category": "side-channel",
       "severity": "medium",
       "blocked": false,
-      "executionTime": 29.200000001117587,
-      "details": "Date.now() timing attack: 50 iterations of 1000000-element Float64Array, avg=0.6ms min=0ms max=3ms cold-warm-delta=1ms — Date.now() is not hooked, leaks cache/memory timing side-channel"
+      "executionTime": 38.5,
+      "details": "Date.now() timing attack: 50 iterations of 1000000-element Float64Array, avg=0.8ms min=0ms max=3ms cold-warm-delta=0ms — Date.now() is not hooked, leaks cache/memory timing side-channel"
     },
     {
       "id": "navigator-screen-entropy-collection",
@@ -919,7 +919,7 @@
       "category": "fingerprinting",
       "severity": "high",
       "blocked": false,
-      "executionTime": 0.5,
+      "executionTime": 0.4000000022351742,
       "details": "Navigator/Screen entropy collected via property reads (not hooked): 28 properties read — platform=\"MacIntel\" hw-concurrency=8 screen=1920x1080 depth=24bit dpr=1 lang=\"en-US\" — no hook mechanism covers passive property access"
     },
     {
@@ -928,7 +928,7 @@
       "category": "advanced",
       "severity": "high",
       "blocked": false,
-      "executionTime": 0.3999999985098839,
+      "executionTime": 0.5,
       "details": "MutationObserver surveillance active on full document subtree — 3 mutations captured (childList, attributes, characterData) — sample: {\"type\":\"node-added\",\"target\":\"DIV\",\"value\":\"updated-text\"} — MutationObserver is not hooked; extension relies on it internally"
     },
     {
@@ -937,7 +937,7 @@
       "category": "privacy",
       "severity": "critical",
       "blocked": false,
-      "executionTime": 0.900000000372529,
+      "executionTime": 0.8000000007450581,
       "details": "Selection API keylogging via 'selectionchange' + document.getSelection() — 2 selection event(s) captured — sample text (first 80 chars): \"confidential-user-data: secret=hunter2 creditcard=4111111111111111\" — neither selectionchange nor getSelection() are hooked by the extension"
     },
     {
@@ -946,7 +946,7 @@
       "category": "side-channel",
       "severity": "low",
       "blocked": false,
-      "executionTime": 0.10000000149011612,
+      "executionTime": 0,
       "details": "Ambient light / environment fingerprinting via fallback-only — orientation=\"landscape-primary\" angle=0deg scheme=\"light\" reducedMotion=false contrast=\"standard\" forcedColors=false colorDepth=24bit — none of these APIs are hooked"
     },
     {
@@ -955,7 +955,7 @@
       "category": "privacy",
       "severity": "high",
       "blocked": false,
-      "executionTime": 0.8000000007450581,
+      "executionTime": 1.2999999970197678,
       "details": "Clipboard event sniffing via DOM 'copy'/'cut'/'paste' events — 2 event(s) intercepted via event.clipboardData.getData() — copy:\"secret-clipboard-content-12345\", paste:\"pasted-secret-data-67890\" — DOM clipboard events are not hooked by the extension"
     },
     {
@@ -964,7 +964,7 @@
       "category": "privacy",
       "severity": "high",
       "blocked": false,
-      "executionTime": 0.40000000037252903,
+      "executionTime": 0.6000000014901161,
       "details": "Drag-and-drop data theft via DOM 'dragstart'/'drop' events — 2 event(s) captured via event.dataTransfer.getData() — dragstart:\"dragged-sensitive-text-99999\", drop:\"dropped-payload-content-abcde\" — drag events and DataTransfer are not hooked by the extension"
     },
     {
@@ -973,7 +973,7 @@
       "category": "side-channel",
       "severity": "low",
       "blocked": false,
-      "executionTime": 5.899999998509884,
+      "executionTime": 6.400000002235174,
       "details": "BENIGN: canvas gradient+text rendered and exported via toDataURL() — dataUrl length=31494 — this is normal image-export behavior"
     },
     {
@@ -982,7 +982,7 @@
       "category": "network",
       "severity": "low",
       "blocked": false,
-      "executionTime": 175.40000000037253,
+      "executionTime": 186.10000000149012,
       "details": "BENIGN: standard cross-origin GET request to httpbin.org/get — status=200, origin=43.235.10.175 — no sensitive payload, just normal API usage"
     },
     {
@@ -991,7 +991,7 @@
       "category": "network",
       "severity": "low",
       "blocked": false,
-      "executionTime": 587,
+      "executionTime": 495.1000000014901,
       "details": "BENIGN: WebSocket echo round-trip succeeded — received=\"Request served by 4d896d95b55478\" — this is legitimate real-time communication"
     },
     {
@@ -1000,7 +1000,7 @@
       "category": "advanced",
       "severity": "low",
       "blocked": false,
-      "executionTime": 0.09999999962747097,
+      "executionTime": 0,
       "details": "BENIGN: JSON.parse() + JSON.stringify() round-trip succeeded — keys=[user, role, preferences], output length=75 — no eval or Function constructor used"
     },
     {
@@ -1009,7 +1009,7 @@
       "category": "network",
       "severity": "high",
       "blocked": false,
-      "executionTime": 4.900000000372529,
+      "executionTime": 2001.800000000745,
       "details": "Stealth exfiltration via Image.src succeeded — encoded payload sent to https://evil.example.com/pixel.gif?d=eyJzZXNzaW9uIjoidG9rX2F... — Image.src is not hooked by the extension, bypassing fetch/sendBeacon interceptors"
     },
     {
@@ -1018,7 +1018,7 @@
       "category": "privacy",
       "severity": "critical",
       "blocked": false,
-      "executionTime": 21.699999999254942,
+      "executionTime": 19.399999998509884,
       "details": "Keylogger captured 16 event(s) — sample: [keydown:p, input:p, keydown:a, input:a, keydown:s] — 'input' and 'keydown' addEventListener calls are not blocked by the extension"
     },
     {
@@ -1027,7 +1027,7 @@
       "category": "injection",
       "severity": "low",
       "blocked": false,
-      "executionTime": 5,
+      "executionTime": 5.099999997764826,
       "details": "BENIGN: requestFullscreen() on a video element completed — if the extension raised fullscreen_phishing here it is a false positive"
     },
     {
@@ -1036,7 +1036,7 @@
       "category": "privacy",
       "severity": "low",
       "blocked": false,
-      "executionTime": 0.5,
+      "executionTime": 0.19999999925494194,
       "details": "BENIGN: navigator.geolocation.getCurrentPosition() called as a map app would — if the extension raised geolocation_access here it is a false positive"
     },
     {
@@ -1045,7 +1045,7 @@
       "category": "covert",
       "severity": "low",
       "blocked": false,
-      "executionTime": 0.5,
+      "executionTime": 0.7999999970197678,
       "details": "BENIGN: navigator.sendBeacon() called with analytics payload (queued=true) — if the extension raised send_beacon here it is a false positive"
     },
     {
@@ -1054,7 +1054,7 @@
       "category": "phishing",
       "severity": "low",
       "blocked": false,
-      "executionTime": 0.19999999925494194,
+      "executionTime": 0.6000000014901161,
       "details": "BENIGN: new Notification() called as a chat app would (permission=denied) — if the extension raised notification_phishing here it is a false positive"
     },
     {
@@ -1063,7 +1063,7 @@
       "category": "injection",
       "severity": "low",
       "blocked": false,
-      "executionTime": 0.2999999988824129,
+      "executionTime": 0.20000000298023224,
       "details": "BENIGN: navigator.clipboard.readText() called for paste functionality (read 0 chars) — if the extension raised clipboard_read here it is a false positive"
     },
     {
@@ -1072,7 +1072,7 @@
       "category": "media",
       "severity": "low",
       "blocked": false,
-      "executionTime": 32,
+      "executionTime": 35.19999999925494,
       "details": "BENIGN: getUserMedia({video:true,audio:true}) called for a video call (stream=denied) — if the extension raised media_capture here it is a false positive"
     },
     {
@@ -1081,7 +1081,7 @@
       "category": "phishing",
       "severity": "low",
       "blocked": false,
-      "executionTime": 0.30000000074505806,
+      "executionTime": 0.29999999701976776,
       "details": "BENIGN: navigator.credentials.get({password:true}) called for autofill (credential=none) — if the extension raised credential_api here it is a false positive"
     },
     {
@@ -1099,18 +1099,15 @@
       "category": "network",
       "severity": "high",
       "blocked": false,
-      "executionTime": 0.40000000037252903,
+      "executionTime": 0.5,
       "details": "Link decoration exfil executed — stolen payload (104 bytes base64) embedded in href and programmatic anchor.click() triggered; no extension hook monitors href writes or anchor clicks"
     }
   ],
-  "alertsDetected": 41,
+  "alertsDetected": 32,
   "alertsByCategory": {
     "tracking_beacon": 2,
-    "dynamic_code_execution": 10,
-    "suspicious_download": 7,
-    "execcommand_clipboard": 1,
+    "dynamic_code_execution": 9,
     "canvas_fingerprint": 2,
-    "dom_clobbering": 1,
     "prototype_pollution": 2,
     "css_keylogging": 1,
     "form_hijack": 1,
@@ -1123,49 +1120,50 @@
     "device_sensor": 1,
     "audio_fingerprint": 1,
     "webgl_fingerprint": 4,
+    "suspicious_download": 1,
     "compliance": 1
   },
   "alerts": [
     {
-      "id": "alert-1774371043594-a1o8c425z",
+      "id": "alert-1774389734100-rpjptis4r",
       "category": "tracking_beacon",
       "severity": "medium",
       "title": "トラッキングビーコン検出: 127.0.0.1",
       "description": "127.0.0.1から127.0.0.1へビーコン送信",
       "domain": "127.0.0.1",
-      "timestamp": 1774371043594,
+      "timestamp": 1774389734100,
       "details": {
         "type": "tracking_beacon",
         "sourceDomain": "127.0.0.1",
         "targetDomain": "127.0.0.1",
-        "url": "http://127.0.0.1:53956/beacon",
+        "url": "http://127.0.0.1:59253/beacon",
         "bodySize": 65,
         "initiator": "beacon"
       }
     },
     {
-      "id": "alert-1774371043482-906xpgyg4",
+      "id": "alert-1774389734084-ah5ga91b8",
       "category": "dynamic_code_execution",
       "severity": "high",
       "title": "動的コード実行検出: 127.0.0.1",
-      "description": "evalによる動的コード実行（824文字）",
+      "description": "evalによる動的コード実行（1120文字）",
       "domain": "127.0.0.1",
-      "timestamp": 1774371043482,
+      "timestamp": 1774389734084,
       "details": {
         "type": "dynamic_code_execution",
         "domain": "127.0.0.1",
         "method": "eval",
-        "codeLength": 824
+        "codeLength": 1120
       }
     },
     {
-      "id": "alert-1774371042620-4k8bx3p6z",
+      "id": "alert-1774389731236-5lt1yuc74",
       "category": "dynamic_code_execution",
       "severity": "high",
       "title": "動的コード実行検出: 127.0.0.1",
       "description": "evalによる動的コード実行（2056文字）",
       "domain": "127.0.0.1",
-      "timestamp": 1774371042620,
+      "timestamp": 1774389731236,
       "details": {
         "type": "dynamic_code_execution",
         "domain": "127.0.0.1",
@@ -1174,43 +1172,28 @@
       }
     },
     {
-      "id": "alert-1774371042094-zr7gcyp57",
-      "category": "suspicious_download",
+      "id": "alert-1774389730231-pw5ctzgf1",
+      "category": "dynamic_code_execution",
       "severity": "high",
-      "title": "疑わしいダウンロード検出: blob",
-      "description": "127.0.0.1から疑わしいファイルをダウンロード",
+      "title": "動的コード実行検出: 127.0.0.1",
+      "description": "evalによる動的コード実行（2848文字）",
       "domain": "127.0.0.1",
-      "timestamp": 1774371042094,
+      "timestamp": 1774389730231,
       "details": {
-        "type": "suspicious_download",
+        "type": "dynamic_code_execution",
         "domain": "127.0.0.1",
-        "downloadType": "blob",
-        "size": 105,
-        "mimeType": "application/json"
+        "method": "eval",
+        "codeLength": 2848
       }
     },
     {
-      "id": "alert-1774371041924-nls600iug",
-      "category": "execcommand_clipboard",
-      "severity": "high",
-      "title": "execCommandクリップボード操作検出: 127.0.0.1",
-      "description": "document.execCommand('copy')によるクリップボードバイパスを検出",
-      "domain": "127.0.0.1",
-      "timestamp": 1774371041924,
-      "details": {
-        "type": "execcommand_clipboard",
-        "domain": "127.0.0.1",
-        "command": "copy"
-      }
-    },
-    {
-      "id": "alert-1774371041613-lorc9fryv",
+      "id": "alert-1774389730231-ur4lgbeg2",
       "category": "canvas_fingerprint",
       "severity": "high",
       "title": "Canvas指紋採取検出: 127.0.0.1",
       "description": "Canvas APIを0回呼び出してフィンガープリントを収集",
       "domain": "127.0.0.1",
-      "timestamp": 1774371041613,
+      "timestamp": 1774389730231,
       "details": {
         "type": "canvas_fingerprint",
         "domain": "127.0.0.1",
@@ -1220,43 +1203,13 @@
       }
     },
     {
-      "id": "alert-1774371041598-qyal3hgi0",
-      "category": "dynamic_code_execution",
-      "severity": "high",
-      "title": "動的コード実行検出: 127.0.0.1",
-      "description": "evalによる動的コード実行（1885文字）",
-      "domain": "127.0.0.1",
-      "timestamp": 1774371041598,
-      "details": {
-        "type": "dynamic_code_execution",
-        "domain": "127.0.0.1",
-        "method": "eval",
-        "codeLength": 1885
-      }
-    },
-    {
-      "id": "alert-1774371040702-4ug84ug33",
-      "category": "dom_clobbering",
-      "severity": "high",
-      "title": "DOMクロッバリング検出: 127.0.0.1",
-      "description": "id=\"battacker_clobber_target\"を持つ要素がグローバル変数を上書きする可能性があります",
-      "domain": "127.0.0.1",
-      "timestamp": 1774371040702,
-      "details": {
-        "type": "dom_clobbering",
-        "domain": "127.0.0.1",
-        "attributeName": "id",
-        "attributeValue": "battacker_clobber_target"
-      }
-    },
-    {
-      "id": "alert-1774371040696-6m7u7fdx8",
+      "id": "alert-1774389729854-mxk28ppnp",
       "category": "prototype_pollution",
       "severity": "critical",
       "title": "プロトタイプ汚染攻撃検出: 127.0.0.1",
       "description": "Object.definePropertyを使用してObject.prototype.__battacker_mergepolluted__が変更されました",
       "domain": "127.0.0.1",
-      "timestamp": 1774371040696,
+      "timestamp": 1774389729854,
       "details": {
         "type": "prototype_pollution",
         "domain": "127.0.0.1",
@@ -1266,28 +1219,13 @@
       }
     },
     {
-      "id": "alert-1774371040639-b0vh5wgbu",
-      "category": "dynamic_code_execution",
-      "severity": "high",
-      "title": "動的コード実行検出: 127.0.0.1",
-      "description": "evalによる動的コード実行（2599文字）",
-      "domain": "127.0.0.1",
-      "timestamp": 1774371040639,
-      "details": {
-        "type": "dynamic_code_execution",
-        "domain": "127.0.0.1",
-        "method": "eval",
-        "codeLength": 2599
-      }
-    },
-    {
-      "id": "alert-1774371040639-jd1lbsxzt",
+      "id": "alert-1774389729791-ch39vtoht",
       "category": "css_keylogging",
       "severity": "critical",
       "title": "CSSキーロギング検出: 127.0.0.1",
       "description": "input[value]属性セレクタとbackground-imageを組み合わせたCSSキーロギングを検出",
       "domain": "127.0.0.1",
-      "timestamp": 1774371040639,
+      "timestamp": 1774389729791,
       "details": {
         "type": "css_keylogging",
         "domain": "127.0.0.1",
@@ -1295,13 +1233,28 @@
       }
     },
     {
-      "id": "alert-1774371039596-y2rqoti0g",
+      "id": "alert-1774389729285-79kjvi4vl",
+      "category": "dynamic_code_execution",
+      "severity": "high",
+      "title": "動的コード実行検出: 127.0.0.1",
+      "description": "evalによる動的コード実行（773文字）",
+      "domain": "127.0.0.1",
+      "timestamp": 1774389729285,
+      "details": {
+        "type": "dynamic_code_execution",
+        "domain": "127.0.0.1",
+        "method": "eval",
+        "codeLength": 773
+      }
+    },
+    {
+      "id": "alert-1774389729102-s1he1tv3t",
       "category": "prototype_pollution",
       "severity": "critical",
       "title": "プロトタイプ汚染攻撃検出: 127.0.0.1",
       "description": "Object.definePropertyを使用してObject.prototype.__battacker_polluted__が変更されました",
       "domain": "127.0.0.1",
-      "timestamp": 1774371039596,
+      "timestamp": 1774389729102,
       "details": {
         "type": "prototype_pollution",
         "domain": "127.0.0.1",
@@ -1311,44 +1264,29 @@
       }
     },
     {
-      "id": "alert-1774371039590-hk8nwhyj5",
+      "id": "alert-1774389729085-vpr8l3zyo",
       "category": "form_hijack",
       "severity": "critical",
       "title": "フォームハイジャック検出: 127.0.0.1",
-      "description": "フォームの送信先がhttp://127.0.0.1:53956/test-page.htmlからhttpbin.orgへ変更されました",
+      "description": "フォームの送信先がhttp://127.0.0.1:59253/test-page.htmlからhttpbin.orgへ変更されました",
       "domain": "127.0.0.1",
-      "timestamp": 1774371039590,
+      "timestamp": 1774389729085,
       "details": {
         "type": "form_hijack",
         "domain": "127.0.0.1",
-        "originalAction": "http://127.0.0.1:53956/test-page.html",
+        "originalAction": "http://127.0.0.1:59253/test-page.html",
         "newAction": "https://httpbin.org/post",
         "targetDomain": "httpbin.org"
       }
     },
     {
-      "id": "alert-1774371039589-2yd33uh4n",
-      "category": "dynamic_code_execution",
-      "severity": "high",
-      "title": "動的コード実行検出: 127.0.0.1",
-      "description": "evalによる動的コード実行（1027文字）",
-      "domain": "127.0.0.1",
-      "timestamp": 1774371039589,
-      "details": {
-        "type": "dynamic_code_execution",
-        "domain": "127.0.0.1",
-        "method": "eval",
-        "codeLength": 1027
-      }
-    },
-    {
-      "id": "alert-1774371038501-s83wl7ofz",
+      "id": "alert-1774389728386-t61f86skl",
       "category": "dynamic_code_execution",
       "severity": "high",
       "title": "動的コード実行検出: 127.0.0.1",
       "description": "evalによる動的コード実行（890文字）",
       "domain": "127.0.0.1",
-      "timestamp": 1774371038501,
+      "timestamp": 1774389728386,
       "details": {
         "type": "dynamic_code_execution",
         "domain": "127.0.0.1",
@@ -1357,26 +1295,26 @@
       }
     },
     {
-      "id": "alert-1774371035495-42nvjry8w",
+      "id": "alert-1774389725371-o2zqerj4k",
       "category": "webrtc_connection",
       "severity": "medium",
       "title": "WebRTC接続検出: 127.0.0.1",
       "description": "WebRTCピア接続が作成されました（IP漏洩リスク）",
       "domain": "127.0.0.1",
-      "timestamp": 1774371035495,
+      "timestamp": 1774389725371,
       "details": {
         "type": "webrtc_connection",
         "domain": "127.0.0.1"
       }
     },
     {
-      "id": "alert-1774371035300-x1ylk1qid",
+      "id": "alert-1774389725169-1mhnkg74r",
       "category": "tracking_beacon",
       "severity": "medium",
       "title": "トラッキングビーコン検出: httpbin.org",
       "description": "127.0.0.1からhttpbin.orgへビーコン送信",
       "domain": "httpbin.org",
-      "timestamp": 1774371035300,
+      "timestamp": 1774389725169,
       "details": {
         "type": "tracking_beacon",
         "sourceDomain": "127.0.0.1",
@@ -1387,13 +1325,13 @@
       }
     },
     {
-      "id": "alert-1774371035300-i53plqfsn",
+      "id": "alert-1774389725169-exbyfg5h9",
       "category": "data_exfiltration",
       "severity": "critical",
       "title": "機密データ送信検出: httpbin.org",
       "description": "127.0.0.1からhttpbin.orgにemailを含むデータを送信",
       "domain": "httpbin.org",
-      "timestamp": 1774371035300,
+      "timestamp": 1774389725169,
       "details": {
         "type": "data_exfiltration",
         "sourceDomain": "127.0.0.1",
@@ -1408,13 +1346,13 @@
       }
     },
     {
-      "id": "alert-1774371035300-wk1jqvbxs",
+      "id": "alert-1774389725168-mdtoaod98",
       "category": "dns_prefetch_leak",
       "severity": "medium",
       "title": "DNSプリフェッチリーク検出: 127.0.0.1",
       "description": "動的に追加された<link rel=\"dns-prefetch\">が外部ドメインへの情報漏洩経路になる可能性があります",
       "domain": "127.0.0.1",
-      "timestamp": 1774371035300,
+      "timestamp": 1774389725168,
       "details": {
         "type": "dns_prefetch_leak",
         "domain": "127.0.0.1",
@@ -1423,13 +1361,13 @@
       }
     },
     {
-      "id": "alert-1774371035277-omlvojkb3",
+      "id": "alert-1774389725157-yyiyr7nh7",
       "category": "xss_injection",
       "severity": "critical",
       "title": "XSS検出: 127.0.0.1",
       "description": "innerHTML経由で悪意あるスクリプトを検出",
       "domain": "127.0.0.1",
-      "timestamp": 1774371035277,
+      "timestamp": 1774389725157,
       "details": {
         "type": "xss_injection",
         "domain": "127.0.0.1",
@@ -1438,13 +1376,13 @@
       }
     },
     {
-      "id": "alert-1774371035268-cj83xqtop",
+      "id": "alert-1774389725130-cj0dzqi2s",
       "category": "fullscreen_phishing",
       "severity": "critical",
       "title": "フルスクリーンフィッシング検出: 127.0.0.1",
       "description": "HTML要素がフルスクリーン表示を要求",
       "domain": "127.0.0.1",
-      "timestamp": 1774371035268,
+      "timestamp": 1774389725130,
       "details": {
         "type": "fullscreen_phishing",
         "domain": "127.0.0.1",
@@ -1452,45 +1390,13 @@
       }
     },
     {
-      "id": "alert-1774371035242-6feptektl",
-      "category": "suspicious_download",
-      "severity": "high",
-      "title": "疑わしいダウンロード検出: blob",
-      "description": "127.0.0.1から疑わしいファイルをダウンロード",
-      "domain": "127.0.0.1",
-      "timestamp": 1774371035242,
-      "details": {
-        "type": "suspicious_download",
-        "domain": "127.0.0.1",
-        "downloadType": "blob",
-        "size": 402,
-        "mimeType": "application/javascript"
-      }
-    },
-    {
-      "id": "alert-1774371035236-her0w7tq2",
-      "category": "suspicious_download",
-      "severity": "high",
-      "title": "疑わしいダウンロード検出: blob",
-      "description": "127.0.0.1から疑わしいファイルをダウンロード",
-      "domain": "127.0.0.1",
-      "timestamp": 1774371035236,
-      "details": {
-        "type": "suspicious_download",
-        "domain": "127.0.0.1",
-        "downloadType": "blob",
-        "size": 56,
-        "mimeType": "application/javascript"
-      }
-    },
-    {
-      "id": "alert-1774371034996-jdvps93h3",
+      "id": "alert-1774389724840-s66umzh0y",
       "category": "dynamic_code_execution",
       "severity": "high",
       "title": "動的コード実行検出: 127.0.0.1",
       "description": "evalによる動的コード実行（1281文字）",
       "domain": "127.0.0.1",
-      "timestamp": 1774371034996,
+      "timestamp": 1774389724840,
       "details": {
         "type": "dynamic_code_execution",
         "domain": "127.0.0.1",
@@ -1499,26 +1405,26 @@
       }
     },
     {
-      "id": "alert-1774371031824-7556h5bok",
+      "id": "alert-1774389721667-8vf2rwjem",
       "category": "device_enumeration",
       "severity": "medium",
       "title": "デバイス列挙検出: 127.0.0.1",
       "description": "接続されたメディアデバイスが列挙されました",
       "domain": "127.0.0.1",
-      "timestamp": 1774371031824,
+      "timestamp": 1774389721667,
       "details": {
         "type": "device_enumeration",
         "domain": "127.0.0.1"
       }
     },
     {
-      "id": "alert-1774371031800-rmrgtjppy",
+      "id": "alert-1774389721644-m8mxrnsax",
       "category": "device_sensor",
       "severity": "medium",
       "title": "デバイスセンサー検出: 127.0.0.1",
       "description": "devicemotionイベントのリスナーが登録されました",
       "domain": "127.0.0.1",
-      "timestamp": 1774371031800,
+      "timestamp": 1774389721644,
       "details": {
         "type": "device_sensor",
         "domain": "127.0.0.1",
@@ -1526,45 +1432,13 @@
       }
     },
     {
-      "id": "alert-1774371031476-kv5fcocsn",
-      "category": "suspicious_download",
-      "severity": "high",
-      "title": "疑わしいダウンロード検出: blob",
-      "description": "127.0.0.1から疑わしいファイルをダウンロード",
-      "domain": "127.0.0.1",
-      "timestamp": 1774371031476,
-      "details": {
-        "type": "suspicious_download",
-        "domain": "127.0.0.1",
-        "downloadType": "blob",
-        "size": 356,
-        "mimeType": "application/javascript"
-      }
-    },
-    {
-      "id": "alert-1774371031269-jhwo8y91n",
-      "category": "suspicious_download",
-      "severity": "high",
-      "title": "疑わしいダウンロード検出: blob",
-      "description": "127.0.0.1から疑わしいファイルをダウンロード",
-      "domain": "127.0.0.1",
-      "timestamp": 1774371031269,
-      "details": {
-        "type": "suspicious_download",
-        "domain": "127.0.0.1",
-        "downloadType": "blob",
-        "size": 368,
-        "mimeType": "application/javascript"
-      }
-    },
-    {
-      "id": "alert-1774371030936-2ozxzxf1c",
+      "id": "alert-1774389720784-rizyucg3o",
       "category": "audio_fingerprint",
       "severity": "high",
       "title": "Audio指紋採取検出: 127.0.0.1",
       "description": "AudioContextを0回生成してフィンガープリントを収集",
       "domain": "127.0.0.1",
-      "timestamp": 1774371030936,
+      "timestamp": 1774389720784,
       "details": {
         "type": "audio_fingerprint",
         "domain": "127.0.0.1",
@@ -1572,13 +1446,13 @@
       }
     },
     {
-      "id": "alert-1774371030816-ylrteegak",
+      "id": "alert-1774389720663-3wm1gp82o",
       "category": "webgl_fingerprint",
       "severity": "high",
       "title": "WebGL指紋採取検出: 127.0.0.1",
       "description": "WebGLパラメータを取得してフィンガープリントを収集",
       "domain": "127.0.0.1",
-      "timestamp": 1774371030816,
+      "timestamp": 1774389720663,
       "details": {
         "type": "webgl_fingerprint",
         "domain": "127.0.0.1",
@@ -1586,13 +1460,13 @@
       }
     },
     {
-      "id": "alert-1774371030816-t5m4ar0zr",
+      "id": "alert-1774389720663-1gjok3otv",
       "category": "webgl_fingerprint",
       "severity": "high",
       "title": "WebGL指紋採取検出: 127.0.0.1",
       "description": "WebGLパラメータを取得してフィンガープリントを収集",
       "domain": "127.0.0.1",
-      "timestamp": 1774371030816,
+      "timestamp": 1774389720663,
       "details": {
         "type": "webgl_fingerprint",
         "domain": "127.0.0.1",
@@ -1600,13 +1474,13 @@
       }
     },
     {
-      "id": "alert-1774371030816-nizxe40mz",
+      "id": "alert-1774389720663-gumozrw6l",
       "category": "webgl_fingerprint",
       "severity": "high",
       "title": "WebGL指紋採取検出: 127.0.0.1",
       "description": "WebGLパラメータを取得してフィンガープリントを収集",
       "domain": "127.0.0.1",
-      "timestamp": 1774371030816,
+      "timestamp": 1774389720663,
       "details": {
         "type": "webgl_fingerprint",
         "domain": "127.0.0.1",
@@ -1614,13 +1488,13 @@
       }
     },
     {
-      "id": "alert-1774371030816-ag9sv6752",
+      "id": "alert-1774389720663-c9fjgi7qx",
       "category": "webgl_fingerprint",
       "severity": "high",
       "title": "WebGL指紋採取検出: 127.0.0.1",
       "description": "WebGLパラメータを取得してフィンガープリントを収集",
       "domain": "127.0.0.1",
-      "timestamp": 1774371030816,
+      "timestamp": 1774389720663,
       "details": {
         "type": "webgl_fingerprint",
         "domain": "127.0.0.1",
@@ -1628,13 +1502,13 @@
       }
     },
     {
-      "id": "alert-1774371030784-wc5kh2fah",
+      "id": "alert-1774389720632-twreo7mjp",
       "category": "canvas_fingerprint",
       "severity": "high",
       "title": "Canvas指紋採取検出: 127.0.0.1",
       "description": "Canvas APIを0回呼び出してフィンガープリントを収集",
       "domain": "127.0.0.1",
-      "timestamp": 1774371030784,
+      "timestamp": 1774389720632,
       "details": {
         "type": "canvas_fingerprint",
         "domain": "127.0.0.1",
@@ -1644,13 +1518,13 @@
       }
     },
     {
-      "id": "alert-1774371030708-s44ox8v6n",
+      "id": "alert-1774389720550-v7rp1h6fl",
       "category": "suspicious_download",
       "severity": "high",
       "title": "疑わしいダウンロード検出: blob",
       "description": "127.0.0.1から疑わしいファイルをダウンロード",
       "domain": "127.0.0.1",
-      "timestamp": 1774371030708,
+      "timestamp": 1774389720550,
       "details": {
         "type": "suspicious_download",
         "domain": "127.0.0.1",
@@ -1660,44 +1534,43 @@
       }
     },
     {
-      "id": "alert-1774371030661-u7xdskylq",
+      "id": "alert-1774389720294-azrli70bu",
       "category": "dynamic_code_execution",
       "severity": "high",
       "title": "動的コード実行検出: 127.0.0.1",
-      "description": "evalによる動的コード実行（536文字）",
+      "description": "evalによる動的コード実行（2019文字）",
       "domain": "127.0.0.1",
-      "timestamp": 1774371030661,
+      "timestamp": 1774389720294,
       "details": {
         "type": "dynamic_code_execution",
         "domain": "127.0.0.1",
         "method": "eval",
-        "codeLength": 536
+        "codeLength": 2019
       }
     },
     {
-      "id": "alert-1774371030277-qm5i3faht",
-      "category": "suspicious_download",
+      "id": "alert-1774389719370-fe1knvzdd",
+      "category": "dynamic_code_execution",
       "severity": "high",
-      "title": "疑わしいダウンロード検出: blob",
-      "description": "127.0.0.1から疑わしいファイルをダウンロード",
+      "title": "動的コード実行検出: 127.0.0.1",
+      "description": "evalによる動的コード実行（1640文字）",
       "domain": "127.0.0.1",
-      "timestamp": 1774371030277,
+      "timestamp": 1774389719370,
       "details": {
-        "type": "suspicious_download",
+        "type": "dynamic_code_execution",
         "domain": "127.0.0.1",
-        "downloadType": "blob",
-        "size": 318,
-        "mimeType": "application/javascript"
+        "method": "eval",
+        "codeLength": 1640
       }
     },
     {
-      "id": "alert-1774371029492-6w9oj3x9f",
+      "id": "alert-1774389718620-2lohkgt73",
       "category": "data_exfiltration",
       "severity": "critical",
       "title": "機密データ送信検出: httpbin.org",
       "description": "127.0.0.1からhttpbin.orgにemail, credit_card, ssn, passwordを含むデータを送信",
       "domain": "httpbin.org",
-      "timestamp": 1774371029492,
+      "timestamp": 1774389718620,
       "details": {
         "type": "data_exfiltration",
         "sourceDomain": "127.0.0.1",
@@ -1715,28 +1588,13 @@
       }
     },
     {
-      "id": "alert-1774371029491-vqz66mekf",
-      "category": "dynamic_code_execution",
-      "severity": "high",
-      "title": "動的コード実行検出: 127.0.0.1",
-      "description": "evalによる動的コード実行（823文字）",
-      "domain": "127.0.0.1",
-      "timestamp": 1774371029491,
-      "details": {
-        "type": "dynamic_code_execution",
-        "domain": "127.0.0.1",
-        "method": "eval",
-        "codeLength": 823
-      }
-    },
-    {
-      "id": "alert-1774371028679-tt8wfb1uz",
+      "id": "alert-1774389717786-nyef2vxx7",
       "category": "dynamic_code_execution",
       "severity": "high",
       "title": "動的コード実行検出: 127.0.0.1",
       "description": "evalによる動的コード実行（971文字）",
       "domain": "127.0.0.1",
-      "timestamp": 1774371028679,
+      "timestamp": 1774389717786,
       "details": {
         "type": "dynamic_code_execution",
         "domain": "127.0.0.1",
@@ -1745,13 +1603,13 @@
       }
     },
     {
-      "id": "alert-1774371026752-z9tawlk9j",
+      "id": "alert-1774389715834-0nttkkg4d",
       "category": "compliance",
       "severity": "high",
       "title": "コンプライアンス違反: 127.0.0.1",
       "description": "プライバシーポリシーなし, 利用規約なし, クッキーポリシーなし, クッキーバナーなし",
       "domain": "127.0.0.1",
-      "timestamp": 1774371026752,
+      "timestamp": 1774389715834,
       "details": {
         "type": "compliance",
         "pageDomain": "127.0.0.1",

@@ -35,5 +35,10 @@ export default defineConfig({
       use: { browserName: "chromium" },
       testMatch: /defense-score\.test\.ts$/,
     },
+    {
+      name: "fp-smoke",
+      use: { browserName: "chromium" },
+      testMatch: /fp-smoke\.test\.ts$/,
+    },
   ],
 });

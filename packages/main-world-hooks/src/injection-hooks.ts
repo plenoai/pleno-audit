@@ -7,33 +7,49 @@
 import { type SharedHookUtils } from "./shared.js";
 
 export function initInjectionHooks(emitSecurityEvent: SharedHookUtils["emitSecurityEvent"]): void {
-  // eval()
+  // eval() — deduplicated, skip trivial/JSON-like code
   const originalEval = window.eval;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- intentional monkey-patch of eval
+  const evalSeen = new Set<string>();
   window.eval = function (this: unknown, code: string) {
-    emitSecurityEvent("__DYNAMIC_CODE_EXECUTION_DETECTED__", {
-      method: "eval",
-      codeLength: typeof code === "string" ? code.length : 0,
-      codeSample: typeof code === "string" ? code.substring(0, 200) : "",
-      timestamp: Date.now(),
-      pageUrl: location.href,
-    });
+    if (typeof code === "string" && code.length > 0) {
+      const key = code.substring(0, 100);
+      if (!evalSeen.has(key)) {
+        evalSeen.add(key);
+        // Skip short JSON-like strings (common in webpack/frameworks)
+        const isShortJson = code.length < 50 && /^\s*[\[{]/.test(code);
+        if (!isShortJson) {
+          emitSecurityEvent("__DYNAMIC_CODE_EXECUTION_DETECTED__", {
+            method: "eval",
+            codeLength: code.length,
+            codeSample: code.substring(0, 200),
+            timestamp: Date.now(),
+            pageUrl: location.href,
+          });
+        }
+      }
+    }
     return originalEval.call(this as any, code);
   } as typeof eval;
 
-  // Function constructor
+  // Function constructor — deduplicated
   const OriginalFunction = window.Function;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- intentional monkey-patch of Function constructor
+  const funcSeen = new Set<string>();
   window.Function = function (this: unknown, ...args: string[]) {
     const body = args.length > 0 ? args[args.length - 1] : "";
-    emitSecurityEvent("__DYNAMIC_CODE_EXECUTION_DETECTED__", {
-      method: "Function",
-      codeLength: typeof body === "string" ? body.length : 0,
-      codeSample: typeof body === "string" ? body.substring(0, 200) : "",
-      argCount: args.length,
-      timestamp: Date.now(),
-      pageUrl: location.href,
-    });
+    if (typeof body === "string" && body.length > 0) {
+      const key = body.substring(0, 100);
+      if (!funcSeen.has(key)) {
+        funcSeen.add(key);
+        emitSecurityEvent("__DYNAMIC_CODE_EXECUTION_DETECTED__", {
+          method: "Function",
+          codeLength: body.length,
+          codeSample: body.substring(0, 200),
+          argCount: args.length,
+          timestamp: Date.now(),
+          pageUrl: location.href,
+        });
+      }
+    }
     return OriginalFunction.apply(this as any, args);
   } as FunctionConstructor;
   (window.Function as any).prototype = OriginalFunction.prototype;
@@ -106,6 +122,7 @@ export function initInjectionHooks(emitSecurityEvent: SharedHookUtils["emitSecur
   // DeviceMotion / DeviceOrientation (sensor fingerprinting)
   const originalAddEventListener = EventTarget.prototype.addEventListener;
   const sensorEvents = new Set(["devicemotion", "deviceorientation"]);
+  const sensorSeen = new Set<string>();
   // Clipboard event sniffing (copy/cut/paste) — only emit on rapid succession (>10 in 5s)
   const clipboardSniffEvents = new Set(["copy", "cut", "paste"]);
   // Drag-and-drop data theft (dragstart/drop) — only emit on rapid succession (>10 in 5s)
@@ -142,11 +159,14 @@ export function initInjectionHooks(emitSecurityEvent: SharedHookUtils["emitSecur
     options?: boolean | AddEventListenerOptions,
   ) {
     if (sensorEvents.has(type)) {
-      emitSecurityEvent("__DEVICE_SENSOR_ACCESSED__", {
-        sensorType: type,
-        timestamp: Date.now(),
-        pageUrl: location.href,
-      });
+      if (!sensorSeen.has(type)) {
+        sensorSeen.add(type);
+        emitSecurityEvent("__DEVICE_SENSOR_ACCESSED__", {
+          sensorType: type,
+          timestamp: Date.now(),
+          pageUrl: location.href,
+        });
+      }
     } else if (clipboardSniffEvents.has(type)) {
       const now = Date.now();
       const result = checkSniffBurst(now, clipboardSniffCount, clipboardSniffWindowStart, clipboardSniffEmitted);

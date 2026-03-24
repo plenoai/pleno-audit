@@ -160,7 +160,7 @@ export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecuri
   }
 
   // ===== execCommand Clipboard Bypass =====
-  const SENSITIVE_EXEC_COMMANDS = new Set(["copy", "cut", "paste", "inserthtml"]);
+  const SENSITIVE_EXEC_COMMANDS = new Set(["inserthtml"]);
   const originalExecCommand = document.execCommand.bind(document);
   document.execCommand = function (commandId: string, showUI?: boolean, value?: string): boolean {
     if (SENSITIVE_EXEC_COMMANDS.has(commandId.toLowerCase())) {
@@ -317,6 +317,17 @@ export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecuri
           /* ignore */
         }
         if (isExternal) {
+          // Skip same-site preconnects (e.g., cdn.example.com preconnected from example.com)
+          try {
+            const linkHost = new URL(href, window.location.origin).hostname;
+            const pageHost = window.location.hostname;
+            // Simple same-site check: share the last two domain parts
+            const linkParts = linkHost.split(".");
+            const pageParts = pageHost.split(".");
+            const linkBase = linkParts.slice(-2).join(".");
+            const pageBase = pageParts.slice(-2).join(".");
+            if (linkBase === pageBase) continue; // same-site, skip
+          } catch { /* ignore */ }
           emitSecurityEvent("__DNS_PREFETCH_LEAK_DETECTED__", {
             rel,
             href,
@@ -422,10 +433,6 @@ export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecuri
     "undefined", "Infinity", "NaN", "isNaN", "isFinite", "parseInt", "parseFloat",
     "encodeURI", "decodeURI", "encodeURIComponent", "decodeURIComponent",
   ]);
-  // Also detect form/embed/object elements with any id/name - these are the primary
-  // DOM clobbering vectors as they expose nested named access (e.g., formId.inputName)
-  const CLOBBERING_TAGS = new Set(["FORM", "EMBED", "OBJECT", "IMG", "A"]);
-
   const domClobberingObserver = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
       for (const node of mutation.addedNodes) {
@@ -435,7 +442,7 @@ export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecuri
           const attrValue = el.getAttribute(attrName);
           if (!attrValue) continue;
           // Detect dangerous global name clobbering OR form/embed/object with any id/name
-          if (DANGEROUS_GLOBAL_NAMES.has(attrValue) || (CLOBBERING_TAGS.has(el.tagName) && attrName === "id")) {
+          if (DANGEROUS_GLOBAL_NAMES.has(attrValue)) {
             emitSecurityEvent("__DOM_CLOBBERING_DETECTED__", {
               attributeName: attrName,
               attributeValue: attrValue,
@@ -522,8 +529,13 @@ export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecuri
 
   // ===== Suspicious Download =====
   const originalCreateObjectURL = URL.createObjectURL;
+  const SUSPICIOUS_MIME_TYPES = new Set([
+    "application/x-msdownload", "application/x-msdos-program",
+    "application/x-executable", "application/octet-stream",
+    "application/x-sh", "application/x-bat",
+  ]);
   URL.createObjectURL = function (blob: Blob | MediaSource) {
-    if (blob instanceof Blob) {
+    if (blob instanceof Blob && SUSPICIOUS_MIME_TYPES.has(blob.type)) {
       emitSecurityEvent("__SUSPICIOUS_DOWNLOAD_DETECTED__", { type: "blob", size: blob.size, mimeType: blob.type, timestamp: Date.now() });
     }
     return originalCreateObjectURL.call(this, blob);

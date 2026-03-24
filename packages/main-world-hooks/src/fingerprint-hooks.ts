@@ -44,22 +44,30 @@ export function initFingerprintHooks(emitSecurityEvent: SharedHookUtils["emitSec
     return ctx;
   } as typeof HTMLCanvasElement.prototype.getContext;
 
-  // AudioContext fingerprinting detection
+  // AudioContext fingerprinting detection — deduplicated (once per page)
   if (window.AudioContext) {
     const OriginalAudioContext = window.AudioContext;
+    let audioContextEmitted = false;
     const NewAudioContext = function (this: AudioContext, options?: AudioContextOptions) {
-      emitSecurityEvent("__AUDIO_FINGERPRINT_DETECTED__", { ts: Date.now() });
+      if (!audioContextEmitted) {
+        audioContextEmitted = true;
+        emitSecurityEvent("__AUDIO_FINGERPRINT_DETECTED__", { ts: Date.now() });
+      }
       return options !== undefined ? new OriginalAudioContext(options) : new OriginalAudioContext();
     } as unknown as typeof AudioContext;
     NewAudioContext.prototype = OriginalAudioContext.prototype;
     window.AudioContext = NewAudioContext;
   }
 
-  // RTCPeerConnection detection
+  // RTCPeerConnection detection — deduplicated (once per page)
   if (window.RTCPeerConnection) {
     const OriginalRTCPeerConnection = window.RTCPeerConnection;
+    let rtcEmitted = false;
     window.RTCPeerConnection = function (...args: ConstructorParameters<typeof RTCPeerConnection>) {
-      emitSecurityEvent("__WEBRTC_CONNECTION_DETECTED__", { ts: Date.now() });
+      if (!rtcEmitted) {
+        rtcEmitted = true;
+        emitSecurityEvent("__WEBRTC_CONNECTION_DETECTED__", { ts: Date.now() });
+      }
       return new OriginalRTCPeerConnection(...args);
     } as unknown as typeof RTCPeerConnection;
     window.RTCPeerConnection.prototype = OriginalRTCPeerConnection.prototype;
