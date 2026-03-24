@@ -3725,6 +3725,139 @@ const attacks: AttackDef[] = [
       }),
   },
 
+  // --- Benign Bait: Remaining Hooks ---
+  {
+    id: "benign-clipboard-read-paste",
+    name: "Benign Clipboard Read (Paste)",
+    category: "injection",
+    description:
+      "Calls navigator.clipboard.readText() after a user gesture — this is what text editors do for paste " +
+      "functionality. The clipboard_read hook fires on all readText calls. " +
+      "If this triggers a clipboard_read alert, it is a false positive.",
+    severity: "low",
+    simulate: (page) =>
+      page.evaluate(async () => {
+        const startTime = performance.now();
+        try {
+          // Simulate paste: read clipboard text as a text editor would after Ctrl+V
+          const text = await navigator.clipboard.readText().catch(() => "");
+          return {
+            blocked: false,
+            executionTime: performance.now() - startTime,
+            details:
+              `BENIGN: navigator.clipboard.readText() called for paste functionality (read ${text.length} chars) — ` +
+              "if the extension raised clipboard_read here it is a false positive",
+          };
+        } catch (error: any) {
+          return {
+            blocked: false,
+            executionTime: performance.now() - startTime,
+            details: `BENIGN: clipboard.readText() threw (${error?.message}) — benign paste operation, not an attack`,
+          };
+        }
+      }),
+  },
+  {
+    id: "benign-media-video-call",
+    name: "Benign Video Call (getUserMedia)",
+    category: "media",
+    description:
+      "Calls getUserMedia({video:true, audio:true}) to start a video call — Zoom and Teams do this on every call. " +
+      "The media_capture hook fires on all getUserMedia calls. " +
+      "If this triggers a media_capture alert, it is a false positive.",
+    severity: "low",
+    simulate: (page) =>
+      page.evaluate(async () => {
+        const startTime = performance.now();
+        try {
+          // Request camera + microphone as a video-call app would
+          const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true }).catch(() => null);
+          if (stream) {
+            stream.getTracks().forEach((t) => t.stop());
+          }
+          return {
+            blocked: false,
+            executionTime: performance.now() - startTime,
+            details:
+              `BENIGN: getUserMedia({video:true,audio:true}) called for a video call (stream=${stream ? "obtained" : "denied"}) — ` +
+              "if the extension raised media_capture here it is a false positive",
+          };
+        } catch (error: any) {
+          return {
+            blocked: false,
+            executionTime: performance.now() - startTime,
+            details: `BENIGN: getUserMedia() threw (${error?.message}) — benign video call, not an attack`,
+          };
+        }
+      }),
+  },
+  {
+    id: "benign-credential-autofill",
+    name: "Benign Credential Autofill (credentials.get)",
+    category: "phishing",
+    description:
+      "Calls navigator.credentials.get({password:true}) for browser autofill — password managers and login forms " +
+      "use this API to fill saved credentials. The credential_api hook fires on all credentials.get calls. " +
+      "If this triggers a credential_api alert, it is a false positive.",
+    severity: "low",
+    simulate: (page) =>
+      page.evaluate(async () => {
+        const startTime = performance.now();
+        try {
+          // Request saved credentials as a login form with autofill would
+          const credential = await navigator.credentials
+            .get({ password: true } as CredentialRequestOptions)
+            .catch(() => null);
+          return {
+            blocked: false,
+            executionTime: performance.now() - startTime,
+            details:
+              `BENIGN: navigator.credentials.get({password:true}) called for autofill (credential=${credential ? "found" : "none"}) — ` +
+              "if the extension raised credential_api here it is a false positive",
+          };
+        } catch (error: any) {
+          return {
+            blocked: false,
+            executionTime: performance.now() - startTime,
+            details: `BENIGN: credentials.get() threw (${error?.message}) — benign autofill request, not an attack`,
+          };
+        }
+      }),
+  },
+  {
+    id: "benign-broadcast-channel-tabs",
+    name: "Benign BroadcastChannel Tab Sync",
+    category: "side-channel",
+    description:
+      "Creates a BroadcastChannel for tab synchronization (e.g., login state sync across tabs) — " +
+      "SPAs use this to keep multiple open tabs in sync. The broadcast_channel hook fires on all BroadcastChannel " +
+      "instantiation. If this triggers a broadcast_channel alert, it is a false positive.",
+    severity: "low",
+    simulate: (page) =>
+      page.evaluate(async () => {
+        const startTime = performance.now();
+        try {
+          // Create a channel as a SPA would to sync login state across tabs
+          const channel = new BroadcastChannel("app-login-sync");
+          channel.postMessage({ type: "LOGIN_STATE", loggedIn: true, ts: Date.now() });
+          channel.close();
+          return {
+            blocked: false,
+            executionTime: performance.now() - startTime,
+            details:
+              "BENIGN: new BroadcastChannel('app-login-sync') created and posted a login-state sync message — " +
+              "if the extension raised broadcast_channel here it is a false positive",
+          };
+        } catch (error: any) {
+          return {
+            blocked: false,
+            executionTime: performance.now() - startTime,
+            details: `BENIGN: BroadcastChannel threw (${error?.message}) — benign tab sync, not an attack`,
+          };
+        }
+      }),
+  },
+
   // --- Real Attack ---
   {
     id: "stealth-link-decoration-exfil",

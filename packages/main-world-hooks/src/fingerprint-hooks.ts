@@ -65,13 +65,6 @@ export function initFingerprintHooks(emitSecurityEvent: SharedHookUtils["emitSec
     window.RTCPeerConnection.prototype = OriginalRTCPeerConnection.prototype;
   }
 
-  // BroadcastChannel detection
-  if (window.BroadcastChannel) {
-    const OriginalBroadcastChannel = window.BroadcastChannel;
-    window.BroadcastChannel = function (name: string) {
-      emitSecurityEvent("__BROADCAST_CHANNEL_DETECTED__", { name, ts: Date.now() });
-      return new OriginalBroadcastChannel(name);
-    } as unknown as typeof BroadcastChannel;
-    window.BroadcastChannel.prototype = OriginalBroadcastChannel.prototype;
-  }
+  // BroadcastChannel - widely used for tab sync (login state, theme, settings)
+  // Removed to avoid false positives on normal multi-tab applications
 }

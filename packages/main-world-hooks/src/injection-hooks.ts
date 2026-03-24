@@ -70,17 +70,8 @@ export function initInjectionHooks(emitSecurityEvent: SharedHookUtils["emitSecur
     };
   }
 
-  // clipboard.readText
-  if (navigator.clipboard && navigator.clipboard.readText) {
-    const originalReadText = navigator.clipboard.readText.bind(navigator.clipboard);
-    navigator.clipboard.readText = function () {
-      emitSecurityEvent("__CLIPBOARD_READ_DETECTED__", {
-        timestamp: Date.now(),
-        pageUrl: location.href,
-      });
-      return originalReadText();
-    };
-  }
+  // clipboard.readText - browser already requires permission grant
+  // Removed to avoid false positives on text editors/paste functionality
 
   // navigator.sendBeacon (covert exfiltration channel)
   // Only alert on large payloads (>1KB) to avoid false positives from analytics
@@ -100,35 +91,8 @@ export function initInjectionHooks(emitSecurityEvent: SharedHookUtils["emitSecur
     };
   }
 
-  // getUserMedia / getDisplayMedia (media capture)
-  if (navigator.mediaDevices) {
-    if (navigator.mediaDevices.getUserMedia) {
-      const originalGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
-      navigator.mediaDevices.getUserMedia = function (constraints?: MediaStreamConstraints) {
-        emitSecurityEvent("__MEDIA_CAPTURE_DETECTED__", {
-          method: "getUserMedia",
-          audio: !!constraints?.audio,
-          video: !!constraints?.video,
-          timestamp: Date.now(),
-          pageUrl: location.href,
-        });
-        return originalGetUserMedia(constraints);
-      };
-    }
-    if (navigator.mediaDevices.getDisplayMedia) {
-      const originalGetDisplayMedia = navigator.mediaDevices.getDisplayMedia.bind(navigator.mediaDevices);
-      navigator.mediaDevices.getDisplayMedia = function (constraints?: DisplayMediaStreamOptions) {
-        emitSecurityEvent("__MEDIA_CAPTURE_DETECTED__", {
-          method: "getDisplayMedia",
-          audio: !!constraints?.audio,
-          video: true,
-          timestamp: Date.now(),
-          pageUrl: location.href,
-        });
-        return originalGetDisplayMedia(constraints);
-      };
-    }
-  }
+  // getUserMedia / getDisplayMedia - browser already requires permission grant
+  // Removed to avoid false positives on video call apps (Zoom, Teams, Meet)
 
   // Notification API - browser already requires permission grant, no need for extension alert
   // Removed to avoid false positives on chat/email apps
@@ -136,20 +100,8 @@ export function initInjectionHooks(emitSecurityEvent: SharedHookUtils["emitSecur
   // geolocation - browser already shows permission dialog, no need for extension alert
   // Removed to avoid false positives on map/weather apps
 
-  // Credential Management API (phishing/harvesting)
-  if (navigator.credentials?.get) {
-    const originalCredentialsGet = navigator.credentials.get.bind(navigator.credentials);
-    navigator.credentials.get = function (options?: CredentialRequestOptions) {
-      emitSecurityEvent("__CREDENTIAL_API_DETECTED__", {
-        method: "get",
-        hasPassword: !!(options as Record<string, unknown>)?.password,
-        hasFederated: !!(options as Record<string, unknown>)?.federated,
-        timestamp: Date.now(),
-        pageUrl: location.href,
-      });
-      return originalCredentialsGet(options);
-    };
-  }
+  // Credential Management API - browser autofill UI handles this
+  // Removed to avoid false positives on login pages using browser autofill
 
   // DeviceMotion / DeviceOrientation (sensor fingerprinting)
   const originalAddEventListener = EventTarget.prototype.addEventListener;

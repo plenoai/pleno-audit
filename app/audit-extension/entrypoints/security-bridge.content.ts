@@ -60,17 +60,17 @@ export default defineContentScript({
       "__SERVICE_WORKER_REGISTERED__",
       "__DYNAMIC_CODE_EXECUTION_DETECTED__",
       "__FULLSCREEN_PHISHING_DETECTED__",
-      "__CLIPBOARD_READ_DETECTED__",
+      // Clipboard read removed (browser permission dialog handles this)
       // Geolocation removed (browser permission dialog handles this)
       "__CANVAS_FINGERPRINT_DETECTED__",
       "__WEBGL_FINGERPRINT_DETECTED__",
       "__AUDIO_FINGERPRINT_DETECTED__",
-      "__BROADCAST_CHANNEL_DETECTED__",
+      // BroadcastChannel removed (tab sync is normal behavior)
       "__WEBRTC_CONNECTION_DETECTED__",
       "__SEND_BEACON_DETECTED__",
-      "__MEDIA_CAPTURE_DETECTED__",
+      // Media capture removed (browser permission dialog handles this)
       // Notification removed (browser permission dialog handles this)
-      "__CREDENTIAL_API_DETECTED__",
+      // Credential API removed (browser autofill UI handles this)
       "__DEVICE_SENSOR_ACCESSED__",
       "__DEVICE_ENUMERATION_DETECTED__",
       "__STORAGE_EXFILTRATION_DETECTED__",
