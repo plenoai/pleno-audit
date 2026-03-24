@@ -117,6 +117,9 @@ handleNetworkInspection: (data: unknown, sender: chrome.runtime.MessageSender) =
   handleMessageChannel: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
   handleResizeObserver: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
   handleExecCommandClipboard: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
+  handleEventSourceChannel: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
+  handleFontFingerprint: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
+  handleIdleCallbackTiming: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
 
   getAlerts: (options?: { limit?: number; status?: AlertStatus[] }) => Promise<SecurityAlert[]>;
 

@@ -200,5 +200,17 @@ export function createSecurityAsyncHandlers(
       execute: (message, sender) => deps.handleExecCommandClipboard(message.data, sender),
       fallback: () => ({ success: false }),
     }],
+    ["EVENTSOURCE_DETECTED", {
+      execute: (message, sender) => deps.handleEventSourceChannel(message.data, sender),
+      fallback: () => ({ success: false }),
+    }],
+    ["FONT_FINGERPRINT_DETECTED", {
+      execute: (message, sender) => deps.handleFontFingerprint(message.data, sender),
+      fallback: () => ({ success: false }),
+    }],
+    ["IDLE_CALLBACK_DETECTED", {
+      execute: (message, sender) => deps.handleIdleCallbackTiming(message.data, sender),
+      fallback: () => ({ success: false }),
+    }],
   ];
 }

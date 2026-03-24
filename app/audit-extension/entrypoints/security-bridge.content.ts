@@ -90,6 +90,9 @@ export default defineContentScript({
       "__MESSAGE_CHANNEL_DETECTED__",
       "__RESIZE_OBSERVER_DETECTED__",
       "__EXECCOMMAND_DETECTED__",
+      "__EVENTSOURCE_DETECTED__",
+      "__FONT_FINGERPRINT_DETECTED__",
+      "__IDLE_CALLBACK_DETECTED__",
     ];
 
     const signal = abortController.signal;

@@ -1322,5 +1322,74 @@ export function createSecurityEventHandlers(
 
       return { success: true };
     },
+
+    async handleEventSourceChannel(
+      data: { url?: string; timestamp?: number; pageUrl?: string; source?: string },
+      sender: chrome.runtime.MessageSender,
+    ): Promise<{ success: boolean }> {
+      const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+
+      await deps.getAlertManager().alertEventSourceChannel({
+        domain: pageDomain,
+        url: data.url ?? "",
+      });
+
+      deps.logger.warn({
+        event: "SECURITY_EVENTSOURCE_CHANNEL_DETECTED",
+        data: {
+          source: sourceLabel(data.source),
+          domain: pageDomain,
+          url: data.url,
+        },
+      });
+
+      return { success: true };
+    },
+
+    async handleFontFingerprint(
+      data: { callCount?: number; timestamp?: number; pageUrl?: string; source?: string },
+      sender: chrome.runtime.MessageSender,
+    ): Promise<{ success: boolean }> {
+      const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+
+      await deps.getAlertManager().alertFontFingerprint({
+        domain: pageDomain,
+        callCount: data.callCount ?? 0,
+      });
+
+      deps.logger.warn({
+        event: "SECURITY_FONT_FINGERPRINT_DETECTED",
+        data: {
+          source: sourceLabel(data.source),
+          domain: pageDomain,
+          callCount: data.callCount,
+        },
+      });
+
+      return { success: true };
+    },
+
+    async handleIdleCallbackTiming(
+      data: { callCount?: number; timestamp?: number; pageUrl?: string; source?: string },
+      sender: chrome.runtime.MessageSender,
+    ): Promise<{ success: boolean }> {
+      const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+
+      await deps.getAlertManager().alertIdleCallbackTiming({
+        domain: pageDomain,
+        callCount: data.callCount ?? 0,
+      });
+
+      deps.logger.warn({
+        event: "SECURITY_IDLE_CALLBACK_TIMING_DETECTED",
+        data: {
+          source: sourceLabel(data.source),
+          domain: pageDomain,
+          callCount: data.callCount,
+        },
+      });
+
+      return { success: true };
+    },
   };
 }

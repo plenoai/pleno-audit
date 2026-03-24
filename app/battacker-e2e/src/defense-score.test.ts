@@ -2623,6 +2623,219 @@ const attacks: AttackDef[] = [
         }
       }),
   },
+
+  // --- Iteration 6: Hook-Based Detection Fundamental Limitations ---
+
+  {
+    id: "css-computed-style-fingerprint",
+    name: "CSS Computed Style Fingerprinting",
+    category: "fingerprinting",
+    description:
+      "Reads getComputedStyle() values from default-styled elements to fingerprint the browser/OS. " +
+      "getComputedStyle is a read-only property accessor that is never hooked by the extension. " +
+      "Font metrics, default colors, and scrollbar width reveal OS and browser identity.",
+    severity: "medium",
+    simulate: (page) =>
+      page.evaluate(async () => {
+        const startTime = performance.now();
+        try {
+          // Create an off-screen element with no explicit styling so that
+          // computed values reflect the browser/OS defaults.
+          const el = document.createElement("div");
+          el.style.cssText =
+            "position:absolute;visibility:hidden;pointer-events:none;" +
+            "left:-9999px;top:-9999px;";
+          document.body.appendChild(el);
+
+          // Scrollbar-width probe: a narrow scrollable container whose
+          // offsetWidth minus clientWidth equals the platform scrollbar width.
+          const scrollProbe = document.createElement("div");
+          scrollProbe.style.cssText =
+            "width:100px;height:50px;overflow:scroll;" +
+            "position:absolute;visibility:hidden;left:-9999px;";
+          document.body.appendChild(scrollProbe);
+          const scrollbarWidth = scrollProbe.offsetWidth - scrollProbe.clientWidth;
+          document.body.removeChild(scrollProbe);
+
+          // getComputedStyle — not intercepted by any content-script hook.
+          const cs = getComputedStyle(el);
+
+          const fingerprint: Record<string, string | number> = {
+            fontFamily: cs.fontFamily,
+            fontSize: cs.fontSize,
+            lineHeight: cs.lineHeight,
+            color: cs.color,
+            backgroundColor: cs.backgroundColor,
+            fontWeight: cs.fontWeight,
+            letterSpacing: cs.letterSpacing,
+            wordSpacing: cs.wordSpacing,
+            scrollbarWidth,
+          };
+
+          document.body.removeChild(el);
+
+          const entropy = JSON.stringify(fingerprint);
+
+          return {
+            blocked: false,
+            executionTime: performance.now() - startTime,
+            details:
+              `CSS computed-style fingerprint collected via getComputedStyle() (not hooked): ` +
+              `scrollbarWidth=${scrollbarWidth}px font="${fingerprint.fontFamily}" ` +
+              `fontSize=${fingerprint.fontSize} — full entropy: ${entropy.substring(0, 120)}`,
+          };
+        } catch (error: any) {
+          return {
+            blocked: true,
+            executionTime: performance.now() - startTime,
+            details: `CSS computed-style fingerprinting blocked: ${error?.message}`,
+          };
+        }
+      }),
+  },
+
+  {
+    id: "date-now-timing-attack",
+    name: "Timing Attack via Date.now()",
+    category: "side-channel",
+    description:
+      "Uses Date.now() (not performance.now()) for millisecond-resolution timing to infer memory " +
+      "access patterns. Date.now() is impossible to hook without breaking virtually every website, " +
+      "so the extension leaves it untouched. Repeated array allocation timing reveals cache behaviour.",
+    severity: "medium",
+    simulate: (page) =>
+      page.evaluate(async () => {
+        const startTime = performance.now();
+        try {
+          // Date.now() is not hooked — hooking it would break timestamps across
+          // every library on the page (moment, lodash, etc.).
+          const ITERATIONS = 50;
+          const SIZE = 1_000_000; // 1 M elements ≈ 8 MB — crosses L3 cache boundary
+
+          const timings: number[] = [];
+
+          for (let i = 0; i < ITERATIONS; i++) {
+            const t0 = Date.now(); // unhookable
+
+            // Force allocation + sequential write (cache-cold on first pass)
+            const arr = new Float64Array(SIZE);
+            for (let j = 0; j < SIZE; j += 64) {
+              arr[j] = j; // stride-64 access pattern
+            }
+
+            timings.push(Date.now() - t0);
+          }
+
+          const avg = timings.reduce((a, b) => a + b, 0) / timings.length;
+          const min = Math.min(...timings);
+          const max = Math.max(...timings);
+
+          // Variance between first and subsequent iterations distinguishes
+          // warm vs cold cache state, leaking information about CPU/memory.
+          const coldWarmDelta = timings[0] - (timings[ITERATIONS - 1] ?? 0);
+
+          return {
+            blocked: false,
+            executionTime: performance.now() - startTime,
+            details:
+              `Date.now() timing attack: ${ITERATIONS} iterations of ${SIZE}-element Float64Array, ` +
+              `avg=${avg.toFixed(1)}ms min=${min}ms max=${max}ms cold-warm-delta=${coldWarmDelta}ms — ` +
+              `Date.now() is not hooked, leaks cache/memory timing side-channel`,
+          };
+        } catch (error: any) {
+          return {
+            blocked: true,
+            executionTime: performance.now() - startTime,
+            details: `Date.now() timing attack blocked: ${error?.message}`,
+          };
+        }
+      }),
+  },
+
+  {
+    id: "navigator-screen-entropy-collection",
+    name: "Navigator/Screen Entropy Collection",
+    category: "fingerprinting",
+    description:
+      "Collects ALL navigator and screen properties in a single sweep. Property reads (navigator.userAgent, " +
+      "navigator.hardwareConcurrency, screen.colorDepth, etc.) are never hooked — the extension only " +
+      "intercepts constructor calls and method invocations, leaving passive property access completely open.",
+    severity: "high",
+    simulate: (page) =>
+      page.evaluate(async () => {
+        const startTime = performance.now();
+        try {
+          // Pure property reads — zero method calls, zero constructor invocations.
+          // The extension's hook layer has no mechanism to intercept these.
+          const navEntropy: Record<string, unknown> = {
+            userAgent: navigator.userAgent,
+            appName: navigator.appName,
+            appVersion: navigator.appVersion,
+            platform: navigator.platform,
+            product: navigator.product,
+            productSub: navigator.productSub,
+            vendor: navigator.vendor,
+            vendorSub: navigator.vendorSub,
+            language: navigator.language,
+            languages: [...(navigator.languages ?? [])],
+            onLine: navigator.onLine,
+            cookieEnabled: navigator.cookieEnabled,
+            hardwareConcurrency: navigator.hardwareConcurrency,
+            maxTouchPoints: navigator.maxTouchPoints,
+            pdfViewerEnabled: (navigator as any).pdfViewerEnabled,
+            doNotTrack: navigator.doNotTrack,
+          };
+
+          const screenEntropy: Record<string, unknown> = {
+            width: screen.width,
+            height: screen.height,
+            availWidth: screen.availWidth,
+            availHeight: screen.availHeight,
+            colorDepth: screen.colorDepth,
+            pixelDepth: screen.pixelDepth,
+            orientation: screen.orientation?.type,
+          };
+
+          // devicePixelRatio is also an unhooked property read.
+          const miscEntropy: Record<string, unknown> = {
+            devicePixelRatio: window.devicePixelRatio,
+            innerWidth: window.innerWidth,
+            innerHeight: window.innerHeight,
+            outerWidth: window.outerWidth,
+            outerHeight: window.outerHeight,
+          };
+
+          const totalProps =
+            Object.keys(navEntropy).length +
+            Object.keys(screenEntropy).length +
+            Object.keys(miscEntropy).length;
+
+          const fingerprint = {
+            navigator: navEntropy,
+            screen: screenEntropy,
+            misc: miscEntropy,
+          };
+
+          return {
+            blocked: false,
+            executionTime: performance.now() - startTime,
+            details:
+              `Navigator/Screen entropy collected via property reads (not hooked): ` +
+              `${totalProps} properties read — ` +
+              `platform="${navEntropy.platform}" hw-concurrency=${navEntropy.hardwareConcurrency} ` +
+              `screen=${screenEntropy.width}x${screenEntropy.height} depth=${screenEntropy.colorDepth}bit ` +
+              `dpr=${miscEntropy.devicePixelRatio} lang="${navEntropy.language}" — ` +
+              `no hook mechanism covers passive property access`,
+          };
+        } catch (error: any) {
+          return {
+            blocked: true,
+            executionTime: performance.now() - startTime,
+            details: `Navigator/Screen entropy collection blocked: ${error?.message}`,
+          };
+        }
+      }),
+  },
 ];
 
 // ============================================================================

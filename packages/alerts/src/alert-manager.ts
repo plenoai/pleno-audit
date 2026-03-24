@@ -65,6 +65,9 @@ import type {
   MessageChannelAlertParams,
   ResizeObserverAlertParams,
   ExecCommandClipboardAlertParams,
+  EventSourceChannelAlertParams,
+  FontFingerprintAlertParams,
+  IdleCallbackTimingAlertParams,
 } from "./alert-builders.js";
 import {
   buildNRDAlert,
@@ -117,6 +120,9 @@ import {
   buildMessageChannelAlert,
   buildResizeObserverAlert,
   buildExecCommandClipboardAlert,
+  buildEventSourceChannelAlert,
+  buildFontFingerprintAlert,
+  buildIdleCallbackTimingAlert,
 } from "./alert-builders.js";
 
 /**
@@ -593,6 +599,24 @@ export function createAlertManager(
     return createOptionalAlert(buildExecCommandClipboardAlert(params));
   }
 
+  async function alertEventSourceChannel(
+    params: EventSourceChannelAlertParams
+  ): Promise<SecurityAlert | null> {
+    return createOptionalAlert(buildEventSourceChannelAlert(params));
+  }
+
+  async function alertFontFingerprint(
+    params: FontFingerprintAlertParams
+  ): Promise<SecurityAlert | null> {
+    return createOptionalAlert(buildFontFingerprintAlert(params));
+  }
+
+  async function alertIdleCallbackTiming(
+    params: IdleCallbackTimingAlertParams
+  ): Promise<SecurityAlert | null> {
+    return createOptionalAlert(buildIdleCallbackTimingAlert(params));
+  }
+
   async function updateAlertStatus(
     alertId: string,
     status: AlertStatus
@@ -686,6 +710,9 @@ export function createAlertManager(
     alertMessageChannel,
     alertResizeObserver,
     alertExecCommandClipboard,
+    alertEventSourceChannel,
+    alertFontFingerprint,
+    alertIdleCallbackTiming,
     updateAlertStatus,
     getAlerts,
     getAlertCount,

@@ -66,7 +66,10 @@ export type AlertCategory =
   | "history_manipulation" // history.pushState/replaceState manipulation
   | "message_channel" // MessageChannel constructor for covert communication
   | "resize_observer" // ResizeObserver constructor for device fingerprinting
-  | "execcommand_clipboard"; // document.execCommand clipboard bypass
+  | "execcommand_clipboard" // document.execCommand clipboard bypass
+  | "eventsource_channel" // EventSource covert C2 channel
+  | "font_fingerprint" // FontFace API font fingerprinting
+  | "idle_callback_timing"; // requestIdleCallback timing side channel
 
 /**
  * Alert status
@@ -151,7 +154,10 @@ export type AlertDetails =
   | HistoryManipulationAlertDetails
   | MessageChannelAlertDetails
   | ResizeObserverAlertDetails
-  | ExecCommandClipboardAlertDetails;
+  | ExecCommandClipboardAlertDetails
+  | EventSourceChannelAlertDetails
+  | FontFingerprintAlertDetails
+  | IdleCallbackTimingAlertDetails;
 
 export interface NRDAlertDetails {
   type: "nrd";
@@ -538,6 +544,24 @@ export interface ExecCommandClipboardAlertDetails {
   type: "execcommand_clipboard";
   domain: string;
   command: string;
+}
+
+export interface EventSourceChannelAlertDetails {
+  type: "eventsource_channel";
+  domain: string;
+  url: string;
+}
+
+export interface FontFingerprintAlertDetails {
+  type: "font_fingerprint";
+  domain: string;
+  callCount: number;
+}
+
+export interface IdleCallbackTimingAlertDetails {
+  type: "idle_callback_timing";
+  domain: string;
+  callCount: number;
 }
 
 /**

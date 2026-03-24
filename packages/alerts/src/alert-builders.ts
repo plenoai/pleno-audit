@@ -56,6 +56,9 @@ import type {
   IntersectionObserverAlertDetails,
   IndexedDBAbuseAlertDetails,
   HistoryManipulationAlertDetails,
+  EventSourceChannelAlertDetails,
+  FontFingerprintAlertDetails,
+  IdleCallbackTimingAlertDetails,
 } from "./types.js";
 
 export interface CreateAlertInput {
@@ -2021,4 +2024,97 @@ const EXECCOMMAND_CLIPBOARD_ALERT_DEFINITION: AlertDefinition<
 
 export const buildExecCommandClipboardAlert = createAlertBuilder(
   EXECCOMMAND_CLIPBOARD_ALERT_DEFINITION
+);
+
+// ============================================================================
+// EventSource Covert C2 Channel
+// ============================================================================
+
+export interface EventSourceChannelAlertParams {
+  domain: string;
+  url: string;
+}
+
+const EVENTSOURCE_CHANNEL_ALERT_DEFINITION: AlertDefinition<
+  EventSourceChannelAlertParams,
+  EventSourceChannelAlertDetails
+> = {
+  category: "eventsource_channel",
+  detailsType: "eventsource_channel",
+  build: (params) => ({
+    severity: "high",
+    title: `EventSource隠密C2チャネル検出: ${params.domain}`,
+    description: `EventSourceが「${params.url}」に接続しました（隠密C2通信チャネルの可能性）`,
+    domain: params.domain,
+    details: {
+      domain: params.domain,
+      url: params.url,
+    },
+  }),
+};
+
+export const buildEventSourceChannelAlert = createAlertBuilder(
+  EVENTSOURCE_CHANNEL_ALERT_DEFINITION
+);
+
+// ============================================================================
+// FontFace API Fingerprinting
+// ============================================================================
+
+export interface FontFingerprintAlertParams {
+  domain: string;
+  callCount: number;
+}
+
+const FONT_FINGERPRINT_ALERT_DEFINITION: AlertDefinition<
+  FontFingerprintAlertParams,
+  FontFingerprintAlertDetails
+> = {
+  category: "font_fingerprint",
+  detailsType: "font_fingerprint",
+  build: (params) => ({
+    severity: "high",
+    title: `フォント指紋採取検出: ${params.domain}`,
+    description: `FontFaceSet.check()を${params.callCount}回呼び出してインストール済みフォントを列挙しています`,
+    domain: params.domain,
+    details: {
+      domain: params.domain,
+      callCount: params.callCount,
+    },
+  }),
+};
+
+export const buildFontFingerprintAlert = createAlertBuilder(
+  FONT_FINGERPRINT_ALERT_DEFINITION
+);
+
+// ============================================================================
+// requestIdleCallback Timing Side Channel
+// ============================================================================
+
+export interface IdleCallbackTimingAlertParams {
+  domain: string;
+  callCount: number;
+}
+
+const IDLE_CALLBACK_TIMING_ALERT_DEFINITION: AlertDefinition<
+  IdleCallbackTimingAlertParams,
+  IdleCallbackTimingAlertDetails
+> = {
+  category: "idle_callback_timing",
+  detailsType: "idle_callback_timing",
+  build: (params) => ({
+    severity: "medium",
+    title: `requestIdleCallbackタイミングサイドチャネル検出: ${params.domain}`,
+    description: `2秒以内にrequestIdleCallbackを${params.callCount}回呼び出しています（タイミング情報によるサイドチャネル攻撃の可能性）`,
+    domain: params.domain,
+    details: {
+      domain: params.domain,
+      callCount: params.callCount,
+    },
+  }),
+};
+
+export const buildIdleCallbackTimingAlert = createAlertBuilder(
+  IDLE_CALLBACK_TIMING_ALERT_DEFINITION
 );

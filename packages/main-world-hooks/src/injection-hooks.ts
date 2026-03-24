@@ -384,6 +384,82 @@ export function initInjectionHooks(emitSecurityEvent: SharedHookUtils["emitSecur
     (window as any).ResizeObserver.prototype = OriginalResizeObserver.prototype;
   }
 
+  // ===== EventSource Covert C2 Channel Detection =====
+  // EventSource is used for server-sent events and can serve as a covert C2 (command-and-control) channel.
+  if (typeof EventSource !== "undefined") {
+    const OriginalEventSource = EventSource;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- intentional monkey-patch of EventSource constructor
+    (window as any).EventSource = function (this: unknown, url: string | URL, eventSourceInitDict?: EventSourceInit) {
+      emitSecurityEvent("__EVENTSOURCE_DETECTED__", {
+        url: String(url),
+        timestamp: Date.now(),
+        pageUrl: location.href,
+      });
+      return new OriginalEventSource(url, eventSourceInitDict);
+    } as unknown as typeof EventSource;
+    (window as any).EventSource.prototype = OriginalEventSource.prototype;
+    (window as any).EventSource.CONNECTING = OriginalEventSource.CONNECTING;
+    (window as any).EventSource.OPEN = OriginalEventSource.OPEN;
+    (window as any).EventSource.CLOSED = OriginalEventSource.CLOSED;
+  }
+
+  // ===== FontFace API Fingerprinting Detection =====
+  // document.fonts.check() called repeatedly is used to fingerprint installed fonts.
+  if (typeof document !== "undefined" && document.fonts && typeof document.fonts.check === "function") {
+    const originalFontCheck = FontFaceSet.prototype.check;
+    let fontCheckCount = 0;
+    let fontCheckWindowStart = 0;
+    let fontFingerprintEmitted = false;
+    FontFaceSet.prototype.check = function (font: string, text?: string) {
+      const now = Date.now();
+      if (now - fontCheckWindowStart > 1000) {
+        fontCheckCount = 0;
+        fontCheckWindowStart = now;
+        fontFingerprintEmitted = false;
+      }
+      fontCheckCount++;
+      if (!fontFingerprintEmitted && fontCheckCount > 5) {
+        fontFingerprintEmitted = true;
+        emitSecurityEvent("__FONT_FINGERPRINT_DETECTED__", {
+          callCount: fontCheckCount,
+          timestamp: now,
+          pageUrl: location.href,
+        });
+      }
+      return originalFontCheck.call(this, font, text);
+    };
+  }
+
+  // ===== requestIdleCallback Timing Side Channel Detection =====
+  // Rapid chained requestIdleCallback calls are used as a timing side channel to infer CPU activity.
+  if (typeof window.requestIdleCallback === "function") {
+    const originalRequestIdleCallback = window.requestIdleCallback;
+    let idleCallbackCount = 0;
+    let idleCallbackWindowStart = 0;
+    let idleCallbackEmitted = false;
+    window.requestIdleCallback = function (
+      callback: IdleRequestCallback,
+      options?: IdleRequestOptions,
+    ): number {
+      const now = Date.now();
+      if (now - idleCallbackWindowStart > 2000) {
+        idleCallbackCount = 0;
+        idleCallbackWindowStart = now;
+        idleCallbackEmitted = false;
+      }
+      idleCallbackCount++;
+      if (!idleCallbackEmitted && idleCallbackCount > 5) {
+        idleCallbackEmitted = true;
+        emitSecurityEvent("__IDLE_CALLBACK_DETECTED__", {
+          callCount: idleCallbackCount,
+          timestamp: now,
+          pageUrl: location.href,
+        });
+      }
+      return originalRequestIdleCallback(callback, options);
+    };
+  }
+
   // ===== IntersectionObserver Surveillance Detection =====
   // Bulk observe() calls on many elements is a pattern used for scroll/visibility tracking surveillance.
   if (typeof IntersectionObserver !== "undefined") {
