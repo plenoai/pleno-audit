@@ -40,10 +40,6 @@ export function createSecurityAsyncHandlers(
       execute: (message, sender) => deps.handleClipboardHijack(message.data, sender),
       fallback: () => ({ success: false }),
     }],
-    ["COOKIE_ACCESS_DETECTED", {
-      execute: (message, sender) => deps.handleCookieAccess(message.data, sender),
-      fallback: () => ({ success: false }),
-    }],
     ["XSS_DETECTED", {
       execute: (message, sender) => deps.handleXSSDetected(message.data, sender),
       fallback: () => ({ success: false }),

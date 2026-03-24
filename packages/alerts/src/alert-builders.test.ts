@@ -17,7 +17,6 @@ import {
   buildPolicyViolationAlert,
   buildTrackingBeaconAlert,
   buildClipboardHijackAlert,
-  buildCookieAccessAlert,
   buildXSSInjectionAlert,
   buildDOMScrapingAlert,
   buildSuspiciousDownloadAlert,
@@ -33,7 +32,6 @@ import {
   type PolicyViolationAlertParams,
   type TrackingBeaconAlertParams,
   type ClipboardHijackAlertParams,
-  type CookieAccessAlertParams,
   type XSSInjectionAlertParams,
   type DOMScrapingAlertParams,
   type SuspiciousDownloadAlertParams,
@@ -603,20 +601,6 @@ describe("buildClipboardHijackAlert", () => {
 
     expect(alert.category).toBe("clipboard_hijack");
     expect(alert.severity).toBe("critical");
-  });
-});
-
-describe("buildCookieAccessAlert", () => {
-  it("builds cookie access alert", () => {
-    const params: CookieAccessAlertParams = {
-      domain: "example.com",
-      readCount: 5,
-    };
-    const alert = buildCookieAccessAlert(params);
-
-    expect(alert.category).toBe("cookie_access");
-    expect(alert.severity).toBe("medium");
-    expect(alert.details.type).toBe("cookie_access");
   });
 });
 

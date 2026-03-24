@@ -62,13 +62,6 @@ export interface ClipboardHijackData {
   fullLength: number;
 }
 
-export interface CookieAccessData {
-  source?: string;
-  timestamp: string;
-  pageUrl: string;
-  readCount: number;
-}
-
 export interface XSSDetectedData {
   source?: string;
   timestamp: string;
@@ -372,28 +365,6 @@ export function createSecurityEventHandlers(
           source: sourceLabel(data.source),
           domain: pageDomain,
           cryptoType: data.cryptoType,
-        },
-      });
-
-      return { success: true };
-    },
-
-    async handleCookieAccess(
-      data: CookieAccessData,
-      sender: chrome.runtime.MessageSender,
-    ): Promise<{ success: boolean }> {
-      const pageDomain = resolvePageDomain(sender, data.pageUrl, deps.extractDomainFromUrl);
-
-      await deps.getAlertManager().alertCookieAccess({
-        domain: pageDomain,
-        readCount: data.readCount,
-      });
-
-      deps.logger.debug({
-        event: "SECURITY_COOKIE_ACCESS_DETECTED",
-        data: {
-          source: sourceLabel(data.source),
-          domain: pageDomain,
         },
       });
 

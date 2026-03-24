@@ -57,7 +57,6 @@
     - simulateBeacon(): Send tracking beacon<br>
     - simulateExfiltration(): POST sensitive data<br>
     - simulateXSS(): Inject XSS payload via innerHTML<br>
-    - simulateCookieRead(): Access document.cookie<br>
     - simulateDOMScraping(): Mass querySelectorAll calls
   </div>
 
@@ -66,7 +65,6 @@
     <button onclick="simulateBeacon()">Beacon</button>
     <button onclick="simulateExfiltration()">Data Exfil</button>
     <button onclick="simulateXSS()">XSS</button>
-    <button onclick="simulateCookieRead()">Cookie Read</button>
     <button onclick="simulateDOMScraping()">DOM Scraping</button>
     <button onclick="runAllTests()">Run All</button>
   </div>
@@ -137,18 +135,6 @@
       log('XSS payload 3: javascript: href');
     }
 
-    function simulateCookieRead() {
-      log('Simulating cookie access...');
-      // Set a test cookie first
-      document.cookie = 'test_session=abc123; path=/';
-
-      // Multiple rapid reads to trigger detection
-      for (let i = 0; i < 10; i++) {
-        const cookies = document.cookie;
-      }
-      log('Cookie accessed 10 times');
-    }
-
     function simulateDOMScraping() {
       log('Simulating DOM scraping...');
       // Trigger scraping detection (threshold is 50 calls in 5 seconds)
@@ -172,9 +158,6 @@
       simulateXSS();
       await new Promise(r => setTimeout(r, 200));
 
-      simulateCookieRead();
-      await new Promise(r => setTimeout(r, 200));
-
       simulateDOMScraping();
 
       log('=== All tests complete ===');
@@ -184,7 +167,6 @@
     window.simulateBeacon = simulateBeacon;
     window.simulateExfiltration = simulateExfiltration;
     window.simulateXSS = simulateXSS;
-    window.simulateCookieRead = simulateCookieRead;
     window.simulateDOMScraping = simulateDOMScraping;
     window.runAllTests = runAllTests;
 

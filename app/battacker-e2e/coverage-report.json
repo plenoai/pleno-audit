@@ -32,13 +32,6 @@
       "implemented": true
     },
     {
-      "type": "cookie_access_detected",
-      "tested": true,
-      "detected": true,
-      "eventCount": 1,
-      "implemented": true
-    },
-    {
       "type": "dom_scraping_detected",
       "tested": true,
       "detected": true,

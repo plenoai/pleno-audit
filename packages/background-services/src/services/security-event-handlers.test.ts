@@ -17,7 +17,6 @@ function createMockAlertManager(): AlertManager {
     alertSupplyChainRisk: vi.fn().mockResolvedValue(null),
     alertTrackingBeacon: vi.fn().mockResolvedValue(null),
     alertClipboardHijack: vi.fn().mockResolvedValue(null),
-    alertCookieAccess: vi.fn().mockResolvedValue(null),
     alertXSSInjection: vi.fn().mockResolvedValue(null),
     alertDOMScraping: vi.fn().mockResolvedValue(null),
     alertSuspiciousDownload: vi.fn().mockResolvedValue(null),

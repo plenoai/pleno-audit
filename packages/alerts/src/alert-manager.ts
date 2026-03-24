@@ -28,7 +28,6 @@ import type {
   PolicyViolationAlertParams,
   TrackingBeaconAlertParams,
   ClipboardHijackAlertParams,
-  CookieAccessAlertParams,
   XSSInjectionAlertParams,
   DOMScrapingAlertParams,
   SuspiciousDownloadAlertParams,
@@ -86,7 +85,6 @@ import {
   buildPolicyViolationAlert,
   buildTrackingBeaconAlert,
   buildClipboardHijackAlert,
-  buildCookieAccessAlert,
   buildXSSInjectionAlert,
   buildDOMScrapingAlert,
   buildSuspiciousDownloadAlert,
@@ -409,12 +407,6 @@ export function createAlertManager(
     return createOptionalAlert(buildClipboardHijackAlert(params));
   }
 
-  async function alertCookieAccess(
-    params: CookieAccessAlertParams
-  ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildCookieAccessAlert(params));
-  }
-
   async function alertXSSInjection(
     params: XSSInjectionAlertParams
   ): Promise<SecurityAlert | null> {
@@ -723,7 +715,6 @@ export function createAlertManager(
     alertPolicyViolation,
     alertTrackingBeacon,
     alertClipboardHijack,
-    alertCookieAccess,
     alertXSSInjection,
     alertDOMScraping,
     alertSuspiciousDownload,

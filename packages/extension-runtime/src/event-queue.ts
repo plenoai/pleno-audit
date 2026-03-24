@@ -56,7 +56,6 @@ const DEFAULT_CONFIG: Required<EventQueueConfig> = {
   maxQueue: 200,
   maxUnloadBatch: 50,
   lowPriorityTypes: [
-    "COOKIE_ACCESS_DETECTED",
     "DOM_SCRAPING_DETECTED",
     "TRACKING_BEACON_DETECTED",
     "NETWORK_INSPECTION_REQUEST",

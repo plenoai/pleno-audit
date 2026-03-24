@@ -38,7 +38,6 @@ export {
 export {
   createSecurityEventHandlers,
   type ClipboardHijackData,
-  type CookieAccessData,
   type DOMScrapingData,
   type DataExfiltrationData,
   type CredentialTheftData,

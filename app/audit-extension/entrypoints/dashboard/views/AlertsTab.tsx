@@ -38,7 +38,6 @@ const categoryLabels: Record<string, string> = {
   credential_theft: "Cred",
   xss_injection: "XSS",
   dom_scraping: "DOM",
-  cookie_access: "Cookie",
   clipboard_hijack: "Clip",
   suspicious_download: "DL",
   canvas_fingerprint: "Canvas",

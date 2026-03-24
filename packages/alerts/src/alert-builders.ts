@@ -22,7 +22,6 @@ import type {
   PolicyViolationAlertDetails,
   TrackingBeaconAlertDetails,
   ClipboardHijackAlertDetails,
-  CookieAccessAlertDetails,
   XSSInjectionAlertDetails,
   DOMScrapingAlertDetails,
   SuspiciousDownloadAlertDetails,
@@ -775,31 +774,6 @@ const CLIPBOARD_HIJACK_ALERT_DEFINITION: AlertDefinition<
 export const buildClipboardHijackAlert = createAlertBuilder(
   CLIPBOARD_HIJACK_ALERT_DEFINITION
 );
-
-export interface CookieAccessAlertParams {
-  domain: string;
-  readCount: number;
-}
-
-const COOKIE_ACCESS_ALERT_DEFINITION: AlertDefinition<
-  CookieAccessAlertParams,
-  CookieAccessAlertDetails
-> = {
-  category: "cookie_access",
-  detailsType: "cookie_access",
-  build: (params) => ({
-    severity: "medium",
-    title: `Cookie盗取の可能性: ${params.domain}`,
-    description: "スクリプトがCookieにアクセスしました",
-    domain: params.domain,
-    details: {
-      domain: params.domain,
-      readCount: params.readCount,
-    },
-  }),
-};
-
-export const buildCookieAccessAlert = createAlertBuilder(COOKIE_ACCESS_ALERT_DEFINITION);
 
 export interface XSSInjectionAlertParams {
   domain: string;

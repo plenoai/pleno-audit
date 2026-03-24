@@ -1,7 +1,7 @@
 /**
  * @fileoverview Security Detection Hooks
  *
- * Supply Chain, Credential Theft, Clipboard Hijack, Cookie Access,
+ * Supply Chain, Credential Theft, Clipboard Hijack,
  * XSS/DOM Scraping, Suspicious Download の検出フック。
  *
  * === Main World Invariant ===
@@ -179,35 +179,9 @@ export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecuri
   };
 
   // ===== Cookie Access =====
-  let cookieAccessCount = 0;
-  let cookieAccessWindowStart = 0;
-  let cookieAccessEmitted = false;
-  try {
-    const desc = Object.getOwnPropertyDescriptor(Document.prototype, "cookie");
-    if (desc?.get) {
-      const originalGet = desc.get;
-      Object.defineProperty(document, "cookie", {
-        get() {
-          const now = Date.now();
-          if (now - cookieAccessWindowStart > 3000) {
-            cookieAccessCount = 0;
-            cookieAccessWindowStart = now;
-            cookieAccessEmitted = false;
-          }
-          cookieAccessCount++;
-          if (!cookieAccessEmitted && cookieAccessCount >= 5) {
-            cookieAccessEmitted = true;
-            deferEmit(emitSecurityEvent, "__COOKIE_ACCESS_DETECTED__", { timestamp: now, readCount: cookieAccessCount, pageUrl: window.location.href });
-          }
-          return originalGet.call(document);
-        },
-        set: desc.set,
-        configurable: true,
-      });
-    }
-  } catch {
-    /* ignore */
-  }
+  // REMOVED: document.cookie getter hook.
+  // Cookie tracking is handled by chrome.cookies.onChanged in cookie-monitor.ts.
+  // The main-world getter hook was redundant and caused false positives.
 
   // ===== DOM Scraping (querySelectorAll threshold) =====
   let qsaCount = 0;

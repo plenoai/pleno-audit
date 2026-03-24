@@ -50,7 +50,7 @@ export default defineContentScript({
       "__TRACKING_BEACON_DETECTED__",
       "__NETWORK_INSPECTION_REQUEST__",
       "__CLIPBOARD_HIJACK_DETECTED__",
-      "__COOKIE_ACCESS_DETECTED__",
+      // Cookie Access hook removed (handled by chrome.cookies.onChanged)
       // XSS via innerHTML removed (prototype modification triggers anti-tamper SDKs)
       "__DOM_SCRAPING_DETECTED__",
       "__SUSPICIOUS_DOWNLOAD_DETECTED__",

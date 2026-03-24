@@ -30,7 +30,6 @@ export type AlertCategory =
   | "policy_violation" // Enterprise policy violation
   | "tracking_beacon" // Tracking beacon detected
   | "clipboard_hijack" // Clipboard hijack attempt (crypto address)
-  | "cookie_access" // Suspicious cookie access
   | "xss_injection" // XSS payload detected
   | "dom_scraping" // DOM scraping detected
   | "suspicious_download" // Suspicious file download
@@ -123,7 +122,6 @@ export type AlertDetails =
   | PolicyViolationAlertDetails
   | TrackingBeaconAlertDetails
   | ClipboardHijackAlertDetails
-  | CookieAccessAlertDetails
   | XSSInjectionAlertDetails
   | DOMScrapingAlertDetails
   | SuspiciousDownloadAlertDetails
@@ -304,12 +302,6 @@ export interface ClipboardHijackAlertDetails {
   domain: string;
   cryptoType: string;
   textPreview: string;
-}
-
-export interface CookieAccessAlertDetails {
-  type: "cookie_access";
-  domain: string;
-  readCount: number;
 }
 
 export interface XSSInjectionAlertDetails {

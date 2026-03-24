@@ -77,7 +77,6 @@ handleNetworkInspection: (data: unknown, sender: chrome.runtime.MessageSender) =
   handleSupplyChainRisk: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
   handleTrackingBeacon: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
   handleClipboardHijack: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
-  handleCookieAccess: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
   handleXSSDetected: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
   handleDOMScraping: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
   handleSuspiciousDownload: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;

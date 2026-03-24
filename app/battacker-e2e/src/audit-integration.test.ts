@@ -44,12 +44,6 @@ const AUDIT_DETECTION_SPEC = {
     priority: "critical",
     implemented: true,
   },
-  cookie_access_detected: {
-    description: "Frequent document.cookie access",
-    source: "api-hooks.js",
-    priority: "medium",
-    implemented: true,
-  },
   dom_scraping_detected: {
     description: "Mass querySelectorAll calls (>50 in 5 seconds)",
     source: "api-hooks.js",
@@ -259,15 +253,6 @@ async function simulateXSS(page: Page): Promise<void> {
   });
 }
 
-async function simulateCookieAccess(page: Page): Promise<void> {
-  await page.evaluate(() => {
-    document.cookie = "test_session=abc123; path=/";
-    for (let i = 0; i < 10; i++) {
-      const _ = document.cookie;
-    }
-  });
-}
-
 async function simulateDOMScraping(page: Page): Promise<void> {
   await page.evaluate(() => {
     for (let i = 0; i < 60; i++) {
@@ -390,7 +375,6 @@ const DETECTION_SIMULATORS: Record<AuditDetectionType, (page: Page, serverPort: 
   tracking_beacon_detected: (page) => simulateTrackingBeacon(page),
   data_exfiltration_detected: (page) => simulateDataExfiltration(page),
   xss_detected: (page) => simulateXSS(page),
-  cookie_access_detected: (page) => simulateCookieAccess(page),
   dom_scraping_detected: (page) => simulateDOMScraping(page),
   clipboard_hijack_detected: (page) => simulateClipboardHijack(page),
   suspicious_download_detected: (page) => simulateSuspiciousDownload(page),
