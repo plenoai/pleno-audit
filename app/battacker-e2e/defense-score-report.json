@@ -1,18 +1,18 @@
 {
-  "timestamp": "2026-03-24T14:58:05.792Z",
-  "totalScore": 15,
+  "timestamp": "2026-03-24T15:02:57.188Z",
+  "totalScore": 14,
   "grade": "F",
-  "testsRun": 70,
+  "testsRun": 74,
   "blocked": 9,
   "categories": [
     {
       "category": "side-channel",
       "label": "Side-Channel Attacks",
       "score": 20,
-      "maxScore": 130,
-      "pct": 15,
+      "maxScore": 170,
+      "pct": 12,
       "blocked": 1,
-      "total": 7,
+      "total": 9,
       "weight": 0.12
     },
     {
@@ -49,10 +49,10 @@
       "category": "covert",
       "label": "Covert Channel Attacks",
       "score": 30,
-      "maxScore": 180,
-      "pct": 17,
+      "maxScore": 210,
+      "pct": 14,
       "blocked": 1,
-      "total": 8,
+      "total": 9,
       "weight": 0.08
     },
     {
@@ -79,10 +79,10 @@
       "category": "privacy",
       "label": "Privacy Attacks",
       "score": 30,
-      "maxScore": 95,
-      "pct": 32,
+      "maxScore": 115,
+      "pct": 26,
       "blocked": 1,
-      "total": 6,
+      "total": 7,
       "weight": 0.06
     },
     {
@@ -163,7 +163,7 @@
       "category": "network",
       "severity": "high",
       "blocked": false,
-      "executionTime": 715.5,
+      "executionTime": 739.3000000002794,
       "details": "Beacon sent (status: 200)"
     },
     {
@@ -172,7 +172,7 @@
       "category": "network",
       "severity": "critical",
       "blocked": false,
-      "executionTime": 698.2999999998137,
+      "executionTime": 237.39999999990687,
       "details": "Exfiltration simulated (status: 200)"
     },
     {
@@ -181,7 +181,7 @@
       "category": "network",
       "severity": "critical",
       "blocked": false,
-      "executionTime": 905,
+      "executionTime": 507.5,
       "details": "C2 polling successful, received 275 bytes"
     },
     {
@@ -190,7 +190,7 @@
       "category": "network",
       "severity": "critical",
       "blocked": false,
-      "executionTime": 597.4000000003725,
+      "executionTime": 503,
       "details": "WebSocket C2 successful: 32 bytes"
     },
     {
@@ -199,7 +199,7 @@
       "category": "network",
       "severity": "critical",
       "blocked": false,
-      "executionTime": 182.40000000037253,
+      "executionTime": 203.10000000009313,
       "details": "Worker exfil successful (status: 200)"
     },
     {
@@ -208,7 +208,7 @@
       "category": "phishing",
       "severity": "high",
       "blocked": false,
-      "executionTime": 0.6000000000931323,
+      "executionTime": 0.2999999998137355,
       "details": "Clipboard hijack successful"
     },
     {
@@ -217,7 +217,7 @@
       "category": "phishing",
       "severity": "high",
       "blocked": false,
-      "executionTime": 0.39999999990686774,
+      "executionTime": 1.2000000001862645,
       "details": "No stored credentials found"
     },
     {
@@ -226,7 +226,7 @@
       "category": "phishing",
       "severity": "medium",
       "blocked": true,
-      "executionTime": 0.2999999998137355,
+      "executionTime": 0.39999999990686774,
       "details": "Notification permission denied"
     },
     {
@@ -244,7 +244,7 @@
       "category": "client-side",
       "severity": "medium",
       "blocked": false,
-      "executionTime": 0.10000000009313226,
+      "executionTime": 0,
       "details": "DOM access: 1 forms, 2 inputs"
     },
     {
@@ -253,7 +253,7 @@
       "category": "client-side",
       "severity": "high",
       "blocked": false,
-      "executionTime": 0.19999999972060323,
+      "executionTime": 0.10000000009313226,
       "details": "Cookie access: 0 chars"
     },
     {
@@ -262,7 +262,7 @@
       "category": "download",
       "severity": "high",
       "blocked": false,
-      "executionTime": 0.5,
+      "executionTime": 0.2999999998137355,
       "details": "Blob URL download link created"
     },
     {
@@ -289,7 +289,7 @@
       "category": "persistence",
       "severity": "high",
       "blocked": false,
-      "executionTime": 20.700000000186265,
+      "executionTime": 17.399999999906868,
       "details": "IndexedDB data stash successful"
     },
     {
@@ -298,7 +298,7 @@
       "category": "persistence",
       "severity": "medium",
       "blocked": false,
-      "executionTime": 1.8999999999068677,
+      "executionTime": 2.1000000000931323,
       "details": "Cache API abuse successful"
     },
     {
@@ -307,7 +307,7 @@
       "category": "persistence",
       "severity": "low",
       "blocked": false,
-      "executionTime": 0.2999999998137355,
+      "executionTime": 0.20000000018626451,
       "details": "History state exfil successful"
     },
     {
@@ -316,7 +316,7 @@
       "category": "side-channel",
       "severity": "medium",
       "blocked": false,
-      "executionTime": 3.1999999997206032,
+      "executionTime": 2.1000000000931323,
       "details": "Canvas fingerprint: AA//9htOjoAAAABklEQVQDAKC1pKFTJqQDAAAAAElFTkSuQmCC"
     },
     {
@@ -325,7 +325,7 @@
       "category": "side-channel",
       "severity": "medium",
       "blocked": false,
-      "executionTime": 0.20000000018626451,
+      "executionTime": 0.10000000009313226,
       "details": "Performance timing: 4 metrics collected"
     },
     {
@@ -334,7 +334,7 @@
       "category": "side-channel",
       "severity": "high",
       "blocked": false,
-      "executionTime": 0.20000000018626451,
+      "executionTime": 0.3000000002793968,
       "details": "BroadcastChannel leak successful"
     },
     {
@@ -343,7 +343,7 @@
       "category": "side-channel",
       "severity": "critical",
       "blocked": false,
-      "executionTime": 0.10000000009313226,
+      "executionTime": 0,
       "details": "High-precision timer available - resolution 0.000000ms"
     },
     {
@@ -370,7 +370,7 @@
       "category": "fingerprinting",
       "severity": "high",
       "blocked": false,
-      "executionTime": 219.10000000009313,
+      "executionTime": 208.8000000002794,
       "details": "Audio fingerprint hash: 61496cbe"
     },
     {
@@ -379,7 +379,7 @@
       "category": "fingerprinting",
       "severity": "medium",
       "blocked": false,
-      "executionTime": 7.600000000093132,
+      "executionTime": 7.899999999906868,
       "details": "Font fingerprint: 10/10 fonts detected"
     },
     {
@@ -388,7 +388,7 @@
       "category": "fingerprinting",
       "severity": "medium",
       "blocked": false,
-      "executionTime": 0.09999999962747097,
+      "executionTime": 0,
       "details": "Screen fingerprint: 1920x1080 @ 1x"
     },
     {
@@ -397,7 +397,7 @@
       "category": "fingerprinting",
       "severity": "medium",
       "blocked": false,
-      "executionTime": 0.09999999962747097,
+      "executionTime": 0.10000000009313226,
       "details": "Navigator fingerprint: 6 properties collected"
     },
     {
@@ -407,7 +407,7 @@
       "severity": "high",
       "blocked": false,
       "executionTime": 200,
-      "details": "CPU mining: 3231220 h/s (646244 hashes)"
+      "details": "CPU mining: 3238110 h/s (647622 hashes)"
     },
     {
       "id": "cryptojacking-worker",
@@ -415,8 +415,8 @@
       "category": "cryptojacking",
       "severity": "critical",
       "blocked": false,
-      "executionTime": 201.89999999990687,
-      "details": "Worker mining: 4496395 h/s"
+      "executionTime": 202.59999999962747,
+      "details": "Worker mining: 4424075 h/s"
     },
     {
       "id": "cryptojacking-multi-worker",
@@ -424,8 +424,8 @@
       "category": "cryptojacking",
       "severity": "critical",
       "blocked": false,
-      "executionTime": 204,
-      "details": "Multi-worker mining: 4 workers, 14218020 h/s combined"
+      "executionTime": 204.5,
+      "details": "Multi-worker mining: 4 workers, 13915110 h/s combined"
     },
     {
       "id": "cryptojacking-wasm",
@@ -433,8 +433,8 @@
       "category": "cryptojacking",
       "severity": "high",
       "blocked": false,
-      "executionTime": 100.1999999997206,
-      "details": "WASM mining: 578090000 ops/s"
+      "executionTime": 101,
+      "details": "WASM mining: 458370000 ops/s"
     },
     {
       "id": "privacy-geolocation",
@@ -442,7 +442,7 @@
       "category": "privacy",
       "severity": "critical",
       "blocked": true,
-      "executionTime": 0.39999999990686774,
+      "executionTime": 0.40000000037252903,
       "details": "Geolocation permission denied"
     },
     {
@@ -451,7 +451,7 @@
       "category": "privacy",
       "severity": "medium",
       "blocked": false,
-      "executionTime": 0.10000000009313226,
+      "executionTime": 0,
       "details": "Battery: 100% (charging)"
     },
     {
@@ -460,7 +460,7 @@
       "category": "privacy",
       "severity": "high",
       "blocked": false,
-      "executionTime": 20.100000000093132,
+      "executionTime": 19.700000000186265,
       "details": "Motion data: x=undefined"
     },
     {
@@ -469,7 +469,7 @@
       "category": "privacy",
       "severity": "medium",
       "blocked": false,
-      "executionTime": 146.89999999990687,
+      "executionTime": 168.20000000018626,
       "details": "Media devices: 1 cameras, 1 mics"
     },
     {
@@ -487,7 +487,7 @@
       "category": "media",
       "severity": "critical",
       "blocked": false,
-      "executionTime": 3002.399999999907,
+      "executionTime": 3002.2999999998137,
       "details": "Screen capture permission pending"
     },
     {
@@ -496,7 +496,7 @@
       "category": "media",
       "severity": "critical",
       "blocked": true,
-      "executionTime": 50.5,
+      "executionTime": 37.299999999813735,
       "details": "Audio capture blocked"
     },
     {
@@ -505,7 +505,7 @@
       "category": "media",
       "severity": "critical",
       "blocked": true,
-      "executionTime": 27.90000000037253,
+      "executionTime": 26.09999999962747,
       "details": "Media capture blocked"
     },
     {
@@ -514,7 +514,7 @@
       "category": "storage",
       "severity": "high",
       "blocked": false,
-      "executionTime": 0.2999999998137355,
+      "executionTime": 0.3000000002793968,
       "details": "localStorage exfil: 52 bytes"
     },
     {
@@ -523,7 +523,7 @@
       "category": "storage",
       "severity": "high",
       "blocked": false,
-      "executionTime": 0.20000000018626451,
+      "executionTime": 0.10000000009313226,
       "details": "sessionStorage exfil: 65 bytes"
     },
     {
@@ -532,7 +532,7 @@
       "category": "storage",
       "severity": "medium",
       "blocked": false,
-      "executionTime": 102.1999999997206,
+      "executionTime": 102.20000000018626,
       "details": "Storage event listener set (single-tab test)"
     },
     {
@@ -541,7 +541,7 @@
       "category": "storage",
       "severity": "medium",
       "blocked": false,
-      "executionTime": 1.5,
+      "executionTime": 1.1999999997206032,
       "details": "Storage quota probe: 2048000 bytes stored"
     },
     {
@@ -550,7 +550,7 @@
       "category": "worker",
       "severity": "critical",
       "blocked": false,
-      "executionTime": 2.8000000002793968,
+      "executionTime": 2.3999999999068677,
       "details": "SharedWorker communication successful"
     },
     {
@@ -559,8 +559,8 @@
       "category": "worker",
       "severity": "critical",
       "blocked": true,
-      "executionTime": 0.8000000002793968,
-      "details": "Service Worker blocked: Failed to register a ServiceWorker: The URL protocol of the script ('blob:http://127.0.0.1:50552/23688a6e-065e-4b1f-ba30-beaeb6dc1df6') is not supported."
+      "executionTime": 0.5,
+      "details": "Service Worker blocked: Failed to register a ServiceWorker: The URL protocol of the script ('blob:http://127.0.0.1:50597/095a79d2-a972-4f86-ab5d-dfdd64f77f37') is not supported."
     },
     {
       "id": "worker-spawning-chain",
@@ -568,7 +568,7 @@
       "category": "worker",
       "severity": "high",
       "blocked": false,
-      "executionTime": 5.7999999998137355,
+      "executionTime": 3.900000000372529,
       "details": "Worker chain: depth 1"
     },
     {
@@ -577,7 +577,7 @@
       "category": "injection",
       "severity": "high",
       "blocked": true,
-      "executionTime": 11,
+      "executionTime": 10.200000000186265,
       "details": "Clipboard read blocked: Failed to execute 'readText' on 'Clipboard': Read permission denied."
     },
     {
@@ -595,7 +595,7 @@
       "category": "injection",
       "severity": "high",
       "blocked": false,
-      "executionTime": 0.3000000002793968,
+      "executionTime": 0.2999999998137355,
       "details": "innerHTML injection: dangerous elements persisted"
     },
     {
@@ -604,7 +604,7 @@
       "category": "injection",
       "severity": "critical",
       "blocked": false,
-      "executionTime": 0.10000000009313226,
+      "executionTime": 0,
       "details": "Function constructor execution successful"
     },
     {
@@ -613,7 +613,7 @@
       "category": "covert",
       "severity": "critical",
       "blocked": false,
-      "executionTime": 0.6000000000931323,
+      "executionTime": 0.39999999990686774,
       "details": "Beacon API exfiltration successful"
     },
     {
@@ -622,7 +622,7 @@
       "category": "covert",
       "severity": "high",
       "blocked": false,
-      "executionTime": 103.29999999981374,
+      "executionTime": 102.79999999981374,
       "details": "DNS prefetch leak: covert channel established"
     },
     {
@@ -631,7 +631,7 @@
       "category": "covert",
       "severity": "critical",
       "blocked": true,
-      "executionTime": 1.8000000002793968,
+      "executionTime": 1.5,
       "details": "WebTransport blocked: Opening handshake failed."
     },
     {
@@ -640,7 +640,7 @@
       "category": "covert",
       "severity": "critical",
       "blocked": false,
-      "executionTime": 3070,
+      "executionTime": 3068.5,
       "details": "WebRTC DataChannel timed out"
     },
     {
@@ -649,8 +649,8 @@
       "category": "covert",
       "severity": "medium",
       "blocked": false,
-      "executionTime": 618,
-      "details": "Image timing channel: avg 206ms"
+      "executionTime": 564.6000000000931,
+      "details": "Image timing channel: avg 188ms"
     },
     {
       "id": "advanced-form-submit-hijack",
@@ -658,7 +658,7 @@
       "category": "advanced",
       "severity": "high",
       "blocked": false,
-      "executionTime": 0.10000000009313226,
+      "executionTime": 0.20000000018626451,
       "details": "Form submission hijacking successful"
     },
     {
@@ -667,7 +667,7 @@
       "category": "advanced",
       "severity": "critical",
       "blocked": false,
-      "executionTime": 0,
+      "executionTime": 0.10000000009313226,
       "details": "Prototype pollution successful"
     },
     {
@@ -676,7 +676,7 @@
       "category": "advanced",
       "severity": "medium",
       "blocked": false,
-      "executionTime": 175.20000000018626,
+      "executionTime": 181.5,
       "details": "Request header injection: custom headers sent"
     },
     {
@@ -685,7 +685,7 @@
       "category": "advanced",
       "severity": "high",
       "blocked": true,
-      "executionTime": 0.19999999972060323,
+      "executionTime": 0.20000000018626451,
       "details": "MutationObserver XSS blocked"
     },
     {
@@ -694,8 +694,8 @@
       "category": "advanced",
       "severity": "medium",
       "blocked": false,
-      "executionTime": 409.29999999981374,
-      "details": "CORS preflight timing: 409ms"
+      "executionTime": 626.8999999999069,
+      "details": "CORS preflight timing: 627ms"
     },
     {
       "id": "covert-css-keylogging",
@@ -703,7 +703,7 @@
       "category": "covert",
       "severity": "high",
       "blocked": false,
-      "executionTime": 52.89999999990687,
+      "executionTime": 51.299999999813735,
       "details": "CSS keylogging: 36 selector rules injected undetected (45 total rules in page)"
     },
     {
@@ -712,7 +712,7 @@
       "category": "advanced",
       "severity": "critical",
       "blocked": false,
-      "executionTime": 0.09999999962747097,
+      "executionTime": 0,
       "details": "Prototype pollution via JSON.parse: successful (native=false, merge=true)"
     },
     {
@@ -721,7 +721,7 @@
       "category": "injection",
       "severity": "high",
       "blocked": false,
-      "executionTime": 0.20000000018626451,
+      "executionTime": 0,
       "details": "DOM clobbering: window.battacker_clobber_target shadowed (shallow=true, deep=true)"
     },
     {
@@ -739,7 +739,7 @@
       "category": "covert",
       "severity": "high",
       "blocked": false,
-      "executionTime": 16.100000000093132,
+      "executionTime": 14.5,
       "details": "postMessage exfil: round-trip successful, payload echoed (75 bytes)"
     },
     {
@@ -748,7 +748,7 @@
       "category": "covert",
       "severity": "high",
       "blocked": false,
-      "executionTime": 127.29999999981374,
+      "executionTime": 127.6999999997206,
       "details": "Timer covert channel: encoded 1010 → observed [43,22,41,22]ms, decoded 1010 (4/4 match)"
     },
     {
@@ -757,7 +757,7 @@
       "category": "persistence",
       "severity": "critical",
       "blocked": false,
-      "executionTime": 2.5,
+      "executionTime": 2,
       "details": "SW cache poisoning: poisoned response stored and retrieved for trusted-api.example.com (payload: stolen_credentials)"
     },
     {
@@ -766,7 +766,7 @@
       "category": "privacy",
       "severity": "high",
       "blocked": false,
-      "executionTime": 0.39999999990686774,
+      "executionTime": 0.2999999998137355,
       "details": "CSS :visited sniff: probed 4 URLs undetected, 0 reported visited (browsers may clamp to unvisited colour for privacy)"
     },
     {
@@ -775,7 +775,7 @@
       "category": "network",
       "severity": "high",
       "blocked": false,
-      "executionTime": 348.70000000018626,
+      "executionTime": 193.20000000018626,
       "details": "Fetch metadata bypass: GET no-cors exfiltration sent (64 bytes base64-encoded in query string) — opaque response, no hook interception"
     },
     {
@@ -784,17 +784,56 @@
       "category": "side-channel",
       "severity": "critical",
       "blocked": false,
-      "executionTime": 0.20000000018626451,
+      "executionTime": 0.10000000009313226,
       "details": "WASM memory scan: 65536 bytes allocated, sentinel verified=true, entropy=0.147 bits/byte — raw buffer accessible without hook interception"
+    },
+    {
+      "id": "covert-image-steganography",
+      "name": "Image Steganography Exfiltration",
+      "category": "covert",
+      "severity": "critical",
+      "blocked": false,
+      "executionTime": 5,
+      "details": "Image steganography: 59 bytes encoded into 314 byte data URL; LSB round-trip verified (bit=1); canvas.toDataURL fired but not blocked"
+    },
+    {
+      "id": "side-channel-css-animation-timing",
+      "name": "CSS Animation Timing Side Channel",
+      "category": "side-channel",
+      "severity": "medium",
+      "blocked": false,
+      "executionTime": 164.5,
+      "details": "CSS animation timing: 5 samples, avg=0.000ms, jitter=0.000ms — animationstart/animationend unhooked, scheduling side channel open"
+    },
+    {
+      "id": "privacy-intersection-observer-surveillance",
+      "name": "Intersection Observer Surveillance",
+      "category": "privacy",
+      "severity": "high",
+      "blocked": false,
+      "executionTime": 106.70000000018626,
+      "details": "IntersectionObserver surveillance: observed 2 elements, recorded 2 visibility events undetected — IntersectionObserver constructor not hooked"
+    },
+    {
+      "id": "side-channel-shared-array-buffer-timer",
+      "name": "SharedArrayBuffer High-Resolution Timer",
+      "category": "side-channel",
+      "severity": "critical",
+      "blocked": false,
+      "executionTime": 0,
+      "details": "SharedArrayBuffer not available in this context (cross-origin isolation required) — API surface exists, no hook intercepts its constructor"
     }
   ],
-  "alertsDetected": 46,
+  "alertsDetected": 55,
   "alertsByCategory": {
-    "dynamic_code_execution": 8,
+    "canvas_fingerprint": 2,
+    "fetch_exfiltration": 4,
+    "cache_api_abuse": 4,
     "postmessage_exfil": 1,
-    "performance_observer": 1,
-    "dom_clobbering": 1,
     "prototype_pollution": 2,
+    "dom_clobbering": 1,
+    "performance_observer": 1,
+    "dynamic_code_execution": 6,
     "css_keylogging": 1,
     "form_hijack": 1,
     "webrtc_connection": 1,
@@ -810,10 +849,10 @@
     "device_enumeration": 1,
     "device_sensor": 1,
     "geolocation_access": 1,
+    "wasm_execution": 2,
     "audio_fingerprint": 1,
     "webgl_fingerprint": 4,
     "broadcast_channel": 1,
-    "canvas_fingerprint": 1,
     "cookie_access": 1,
     "credential_api": 1,
     "websocket_connection": 1,
@@ -821,372 +860,444 @@
   },
   "alerts": [
     {
-      "id": "alert-1774364285787-somd95h9p",
-      "category": "dynamic_code_execution",
-      "severity": "high",
-      "title": "動的コード実行検出: 127.0.0.1",
-      "domain": "127.0.0.1",
-      "timestamp": 1774364285787
-    },
-    {
-      "id": "alert-1774364285277-59rexwwpc",
-      "category": "postmessage_exfil",
-      "severity": "high",
-      "title": "postMessageクロスオリジン送信検出: 127.0.0.1",
-      "domain": "127.0.0.1",
-      "timestamp": 1774364285277
-    },
-    {
-      "id": "alert-1774364285271-kb12bmjd2",
-      "category": "performance_observer",
-      "severity": "medium",
-      "title": "PerformanceObserverサイドチャネル検出: 127.0.0.1",
-      "domain": "127.0.0.1",
-      "timestamp": 1774364285271
-    },
-    {
-      "id": "alert-1774364285248-892ph9b2b",
-      "category": "dom_clobbering",
-      "severity": "high",
-      "title": "DOMクロッバリング検出: 127.0.0.1",
-      "domain": "127.0.0.1",
-      "timestamp": 1774364285248
-    },
-    {
-      "id": "alert-1774364285246-72g5z4xv1",
-      "category": "prototype_pollution",
-      "severity": "critical",
-      "title": "プロトタイプ汚染攻撃検出: 127.0.0.1",
-      "domain": "127.0.0.1",
-      "timestamp": 1774364285246
-    },
-    {
-      "id": "alert-1774364285183-5co8lyisp",
-      "category": "css_keylogging",
-      "severity": "critical",
-      "title": "CSSキーロギング検出: 127.0.0.1",
-      "domain": "127.0.0.1",
-      "timestamp": 1774364285183
-    },
-    {
-      "id": "alert-1774364284761-6pz4qxwb5",
-      "category": "dynamic_code_execution",
-      "severity": "high",
-      "title": "動的コード実行検出: 127.0.0.1",
-      "domain": "127.0.0.1",
-      "timestamp": 1774364284761
-    },
-    {
-      "id": "alert-1774364284580-o7c2zb0x4",
-      "category": "prototype_pollution",
-      "severity": "critical",
-      "title": "プロトタイプ汚染攻撃検出: 127.0.0.1",
-      "domain": "127.0.0.1",
-      "timestamp": 1774364284580
-    },
-    {
-      "id": "alert-1774364284565-p30uoye6d",
-      "category": "form_hijack",
-      "severity": "critical",
-      "title": "フォームハイジャック検出: 127.0.0.1",
-      "domain": "127.0.0.1",
-      "timestamp": 1774364284565
-    },
-    {
-      "id": "alert-1774364283939-neehx79yr",
-      "category": "dynamic_code_execution",
-      "severity": "high",
-      "title": "動的コード実行検出: 127.0.0.1",
-      "domain": "127.0.0.1",
-      "timestamp": 1774364283939
-    },
-    {
-      "id": "alert-1774364280934-j8wctjmfe",
-      "category": "webrtc_connection",
-      "severity": "medium",
-      "title": "WebRTC接続検出: 127.0.0.1",
-      "domain": "127.0.0.1",
-      "timestamp": 1774364280934
-    },
-    {
-      "id": "alert-1774364280747-45pog9q66",
-      "category": "dns_prefetch_leak",
-      "severity": "medium",
-      "title": "DNSプリフェッチリーク検出: 127.0.0.1",
-      "domain": "127.0.0.1",
-      "timestamp": 1774364280747
-    },
-    {
-      "id": "alert-1774364280746-p3hwfr9fp",
-      "category": "tracking_beacon",
-      "severity": "medium",
-      "title": "トラッキングビーコン検出: httpbin.org",
-      "domain": "httpbin.org",
-      "timestamp": 1774364280746
-    },
-    {
-      "id": "alert-1774364280746-mn4lep3a3",
-      "category": "data_exfiltration",
-      "severity": "critical",
-      "title": "機密データ送信検出: httpbin.org",
-      "domain": "httpbin.org",
-      "timestamp": 1774364280746
-    },
-    {
-      "id": "alert-1774364280745-lyet4xety",
-      "category": "send_beacon",
-      "severity": "medium",
-      "title": "Beacon送信検出: 127.0.0.1",
-      "domain": "127.0.0.1",
-      "timestamp": 1774364280745
-    },
-    {
-      "id": "alert-1774364280735-a41mov5l3",
-      "category": "xss_injection",
-      "severity": "critical",
-      "title": "XSS検出: 127.0.0.1",
-      "domain": "127.0.0.1",
-      "timestamp": 1774364280735
-    },
-    {
-      "id": "alert-1774364280721-kje15fni7",
-      "category": "fullscreen_phishing",
-      "severity": "critical",
-      "title": "フルスクリーンフィッシング検出: 127.0.0.1",
-      "domain": "127.0.0.1",
-      "timestamp": 1774364280721
-    },
-    {
-      "id": "alert-1774364280715-ifc0exj40",
-      "category": "clipboard_read",
-      "severity": "medium",
-      "title": "クリップボード読み取り検出: 127.0.0.1",
-      "domain": "127.0.0.1",
-      "timestamp": 1774364280715
-    },
-    {
-      "id": "alert-1774364280694-4xkuvo1n2",
-      "category": "suspicious_download",
-      "severity": "high",
-      "title": "疑わしいダウンロード検出: blob",
-      "domain": "127.0.0.1",
-      "timestamp": 1774364280694
-    },
-    {
-      "id": "alert-1774364280689-mkganmcc2",
-      "category": "suspicious_download",
-      "severity": "high",
-      "title": "疑わしいダウンロード検出: blob",
-      "domain": "127.0.0.1",
-      "timestamp": 1774364280689
-    },
-    {
-      "id": "alert-1774364280504-yjrqxs09j",
-      "category": "media_capture",
-      "severity": "high",
-      "title": "メディアキャプチャ検出: 127.0.0.1",
-      "domain": "127.0.0.1",
-      "timestamp": 1774364280504
-    },
-    {
-      "id": "alert-1774364280450-231nli6ok",
-      "category": "media_capture",
-      "severity": "high",
-      "title": "メディアキャプチャ検出: 127.0.0.1",
-      "domain": "127.0.0.1",
-      "timestamp": 1774364280450
-    },
-    {
-      "id": "alert-1774364280449-fk4gqc4jo",
-      "category": "dynamic_code_execution",
-      "severity": "high",
-      "title": "動的コード実行検出: 127.0.0.1",
-      "domain": "127.0.0.1",
-      "timestamp": 1774364280449
-    },
-    {
-      "id": "alert-1774364277445-uzn0wnujo",
-      "category": "media_capture",
-      "severity": "critical",
-      "title": "メディアキャプチャ検出: 127.0.0.1",
-      "domain": "127.0.0.1",
-      "timestamp": 1774364277445
-    },
-    {
-      "id": "alert-1774364277277-s0szalq96",
-      "category": "device_enumeration",
-      "severity": "medium",
-      "title": "デバイス列挙検出: 127.0.0.1",
-      "domain": "127.0.0.1",
-      "timestamp": 1774364277277
-    },
-    {
-      "id": "alert-1774364277253-mmx74frnj",
-      "category": "device_sensor",
-      "severity": "medium",
-      "title": "デバイスセンサー検出: 127.0.0.1",
-      "domain": "127.0.0.1",
-      "timestamp": 1774364277253
-    },
-    {
-      "id": "alert-1774364277244-ddjt8iaju",
-      "category": "geolocation_access",
-      "severity": "medium",
-      "title": "位置情報アクセス検出: 127.0.0.1",
-      "domain": "127.0.0.1",
-      "timestamp": 1774364277244
-    },
-    {
-      "id": "alert-1774364276930-cns47i9uz",
-      "category": "suspicious_download",
-      "severity": "high",
-      "title": "疑わしいダウンロード検出: blob",
-      "domain": "127.0.0.1",
-      "timestamp": 1774364276930
-    },
-    {
-      "id": "alert-1774364276724-onbn7uo8d",
-      "category": "suspicious_download",
-      "severity": "high",
-      "title": "疑わしいダウンロード検出: blob",
-      "domain": "127.0.0.1",
-      "timestamp": 1774364276724
-    },
-    {
-      "id": "alert-1774364276394-ba8xn5igt",
-      "category": "audio_fingerprint",
-      "severity": "high",
-      "title": "Audio指紋採取検出: 127.0.0.1",
-      "domain": "127.0.0.1",
-      "timestamp": 1774364276394
-    },
-    {
-      "id": "alert-1774364276267-g6fsyxk2e",
-      "category": "webgl_fingerprint",
-      "severity": "high",
-      "title": "WebGL指紋採取検出: 127.0.0.1",
-      "domain": "127.0.0.1",
-      "timestamp": 1774364276267
-    },
-    {
-      "id": "alert-1774364276267-o1iw9vif3",
-      "category": "webgl_fingerprint",
-      "severity": "high",
-      "title": "WebGL指紋採取検出: 127.0.0.1",
-      "domain": "127.0.0.1",
-      "timestamp": 1774364276267
-    },
-    {
-      "id": "alert-1774364276266-fi7jd75xr",
-      "category": "webgl_fingerprint",
-      "severity": "high",
-      "title": "WebGL指紋採取検出: 127.0.0.1",
-      "domain": "127.0.0.1",
-      "timestamp": 1774364276266
-    },
-    {
-      "id": "alert-1774364276266-u74653k75",
-      "category": "webgl_fingerprint",
-      "severity": "high",
-      "title": "WebGL指紋採取検出: 127.0.0.1",
-      "domain": "127.0.0.1",
-      "timestamp": 1774364276266
-    },
-    {
-      "id": "alert-1774364276246-7ktq8ribn",
-      "category": "broadcast_channel",
-      "severity": "medium",
-      "title": "BroadcastChannel検出: 127.0.0.1",
-      "domain": "127.0.0.1",
-      "timestamp": 1774364276246
-    },
-    {
-      "id": "alert-1774364276237-m8xkhebp4",
+      "id": "alert-1774364576899-57fp92hlj",
       "category": "canvas_fingerprint",
       "severity": "high",
       "title": "Canvas指紋採取検出: 127.0.0.1",
       "domain": "127.0.0.1",
-      "timestamp": 1774364276237
+      "timestamp": 1774364576899
     },
     {
-      "id": "alert-1774364276163-o5dx7auhr",
+      "id": "alert-1774364576695-pqu84epob",
+      "category": "fetch_exfiltration",
+      "severity": "high",
+      "title": "fetchによるデータ流出を検出: 127.0.0.1",
+      "domain": "127.0.0.1",
+      "timestamp": 1774364576695
+    },
+    {
+      "id": "alert-1774364576682-p0xdf8u0z",
+      "category": "cache_api_abuse",
+      "severity": "medium",
+      "title": "Cache APIの不正使用を検出: 127.0.0.1",
+      "domain": "127.0.0.1",
+      "timestamp": 1774364576682
+    },
+    {
+      "id": "alert-1774364576682-suctl0i9o",
+      "category": "cache_api_abuse",
+      "severity": "high",
+      "title": "Cache APIの不正使用を検出: 127.0.0.1",
+      "domain": "127.0.0.1",
+      "timestamp": 1774364576682
+    },
+    {
+      "id": "alert-1774364576545-t2p1xlqdd",
+      "category": "postmessage_exfil",
+      "severity": "high",
+      "title": "postMessageクロスオリジン送信検出: 127.0.0.1",
+      "domain": "127.0.0.1",
+      "timestamp": 1774364576545
+    },
+    {
+      "id": "alert-1774364576542-h1ossh792",
+      "category": "prototype_pollution",
+      "severity": "critical",
+      "title": "プロトタイプ汚染攻撃検出: 127.0.0.1",
+      "domain": "127.0.0.1",
+      "timestamp": 1774364576542
+    },
+    {
+      "id": "alert-1774364576542-mwh8zd3q5",
+      "category": "dom_clobbering",
+      "severity": "high",
+      "title": "DOMクロッバリング検出: 127.0.0.1",
+      "domain": "127.0.0.1",
+      "timestamp": 1774364576542
+    },
+    {
+      "id": "alert-1774364576542-o8e63byxx",
+      "category": "performance_observer",
+      "severity": "medium",
+      "title": "PerformanceObserverサイドチャネル検出: 127.0.0.1",
+      "domain": "127.0.0.1",
+      "timestamp": 1774364576542
+    },
+    {
+      "id": "alert-1774364576463-8ib185i75",
+      "category": "dynamic_code_execution",
+      "severity": "high",
+      "title": "動的コード実行検出: 127.0.0.1",
+      "domain": "127.0.0.1",
+      "timestamp": 1774364576463
+    },
+    {
+      "id": "alert-1774364576463-xc7q4teuq",
+      "category": "css_keylogging",
+      "severity": "critical",
+      "title": "CSSキーロギング検出: 127.0.0.1",
+      "domain": "127.0.0.1",
+      "timestamp": 1774364576463
+    },
+    {
+      "id": "alert-1774364575645-6xwtpys0o",
+      "category": "prototype_pollution",
+      "severity": "critical",
+      "title": "プロトタイプ汚染攻撃検出: 127.0.0.1",
+      "domain": "127.0.0.1",
+      "timestamp": 1774364575645
+    },
+    {
+      "id": "alert-1774364575645-1h5xn230m",
+      "category": "fetch_exfiltration",
+      "severity": "high",
+      "title": "fetchによるデータ流出を検出: 127.0.0.1",
+      "domain": "127.0.0.1",
+      "timestamp": 1774364575645
+    },
+    {
+      "id": "alert-1774364575630-jhqh67uyq",
+      "category": "form_hijack",
+      "severity": "critical",
+      "title": "フォームハイジャック検出: 127.0.0.1",
+      "domain": "127.0.0.1",
+      "timestamp": 1774364575630
+    },
+    {
+      "id": "alert-1774364575061-49qn7eb34",
+      "category": "dynamic_code_execution",
+      "severity": "high",
+      "title": "動的コード実行検出: 127.0.0.1",
+      "domain": "127.0.0.1",
+      "timestamp": 1774364575061
+    },
+    {
+      "id": "alert-1774364572058-p6zhfd09e",
+      "category": "webrtc_connection",
+      "severity": "medium",
+      "title": "WebRTC接続検出: 127.0.0.1",
+      "domain": "127.0.0.1",
+      "timestamp": 1774364572058
+    },
+    {
+      "id": "alert-1774364571880-r6wj7np91",
+      "category": "dns_prefetch_leak",
+      "severity": "medium",
+      "title": "DNSプリフェッチリーク検出: 127.0.0.1",
+      "domain": "127.0.0.1",
+      "timestamp": 1774364571880
+    },
+    {
+      "id": "alert-1774364571880-ajbpsp8ou",
+      "category": "tracking_beacon",
+      "severity": "medium",
+      "title": "トラッキングビーコン検出: httpbin.org",
+      "domain": "httpbin.org",
+      "timestamp": 1774364571880
+    },
+    {
+      "id": "alert-1774364571880-scrixi4q1",
+      "category": "data_exfiltration",
+      "severity": "critical",
+      "title": "機密データ送信検出: httpbin.org",
+      "domain": "httpbin.org",
+      "timestamp": 1774364571880
+    },
+    {
+      "id": "alert-1774364571879-tutvdautg",
+      "category": "send_beacon",
+      "severity": "medium",
+      "title": "Beacon送信検出: 127.0.0.1",
+      "domain": "127.0.0.1",
+      "timestamp": 1774364571879
+    },
+    {
+      "id": "alert-1774364571865-kap3bptaw",
+      "category": "xss_injection",
+      "severity": "critical",
+      "title": "XSS検出: 127.0.0.1",
+      "domain": "127.0.0.1",
+      "timestamp": 1774364571865
+    },
+    {
+      "id": "alert-1774364571842-xmqlvtd14",
+      "category": "fullscreen_phishing",
+      "severity": "critical",
+      "title": "フルスクリーンフィッシング検出: 127.0.0.1",
+      "domain": "127.0.0.1",
+      "timestamp": 1774364571842
+    },
+    {
+      "id": "alert-1774364571836-1688mkyhs",
+      "category": "clipboard_read",
+      "severity": "medium",
+      "title": "クリップボード読み取り検出: 127.0.0.1",
+      "domain": "127.0.0.1",
+      "timestamp": 1774364571836
+    },
+    {
+      "id": "alert-1774364571818-5wif9ufmp",
       "category": "suspicious_download",
       "severity": "high",
       "title": "疑わしいダウンロード検出: blob",
       "domain": "127.0.0.1",
-      "timestamp": 1774364276163
+      "timestamp": 1774364571818
     },
     {
-      "id": "alert-1774364276146-qnbmh54ix",
+      "id": "alert-1774364571813-mp1b1vpdv",
+      "category": "suspicious_download",
+      "severity": "high",
+      "title": "疑わしいダウンロード検出: blob",
+      "domain": "127.0.0.1",
+      "timestamp": 1774364571813
+    },
+    {
+      "id": "alert-1774364571651-jcdyvbqjm",
+      "category": "media_capture",
+      "severity": "high",
+      "title": "メディアキャプチャ検出: 127.0.0.1",
+      "domain": "127.0.0.1",
+      "timestamp": 1774364571651
+    },
+    {
+      "id": "alert-1774364571609-qkxolt23t",
+      "category": "dynamic_code_execution",
+      "severity": "high",
+      "title": "動的コード実行検出: 127.0.0.1",
+      "domain": "127.0.0.1",
+      "timestamp": 1774364571609
+    },
+    {
+      "id": "alert-1774364571609-333z6mp3f",
+      "category": "media_capture",
+      "severity": "high",
+      "title": "メディアキャプチャ検出: 127.0.0.1",
+      "domain": "127.0.0.1",
+      "timestamp": 1774364571609
+    },
+    {
+      "id": "alert-1774364568612-tkc4xlw1i",
+      "category": "media_capture",
+      "severity": "critical",
+      "title": "メディアキャプチャ検出: 127.0.0.1",
+      "domain": "127.0.0.1",
+      "timestamp": 1774364568612
+    },
+    {
+      "id": "alert-1774364568424-gcp327qos",
+      "category": "device_enumeration",
+      "severity": "medium",
+      "title": "デバイス列挙検出: 127.0.0.1",
+      "domain": "127.0.0.1",
+      "timestamp": 1774364568424
+    },
+    {
+      "id": "alert-1774364568400-g6dvq85rr",
+      "category": "device_sensor",
+      "severity": "medium",
+      "title": "デバイスセンサー検出: 127.0.0.1",
+      "domain": "127.0.0.1",
+      "timestamp": 1774364568400
+    },
+    {
+      "id": "alert-1774364568391-sjn0w8ph5",
+      "category": "geolocation_access",
+      "severity": "medium",
+      "title": "位置情報アクセス検出: 127.0.0.1",
+      "domain": "127.0.0.1",
+      "timestamp": 1774364568391
+    },
+    {
+      "id": "alert-1774364568386-ncqhkb6fw",
+      "category": "wasm_execution",
+      "severity": "high",
+      "title": "WebAssembly実行を検出: 127.0.0.1",
+      "domain": "127.0.0.1",
+      "timestamp": 1774364568386
+    },
+    {
+      "id": "alert-1774364568286-u92d63rx3",
+      "category": "wasm_execution",
+      "severity": "high",
+      "title": "WebAssembly実行を検出: 127.0.0.1",
+      "domain": "127.0.0.1",
+      "timestamp": 1774364568286
+    },
+    {
+      "id": "alert-1774364568076-diuam8r7v",
+      "category": "suspicious_download",
+      "severity": "high",
+      "title": "疑わしいダウンロード検出: blob",
+      "domain": "127.0.0.1",
+      "timestamp": 1774364568076
+    },
+    {
+      "id": "alert-1774364567869-s0xvhzj5k",
+      "category": "suspicious_download",
+      "severity": "high",
+      "title": "疑わしいダウンロード検出: blob",
+      "domain": "127.0.0.1",
+      "timestamp": 1774364567869
+    },
+    {
+      "id": "alert-1774364567532-ccb7ajzu6",
+      "category": "audio_fingerprint",
+      "severity": "high",
+      "title": "Audio指紋採取検出: 127.0.0.1",
+      "domain": "127.0.0.1",
+      "timestamp": 1774364567532
+    },
+    {
+      "id": "alert-1774364567416-sewp6d23w",
+      "category": "webgl_fingerprint",
+      "severity": "high",
+      "title": "WebGL指紋採取検出: 127.0.0.1",
+      "domain": "127.0.0.1",
+      "timestamp": 1774364567416
+    },
+    {
+      "id": "alert-1774364567416-euc1s3gzz",
+      "category": "webgl_fingerprint",
+      "severity": "high",
+      "title": "WebGL指紋採取検出: 127.0.0.1",
+      "domain": "127.0.0.1",
+      "timestamp": 1774364567416
+    },
+    {
+      "id": "alert-1774364567416-k25hrzshq",
+      "category": "webgl_fingerprint",
+      "severity": "high",
+      "title": "WebGL指紋採取検出: 127.0.0.1",
+      "domain": "127.0.0.1",
+      "timestamp": 1774364567416
+    },
+    {
+      "id": "alert-1774364567416-1ywypa5zs",
+      "category": "webgl_fingerprint",
+      "severity": "high",
+      "title": "WebGL指紋採取検出: 127.0.0.1",
+      "domain": "127.0.0.1",
+      "timestamp": 1774364567416
+    },
+    {
+      "id": "alert-1774364567400-9m4ykh7h5",
+      "category": "broadcast_channel",
+      "severity": "medium",
+      "title": "BroadcastChannel検出: 127.0.0.1",
+      "domain": "127.0.0.1",
+      "timestamp": 1774364567400
+    },
+    {
+      "id": "alert-1774364567386-agt01isqq",
+      "category": "canvas_fingerprint",
+      "severity": "high",
+      "title": "Canvas指紋採取検出: 127.0.0.1",
+      "domain": "127.0.0.1",
+      "timestamp": 1774364567386
+    },
+    {
+      "id": "alert-1774364567356-0amgf67dm",
+      "category": "cache_api_abuse",
+      "severity": "high",
+      "title": "Cache APIの不正使用を検出: 127.0.0.1",
+      "domain": "127.0.0.1",
+      "timestamp": 1774364567356
+    },
+    {
+      "id": "alert-1774364567353-fdqugmgy6",
+      "category": "cache_api_abuse",
+      "severity": "medium",
+      "title": "Cache APIの不正使用を検出: 127.0.0.1",
+      "domain": "127.0.0.1",
+      "timestamp": 1774364567353
+    },
+    {
+      "id": "alert-1774364567312-sf9iyxu9e",
       "category": "cookie_access",
       "severity": "medium",
       "title": "Cookie盗取の可能性: 127.0.0.1",
       "domain": "127.0.0.1",
-      "timestamp": 1774364276146
+      "timestamp": 1774364567312
     },
     {
-      "id": "alert-1774364276111-1m2j2lhpi",
-      "category": "credential_api",
-      "severity": "high",
-      "title": "認証情報API検出: 127.0.0.1",
-      "domain": "127.0.0.1",
-      "timestamp": 1774364276111
-    },
-    {
-      "id": "alert-1774364276102-bvk1kx1su",
-      "category": "dynamic_code_execution",
-      "severity": "high",
-      "title": "動的コード実行検出: 127.0.0.1",
-      "domain": "127.0.0.1",
-      "timestamp": 1774364276102
-    },
-    {
-      "id": "alert-1774364275904-3s2k6mkvr",
+      "id": "alert-1774364567312-59xkukt42",
       "category": "suspicious_download",
       "severity": "high",
       "title": "疑わしいダウンロード検出: blob",
       "domain": "127.0.0.1",
-      "timestamp": 1774364275904
+      "timestamp": 1774364567312
     },
     {
-      "id": "alert-1774364275288-r3fkz5y6a",
+      "id": "alert-1774364567271-j19j5a40h",
+      "category": "credential_api",
+      "severity": "high",
+      "title": "認証情報API検出: 127.0.0.1",
+      "domain": "127.0.0.1",
+      "timestamp": 1774364567271
+    },
+    {
+      "id": "alert-1774364567053-nhkxhx691",
+      "category": "dynamic_code_execution",
+      "severity": "high",
+      "title": "動的コード実行検出: 127.0.0.1",
+      "domain": "127.0.0.1",
+      "timestamp": 1774364567053
+    },
+    {
+      "id": "alert-1774364567053-k64ebkq25",
+      "category": "suspicious_download",
+      "severity": "high",
+      "title": "疑わしいダウンロード検出: blob",
+      "domain": "127.0.0.1",
+      "timestamp": 1774364567053
+    },
+    {
+      "id": "alert-1774364566529-9hmm69shf",
       "category": "websocket_connection",
       "severity": "medium",
       "title": "WebSocket接続検出: ",
       "domain": "127.0.0.1",
-      "timestamp": 1774364275288
+      "timestamp": 1774364566529
     },
     {
-      "id": "alert-1774364275287-74j0sfwdn",
+      "id": "alert-1774364566001-69833bnb9",
       "category": "dynamic_code_execution",
       "severity": "high",
       "title": "動的コード実行検出: 127.0.0.1",
       "domain": "127.0.0.1",
-      "timestamp": 1774364275287
+      "timestamp": 1774364566001
     },
     {
-      "id": "alert-1774364274367-8s1ei9pvo",
+      "id": "alert-1774364565745-2gyte0yuw",
+      "category": "fetch_exfiltration",
+      "severity": "medium",
+      "title": "fetchによるデータ流出を検出: 127.0.0.1",
+      "domain": "127.0.0.1",
+      "timestamp": 1774364565745
+    },
+    {
+      "id": "alert-1774364564977-x9e8dezwz",
       "category": "dynamic_code_execution",
       "severity": "high",
       "title": "動的コード実行検出: 127.0.0.1",
       "domain": "127.0.0.1",
-      "timestamp": 1774364274367
+      "timestamp": 1774364564977
     },
     {
-      "id": "alert-1774364272909-yrmphjn1o",
-      "category": "dynamic_code_execution",
-      "severity": "high",
-      "title": "動的コード実行検出: 127.0.0.1",
+      "id": "alert-1774364564977-it2pg7fln",
+      "category": "fetch_exfiltration",
+      "severity": "medium",
+      "title": "fetchによるデータ流出を検出: 127.0.0.1",
       "domain": "127.0.0.1",
-      "timestamp": 1774364272909
+      "timestamp": 1774364564977
     },
     {
-      "id": "alert-1774364270895-z2wzbayb7",
+      "id": "alert-1774364563031-nkcylnwtk",
       "category": "compliance",
       "severity": "high",
       "title": "コンプライアンス違反: 127.0.0.1",
       "domain": "127.0.0.1",
-      "timestamp": 1774364270895
+      "timestamp": 1774364563031
     }
   ]
 }

@@ -50,6 +50,9 @@ import type {
   PerformanceObserverAlertDetails,
   PostMessageExfilAlertDetails,
   DOMClobberingAlertDetails,
+  CacheAPIAbuseAlertDetails,
+  FetchExfiltrationAlertDetails,
+  WASMExecutionAlertDetails,
 } from "./types.js";
 
 export interface CreateAlertInput {
@@ -1679,4 +1682,125 @@ const DOM_CLOBBERING_ALERT_DEFINITION: AlertDefinition<
 
 export const buildDOMClobberingAlert = createAlertBuilder(
   DOM_CLOBBERING_ALERT_DEFINITION
+);
+
+// ============================================================================
+// Cache API Abuse
+// ============================================================================
+
+export interface CacheAPIAbuseAlertParams {
+  domain: string;
+  operation: string;
+  cacheName: string;
+  url?: string;
+}
+
+const CACHE_API_ABUSE_ALERT_DEFINITION: AlertDefinition<
+  CacheAPIAbuseAlertParams,
+  CacheAPIAbuseAlertDetails
+> = {
+  category: "cache_api_abuse",
+  detailsType: "cache_api_abuse",
+  build: (params, helpers) => {
+    const isPut = params.operation === "put";
+    const severity = helpers.resolveSeverity([[isPut, "high"]], "medium");
+    const description = isPut
+      ? `キャッシュ「${params.cacheName}」にデータを書き込みました（URL: ${params.url ?? "不明"}）`
+      : `Cache APIで「${params.cacheName}」を開きました`;
+
+    return {
+      severity,
+      title: `Cache APIの不正使用を検出: ${params.domain}`,
+      description,
+      domain: params.domain,
+      details: {
+        domain: params.domain,
+        operation: params.operation,
+        cacheName: params.cacheName,
+        url: params.url,
+      },
+    };
+  },
+};
+
+export const buildCacheAPIAbuseAlert = createAlertBuilder(
+  CACHE_API_ABUSE_ALERT_DEFINITION
+);
+
+// ============================================================================
+// Fetch Exfiltration
+// ============================================================================
+
+export interface FetchExfiltrationAlertParams {
+  domain: string;
+  url: string;
+  mode: string;
+  reason: string;
+  bodySize?: number;
+}
+
+const FETCH_EXFILTRATION_ALERT_DEFINITION: AlertDefinition<
+  FetchExfiltrationAlertParams,
+  FetchExfiltrationAlertDetails
+> = {
+  category: "fetch_exfiltration",
+  detailsType: "fetch_exfiltration",
+  build: (params, helpers) => {
+    const isNoCors = params.reason === "cross_origin_no_cors";
+    const severity = helpers.resolveSeverity([[isNoCors, "high"]], "medium");
+    const description = isNoCors
+      ? `no-corsモードでクロスオリジンfetch: ${params.url}`
+      : `クロスオリジンfetchで${params.bodySize ?? 0}バイトのデータを送信: ${params.url}`;
+
+    return {
+      severity,
+      title: `fetchによるデータ流出を検出: ${params.domain}`,
+      description,
+      domain: params.domain,
+      details: {
+        domain: params.domain,
+        url: params.url,
+        mode: params.mode,
+        reason: params.reason,
+        bodySize: params.bodySize,
+      },
+    };
+  },
+};
+
+export const buildFetchExfiltrationAlert = createAlertBuilder(
+  FETCH_EXFILTRATION_ALERT_DEFINITION
+);
+
+// ============================================================================
+// WASM Execution
+// ============================================================================
+
+export interface WASMExecutionAlertParams {
+  domain: string;
+  method: string;
+  byteLength: number | null;
+}
+
+const WASM_EXECUTION_ALERT_DEFINITION: AlertDefinition<
+  WASMExecutionAlertParams,
+  WASMExecutionAlertDetails
+> = {
+  category: "wasm_execution",
+  detailsType: "wasm_execution",
+  build: (params) => ({
+    severity: "high",
+    title: `WebAssembly実行を検出: ${params.domain}`,
+    description: `WebAssembly.${params.method}${params.byteLength !== null ? `（${params.byteLength}バイト）` : ""}が呼び出されました`,
+    domain: params.domain,
+    details: {
+      domain: params.domain,
+      method: params.method,
+      byteLength: params.byteLength,
+    },
+  }),
+};
+
+export const buildWASMExecutionAlert = createAlertBuilder(
+  WASM_EXECUTION_ALERT_DEFINITION
 );

@@ -244,6 +244,83 @@ export function initInjectionHooks(emitSecurityEvent: SharedHookUtils["emitSecur
     (window as any).PerformanceObserver.supportedEntryTypes = OriginalPerformanceObserver.supportedEntryTypes;
   }
 
+  // ===== WebAssembly Instantiation Detection =====
+  // Detects WebAssembly.instantiate/compile — WASM is used for obfuscated exploit payloads and covert computation.
+  if (typeof WebAssembly !== "undefined") {
+    if (typeof WebAssembly.instantiate === "function") {
+      const originalInstantiate = WebAssembly.instantiate;
+      WebAssembly.instantiate = function (
+        bufferSourceOrModule: BufferSource | WebAssembly.Module,
+        importObject?: WebAssembly.Imports,
+      ): Promise<WebAssembly.WebAssemblyInstantiatedSource | WebAssembly.Instance> {
+        const isBinary = bufferSourceOrModule instanceof ArrayBuffer
+          || ArrayBuffer.isView(bufferSourceOrModule);
+        emitSecurityEvent("__WASM_EXECUTION_DETECTED__", {
+          method: "instantiate",
+          isBinary,
+          byteLength: isBinary
+            ? (bufferSourceOrModule instanceof ArrayBuffer
+                ? bufferSourceOrModule.byteLength
+                : (bufferSourceOrModule as ArrayBufferView).byteLength)
+            : null,
+          timestamp: Date.now(),
+          pageUrl: location.href,
+        });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- intentional monkey-patch of WebAssembly.instantiate
+        return originalInstantiate(bufferSourceOrModule as any, importObject as any);
+      };
+    }
+
+    if (typeof WebAssembly.compile === "function") {
+      const originalCompile = WebAssembly.compile;
+      WebAssembly.compile = function (bytes: BufferSource): Promise<WebAssembly.Module> {
+        emitSecurityEvent("__WASM_EXECUTION_DETECTED__", {
+          method: "compile",
+          isBinary: true,
+          byteLength: bytes instanceof ArrayBuffer
+            ? bytes.byteLength
+            : (bytes as ArrayBufferView).byteLength,
+          timestamp: Date.now(),
+          pageUrl: location.href,
+        });
+        return originalCompile(bytes);
+      };
+    }
+
+    if (typeof WebAssembly.instantiateStreaming === "function") {
+      const originalInstantiateStreaming = WebAssembly.instantiateStreaming;
+      WebAssembly.instantiateStreaming = function (
+        source: Response | PromiseLike<Response>,
+        importObject?: WebAssembly.Imports,
+      ): Promise<WebAssembly.WebAssemblyInstantiatedSource> {
+        emitSecurityEvent("__WASM_EXECUTION_DETECTED__", {
+          method: "instantiateStreaming",
+          isBinary: false,
+          byteLength: null,
+          timestamp: Date.now(),
+          pageUrl: location.href,
+        });
+        return originalInstantiateStreaming(source, importObject);
+      };
+    }
+
+    if (typeof WebAssembly.compileStreaming === "function") {
+      const originalCompileStreaming = WebAssembly.compileStreaming;
+      WebAssembly.compileStreaming = function (
+        source: Response | PromiseLike<Response>,
+      ): Promise<WebAssembly.Module> {
+        emitSecurityEvent("__WASM_EXECUTION_DETECTED__", {
+          method: "compileStreaming",
+          isBinary: false,
+          byteLength: null,
+          timestamp: Date.now(),
+          pageUrl: location.href,
+        });
+        return originalCompileStreaming(source);
+      };
+    }
+  }
+
   // postMessage cross-origin exfiltration (outgoing)
   const originalPostMessage = window.postMessage.bind(window);
   window.postMessage = function (message: unknown, targetOriginOrOptions: string | WindowPostMessageOptions, transfer?: Transferable[]) {

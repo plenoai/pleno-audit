@@ -81,6 +81,9 @@ export default defineContentScript({
       "__PERFORMANCE_OBSERVER_DETECTED__",
       "__POSTMESSAGE_EXFIL_DETECTED__",
       "__DOM_CLOBBERING_DETECTED__",
+      "__CACHE_API_ABUSE_DETECTED__",
+      "__FETCH_EXFILTRATION_DETECTED__",
+      "__WASM_EXECUTION_DETECTED__",
     ];
 
     const signal = abortController.signal;

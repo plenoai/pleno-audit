@@ -57,7 +57,10 @@ export type AlertCategory =
   | "css_keylogging" // CSS input[value] attribute selector keylogging
   | "performance_observer" // PerformanceObserver resource timing side channel
   | "postmessage_exfil" // postMessage cross-origin data exfiltration
-  | "dom_clobbering"; // DOM clobbering — named elements shadowing window globals
+  | "dom_clobbering" // DOM clobbering — named elements shadowing window globals
+  | "cache_api_abuse" // Cache API usage for persistence or cache poisoning
+  | "fetch_exfiltration" // fetch() to cross-origin with no-cors mode or large payload
+  | "wasm_execution"; // WebAssembly instantiation/compilation
 
 /**
  * Alert status
@@ -133,7 +136,10 @@ export type AlertDetails =
   | CSSKeyloggingAlertDetails
   | PerformanceObserverAlertDetails
   | PostMessageExfilAlertDetails
-  | DOMClobberingAlertDetails;
+  | DOMClobberingAlertDetails
+  | CacheAPIAbuseAlertDetails
+  | FetchExfiltrationAlertDetails
+  | WASMExecutionAlertDetails;
 
 export interface NRDAlertDetails {
   type: "nrd";
@@ -459,6 +465,30 @@ export interface DOMClobberingAlertDetails {
   domain: string;
   attributeName: string;
   attributeValue: string;
+}
+
+export interface CacheAPIAbuseAlertDetails {
+  type: "cache_api_abuse";
+  domain: string;
+  operation: string;
+  cacheName: string;
+  url?: string;
+}
+
+export interface FetchExfiltrationAlertDetails {
+  type: "fetch_exfiltration";
+  domain: string;
+  url: string;
+  mode: string;
+  reason: string;
+  bodySize?: number;
+}
+
+export interface WASMExecutionAlertDetails {
+  type: "wasm_execution";
+  domain: string;
+  method: string;
+  byteLength: number | null;
 }
 
 /**

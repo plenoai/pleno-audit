@@ -164,5 +164,17 @@ export function createSecurityAsyncHandlers(
       execute: (message, sender) => deps.handleDOMClobbering(message.data, sender),
       fallback: () => ({ success: false }),
     }],
+    ["CACHE_API_ABUSE_DETECTED", {
+      execute: (message, sender) => deps.handleCacheAPIAbuse(message.data, sender),
+      fallback: () => ({ success: false }),
+    }],
+    ["FETCH_EXFILTRATION_DETECTED", {
+      execute: (message, sender) => deps.handleFetchExfiltration(message.data, sender),
+      fallback: () => ({ success: false }),
+    }],
+    ["WASM_EXECUTION_DETECTED", {
+      execute: (message, sender) => deps.handleWASMExecution(message.data, sender),
+      fallback: () => ({ success: false }),
+    }],
   ];
 }

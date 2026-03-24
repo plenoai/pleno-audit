@@ -56,6 +56,9 @@ import type {
   PerformanceObserverAlertParams,
   PostMessageExfilAlertParams,
   DOMClobberingAlertParams,
+  CacheAPIAbuseAlertParams,
+  FetchExfiltrationAlertParams,
+  WASMExecutionAlertParams,
 } from "./alert-builders.js";
 import {
   buildNRDAlert,
@@ -99,6 +102,9 @@ import {
   buildPerformanceObserverAlert,
   buildPostMessageExfilAlert,
   buildDOMClobberingAlert,
+  buildCacheAPIAbuseAlert,
+  buildFetchExfiltrationAlert,
+  buildWASMExecutionAlert,
 } from "./alert-builders.js";
 
 /**
@@ -521,6 +527,24 @@ export function createAlertManager(
     return createOptionalAlert(buildDOMClobberingAlert(params));
   }
 
+  async function alertCacheAPIAbuse(
+    params: CacheAPIAbuseAlertParams
+  ): Promise<SecurityAlert | null> {
+    return createOptionalAlert(buildCacheAPIAbuseAlert(params));
+  }
+
+  async function alertFetchExfiltration(
+    params: FetchExfiltrationAlertParams
+  ): Promise<SecurityAlert | null> {
+    return createOptionalAlert(buildFetchExfiltrationAlert(params));
+  }
+
+  async function alertWASMExecution(
+    params: WASMExecutionAlertParams
+  ): Promise<SecurityAlert | null> {
+    return createOptionalAlert(buildWASMExecutionAlert(params));
+  }
+
   async function updateAlertStatus(
     alertId: string,
     status: AlertStatus
@@ -605,6 +629,9 @@ export function createAlertManager(
     alertPerformanceObserver,
     alertPostMessageExfil,
     alertDOMClobbering,
+    alertCacheAPIAbuse,
+    alertFetchExfiltration,
+    alertWASMExecution,
     updateAlertStatus,
     getAlerts,
     getAlertCount,

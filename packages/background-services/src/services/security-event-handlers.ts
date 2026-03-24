@@ -1101,5 +1101,86 @@ export function createSecurityEventHandlers(
 
       return { success: true };
     },
+
+    async handleCacheAPIAbuse(
+      data: { operation?: string; cacheName?: string; url?: string; timestamp?: number; pageUrl?: string; source?: string },
+      sender: chrome.runtime.MessageSender,
+    ): Promise<{ success: boolean }> {
+      const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+
+      await deps.getAlertManager().alertCacheAPIAbuse({
+        domain: pageDomain,
+        operation: data.operation ?? "open",
+        cacheName: data.cacheName ?? "",
+        url: data.url,
+      });
+
+      deps.logger.warn({
+        event: "SECURITY_CACHE_API_ABUSE_DETECTED",
+        data: {
+          source: sourceLabel(data.source),
+          domain: pageDomain,
+          operation: data.operation,
+          cacheName: data.cacheName,
+          url: data.url,
+        },
+      });
+
+      return { success: true };
+    },
+
+    async handleFetchExfiltration(
+      data: { url?: string; mode?: string; reason?: string; bodySize?: number; timestamp?: number; pageUrl?: string; source?: string },
+      sender: chrome.runtime.MessageSender,
+    ): Promise<{ success: boolean }> {
+      const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+
+      await deps.getAlertManager().alertFetchExfiltration({
+        domain: pageDomain,
+        url: data.url ?? "",
+        mode: data.mode ?? "cors",
+        reason: data.reason ?? "cross_origin_no_cors",
+        bodySize: data.bodySize,
+      });
+
+      deps.logger.warn({
+        event: "SECURITY_FETCH_EXFILTRATION_DETECTED",
+        data: {
+          source: sourceLabel(data.source),
+          domain: pageDomain,
+          url: data.url,
+          mode: data.mode,
+          reason: data.reason,
+          bodySize: data.bodySize,
+        },
+      });
+
+      return { success: true };
+    },
+
+    async handleWASMExecution(
+      data: { method?: string; byteLength?: number | null; isBinary?: boolean; timestamp?: number; pageUrl?: string; source?: string },
+      sender: chrome.runtime.MessageSender,
+    ): Promise<{ success: boolean }> {
+      const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+
+      await deps.getAlertManager().alertWASMExecution({
+        domain: pageDomain,
+        method: data.method ?? "instantiate",
+        byteLength: data.byteLength ?? null,
+      });
+
+      deps.logger.warn({
+        event: "SECURITY_WASM_EXECUTION_DETECTED",
+        data: {
+          source: sourceLabel(data.source),
+          domain: pageDomain,
+          method: data.method,
+          byteLength: data.byteLength,
+        },
+      });
+
+      return { success: true };
+    },
   };
 }

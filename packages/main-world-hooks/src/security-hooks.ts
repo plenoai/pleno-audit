@@ -436,6 +436,113 @@ export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecuri
   if (document.body || document.head) startDomClobberingObserving();
   else document.addEventListener("DOMContentLoaded", startDomClobberingObserving, { once: true });
 
+  // ===== Cache API Abuse =====
+  // Detects caches.open() and cache.put() for persistence and cache poisoning attacks.
+  // emitSecurityEvent uses CustomEvent (not fetch), so no infinite loop risk.
+  if (typeof caches !== "undefined") {
+    try {
+      const originalCachesOpen = caches.open.bind(caches);
+      caches.open = async function (cacheName: string): Promise<Cache> {
+        emitSecurityEvent("__CACHE_API_ABUSE_DETECTED__", {
+          operation: "open",
+          cacheName,
+          timestamp: Date.now(),
+          pageUrl: window.location.href,
+        });
+        const cache = await originalCachesOpen(cacheName);
+        // Wrap cache.put to detect data storage
+        const originalPut = cache.put.bind(cache);
+        cache.put = async function (request: RequestInfo | URL, response: Response): Promise<void> {
+          const url = typeof request === "string"
+            ? request
+            : request instanceof URL
+              ? request.href
+              : (request as Request).url;
+          emitSecurityEvent("__CACHE_API_ABUSE_DETECTED__", {
+            operation: "put",
+            cacheName,
+            url,
+            timestamp: Date.now(),
+            pageUrl: window.location.href,
+          });
+          return originalPut(request, response);
+        };
+        return cache;
+      };
+    } catch {
+      /* ignore */
+    }
+  }
+
+  // ===== Fetch Exfiltration Detection =====
+  // Detects fetch() calls to cross-origin URLs with no-cors mode or large data payloads.
+  // emitSecurityEvent uses CustomEvent internally, NOT fetch — no infinite loop risk.
+  const originalFetch = window.fetch;
+  window.fetch = async function (
+    input: RequestInfo | URL,
+    init?: RequestInit,
+  ): Promise<Response> {
+    try {
+      const url = typeof input === "string"
+        ? input
+        : input instanceof URL
+          ? input.href
+          : (input as Request).url;
+
+      let isCrossOrigin = false;
+      try {
+        isCrossOrigin = new URL(url, window.location.origin).origin !== window.location.origin;
+      } catch {
+        /* ignore */
+      }
+
+      const isNoCors = (init?.mode === "no-cors") || ((input as Request).mode === "no-cors");
+
+      // Detect cross-origin no-cors fetch (data smuggling via opaque responses)
+      if (isCrossOrigin && isNoCors) {
+        emitSecurityEvent("__FETCH_EXFILTRATION_DETECTED__", {
+          url,
+          mode: "no-cors",
+          reason: "cross_origin_no_cors",
+          timestamp: Date.now(),
+          pageUrl: window.location.href,
+        });
+      } else if (isCrossOrigin && init?.body != null) {
+        // Cross-origin fetch with a non-empty body — potential exfiltration
+        let bodySize = 0;
+        try {
+          const body = init.body;
+          if (typeof body === "string") {
+            bodySize = body.length;
+          } else if (body instanceof Blob) {
+            bodySize = body.size;
+          } else if (body instanceof ArrayBuffer) {
+            bodySize = body.byteLength;
+          } else if (body instanceof FormData || body instanceof URLSearchParams) {
+            // Rough estimate: mark as non-zero
+            bodySize = 1;
+          }
+        } catch {
+          /* ignore */
+        }
+        // Only alert for meaningful payloads (>= 100 bytes)
+        if (bodySize >= 100) {
+          emitSecurityEvent("__FETCH_EXFILTRATION_DETECTED__", {
+            url,
+            mode: init?.mode ?? "cors",
+            reason: "cross_origin_large_body",
+            bodySize,
+            timestamp: Date.now(),
+            pageUrl: window.location.href,
+          });
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+    return originalFetch.call(this, input, init);
+  };
+
   // ===== Suspicious Download =====
   const originalCreateObjectURL = URL.createObjectURL;
   URL.createObjectURL = function (blob: Blob | MediaSource) {
