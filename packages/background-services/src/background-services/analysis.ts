@@ -51,11 +51,17 @@ export function createPageAnalysisHandler(deps: PageAnalysisDependencies) {
   const hasCookieBanner = cookieBanner?.found ?? false;
   const isCookieBannerGDPRCompliant = cookieBanner?.isGDPRCompliant ?? false;
 
-  const hasViolations =
+  // Skip compliance checks for local/development environments
+  const isLocal = /^(localhost|127\.\d+\.\d+\.\d+|0\.0\.0\.0|\[::1\])$/.test(domain)
+    || domain.endsWith(".local")
+    || domain.endsWith(".localhost");
+
+  const hasViolations = !isLocal && (
     (hasLoginForm && (!hasPrivacyPolicy || !hasTermsOfService)) ||
     !hasCookiePolicy ||
     !hasCookieBanner ||
-    (hasCookieBanner && !isCookieBannerGDPRCompliant);
+    (hasCookieBanner && !isCookieBannerGDPRCompliant)
+  );
 
   if (hasViolations) {
     await deps.getAlertManager().alertCompliance({

@@ -1,35 +1,9 @@
 {
-  "timestamp": "2026-03-24T22:11:31.722Z",
-  "totalAlerts": 1,
+  "timestamp": "2026-03-24T22:16:13.005Z",
+  "totalAlerts": 0,
   "actionableAlerts": 0,
-  "acceptedAlerts": 1,
-  "alertsByCategory": {
-    "compliance": 1
-  },
-  "counts": {
-    "medium": 1
-  },
-  "alerts": [
-    {
-      "category": "compliance",
-      "severity": "medium",
-      "title": "コンプライアンス違反: 127.0.0.1",
-      "description": "クッキーポリシーなし, クッキーバナーなし",
-      "details": {
-        "type": "compliance",
-        "pageDomain": "127.0.0.1",
-        "hasPrivacyPolicy": false,
-        "hasTermsOfService": false,
-        "hasCookiePolicy": false,
-        "hasCookieBanner": false,
-        "isCookieBannerGDPRCompliant": false,
-        "hasLoginForm": false,
-        "violations": [
-          "missing_cookie_policy",
-          "missing_cookie_banner"
-        ]
-      },
-      "accepted": true
-    }
-  ]
+  "acceptedAlerts": 0,
+  "alertsByCategory": {},
+  "counts": {},
+  "alerts": []
 }

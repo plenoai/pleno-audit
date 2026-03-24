@@ -282,8 +282,8 @@ export function createAlertManager(
       return null;
     }
 
-    // Dedup: merge alerts with same (category, domain) within the time window
-    const dedupKey = `${params.category}::${params.domain}`;
+    // Dedup: merge alerts with same (category, domain, title) within the time window
+    const dedupKey = `${params.category}::${params.domain}::${params.title}`;
     const now = Date.now();
     const existing = dedupMap.get(dedupKey);
 
