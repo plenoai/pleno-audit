@@ -168,9 +168,9 @@ describe("SkeletonDashboard", () => {
     expect(wrapper?.style.flexDirection).toBe("column");
   });
 
-  it("includes shimmer animation styles", () => {
+  it("uses shimmer animation class", () => {
     const { container } = renderWithTheme(h(SkeletonDashboard, {}));
-    const style = container.querySelector("style");
-    expect(style?.textContent).toContain("skeleton-shimmer");
+    const shimmerEl = container.querySelector("[style*='skeleton-shimmer']");
+    expect(shimmerEl).toBeTruthy();
   });
 });
