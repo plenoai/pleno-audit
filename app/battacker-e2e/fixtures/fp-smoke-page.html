@@ -621,6 +621,77 @@
     }
 
     // ============================================================
+    // Pattern 20: Safe innerHTML patterns
+    // XSS detection requires: <script>..content.., javascript:, onerror=eval, <iframe src=javascript:
+    // Normal HTML content via innerHTML should NOT trigger
+    // ============================================================
+    function safeInnerHTML() {
+      var container = document.createElement("div");
+
+      // Normal HTML content (no XSS patterns)
+      container.innerHTML = '<div class="card"><h3>Title</h3><p>Description text</p></div>';
+      container.innerHTML = '<img src="https://example.com/image.png" alt="photo">';
+      container.innerHTML = '<a href="https://example.com">Link</a>';
+      container.innerHTML = '<ul><li>Item 1</li><li>Item 2</li></ul>';
+
+      // Iframe with HTTPS src (not javascript:)
+      container.innerHTML = '<iframe src="https://www.youtube.com/embed/xxx" frameborder="0"></iframe>';
+
+      // Empty script tag (no content — XSS regex needs [^<]+)
+      container.innerHTML = '<script src="https://cdn.example.com/lib.js"></script>';
+
+      // Sanitized HTML with encoded entities
+      container.innerHTML = '<p>User said: &lt;script&gt;alert(1)&lt;/script&gt;</p>';
+
+      // Rich text editor output
+      container.innerHTML = '<p><strong>Bold</strong> and <em>italic</em> and <u>underline</u></p>';
+      container.innerHTML = '<blockquote>Quoted text</blockquote><pre><code>var x = 1;</code></pre>';
+
+      // Table (common in data display)
+      container.innerHTML = '<table><thead><tr><th>Name</th><th>Value</th></tr></thead><tbody><tr><td>Alice</td><td>100</td></tr></tbody></table>';
+
+      document.body.appendChild(container);
+      setTimeout(function () { container.remove(); }, 500);
+      record("Safe innerHTML", true, "10 safe innerHTML patterns (no XSS triggers)");
+    }
+
+    // ============================================================
+    // Pattern 21: Large canvas (not fingerprinting)
+    // Canvas fingerprint only triggers on <=256x64
+    // ============================================================
+    function largeCanvas() {
+      var canvas = document.createElement("canvas");
+      canvas.width = 800;
+      canvas.height = 600;
+      var ctx = canvas.getContext("2d");
+      if (ctx) {
+        // Draw chart-like content
+        ctx.fillStyle = "#3b82f6";
+        for (var i = 0; i < 10; i++) {
+          ctx.fillRect(i * 80 + 10, 600 - (i + 1) * 50, 60, (i + 1) * 50);
+        }
+        // Export (should NOT trigger canvas fingerprint — too large)
+        canvas.toDataURL("image/png");
+      }
+      record("Large Canvas", true, "800x600 canvas toDataURL (> 256x64 threshold)");
+    }
+
+    // ============================================================
+    // Pattern 22: Form submit (same-origin, no sensitive fields)
+    // Credential theft only triggers on cross-origin + sensitive fields
+    // ============================================================
+    function safeFormSubmit() {
+      var form = document.createElement("form");
+      form.action = "/search";
+      form.method = "GET";
+      form.innerHTML = '<input type="text" name="q" value="test query">';
+      // Don't actually submit — just verify the form creation doesn't trigger
+      document.body.appendChild(form);
+      setTimeout(function () { form.remove(); }, 500);
+      record("Safe Form Submit", true, "Same-origin GET form with non-sensitive fields");
+    }
+
+    // ============================================================
     // Run all patterns on page load
     // ============================================================
     function runAll() {
@@ -648,6 +719,9 @@
       dynamicCSSSafe();
       normalFetchPOST();
       prototypeSafe();
+      safeInnerHTML();
+      largeCanvas();
+      safeFormSubmit();
 
       log("", "info");
       log("All patterns executed.", "info");

@@ -1,16 +1,13 @@
 {
-  "timestamp": "2026-03-24T22:09:54.152Z",
-  "totalAlerts": 3,
+  "timestamp": "2026-03-24T22:11:31.722Z",
+  "totalAlerts": 1,
   "actionableAlerts": 0,
-  "acceptedAlerts": 3,
+  "acceptedAlerts": 1,
   "alertsByCategory": {
-    "compliance": 1,
-    "webrtc_connection": 1,
-    "audio_fingerprint": 1
+    "compliance": 1
   },
   "counts": {
-    "medium": 2,
-    "high": 1
+    "medium": 1
   },
   "alerts": [
     {
@@ -31,29 +28,6 @@
           "missing_cookie_policy",
           "missing_cookie_banner"
         ]
-      },
-      "accepted": true
-    },
-    {
-      "category": "webrtc_connection",
-      "severity": "medium",
-      "title": "WebRTC接続検出: 127.0.0.1",
-      "description": "WebRTCピア接続が作成されました（IP漏洩リスク）",
-      "details": {
-        "type": "webrtc_connection",
-        "domain": "127.0.0.1"
-      },
-      "accepted": true
-    },
-    {
-      "category": "audio_fingerprint",
-      "severity": "high",
-      "title": "Audio指紋採取検出: 127.0.0.1",
-      "description": "AudioContextを0回生成してフィンガープリントを収集",
-      "details": {
-        "type": "audio_fingerprint",
-        "domain": "127.0.0.1",
-        "contextCount": 0
       },
       "accepted": true
     }
