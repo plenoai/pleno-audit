@@ -720,10 +720,11 @@
     // Tests the boundary near the 300 threshold
     // ============================================================
     function spaQuerySelector() {
-      for (var i = 0; i < 250; i++) {
+      // 200 calls here + 50 from pattern 13 = 250 total (< 300 threshold)
+      for (var i = 0; i < 200; i++) {
         document.querySelectorAll("div");
       }
-      record("SPA querySelectorAll", true, "250 calls (< 300 threshold)");
+      record("SPA querySelectorAll", true, "200 calls (+ 50 from pattern 13 = 250 < 300 threshold)");
     }
 
     // ============================================================
@@ -904,11 +905,10 @@
       dynamicCDNScript();
       spaStateManagement();
       normalEventListeners();
-      // Boundary value tests run after a 4-second delay to ensure
-      // time windows (3s for cookie/storage, 5s for QSA/events) have reset.
-      // This prevents pattern interaction (e.g., pattern 2 cookie reads + pattern 29)
-      // from crossing thresholds.
-      log("Waiting 4s for time windows to reset before boundary tests...", "info");
+      // Boundary value tests run after a 6-second delay to ensure
+      // ALL time windows have reset (cookie/storage: 3s, QSA/events: 5s).
+      // This prevents pattern interaction from crossing thresholds.
+      log("Waiting 6s for all time windows to reset before boundary tests...", "info");
       setTimeout(function () {
         cookieBoundary();
         storageBoundary();

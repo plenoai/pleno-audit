@@ -130,9 +130,9 @@ test.describe("False-Positive Smoke Test", () => {
 
     // Wait for all patterns to complete:
     // - Immediate patterns run instantly
-    // - Boundary tests run after 4s delay (to reset time windows)
+    // - Boundary tests run after 6s delay (to reset all time windows: QSA=5s, cookie=3s)
     // - Then security-bridge batch processing needs time to flush
-    await ctx.page.waitForTimeout(8000);
+    await ctx.page.waitForTimeout(10000);
 
     // Collect alerts from extension
     const sw = ctx.context
