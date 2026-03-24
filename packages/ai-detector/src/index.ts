@@ -58,6 +58,7 @@ export {
   ALL_DLP_RULES,
   EXTENDED_DLP_RULES,
   DEFAULT_DLP_CONFIG,
+  calculateShannonEntropy,
   detectSensitiveData,
   hasSensitiveData,
   getHighestRiskClassification,
