@@ -74,6 +74,9 @@ export default defineContentScript({
       "__DEVICE_SENSOR_ACCESSED__",
       "__DEVICE_ENUMERATION_DETECTED__",
       "__STORAGE_EXFILTRATION_DETECTED__",
+      "__PROTOTYPE_POLLUTION_DETECTED__",
+      "__DNS_PREFETCH_LEAK_DETECTED__",
+      "__FORM_HIJACK_DETECTED__",
     ];
 
     const signal = abortController.signal;

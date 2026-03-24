@@ -928,5 +928,84 @@ export function createSecurityEventHandlers(
 
       return { success: true };
     },
+
+    async handlePrototypePollution(
+      data: { target?: string; property?: string; method?: string; timestamp?: number; pageUrl?: string; source?: string },
+      sender: chrome.runtime.MessageSender,
+    ): Promise<{ success: boolean }> {
+      const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+
+      await deps.getAlertManager().alertPrototypePollution({
+        domain: pageDomain,
+        target: data.target ?? "Object.prototype",
+        property: data.property ?? "unknown",
+        method: data.method ?? "unknown",
+      });
+
+      deps.logger.warn({
+        event: "SECURITY_PROTOTYPE_POLLUTION_DETECTED",
+        data: {
+          source: sourceLabel(data.source),
+          domain: pageDomain,
+          target: data.target,
+          property: data.property,
+          method: data.method,
+        },
+      });
+
+      return { success: true };
+    },
+
+    async handleDNSPrefetchLeak(
+      data: { rel?: string; href?: string; timestamp?: number; pageUrl?: string; source?: string },
+      sender: chrome.runtime.MessageSender,
+    ): Promise<{ success: boolean }> {
+      const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+
+      await deps.getAlertManager().alertDNSPrefetchLeak({
+        domain: pageDomain,
+        rel: data.rel ?? "dns-prefetch",
+        href: data.href ?? "",
+      });
+
+      deps.logger.warn({
+        event: "SECURITY_DNS_PREFETCH_LEAK_DETECTED",
+        data: {
+          source: sourceLabel(data.source),
+          domain: pageDomain,
+          rel: data.rel,
+          href: data.href,
+        },
+      });
+
+      return { success: true };
+    },
+
+    async handleFormHijack(
+      data: { originalAction?: string; newAction?: string; targetDomain?: string; isCrossOrigin?: boolean; timestamp?: number; pageUrl?: string; source?: string },
+      sender: chrome.runtime.MessageSender,
+    ): Promise<{ success: boolean }> {
+      const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+
+      await deps.getAlertManager().alertFormHijack({
+        domain: pageDomain,
+        originalAction: data.originalAction ?? "",
+        newAction: data.newAction ?? "",
+        targetDomain: data.targetDomain ?? "",
+      });
+
+      deps.logger.warn({
+        event: "SECURITY_FORM_HIJACK_DETECTED",
+        data: {
+          source: sourceLabel(data.source),
+          domain: pageDomain,
+          originalAction: data.originalAction,
+          newAction: data.newAction,
+          targetDomain: data.targetDomain,
+        },
+      });
+
+      return { success: true };
+    },
   };
 }

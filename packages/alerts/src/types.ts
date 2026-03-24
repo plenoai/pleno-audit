@@ -50,7 +50,10 @@ export type AlertCategory =
   | "credential_api" // Credential Management API access
   | "device_sensor" // Device sensor access (motion/orientation)
   | "device_enumeration" // Media device enumeration
-  | "storage_exfiltration"; // localStorage/sessionStorage mass access
+  | "storage_exfiltration" // localStorage/sessionStorage mass access
+  | "prototype_pollution" // Prototype pollution attack (Object.prototype modification)
+  | "dns_prefetch_leak" // DNS prefetch covert channel via dynamic link injection
+  | "form_hijack"; // Form action hijacking
 
 /**
  * Alert status
@@ -119,7 +122,10 @@ export type AlertDetails =
   | GeolocationAccessAlertDetails
   | WebSocketConnectionAlertDetails
   | WebRTCConnectionAlertDetails
-  | BroadcastChannelAlertDetails;
+  | BroadcastChannelAlertDetails
+  | PrototypePollutionAlertDetails
+  | DNSPrefetchLeakAlertDetails
+  | FormHijackAlertDetails;
 
 export interface NRDAlertDetails {
   type: "nrd";
@@ -397,6 +403,29 @@ export interface BroadcastChannelAlertDetails {
   type: "broadcast_channel";
   domain: string;
   channelName: string;
+}
+
+export interface PrototypePollutionAlertDetails {
+  type: "prototype_pollution";
+  domain: string;
+  target: string;
+  property: string;
+  method: string;
+}
+
+export interface DNSPrefetchLeakAlertDetails {
+  type: "dns_prefetch_leak";
+  domain: string;
+  rel: string;
+  href: string;
+}
+
+export interface FormHijackAlertDetails {
+  type: "form_hijack";
+  domain: string;
+  originalAction: string;
+  newAction: string;
+  targetDomain: string;
 }
 
 /**

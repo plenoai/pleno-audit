@@ -136,5 +136,17 @@ export function createSecurityAsyncHandlers(
       execute: (message, sender) => deps.handleStorageExfiltration(message.data, sender),
       fallback: () => ({ success: false }),
     }],
+    ["PROTOTYPE_POLLUTION_DETECTED", {
+      execute: (message, sender) => deps.handlePrototypePollution(message.data, sender),
+      fallback: () => ({ success: false }),
+    }],
+    ["DNS_PREFETCH_LEAK_DETECTED", {
+      execute: (message, sender) => deps.handleDNSPrefetchLeak(message.data, sender),
+      fallback: () => ({ success: false }),
+    }],
+    ["FORM_HIJACK_DETECTED", {
+      execute: (message, sender) => deps.handleFormHijack(message.data, sender),
+      fallback: () => ({ success: false }),
+    }],
   ];
 }

@@ -43,6 +43,9 @@ import type {
   DeviceSensorAlertDetails,
   DeviceEnumerationAlertDetails,
   StorageExfiltrationAlertDetails,
+  PrototypePollutionAlertDetails,
+  DNSPrefetchLeakAlertDetails,
+  FormHijackAlertDetails,
 } from "./types.js";
 
 export interface CreateAlertInput {
@@ -1443,4 +1446,107 @@ const STORAGE_EXFILTRATION_ALERT_DEFINITION: AlertDefinition<
 
 export const buildStorageExfiltrationAlert = createAlertBuilder(
   STORAGE_EXFILTRATION_ALERT_DEFINITION
+);
+
+// ============================================================================
+// Prototype Pollution
+// ============================================================================
+
+export interface PrototypePollutionAlertParams {
+  domain: string;
+  target: string;
+  property: string;
+  method: string;
+}
+
+const PROTOTYPE_POLLUTION_ALERT_DEFINITION: AlertDefinition<
+  PrototypePollutionAlertParams,
+  PrototypePollutionAlertDetails
+> = {
+  category: "prototype_pollution",
+  detailsType: "prototype_pollution",
+  build: (params) => ({
+    severity: "critical",
+    title: `プロトタイプ汚染攻撃検出: ${params.domain}`,
+    description: `${params.method}を使用して${params.target}.${params.property}が変更されました`,
+    domain: params.domain,
+    details: {
+      domain: params.domain,
+      target: params.target,
+      property: params.property,
+      method: params.method,
+    },
+  }),
+};
+
+export const buildPrototypePollutionAlert = createAlertBuilder(
+  PROTOTYPE_POLLUTION_ALERT_DEFINITION
+);
+
+// ============================================================================
+// DNS Prefetch Leak
+// ============================================================================
+
+export interface DNSPrefetchLeakAlertParams {
+  domain: string;
+  rel: string;
+  href: string;
+}
+
+const DNS_PREFETCH_LEAK_ALERT_DEFINITION: AlertDefinition<
+  DNSPrefetchLeakAlertParams,
+  DNSPrefetchLeakAlertDetails
+> = {
+  category: "dns_prefetch_leak",
+  detailsType: "dns_prefetch_leak",
+  build: (params) => ({
+    severity: "medium",
+    title: `DNSプリフェッチリーク検出: ${params.domain}`,
+    description: `動的に追加された<link rel="${params.rel}">が外部ドメインへの情報漏洩経路になる可能性があります`,
+    domain: params.domain,
+    details: {
+      domain: params.domain,
+      rel: params.rel,
+      href: params.href,
+    },
+  }),
+};
+
+export const buildDNSPrefetchLeakAlert = createAlertBuilder(
+  DNS_PREFETCH_LEAK_ALERT_DEFINITION
+);
+
+// ============================================================================
+// Form Hijack
+// ============================================================================
+
+export interface FormHijackAlertParams {
+  domain: string;
+  originalAction: string;
+  newAction: string;
+  targetDomain: string;
+}
+
+const FORM_HIJACK_ALERT_DEFINITION: AlertDefinition<
+  FormHijackAlertParams,
+  FormHijackAlertDetails
+> = {
+  category: "form_hijack",
+  detailsType: "form_hijack",
+  build: (params) => ({
+    severity: "critical",
+    title: `フォームハイジャック検出: ${params.domain}`,
+    description: `フォームの送信先が${params.originalAction}から${params.targetDomain}へ変更されました`,
+    domain: params.domain,
+    details: {
+      domain: params.domain,
+      originalAction: params.originalAction,
+      newAction: params.newAction,
+      targetDomain: params.targetDomain,
+    },
+  }),
+};
+
+export const buildFormHijackAlert = createAlertBuilder(
+  FORM_HIJACK_ALERT_DEFINITION
 );

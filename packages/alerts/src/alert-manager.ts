@@ -49,6 +49,9 @@ import type {
   DeviceSensorAlertParams,
   DeviceEnumerationAlertParams,
   StorageExfiltrationAlertParams,
+  PrototypePollutionAlertParams,
+  DNSPrefetchLeakAlertParams,
+  FormHijackAlertParams,
 } from "./alert-builders.js";
 import {
   buildNRDAlert,
@@ -85,6 +88,9 @@ import {
   buildDeviceSensorAlert,
   buildDeviceEnumerationAlert,
   buildStorageExfiltrationAlert,
+  buildPrototypePollutionAlert,
+  buildDNSPrefetchLeakAlert,
+  buildFormHijackAlert,
 } from "./alert-builders.js";
 
 /**
@@ -465,6 +471,24 @@ export function createAlertManager(
     return createOptionalAlert(buildStorageExfiltrationAlert(params));
   }
 
+  async function alertPrototypePollution(
+    params: PrototypePollutionAlertParams
+  ): Promise<SecurityAlert | null> {
+    return createOptionalAlert(buildPrototypePollutionAlert(params));
+  }
+
+  async function alertDNSPrefetchLeak(
+    params: DNSPrefetchLeakAlertParams
+  ): Promise<SecurityAlert | null> {
+    return createOptionalAlert(buildDNSPrefetchLeakAlert(params));
+  }
+
+  async function alertFormHijack(
+    params: FormHijackAlertParams
+  ): Promise<SecurityAlert | null> {
+    return createOptionalAlert(buildFormHijackAlert(params));
+  }
+
   async function updateAlertStatus(
     alertId: string,
     status: AlertStatus
@@ -542,6 +566,9 @@ export function createAlertManager(
     alertDeviceSensor,
     alertDeviceEnumeration,
     alertStorageExfiltration,
+    alertPrototypePollution,
+    alertDNSPrefetchLeak,
+    alertFormHijack,
     updateAlertStatus,
     getAlerts,
     getAlertCount,

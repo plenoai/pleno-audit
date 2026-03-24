@@ -230,6 +230,127 @@ export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecuri
     };
   }
 
+  // ===== Prototype Pollution Detection =====
+  try {
+    const originalDefineProperty = Object.defineProperty;
+    Object.defineProperty = function <T>(
+      obj: T,
+      prop: PropertyKey,
+      descriptor: PropertyDescriptor & ThisType<unknown>,
+    ): T {
+      if (obj === Object.prototype || obj === Array.prototype || obj === Function.prototype) {
+        emitSecurityEvent("__PROTOTYPE_POLLUTION_DETECTED__", {
+          target: obj === Object.prototype ? "Object.prototype" : obj === Array.prototype ? "Array.prototype" : "Function.prototype",
+          property: String(prop),
+          method: "Object.defineProperty",
+          timestamp: Date.now(),
+          pageUrl: window.location.href,
+        });
+      }
+      return originalDefineProperty.call(Object, obj, prop, descriptor) as T;
+    };
+  } catch {
+    /* ignore */
+  }
+
+  // Intercept __proto__ assignments via a setter on Object.prototype itself is not feasible;
+  // instead hook Object.setPrototypeOf as it's the programmatic equivalent.
+  try {
+    const originalSetPrototypeOf = Object.setPrototypeOf;
+    Object.setPrototypeOf = function (obj: object, proto: object | null): object {
+      if (proto === null || proto === Object.prototype || proto === Array.prototype) {
+        emitSecurityEvent("__PROTOTYPE_POLLUTION_DETECTED__", {
+          target: "Object.setPrototypeOf",
+          property: "__proto__",
+          method: "Object.setPrototypeOf",
+          timestamp: Date.now(),
+          pageUrl: window.location.href,
+        });
+      }
+      return originalSetPrototypeOf.call(Object, obj, proto);
+    };
+  } catch {
+    /* ignore */
+  }
+
+  // ===== DNS Prefetch / Link Injection Detection =====
+  const PREFETCH_RELS = new Set(["dns-prefetch", "preconnect", "prefetch", "preload", "prerender"]);
+  const dnsPrefetchObserver = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      for (const node of mutation.addedNodes) {
+        if ((node as Element).nodeType !== Node.ELEMENT_NODE) continue;
+        const el = node as Element;
+        if (el.tagName !== "LINK") continue;
+        const rel = (el.getAttribute("rel") || "").toLowerCase().trim();
+        if (!PREFETCH_RELS.has(rel)) continue;
+        const href = (el as HTMLLinkElement).href || el.getAttribute("href") || "";
+        let isExternal = false;
+        try {
+          isExternal = new URL(href, window.location.origin).hostname !== window.location.hostname;
+        } catch {
+          /* ignore */
+        }
+        if (isExternal) {
+          emitSecurityEvent("__DNS_PREFETCH_LEAK_DETECTED__", {
+            rel,
+            href,
+            timestamp: Date.now(),
+            pageUrl: window.location.href,
+          });
+        }
+      }
+    }
+  });
+
+  const startDnsPrefetchObserving = () => {
+    if (document.head) dnsPrefetchObserver.observe(document.head, { childList: true, subtree: true });
+    if (document.body) {
+      dnsPrefetchObserver.observe(document.body, { childList: true, subtree: true });
+    } else {
+      document.addEventListener("DOMContentLoaded", () => {
+        if (document.body) dnsPrefetchObserver.observe(document.body, { childList: true, subtree: true });
+      }, { once: true });
+    }
+  };
+  if (document.body || document.head) startDnsPrefetchObserving();
+  else document.addEventListener("DOMContentLoaded", startDnsPrefetchObserving, { once: true });
+
+  // ===== Form Hijack Detection =====
+  try {
+    const formActionDesc = Object.getOwnPropertyDescriptor(HTMLFormElement.prototype, "action");
+    if (formActionDesc?.set) {
+      const originalFormActionSet = formActionDesc.set;
+      Object.defineProperty(HTMLFormElement.prototype, "action", {
+        get: formActionDesc.get,
+        set(value: string) {
+          try {
+            const newAction = new URL(value, window.location.origin);
+            const currentAction = this.action
+              ? new URL(this.action, window.location.origin)
+              : null;
+            const isOriginChange = currentAction !== null && newAction.origin !== currentAction.origin;
+            if (isOriginChange) {
+              emitSecurityEvent("__FORM_HIJACK_DETECTED__", {
+                originalAction: this.action,
+                newAction: value,
+                targetDomain: newAction.hostname,
+                isCrossOrigin: newAction.hostname !== window.location.hostname,
+                timestamp: Date.now(),
+                pageUrl: window.location.href,
+              });
+            }
+          } catch {
+            /* ignore */
+          }
+          return originalFormActionSet.call(this, value);
+        },
+        configurable: true,
+      });
+    }
+  } catch {
+    /* ignore */
+  }
+
   // ===== Suspicious Download =====
   const originalCreateObjectURL = URL.createObjectURL;
   URL.createObjectURL = function (blob: Blob | MediaSource) {

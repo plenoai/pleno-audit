@@ -1373,6 +1373,283 @@ const attacks: AttackDef[] = [
         }
       }),
   },
+
+  // --- Red Team: Evasion Techniques (unhooked APIs) ---
+  {
+    id: "covert-css-keylogging",
+    name: "CSS Attribute Selector Keylogging",
+    category: "covert",
+    description:
+      "Injects CSS attribute selectors with background-image to exfiltrate typed characters. No JS hook intercepts CSS-based side-channel exfiltration.",
+    severity: "high",
+    simulate: (page) =>
+      page.evaluate(async () => {
+        const startTime = performance.now();
+        try {
+          // Inject a style sheet that fires a background-image request for each
+          // possible character value on an input element via attribute selectors.
+          // In a real attack the URL encodes the character; here we use a same-
+          // origin data URL so no network request is actually made, but we verify
+          // that the injection itself is unchallenged.
+          const style = document.createElement("style");
+          const leakedChars: string[] = [];
+          const alphabet = "abcdefghijklmnopqrstuvwxyz0123456789";
+          const rules = alphabet
+            .split("")
+            .map(
+              (ch) =>
+                `input[value$="${ch}"] { background-image: url("data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7?k=${ch}"); }`,
+            )
+            .join("\n");
+          style.textContent = rules;
+          document.head.appendChild(style);
+
+          // Simulate a keystroke by creating a visible input and setting its value
+          const input = document.createElement("input");
+          input.type = "text";
+          input.style.cssText = "position:fixed;top:-9999px;left:-9999px;opacity:0;";
+          document.body.appendChild(input);
+          input.value = "a"; // triggers attribute selector [value$="a"]
+
+          // Allow a microtask tick for style resolution
+          await new Promise((r) => setTimeout(r, 50));
+
+          // Confirm the injected style rule is present (not stripped by CSP/hooks)
+          const sheets = Array.from(document.styleSheets);
+          let ruleCount = 0;
+          for (const sheet of sheets) {
+            try {
+              ruleCount += sheet.cssRules?.length ?? 0;
+            } catch {
+              /* cross-origin sheet */
+            }
+          }
+
+          document.body.removeChild(input);
+          document.head.removeChild(style);
+
+          // If rules were present, the CSS exfiltration channel was open
+          const leaked = ruleCount > 0;
+          return {
+            blocked: !leaked,
+            executionTime: performance.now() - startTime,
+            details: leaked
+              ? `CSS keylogging: ${alphabet.length} selector rules injected undetected (${ruleCount} total rules in page)`
+              : "CSS keylogging: style injection stripped or rule count zero",
+          };
+        } catch (error: any) {
+          return { blocked: true, executionTime: performance.now() - startTime, details: `CSS keylogging blocked: ${error?.message}` };
+        }
+      }),
+  },
+  {
+    id: "advanced-proto-pollution-jsonparse",
+    name: "Prototype Pollution via JSON.parse",
+    category: "advanced",
+    description:
+      "Pollutes Object.prototype using __proto__ inside JSON.parse(). The hooks do not monitor JSON.parse or prototype chain modifications.",
+    severity: "critical",
+    simulate: (page) =>
+      page.evaluate(() => {
+        const startTime = performance.now();
+        try {
+          // JSON.parse with __proto__ key merges into the prototype in some
+          // environments; in V8/Chrome it is intentionally blocked, so we test
+          // both the direct path and a manual merge that a real payload would use.
+          const payload = '{"__proto__":{"__battacker_jsonpolluted__":true}}';
+          const parsed = JSON.parse(payload) as any;
+
+          // Path 1: native JSON.parse prototype propagation (blocked in V8)
+          const nativePolluted = ({} as any).__battacker_jsonpolluted__ === true;
+
+          // Path 2: manual merge that attackers perform with Object.assign /
+          //         recursive merge after JSON.parse – not monitored by any hook
+          function unsafeMerge(target: any, src: any): any {
+            for (const key of Object.keys(src)) {
+              if (key === "__proto__") {
+                Object.defineProperty(Object.prototype, "__battacker_mergepolluted__", {
+                  value: src[key].__battacker_jsonpolluted__ ?? true,
+                  writable: true,
+                  enumerable: false,
+                  configurable: true,
+                });
+              } else if (typeof src[key] === "object" && src[key] !== null) {
+                target[key] = unsafeMerge(target[key] ?? {}, src[key]);
+              } else {
+                target[key] = src[key];
+              }
+            }
+            return target;
+          }
+          unsafeMerge({}, parsed);
+          const mergePolluted = ({} as any).__battacker_mergepolluted__ === true;
+
+          // Clean up
+          try { delete (Object.prototype as any).__battacker_jsonpolluted__; } catch { /* */ }
+          try { delete (Object.prototype as any).__battacker_mergepolluted__; } catch { /* */ }
+
+          const polluted = nativePolluted || mergePolluted;
+          return {
+            blocked: !polluted,
+            executionTime: performance.now() - startTime,
+            details: polluted
+              ? `Prototype pollution via JSON.parse: successful (native=${nativePolluted}, merge=${mergePolluted})`
+              : "Prototype pollution via JSON.parse: V8 native path blocked; manual merge unexpectedly failed",
+          };
+        } catch (error: any) {
+          return { blocked: true, executionTime: performance.now() - startTime, details: `JSON.parse pollution blocked: ${error?.message}` };
+        }
+      }),
+  },
+  {
+    id: "injection-dom-clobbering",
+    name: "DOM Clobbering Global Variable Shadow",
+    category: "injection",
+    description:
+      "Creates named HTML elements that shadow global JS variables (e.g., window.name, window.opener). No hook monitors named-element creation.",
+    severity: "high",
+    simulate: (page) =>
+      page.evaluate(() => {
+        const startTime = performance.now();
+        try {
+          // DOM clobbering: a named <form id="x"> with a child <input name="y">
+          // makes window.x.y resolve to the input element, shadowing any JS variable
+          // with that name.  We target `window.battacker_clobber_target` as proof.
+          const form = document.createElement("form");
+          form.id = "battacker_clobber_target";
+          form.style.cssText = "display:none;position:fixed;top:-9999px;";
+          const input = document.createElement("input");
+          input.name = "secret";
+          input.value = "clobbered";
+          form.appendChild(input);
+          document.body.appendChild(form);
+
+          // Now window.battacker_clobber_target points to the form element
+          const clobbered = (window as any).battacker_clobber_target instanceof HTMLFormElement;
+
+          // A deeper clobber: window.battacker_clobber_target.secret -> input
+          const deepClobbered =
+            clobbered && (window as any).battacker_clobber_target.secret instanceof HTMLInputElement;
+
+          document.body.removeChild(form);
+
+          return {
+            blocked: !(clobbered || deepClobbered),
+            executionTime: performance.now() - startTime,
+            details:
+              clobbered || deepClobbered
+                ? `DOM clobbering: window.battacker_clobber_target shadowed (shallow=${clobbered}, deep=${deepClobbered})`
+                : "DOM clobbering: named element did not shadow global",
+          };
+        } catch (error: any) {
+          return { blocked: true, executionTime: performance.now() - startTime, details: `DOM clobbering blocked: ${error?.message}` };
+        }
+      }),
+  },
+  {
+    id: "side-channel-performance-observer",
+    name: "PerformanceObserver Resource Timing Side Channel",
+    category: "side-channel",
+    description:
+      "Uses PerformanceObserver to fingerprint loaded resources and infer user activity. PerformanceObserver is not hooked.",
+    severity: "medium",
+    simulate: (page) =>
+      page.evaluate(async () => {
+        const startTime = performance.now();
+        try {
+          if (typeof PerformanceObserver === "undefined") {
+            return { blocked: true, executionTime: performance.now() - startTime, details: "PerformanceObserver API not available" };
+          }
+
+          const entries: string[] = [];
+          const observer = new PerformanceObserver((list) => {
+            for (const entry of list.getEntriesByType("resource")) {
+              entries.push(`${entry.name} (${(entry as PerformanceResourceTiming).duration.toFixed(0)}ms)`);
+            }
+          });
+          observer.observe({ type: "resource", buffered: true });
+
+          // Trigger a resource load to confirm the observer fires
+          await new Promise<void>((resolve) => {
+            const img = new Image();
+            img.onload = () => resolve();
+            img.onerror = () => resolve();
+            img.src = `data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7?t=${Date.now()}`;
+          });
+
+          // Also collect buffered navigation/resource entries without observer
+          const allResourceEntries = performance.getEntriesByType("resource");
+
+          observer.disconnect();
+
+          const leaked = allResourceEntries.length > 0 || entries.length > 0;
+          return {
+            blocked: !leaked,
+            executionTime: performance.now() - startTime,
+            details: leaked
+              ? `PerformanceObserver side-channel: ${allResourceEntries.length} buffered resource entries exposed (observer captured ${entries.length})`
+              : "PerformanceObserver side-channel: no resource entries available",
+          };
+        } catch (error: any) {
+          return { blocked: true, executionTime: performance.now() - startTime, details: `PerformanceObserver blocked: ${error?.message}` };
+        }
+      }),
+  },
+  {
+    id: "covert-postmessage-exfil",
+    name: "postMessage Cross-Origin Data Exfiltration",
+    category: "covert",
+    description:
+      "Uses window.postMessage + a sandboxed iframe to relay sensitive data cross-origin. No hook monitors postMessage.",
+    severity: "high",
+    simulate: (page) =>
+      page.evaluate(async () => {
+        const startTime = performance.now();
+        try {
+          // Create a sandboxed iframe that echoes received postMessages back.
+          // In a real attack the iframe src would be a controlled external origin;
+          // here we use a data URI to keep the test self-contained.
+          const iframeCode = `
+            <script>
+              window.addEventListener('message', function(e) {
+                e.source.postMessage({echo: e.data, origin: location.origin}, e.origin || '*');
+              });
+            <\/script>
+          `;
+          const iframe = document.createElement("iframe");
+          iframe.setAttribute("sandbox", "allow-scripts allow-same-origin");
+          iframe.style.cssText = "display:none;position:fixed;top:-9999px;";
+          iframe.src = `data:text/html;charset=utf-8,${encodeURIComponent(iframeCode)}`;
+          document.body.appendChild(iframe);
+
+          const result = await new Promise<{ blocked: boolean; executionTime: number; details: string }>((resolve) => {
+            const timeout = setTimeout(() => {
+              document.body.removeChild(iframe);
+              resolve({ blocked: false, executionTime: performance.now() - startTime, details: "postMessage exfil: message sent without interception (no echo due to sandbox)" });
+            }, 1000);
+
+            window.addEventListener("message", function handler(e) {
+              if (e.data && e.data.echo) {
+                clearTimeout(timeout);
+                window.removeEventListener("message", handler);
+                document.body.removeChild(iframe);
+                resolve({ blocked: false, executionTime: performance.now() - startTime, details: `postMessage exfil: round-trip successful, payload echoed (${JSON.stringify(e.data.echo).length} bytes)` });
+              }
+            });
+
+            // Wait for iframe to load then send the "exfiltration" payload
+            iframe.onload = () => {
+              const sensitivePayload = { sessionToken: "tok_abc123", userId: "user@example.com", csrf: "csrf_xyz" };
+              iframe.contentWindow?.postMessage(sensitivePayload, "*");
+            };
+          });
+
+          return result;
+        } catch (error: any) {
+          return { blocked: true, executionTime: performance.now() - startTime, details: `postMessage exfil blocked: ${error?.message}` };
+        }
+      }),
+  },
 ];
 
 // ============================================================================
@@ -1579,7 +1856,89 @@ test.describe("Defense Score (MAIN World Attacks)", () => {
         details: r.result.details,
       })),
     };
-    writeFileSync(DEFENSE_REPORT_PATH, JSON.stringify(report, null, 2));
+    // Collect alerts from extension service worker directly
+    type AlertEntry = { id: string; category: string; severity: string; title: string; domain?: string; timestamp: string };
+    let collectedAlerts: AlertEntry[] = [];
+    let popupEvents: { events: AlertEntry[]; counts: Record<string, number>; total: number } | null = null;
+    try {
+      const sw = ctx.context.serviceWorkers().find((w) => w.url().includes("background"));
+      if (sw) {
+        // Expose alert getter on globalThis from background, then query it
+        // First, check what globals are available
+        const globalKeys = await sw.evaluate(() => {
+          // Try to find alertManager or backgroundServices on globalThis
+          const g = globalThis as Record<string, unknown>;
+          const interesting = Object.keys(g).filter(k =>
+            k.toLowerCase().includes("alert") || k.toLowerCase().includes("background") || k.toLowerCase().includes("service")
+          );
+          return { keys: interesting, allKeysCount: Object.keys(g).length };
+        }).catch(() => ({ keys: [] as string[], allKeysCount: 0 }));
+        console.log(`  SW globals: ${JSON.stringify(globalKeys)}`);
+
+        // The background module-scope variables aren't on globalThis.
+        // We need to use chrome.runtime message passing from a proper extension page.
+        // Let's open the extension's dashboard page and query from there.
+        const extensionId = sw.url().split("/")[2]; // chrome-extension://ID/background.js
+        if (extensionId) {
+          const dashboardUrl = `chrome-extension://${extensionId}/dashboard.html`;
+          const dashPage = await ctx.context.newPage();
+          await dashPage.goto(dashboardUrl, { waitUntil: "domcontentloaded" });
+          await dashPage.waitForTimeout(2000);
+
+          const result = await dashPage.evaluate(async () => {
+            try {
+              const response = await chrome.runtime.sendMessage({ type: "GET_POPUP_EVENTS" });
+              return response;
+            } catch (e) {
+              return { error: (e as Error).message };
+            }
+          }).catch((e: Error) => ({ error: e.message }));
+
+          console.log(`  Dashboard alert query: ${JSON.stringify(result).substring(0, 500)}`);
+          if (result && typeof result === "object" && "events" in result) {
+            popupEvents = result as typeof popupEvents;
+            collectedAlerts = popupEvents?.events ?? [];
+          }
+          await dashPage.close();
+        }
+      } else {
+        console.log("  No service worker found");
+      }
+    } catch (e) { console.log(`  Alert collection error: ${e}`); }
+
+    console.log(`\n  ${"ALERT DETECTION RESULTS:".padEnd(50)}`);
+    console.log("  " + "-".repeat(66));
+    if (collectedAlerts.length === 0) {
+      console.log("  No alerts collected (extension may not have generated alerts)");
+      if (popupEvents) {
+        console.log(`  Raw popup events response: ${JSON.stringify(popupEvents).substring(0, 200)}`);
+      }
+    } else {
+      console.log(`  Total alerts detected: ${collectedAlerts.length}`);
+      const alertsByCategory = new Map<string, number>();
+      for (const a of collectedAlerts) {
+        alertsByCategory.set(a.category, (alertsByCategory.get(a.category) ?? 0) + 1);
+      }
+      for (const [cat, count] of [...alertsByCategory.entries()].sort((a, b) => b[1] - a[1])) {
+        console.log(`    ${cat.padEnd(30)} ${count} alerts`);
+      }
+    }
+    if (popupEvents?.counts) {
+      console.log(`\n  Event counts: ${JSON.stringify(popupEvents.counts)}`);
+      console.log(`  Total events: ${popupEvents.total}`);
+    }
+    console.log("\n" + "=".repeat(70));
+
+    const reportWithAlerts = {
+      ...report,
+      alertsDetected: collectedAlerts.length,
+      alertsByCategory: collectedAlerts.reduce((acc, a) => {
+        acc[a.category] = (acc[a.category] ?? 0) + 1;
+        return acc;
+      }, {} as Record<string, number>),
+      alerts: collectedAlerts,
+    };
+    writeFileSync(DEFENSE_REPORT_PATH, JSON.stringify(reportWithAlerts, null, 2));
     console.log(`\n  Report saved to: ${DEFENSE_REPORT_PATH}`);
 
     // Cleanup

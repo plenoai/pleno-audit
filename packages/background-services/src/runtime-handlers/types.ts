@@ -101,6 +101,9 @@ handleNetworkInspection: (data: unknown, sender: chrome.runtime.MessageSender) =
   handleDeviceSensor: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
   handleDeviceEnumeration: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
   handleStorageExfiltration: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
+  handlePrototypePollution: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
+  handleDNSPrefetchLeak: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
+  handleFormHijack: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
 
   getAlerts: (options?: { limit?: number; status?: AlertStatus[] }) => Promise<SecurityAlert[]>;
 
