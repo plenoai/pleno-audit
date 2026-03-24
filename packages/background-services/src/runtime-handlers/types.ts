@@ -114,6 +114,9 @@ handleNetworkInspection: (data: unknown, sender: chrome.runtime.MessageSender) =
   handleIntersectionObserver: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
   handleIndexedDBAbuse: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
   handleHistoryManipulation: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
+  handleMessageChannel: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
+  handleResizeObserver: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
+  handleExecCommandClipboard: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
 
   getAlerts: (options?: { limit?: number; status?: AlertStatus[] }) => Promise<SecurityAlert[]>;
 

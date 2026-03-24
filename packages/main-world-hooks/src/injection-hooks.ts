@@ -353,6 +353,37 @@ export function initInjectionHooks(emitSecurityEvent: SharedHookUtils["emitSecur
     }
   });
 
+  // ===== MessageChannel Covert Communication Detection =====
+  if (typeof MessageChannel !== "undefined") {
+    const OriginalMessageChannel = MessageChannel;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- intentional monkey-patch of MessageChannel constructor
+    (window as any).MessageChannel = function (this: unknown) {
+      emitSecurityEvent("__MESSAGE_CHANNEL_DETECTED__", {
+        timestamp: Date.now(),
+        pageUrl: location.href,
+      });
+      return new OriginalMessageChannel();
+    } as unknown as typeof MessageChannel;
+    (window as any).MessageChannel.prototype = OriginalMessageChannel.prototype;
+  }
+
+  // ===== ResizeObserver Device Fingerprinting Detection =====
+  if (typeof ResizeObserver !== "undefined") {
+    const OriginalResizeObserver = ResizeObserver;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- intentional monkey-patch of ResizeObserver constructor
+    (window as any).ResizeObserver = function (
+      this: unknown,
+      callback: ResizeObserverCallback,
+    ) {
+      emitSecurityEvent("__RESIZE_OBSERVER_DETECTED__", {
+        timestamp: Date.now(),
+        pageUrl: location.href,
+      });
+      return new OriginalResizeObserver(callback);
+    } as unknown as typeof ResizeObserver;
+    (window as any).ResizeObserver.prototype = OriginalResizeObserver.prototype;
+  }
+
   // ===== IntersectionObserver Surveillance Detection =====
   // Bulk observe() calls on many elements is a pattern used for scroll/visibility tracking surveillance.
   if (typeof IntersectionObserver !== "undefined") {

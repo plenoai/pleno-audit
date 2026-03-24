@@ -1257,5 +1257,70 @@ export function createSecurityEventHandlers(
 
       return { success: true };
     },
+
+    async handleMessageChannel(
+      data: { timestamp?: number; pageUrl?: string; source?: string },
+      sender: chrome.runtime.MessageSender,
+    ): Promise<{ success: boolean }> {
+      const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+
+      await deps.getAlertManager().alertMessageChannel({
+        domain: pageDomain,
+      });
+
+      deps.logger.warn({
+        event: "SECURITY_MESSAGE_CHANNEL_DETECTED",
+        data: {
+          source: sourceLabel(data.source),
+          domain: pageDomain,
+        },
+      });
+
+      return { success: true };
+    },
+
+    async handleResizeObserver(
+      data: { timestamp?: number; pageUrl?: string; source?: string },
+      sender: chrome.runtime.MessageSender,
+    ): Promise<{ success: boolean }> {
+      const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+
+      await deps.getAlertManager().alertResizeObserver({
+        domain: pageDomain,
+      });
+
+      deps.logger.debug({
+        event: "SECURITY_RESIZE_OBSERVER_DETECTED",
+        data: {
+          source: sourceLabel(data.source),
+          domain: pageDomain,
+        },
+      });
+
+      return { success: true };
+    },
+
+    async handleExecCommandClipboard(
+      data: { command?: string; timestamp?: number; pageUrl?: string; source?: string },
+      sender: chrome.runtime.MessageSender,
+    ): Promise<{ success: boolean }> {
+      const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+
+      await deps.getAlertManager().alertExecCommandClipboard({
+        domain: pageDomain,
+        command: data.command ?? "copy",
+      });
+
+      deps.logger.warn({
+        event: "SECURITY_EXECCOMMAND_CLIPBOARD_DETECTED",
+        data: {
+          source: sourceLabel(data.source),
+          domain: pageDomain,
+          command: data.command,
+        },
+      });
+
+      return { success: true };
+    },
   };
 }

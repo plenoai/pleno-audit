@@ -87,6 +87,9 @@ export default defineContentScript({
       "__INTERSECTION_OBSERVER_DETECTED__",
       "__INDEXEDDB_ABUSE_DETECTED__",
       "__HISTORY_MANIPULATION_DETECTED__",
+      "__MESSAGE_CHANNEL_DETECTED__",
+      "__RESIZE_OBSERVER_DETECTED__",
+      "__EXECCOMMAND_DETECTED__",
     ];
 
     const signal = abortController.signal;

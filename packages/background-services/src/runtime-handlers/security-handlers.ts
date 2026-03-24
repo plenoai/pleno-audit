@@ -188,5 +188,17 @@ export function createSecurityAsyncHandlers(
       execute: (message, sender) => deps.handleHistoryManipulation(message.data, sender),
       fallback: () => ({ success: false }),
     }],
+    ["MESSAGE_CHANNEL_DETECTED", {
+      execute: (message, sender) => deps.handleMessageChannel(message.data, sender),
+      fallback: () => ({ success: false }),
+    }],
+    ["RESIZE_OBSERVER_DETECTED", {
+      execute: (message, sender) => deps.handleResizeObserver(message.data, sender),
+      fallback: () => ({ success: false }),
+    }],
+    ["EXECCOMMAND_DETECTED", {
+      execute: (message, sender) => deps.handleExecCommandClipboard(message.data, sender),
+      fallback: () => ({ success: false }),
+    }],
   ];
 }

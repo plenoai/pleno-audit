@@ -1933,3 +1933,92 @@ const HISTORY_MANIPULATION_ALERT_DEFINITION: AlertDefinition<
 export const buildHistoryManipulationAlert = createAlertBuilder(
   HISTORY_MANIPULATION_ALERT_DEFINITION
 );
+
+// ============================================================================
+// MessageChannel Covert Communication
+// ============================================================================
+
+export interface MessageChannelAlertParams {
+  domain: string;
+}
+
+const MESSAGE_CHANNEL_ALERT_DEFINITION: AlertDefinition<
+  MessageChannelAlertParams,
+  MessageChannelAlertDetails
+> = {
+  category: "message_channel",
+  detailsType: "message_channel",
+  build: (params) => ({
+    severity: "medium",
+    title: `MessageChannel検出: ${params.domain}`,
+    description: "MessageChannelコンストラクタが呼び出されました（隠密通信チャネルの可能性）",
+    domain: params.domain,
+    details: {
+      domain: params.domain,
+    },
+  }),
+};
+
+export const buildMessageChannelAlert = createAlertBuilder(
+  MESSAGE_CHANNEL_ALERT_DEFINITION
+);
+
+// ============================================================================
+// ResizeObserver Device Fingerprinting
+// ============================================================================
+
+export interface ResizeObserverAlertParams {
+  domain: string;
+}
+
+const RESIZE_OBSERVER_ALERT_DEFINITION: AlertDefinition<
+  ResizeObserverAlertParams,
+  ResizeObserverAlertDetails
+> = {
+  category: "resize_observer",
+  detailsType: "resize_observer",
+  build: (params) => ({
+    severity: "low",
+    title: `ResizeObserver検出: ${params.domain}`,
+    description: "ResizeObserverコンストラクタが呼び出されました（デバイスフィンガープリントの可能性）",
+    domain: params.domain,
+    details: {
+      domain: params.domain,
+    },
+  }),
+};
+
+export const buildResizeObserverAlert = createAlertBuilder(
+  RESIZE_OBSERVER_ALERT_DEFINITION
+);
+
+// ============================================================================
+// execCommand Clipboard Bypass
+// ============================================================================
+
+export interface ExecCommandClipboardAlertParams {
+  domain: string;
+  command: string;
+}
+
+const EXECCOMMAND_CLIPBOARD_ALERT_DEFINITION: AlertDefinition<
+  ExecCommandClipboardAlertParams,
+  ExecCommandClipboardAlertDetails
+> = {
+  category: "execcommand_clipboard",
+  detailsType: "execcommand_clipboard",
+  build: (params) => ({
+    severity: "high",
+    title: `execCommandクリップボード操作検出: ${params.domain}`,
+    description: `document.execCommand('${params.command}')によるクリップボードバイパスを検出`,
+    domain: params.domain,
+    details: {
+      domain: params.domain,
+      command: params.command,
+    },
+  }),
+};
+
+export const buildExecCommandClipboardAlert = createAlertBuilder(
+  EXECCOMMAND_CLIPBOARD_ALERT_DEFINITION
+);

@@ -159,6 +159,20 @@ export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecuri
     };
   }
 
+  // ===== execCommand Clipboard Bypass =====
+  const SENSITIVE_EXEC_COMMANDS = new Set(["copy", "cut", "paste", "inserthtml"]);
+  const originalExecCommand = document.execCommand.bind(document);
+  document.execCommand = function (commandId: string, showUI?: boolean, value?: string): boolean {
+    if (SENSITIVE_EXEC_COMMANDS.has(commandId.toLowerCase())) {
+      emitSecurityEvent("__EXECCOMMAND_DETECTED__", {
+        command: commandId.toLowerCase(),
+        timestamp: Date.now(),
+        pageUrl: window.location.href,
+      });
+    }
+    return originalExecCommand(commandId, showUI, value);
+  };
+
   // ===== Cookie Access =====
   let lastCookieAccessTime = 0;
   try {

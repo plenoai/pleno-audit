@@ -63,7 +63,10 @@ export type AlertCategory =
   | "wasm_execution" // WebAssembly instantiation/compilation
   | "intersection_observer" // IntersectionObserver bulk element surveillance
   | "indexeddb_abuse" // IndexedDB.open() for covert data persistence
-  | "history_manipulation"; // history.pushState/replaceState manipulation
+  | "history_manipulation" // history.pushState/replaceState manipulation
+  | "message_channel" // MessageChannel constructor for covert communication
+  | "resize_observer" // ResizeObserver constructor for device fingerprinting
+  | "execcommand_clipboard"; // document.execCommand clipboard bypass
 
 /**
  * Alert status
@@ -145,7 +148,10 @@ export type AlertDetails =
   | WASMExecutionAlertDetails
   | IntersectionObserverAlertDetails
   | IndexedDBAbuseAlertDetails
-  | HistoryManipulationAlertDetails;
+  | HistoryManipulationAlertDetails
+  | MessageChannelAlertDetails
+  | ResizeObserverAlertDetails
+  | ExecCommandClipboardAlertDetails;
 
 export interface NRDAlertDetails {
   type: "nrd";
@@ -516,6 +522,22 @@ export interface HistoryManipulationAlertDetails {
   method: string;
   url: string | null;
   hasState: boolean;
+}
+
+export interface MessageChannelAlertDetails {
+  type: "message_channel";
+  domain: string;
+}
+
+export interface ResizeObserverAlertDetails {
+  type: "resize_observer";
+  domain: string;
+}
+
+export interface ExecCommandClipboardAlertDetails {
+  type: "execcommand_clipboard";
+  domain: string;
+  command: string;
 }
 
 /**

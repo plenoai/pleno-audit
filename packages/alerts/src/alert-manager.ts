@@ -62,6 +62,9 @@ import type {
   IntersectionObserverAlertParams,
   IndexedDBAbuseAlertParams,
   HistoryManipulationAlertParams,
+  MessageChannelAlertParams,
+  ResizeObserverAlertParams,
+  ExecCommandClipboardAlertParams,
 } from "./alert-builders.js";
 import {
   buildNRDAlert,
@@ -111,6 +114,9 @@ import {
   buildIntersectionObserverAlert,
   buildIndexedDBAbuseAlert,
   buildHistoryManipulationAlert,
+  buildMessageChannelAlert,
+  buildResizeObserverAlert,
+  buildExecCommandClipboardAlert,
 } from "./alert-builders.js";
 
 /**
@@ -569,6 +575,24 @@ export function createAlertManager(
     return createOptionalAlert(buildHistoryManipulationAlert(params));
   }
 
+  async function alertMessageChannel(
+    params: MessageChannelAlertParams
+  ): Promise<SecurityAlert | null> {
+    return createOptionalAlert(buildMessageChannelAlert(params));
+  }
+
+  async function alertResizeObserver(
+    params: ResizeObserverAlertParams
+  ): Promise<SecurityAlert | null> {
+    return createOptionalAlert(buildResizeObserverAlert(params));
+  }
+
+  async function alertExecCommandClipboard(
+    params: ExecCommandClipboardAlertParams
+  ): Promise<SecurityAlert | null> {
+    return createOptionalAlert(buildExecCommandClipboardAlert(params));
+  }
+
   async function updateAlertStatus(
     alertId: string,
     status: AlertStatus
@@ -659,6 +683,9 @@ export function createAlertManager(
     alertIntersectionObserver,
     alertIndexedDBAbuse,
     alertHistoryManipulation,
+    alertMessageChannel,
+    alertResizeObserver,
+    alertExecCommandClipboard,
     updateAlertStatus,
     getAlerts,
     getAlertCount,
