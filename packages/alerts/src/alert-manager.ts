@@ -242,6 +242,10 @@ export function createAlertManager(
   const listeners: Set<AlertListener> = new Set();
   const rules: Map<string, AlertRule> = new Map();
 
+  // Dedup: track (category, domain) → alertId for merging duplicate alerts
+  const DEDUP_WINDOW_MS = 60_000; // 1 minute window
+  const dedupMap = new Map<string, { alertId: string; timestamp: number }>();
+
   for (const rule of [...DEFAULT_RULES, ...config.rules]) {
     rules.set(rule.id, rule);
   }
@@ -278,6 +282,26 @@ export function createAlertManager(
       return null;
     }
 
+    // Dedup: merge alerts with same (category, domain) within the time window
+    const dedupKey = `${params.category}::${params.domain}`;
+    const now = Date.now();
+    const existing = dedupMap.get(dedupKey);
+
+    if (existing && now - existing.timestamp < DEDUP_WINDOW_MS) {
+      // Increment count on existing alert instead of creating a new one
+      const existingAlerts = await alertStore.getAlerts();
+      const existingAlert = existingAlerts.find((a) => a.id === existing.alertId);
+      if (existingAlert) {
+        const newCount = (existingAlert.count ?? 1) + 1;
+        await alertStore.updateAlert(existing.alertId, {
+          count: newCount,
+          timestamp: now, // Update timestamp to latest occurrence
+        });
+        existing.timestamp = now; // Extend the dedup window
+        return existingAlert;
+      }
+    }
+
     const alert: SecurityAlert = {
       id: generateAlertId(),
       category: params.category,
@@ -286,12 +310,14 @@ export function createAlertManager(
       title: params.title,
       description: params.description,
       domain: params.domain,
-      timestamp: Date.now(),
+      timestamp: now,
       details: params.details,
       actions: params.actions || getDefaultActions(params.category),
+      count: 1,
     };
 
     await alertStore.addAlert(alert);
+    dedupMap.set(dedupKey, { alertId: alert.id, timestamp: now });
     notifyListeners(alert);
 
     return alert;

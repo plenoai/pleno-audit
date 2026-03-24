@@ -127,6 +127,7 @@ export function createComputationHandlers(
             domain: a.domain,
             timestamp: a.timestamp,
             details: a.details as Record<string, unknown> | undefined,
+            count: (a as { count?: number }).count,
           }));
 
           const seenIds = new Set(postureAlerts.map((a) => a.id));

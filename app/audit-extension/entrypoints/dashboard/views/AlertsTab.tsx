@@ -16,6 +16,7 @@ interface AlertItem {
   domain: string;
   timestamp: number;
   details?: Record<string, unknown>;
+  count?: number;
 }
 
 const severityVariant: Record<AlertSeverity, "danger" | "warning" | "info"> = {
@@ -274,11 +275,25 @@ export function AlertsTab() {
         {
           key: "category",
           header: "カテゴリ",
-          width: "80px",
+          width: "100px",
           render: (a) => (
-            <Badge variant="info" size="sm">
-              {categoryLabels[a.category] ?? a.category}
-            </Badge>
+            <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+              <Badge variant="info" size="sm">
+                {categoryLabels[a.category] ?? a.category}
+              </Badge>
+              {(a.count ?? 1) > 1 && (
+                <span
+                  style={{
+                    fontSize: "10px",
+                    color: colors.textMuted,
+                    fontWeight: 600,
+                  }}
+                  title={`${a.count} 回検出`}
+                >
+                  x{a.count}
+                </span>
+              )}
+            </span>
           ),
         },
         {

@@ -99,6 +99,8 @@ export interface SecurityAlert {
   details: AlertDetails;
   actions: AlertAction[];
   metadata?: Record<string, unknown>;
+  /** Number of duplicate alerts merged into this one (1 = no duplicates) */
+  count?: number;
 }
 
 /**
