@@ -31,27 +31,27 @@
     },
     // Logger package - console is the output mechanism
     {
-      "files": ["lib/extension-runtime/src/logger.ts"],
+      "files": ["packages/extension-runtime/src/logger.ts"],
       "rules": { "no-console": "off" }
     },
     // Debug bridge - needs console before logger is connected, and WebSocket for debug
     {
-      "files": ["lib/debug-bridge/src/**/*"],
+      "files": ["packages/debug-bridge/src/**/*"],
       "rules": { "no-console": "off", "no-restricted-globals": "off" }
     },
     // RDAP API query for NRD detection (default: OFF)
     {
-      "files": ["lib/nrd/src/rdap.ts"],
+      "files": ["packages/nrd/src/rdap.ts"],
       "rules": { "no-restricted-globals": "off" }
     },
     // Remote API client (default: local mode)
     {
-      "files": ["lib/extension-enterprise/src/api-client.ts"],
+      "files": ["packages/extension-enterprise/src/api-client.ts"],
       "rules": { "no-restricted-globals": "off" }
     },
     // CSP violation report sender (default: OFF)
     {
-      "files": ["lib/csp/src/reporter.ts"],
+      "files": ["packages/csp/src/reporter.ts"],
       "rules": { "no-restricted-globals": "off" }
     },
     // Web API interceptor for monitoring (no actual communication)
@@ -71,12 +71,12 @@
     },
     // Battacker package - attack simulations require network access and console for payload simulation
     {
-      "files": ["lib/battacker/**/*"],
+      "files": ["packages/battacker/**/*"],
       "rules": { "no-console": "off", "no-restricted-globals": "off" }
     },
     // SSO Manager - requires OAuth token exchange (enterprise feature, default: OFF)
     {
-      "files": ["lib/extension-enterprise/src/sso-manager.ts"],
+      "files": ["packages/extension-enterprise/src/sso-manager.ts"],
       "rules": { "no-restricted-globals": "off" }
     },
     // Debug WebSocket - developer tooling for debugging
@@ -96,7 +96,7 @@
     },
     // Lib test files
     {
-      "files": ["lib/**/*.test.ts"],
+      "files": ["packages/**/*.test.ts"],
       "rules": { "no-console": "off", "no-restricted-globals": "off" }
     },
     // App test files

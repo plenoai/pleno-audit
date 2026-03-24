@@ -2,28 +2,28 @@ CASB/Browser Security
 
 ## 構造
 
-### libztbs — Zero Trust Browser Security（`lib/`）
+### libztbs — Zero Trust Browser Security（`packages/`）
 
 ゼロトラストブラウザセキュリティの完全な基盤ライブラリ。
 libztbsだけでブラウザセキュリティ拡張機能を構築可能。
 
 #### コアドメイン
-- `lib/types/` - コア型定義（@libztbs/types）
-- `lib/detectors/` - CASBドメイン：サービス検出、認証検出（@libztbs/detectors）
-- `lib/csp/` - CSP監査：違反検出、ポリシー生成（@libztbs/csp）
-- `lib/nrd/` - NRD検出アルゴリズム（@libztbs/nrd）
-- `lib/typosquat/` - タイポスクワット検出アルゴリズム（@libztbs/typosquat）
-- `lib/ai-detector/` - AI検出・DLPアルゴリズム（@libztbs/ai-detector）
-- `lib/alerts/` - Posture/Policy/Alertセキュリティ基盤（@libztbs/alerts）
-- `lib/battacker/` - ブラウザ防御耐性テスト（@libztbs/battacker）
-- `lib/data-export/` - セキュリティデータエクスポート（@libztbs/data-export）
+- `packages/types/` - コア型定義（@libztbs/types）
+- `packages/detectors/` - CASBドメイン：サービス検出、認証検出（@libztbs/detectors）
+- `packages/csp/` - CSP監査：違反検出、ポリシー生成（@libztbs/csp）
+- `packages/nrd/` - NRD検出アルゴリズム（@libztbs/nrd）
+- `packages/typosquat/` - タイポスクワット検出アルゴリズム（@libztbs/typosquat）
+- `packages/ai-detector/` - AI検出・DLPアルゴリズム（@libztbs/ai-detector）
+- `packages/alerts/` - Posture/Policy/Alertセキュリティ基盤（@libztbs/alerts）
+- `packages/battacker/` - ブラウザ防御耐性テスト（@libztbs/battacker）
+- `packages/data-export/` - セキュリティデータエクスポート（@libztbs/data-export）
 
 #### 拡張機能ランタイム
-- `lib/extension-runtime/` - 拡張機能ランタイム（@libztbs/extension-runtime）
-- `lib/background-services/` - バックグラウンドサービス（@libztbs/background-services）
-- `lib/extension-network-service/` - ネットワーク監視・DNR管理（@libztbs/extension-network-service）
-- `lib/extension-enterprise/` - エンタープライズ機能（@libztbs/extension-enterprise）
-- `lib/debug-bridge/` - デバッグブリッジ（@libztbs/debug-bridge）
+- `packages/extension-runtime/` - 拡張機能ランタイム（@libztbs/extension-runtime）
+- `packages/background-services/` - バックグラウンドサービス（@libztbs/background-services）
+- `packages/extension-network-service/` - ネットワーク監視・DNR管理（@libztbs/extension-network-service）
+- `packages/extension-enterprise/` - エンタープライズ機能（@libztbs/extension-enterprise）
+- `packages/debug-bridge/` - デバッグブリッジ（@libztbs/debug-bridge）
 
 ### pleno-audit アプリケーション（`app/`）
 

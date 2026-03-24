@@ -5,9 +5,9 @@ export default defineConfig({
     globals: true,
     environment: "node",
     include: [
-      "lib/**/*.test.ts",
-      "lib/**/*.spec.ts",
-      "lib/**/*.property.ts",
+      "packages/**/*.test.ts",
+      "packages/**/*.spec.ts",
+      "packages/**/*.property.ts",
       "app/**/domain/**/*.test.ts",
       "app/**/entrypoints/**/*.test.ts",
     ],
@@ -15,41 +15,41 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html"],
-      include: ["lib/*/src/**/*.ts"],
+      include: ["packages/*/src/**/*.ts"],
       exclude: ["**/*.test.ts", "**/*.spec.ts", "**/index.ts"],
       thresholds: {
         // Per-package thresholds: detection packages hold 90%+, others ratcheted to current levels
-        "lib/nrd/src/**": {
+        "packages/nrd/src/**": {
           lines: 95,
           functions: 95,
           branches: 95,
           statements: 95,
         },
-        "lib/typosquat/src/**": {
+        "packages/typosquat/src/**": {
           lines: 95,
           functions: 95,
           branches: 95,
           statements: 95,
         },
-        "lib/detectors/src/**": {
+        "packages/detectors/src/**": {
           lines: 90,
           functions: 90,
           branches: 85,
           statements: 90,
         },
-        "lib/ai-detector/src/**": {
+        "packages/ai-detector/src/**": {
           lines: 70,
           functions: 70,
           branches: 60,
           statements: 70,
         },
-        "lib/data-export/src/**": {
+        "packages/data-export/src/**": {
           lines: 75,
           functions: 65,
           branches: 65,
           statements: 75,
         },
-        "lib/extension-runtime/src/**": {
+        "packages/extension-runtime/src/**": {
           lines: 40,
           functions: 50,
           branches: 40,
