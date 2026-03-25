@@ -68,9 +68,11 @@ export function initAIHooks(shared: SharedHookUtils): void {
 
   // ===== FETCH =====
   window.fetch = function (this: typeof globalThis, input: RequestInfo | URL, init?: RequestInit) {
+    const isRequest = typeof input === "object" && "url" in input;
     const url = typeof input === "string" ? input : (input as Request)?.url;
-    const method = init?.method || (typeof input === "object" ? (input as Request).method : "GET") || "GET";
+    const method = init?.method || (isRequest ? (input as Request).method : "GET") || "GET";
     const body = init?.body;
+    const hasBody = body || (isRequest && !(input as Request).bodyUsed);
 
     // Schedule deferred network inspection (already uses requestIdleCallback)
     if (url) {
@@ -80,48 +82,59 @@ export function initAIHooks(shared: SharedHookUtils): void {
       } catch { /* invalid URL */ }
     }
 
-    // Call original IMMEDIATELY — return unmodified Promise
-    const result = originalFetch.apply(this, [input, init] as unknown as [RequestInfo | URL, RequestInit | undefined]);
-
-    // Side-effect: deferred AI capture for likely AI URLs
-    if (body && method.toUpperCase() !== "GET" && url) {
+    // Clone Request body BEFORE calling original fetch (which consumes it)
+    let bodyTextPromise: Promise<string | undefined> | undefined;
+    if (hasBody && method.toUpperCase() !== "GET" && url) {
       try {
         const fullUrl = new URL(url, window.location.origin).href;
         if (isLikelyAIUrl(fullUrl)) {
           const bodySample = getBodySample(body);
-          const startTime = Date.now();
-          // Register side-effect .then() — does NOT wrap the returned promise
-          result.then((response) => {
+          if (bodySample) {
+            bodyTextPromise = Promise.resolve(bodySample);
+          } else if (isRequest) {
+            // Request object: clone to read body without consuming original
             try {
-              const clone = response.clone();
-              const contentType = response.headers.get("content-type") || "";
-              scheduleIdle(() => {
-                clone.text().then((text) => {
-                  emitSecurityEvent("__AI_PROMPT_CAPTURED__", {
-                    id: crypto.randomUUID(),
-                    timestamp: startTime,
-                    pageUrl: window.location.href,
-                    apiEndpoint: fullUrl,
-                    method: method.toUpperCase(),
-                    rawRequestBody: bodySample,
-                    rawResponseBody: text.length <= MAX_BODY_SAMPLE ? text : text.substring(0, MAX_BODY_SAMPLE),
-                    rawResponseContentType: contentType,
-                    responseTimestamp: Date.now(),
-                  });
-                }).catch(() => {
-                  emitSecurityEvent("__AI_PROMPT_CAPTURED__", {
-                    id: crypto.randomUUID(),
-                    timestamp: startTime,
-                    pageUrl: window.location.href,
-                    apiEndpoint: fullUrl,
-                    method: method.toUpperCase(),
-                    rawRequestBody: bodySample,
-                  });
-                });
-              });
-            } catch { /* ignore clone/read errors */ }
-          }).catch(() => { /* ignore fetch errors in side effect */ });
+              const clonedReq = (input as Request).clone();
+              bodyTextPromise = clonedReq.text().then(
+                (t) => t.length <= MAX_BODY_SAMPLE ? t : t.substring(0, MAX_BODY_SAMPLE),
+                () => undefined,
+              );
+            } catch { /* clone failed */ }
+          }
         }
+      } catch { /* ignore URL parse error */ }
+    }
+
+    // Call original IMMEDIATELY — return unmodified Promise
+    const result = originalFetch.apply(this, [input, init] as unknown as [RequestInfo | URL, RequestInit | undefined]);
+
+    // Side-effect: deferred AI capture for likely AI URLs
+    if (bodyTextPromise && url) {
+      try {
+        const fullUrl = new URL(url, window.location.origin).href;
+        const startTime = Date.now();
+        // Register side-effect .then() — does NOT wrap the returned promise
+        result.then((response) => {
+          try {
+            const clone = response.clone();
+            const contentType = response.headers.get("content-type") || "";
+            scheduleIdle(() => {
+              Promise.all([bodyTextPromise, clone.text().catch(() => undefined)]).then(([reqBody, resText]) => {
+                emitSecurityEvent("__AI_PROMPT_CAPTURED__", {
+                  id: crypto.randomUUID(),
+                  timestamp: startTime,
+                  pageUrl: window.location.href,
+                  apiEndpoint: fullUrl,
+                  method: method.toUpperCase(),
+                  rawRequestBody: reqBody,
+                  rawResponseBody: resText && (resText.length <= MAX_BODY_SAMPLE ? resText : resText.substring(0, MAX_BODY_SAMPLE)),
+                  rawResponseContentType: contentType,
+                  responseTimestamp: Date.now(),
+                });
+              }).catch(() => { /* ignore */ });
+            });
+          } catch { /* ignore clone/read errors */ }
+        }).catch(() => { /* ignore fetch errors in side effect */ });
       } catch { /* ignore URL parse error */ }
     }
 

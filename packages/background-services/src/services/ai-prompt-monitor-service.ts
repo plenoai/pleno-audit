@@ -34,7 +34,6 @@ interface CreateAIPromptMonitorServiceParams {
   defaultDetectionConfig: DetectionConfig;
   getStorage: () => Promise<AIServiceStorage>;
   setStorage: (data: Partial<AIServiceStorage>) => Promise<void>;
-  queueStorageOperation: <T>(operation: () => Promise<T>) => Promise<T>;
   updateService: (domain: string, update: Record<string, unknown>) => Promise<void>;
   checkAIServicePolicy: (params: {
     domain: string;
@@ -137,36 +136,36 @@ export function createAIPromptMonitorService(params: CreateAIPromptMonitorServic
     }
 
     if (pageDomain !== "unknown") {
-      await params.queueStorageOperation(async () => {
-        const latestStorage = await params.getStorage();
-        const existingService = latestStorage.services?.[pageDomain];
-        const existingProviders = existingService?.aiDetected?.providers || [];
-        const providers = existingProviders.includes(provider)
-          ? existingProviders
-          : [...existingProviders, provider];
+      // NOTE: updateService internally queues via queueStorageOperation.
+      // Do NOT wrap in another queueStorageOperation — it causes deadlock.
+      const latestStorage = await params.getStorage();
+      const existingService = latestStorage.services?.[pageDomain];
+      const existingProviders = existingService?.aiDetected?.providers || [];
+      const providers = existingProviders.includes(provider)
+        ? existingProviders
+        : [...existingProviders, provider];
 
-        const existingShadowProviders = existingService?.aiDetected?.shadowAIProviders || [];
-        const shadowAIProviders = isShadowAIDetected && !existingShadowProviders.includes(provider)
-          ? [...existingShadowProviders, provider]
-          : existingShadowProviders;
+      const existingShadowProviders = existingService?.aiDetected?.shadowAIProviders || [];
+      const shadowAIProviders = isShadowAIDetected && !existingShadowProviders.includes(provider)
+        ? [...existingShadowProviders, provider]
+        : existingShadowProviders;
 
-        await params.updateService(pageDomain, {
-          aiDetected: {
-            hasAIActivity: true,
-            lastActivityAt: data.timestamp,
-            providers,
-            hasSensitiveData: analysis.pii.hasSensitiveData || existingService?.aiDetected?.hasSensitiveData,
-            sensitiveDataTypes: analysis.pii.hasSensitiveData
-              ? [...new Set([...(existingService?.aiDetected?.sensitiveDataTypes || []), ...analysis.pii.classifications])]
-              : existingService?.aiDetected?.sensitiveDataTypes,
-            riskLevel: getHigherRiskLevel(
-              existingService?.aiDetected?.riskLevel,
-              analysis.risk.riskLevel
-            ),
-            hasShadowAI: isShadowAIDetected || existingService?.aiDetected?.hasShadowAI,
-            shadowAIProviders: shadowAIProviders.length > 0 ? shadowAIProviders : undefined,
-          },
-        });
+      await params.updateService(pageDomain, {
+        aiDetected: {
+          hasAIActivity: true,
+          lastActivityAt: data.timestamp,
+          providers,
+          hasSensitiveData: analysis.pii.hasSensitiveData || existingService?.aiDetected?.hasSensitiveData,
+          sensitiveDataTypes: analysis.pii.hasSensitiveData
+            ? [...new Set([...(existingService?.aiDetected?.sensitiveDataTypes || []), ...analysis.pii.classifications])]
+            : existingService?.aiDetected?.sensitiveDataTypes,
+          riskLevel: getHigherRiskLevel(
+            existingService?.aiDetected?.riskLevel,
+            analysis.risk.riskLevel
+          ),
+          hasShadowAI: isShadowAIDetected || existingService?.aiDetected?.hasShadowAI,
+          shadowAIProviders: shadowAIProviders.length > 0 ? shadowAIProviders : undefined,
+        },
       });
     }
 

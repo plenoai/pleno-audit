@@ -181,7 +181,6 @@ const aiPromptMonitorService = createAIPromptMonitorService({
   defaultDetectionConfig: DEFAULT_DETECTION_CONFIG,
   getStorage,
   setStorage,
-  queueStorageOperation: backgroundStorage.queueStorageOperation,
   updateService: backgroundStorage.updateService,
   checkAIServicePolicy: backgroundAlerts.checkAIServicePolicy,
   getAlertManager: backgroundAlerts.getAlertManager,

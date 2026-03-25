@@ -182,6 +182,28 @@ export function createComputationHandlers(
       },
     ],
     [
+      "DELETE_SERVICE",
+      {
+        execute: async (message) => {
+          const data = message.data as { domain: string };
+          const [servicesResult, connectionsResult] = await Promise.all([
+            chrome.storage.local.get("services"),
+            chrome.storage.local.get("serviceConnections"),
+          ]);
+
+          const services = (servicesResult.services ?? {}) as Record<string, DetectedService>;
+          const connections = (connectionsResult.serviceConnections ?? {}) as Record<string, string[]>;
+
+          delete services[data.domain];
+          delete connections[data.domain];
+
+          await chrome.storage.local.set({ services, serviceConnections: connections });
+          return { ok: true, domain: data.domain };
+        },
+        fallback: () => ({ ok: false }),
+      },
+    ],
+    [
       "GET_AGGREGATED_SERVICES",
       {
         execute: async () => {
