@@ -43,7 +43,7 @@ jobs:
         run: pnpm --filter @libztbs/battacker build
 
       - name: Build battacker-web
-        run: pnpm --filter @pleno-audit/battacker-web build
+        run: pnpm --filter @libztbs/battacker-web build
 
       - name: Build website
         run: pnpm website:build
