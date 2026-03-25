@@ -3,6 +3,20 @@ import { createComputationHandlers } from "./computation-handlers.js";
 import type { RuntimeHandlerDependencies } from "./types.js";
 import type { DetectedService } from "@libztbs/types";
 
+// chrome.storage.local モック
+const storageData: Record<string, unknown> = {};
+globalThis.chrome = {
+  storage: {
+    local: {
+      get: vi.fn((key: string) => Promise.resolve({ [key]: storageData[key] })),
+      set: vi.fn((data: Record<string, unknown>) => {
+        Object.assign(storageData, data);
+        return Promise.resolve();
+      }),
+    },
+  },
+} as unknown as typeof chrome;
+
 // ---------------------------------------------------------------------------
 // テストデータファクトリ
 // ---------------------------------------------------------------------------
@@ -53,9 +67,10 @@ describe("createComputationHandlers", () => {
     const deps = createMockDeps();
     const entries = createComputationHandlers(deps as unknown as RuntimeHandlerDependencies);
 
-    expect(entries).toHaveLength(2);
+    expect(entries).toHaveLength(3);
     expect(entries[0][0]).toBe("GET_POPUP_EVENTS");
-    expect(entries[1][0]).toBe("GET_AGGREGATED_SERVICES");
+    expect(entries[1][0]).toBe("DISMISS_ALERT_PATTERN");
+    expect(entries[2][0]).toBe("GET_AGGREGATED_SERVICES");
   });
 
   it("各エントリにexecuteとfallbackを持つ", () => {

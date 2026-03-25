@@ -308,6 +308,7 @@ export function createAlertManager(
       title: params.title,
       description: params.description,
       domain: params.domain,
+      url: params.url,
       timestamp: now,
       details: params.details,
       actions: params.actions || getDefaultActions(params.category),
@@ -322,335 +323,338 @@ export function createAlertManager(
   }
 
   async function createOptionalAlert(
-    alertInput: CreateAlertInput | null
+    alertInput: CreateAlertInput | null,
+    url?: string,
   ): Promise<SecurityAlert | null> {
     if (!alertInput) {
       return null;
     }
-
+    if (url) {
+      alertInput.url = url;
+    }
     return createAlert(alertInput);
   }
 
-  async function alertNRD(params: NRDAlertParams): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildNRDAlert(params));
+  async function alertNRD(params: NRDAlertParams, url?: string): Promise<SecurityAlert | null> {
+    return createOptionalAlert(buildNRDAlert(params), url);
   }
 
   async function alertTyposquat(
-    params: TyposquatAlertParams
+    params: TyposquatAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildTyposquatAlert(params));
+    return createOptionalAlert(buildTyposquatAlert(params), url);
   }
 
   async function alertCSPViolation(
-    params: CSPViolationAlertParams
+    params: CSPViolationAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildCSPViolationAlert(params));
+    return createOptionalAlert(buildCSPViolationAlert(params), url);
   }
 
   async function alertAISensitive(
-    params: AISensitiveAlertParams
+    params: AISensitiveAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildAISensitiveAlert(params));
+    return createOptionalAlert(buildAISensitiveAlert(params), url);
   }
 
   async function alertShadowAI(
-    params: ShadowAIAlertParams
+    params: ShadowAIAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildShadowAIAlert(params));
+    return createOptionalAlert(buildShadowAIAlert(params), url);
   }
 
   async function alertExtension(
-    params: ExtensionAlertParams
+    params: ExtensionAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildExtensionAlert(params));
+    return createOptionalAlert(buildExtensionAlert(params), url);
   }
 
   async function alertDataExfiltration(
-    params: DataExfiltrationAlertParams
+    params: DataExfiltrationAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildDataExfiltrationAlert(params));
+    return createOptionalAlert(buildDataExfiltrationAlert(params), url);
   }
 
   async function alertCredentialTheft(
-    params: CredentialTheftAlertParams
+    params: CredentialTheftAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildCredentialTheftAlert(params));
+    return createOptionalAlert(buildCredentialTheftAlert(params), url);
   }
 
   async function alertSupplyChainRisk(
-    params: SupplyChainRiskAlertParams
+    params: SupplyChainRiskAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildSupplyChainRiskAlert(params));
+    return createOptionalAlert(buildSupplyChainRiskAlert(params), url);
   }
 
   async function alertPolicyViolation(
-    params: PolicyViolationAlertParams
+    params: PolicyViolationAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildPolicyViolationAlert(params));
+    return createOptionalAlert(buildPolicyViolationAlert(params), url);
   }
 
   async function alertTrackingBeacon(
-    params: TrackingBeaconAlertParams
+    params: TrackingBeaconAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildTrackingBeaconAlert(params));
+    return createOptionalAlert(buildTrackingBeaconAlert(params), url);
   }
 
   async function alertClipboardHijack(
-    params: ClipboardHijackAlertParams
+    params: ClipboardHijackAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildClipboardHijackAlert(params));
+    return createOptionalAlert(buildClipboardHijackAlert(params), url);
   }
 
   async function alertXSSInjection(
-    params: XSSInjectionAlertParams
+    params: XSSInjectionAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildXSSInjectionAlert(params));
+    return createOptionalAlert(buildXSSInjectionAlert(params), url);
   }
 
   async function alertDOMScraping(
-    params: DOMScrapingAlertParams
+    params: DOMScrapingAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildDOMScrapingAlert(params));
+    return createOptionalAlert(buildDOMScrapingAlert(params), url);
   }
 
   async function alertSuspiciousDownload(
-    params: SuspiciousDownloadAlertParams
+    params: SuspiciousDownloadAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildSuspiciousDownloadAlert(params));
+    return createOptionalAlert(buildSuspiciousDownloadAlert(params), url);
   }
 
   async function alertCanvasFingerprint(
-    params: CanvasFingerprintAlertParams
+    params: CanvasFingerprintAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildCanvasFingerprintAlert(params));
+    return createOptionalAlert(buildCanvasFingerprintAlert(params), url);
   }
 
   async function alertWebGLFingerprint(
-    params: WebGLFingerprintAlertParams
+    params: WebGLFingerprintAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildWebGLFingerprintAlert(params));
+    return createOptionalAlert(buildWebGLFingerprintAlert(params), url);
   }
 
   async function alertAudioFingerprint(
-    params: AudioFingerprintAlertParams
+    params: AudioFingerprintAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildAudioFingerprintAlert(params));
+    return createOptionalAlert(buildAudioFingerprintAlert(params), url);
   }
 
   async function alertDynamicCodeExecution(
-    params: DynamicCodeExecutionAlertParams
+    params: DynamicCodeExecutionAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildDynamicCodeExecutionAlert(params));
+    return createOptionalAlert(buildDynamicCodeExecutionAlert(params), url);
   }
 
   async function alertFullscreenPhishing(
-    params: FullscreenPhishingAlertParams
+    params: FullscreenPhishingAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildFullscreenPhishingAlert(params));
+    return createOptionalAlert(buildFullscreenPhishingAlert(params), url);
   }
 
   async function alertClipboardRead(
-    params: ClipboardReadAlertParams
+    params: ClipboardReadAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildClipboardReadAlert(params));
+    return createOptionalAlert(buildClipboardReadAlert(params), url);
   }
 
   async function alertGeolocationAccess(
-    params: GeolocationAccessAlertParams
+    params: GeolocationAccessAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildGeolocationAccessAlert(params));
+    return createOptionalAlert(buildGeolocationAccessAlert(params), url);
   }
 
   async function alertWebSocketConnection(
-    params: WebSocketConnectionAlertParams
+    params: WebSocketConnectionAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildWebSocketConnectionAlert(params));
+    return createOptionalAlert(buildWebSocketConnectionAlert(params), url);
   }
 
   async function alertWebRTCConnection(
-    params: WebRTCConnectionAlertParams
+    params: WebRTCConnectionAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildWebRTCConnectionAlert(params));
+    return createOptionalAlert(buildWebRTCConnectionAlert(params), url);
   }
 
   async function alertBroadcastChannel(
-    params: BroadcastChannelAlertParams
+    params: BroadcastChannelAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildBroadcastChannelAlert(params));
+    return createOptionalAlert(buildBroadcastChannelAlert(params), url);
   }
 
   async function alertSendBeacon(
-    params: SendBeaconAlertParams
+    params: SendBeaconAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildSendBeaconAlert(params));
+    return createOptionalAlert(buildSendBeaconAlert(params), url);
   }
 
   async function alertMediaCapture(
-    params: MediaCaptureAlertParams
+    params: MediaCaptureAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildMediaCaptureAlert(params));
+    return createOptionalAlert(buildMediaCaptureAlert(params), url);
   }
 
   async function alertNotificationPhishing(
-    params: NotificationPhishingAlertParams
+    params: NotificationPhishingAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildNotificationPhishingAlert(params));
+    return createOptionalAlert(buildNotificationPhishingAlert(params), url);
   }
 
   async function alertCredentialAPI(
-    params: CredentialAPIAlertParams
+    params: CredentialAPIAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildCredentialAPIAlert(params));
+    return createOptionalAlert(buildCredentialAPIAlert(params), url);
   }
 
   async function alertDeviceSensor(
-    params: DeviceSensorAlertParams
+    params: DeviceSensorAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildDeviceSensorAlert(params));
+    return createOptionalAlert(buildDeviceSensorAlert(params), url);
   }
 
   async function alertDeviceEnumeration(
-    params: DeviceEnumerationAlertParams
+    params: DeviceEnumerationAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildDeviceEnumerationAlert(params));
+    return createOptionalAlert(buildDeviceEnumerationAlert(params), url);
   }
 
   async function alertStorageExfiltration(
-    params: StorageExfiltrationAlertParams
+    params: StorageExfiltrationAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildStorageExfiltrationAlert(params));
+    return createOptionalAlert(buildStorageExfiltrationAlert(params), url);
   }
 
   async function alertPrototypePollution(
-    params: PrototypePollutionAlertParams
+    params: PrototypePollutionAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildPrototypePollutionAlert(params));
+    return createOptionalAlert(buildPrototypePollutionAlert(params), url);
   }
 
   async function alertDNSPrefetchLeak(
-    params: DNSPrefetchLeakAlertParams
+    params: DNSPrefetchLeakAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildDNSPrefetchLeakAlert(params));
+    return createOptionalAlert(buildDNSPrefetchLeakAlert(params), url);
   }
 
   async function alertFormHijack(
-    params: FormHijackAlertParams
+    params: FormHijackAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildFormHijackAlert(params));
+    return createOptionalAlert(buildFormHijackAlert(params), url);
   }
 
   async function alertCSSKeylogging(
-    params: CSSKeyloggingAlertParams
+    params: CSSKeyloggingAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildCSSKeyloggingAlert(params));
+    return createOptionalAlert(buildCSSKeyloggingAlert(params), url);
   }
 
   async function alertPerformanceObserver(
-    params: PerformanceObserverAlertParams
+    params: PerformanceObserverAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildPerformanceObserverAlert(params));
+    return createOptionalAlert(buildPerformanceObserverAlert(params), url);
   }
 
   async function alertPostMessageExfil(
-    params: PostMessageExfilAlertParams
+    params: PostMessageExfilAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildPostMessageExfilAlert(params));
+    return createOptionalAlert(buildPostMessageExfilAlert(params), url);
   }
 
   async function alertDOMClobbering(
-    params: DOMClobberingAlertParams
+    params: DOMClobberingAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildDOMClobberingAlert(params));
+    return createOptionalAlert(buildDOMClobberingAlert(params), url);
   }
 
   async function alertCacheAPIAbuse(
-    params: CacheAPIAbuseAlertParams
+    params: CacheAPIAbuseAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildCacheAPIAbuseAlert(params));
+    return createOptionalAlert(buildCacheAPIAbuseAlert(params), url);
   }
 
   async function alertFetchExfiltration(
-    params: FetchExfiltrationAlertParams
+    params: FetchExfiltrationAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildFetchExfiltrationAlert(params));
+    return createOptionalAlert(buildFetchExfiltrationAlert(params), url);
   }
 
   async function alertWASMExecution(
-    params: WASMExecutionAlertParams
+    params: WASMExecutionAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildWASMExecutionAlert(params));
+    return createOptionalAlert(buildWASMExecutionAlert(params), url);
   }
 
   async function alertIntersectionObserver(
-    params: IntersectionObserverAlertParams
+    params: IntersectionObserverAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildIntersectionObserverAlert(params));
+    return createOptionalAlert(buildIntersectionObserverAlert(params), url);
   }
 
   async function alertIndexedDBAbuse(
-    params: IndexedDBAbuseAlertParams
+    params: IndexedDBAbuseAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildIndexedDBAbuseAlert(params));
+    return createOptionalAlert(buildIndexedDBAbuseAlert(params), url);
   }
 
   async function alertHistoryManipulation(
-    params: HistoryManipulationAlertParams
+    params: HistoryManipulationAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildHistoryManipulationAlert(params));
+    return createOptionalAlert(buildHistoryManipulationAlert(params), url);
   }
 
   async function alertMessageChannel(
-    params: MessageChannelAlertParams
+    params: MessageChannelAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildMessageChannelAlert(params));
+    return createOptionalAlert(buildMessageChannelAlert(params), url);
   }
 
   async function alertResizeObserver(
-    params: ResizeObserverAlertParams
+    params: ResizeObserverAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildResizeObserverAlert(params));
+    return createOptionalAlert(buildResizeObserverAlert(params), url);
   }
 
   async function alertExecCommandClipboard(
-    params: ExecCommandClipboardAlertParams
+    params: ExecCommandClipboardAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildExecCommandClipboardAlert(params));
+    return createOptionalAlert(buildExecCommandClipboardAlert(params), url);
   }
 
   async function alertEventSourceChannel(
-    params: EventSourceChannelAlertParams
+    params: EventSourceChannelAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildEventSourceChannelAlert(params));
+    return createOptionalAlert(buildEventSourceChannelAlert(params), url);
   }
 
   async function alertFontFingerprint(
-    params: FontFingerprintAlertParams
+    params: FontFingerprintAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildFontFingerprintAlert(params));
+    return createOptionalAlert(buildFontFingerprintAlert(params), url);
   }
 
   async function alertIdleCallbackTiming(
-    params: IdleCallbackTimingAlertParams
+    params: IdleCallbackTimingAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildIdleCallbackTimingAlert(params));
+    return createOptionalAlert(buildIdleCallbackTimingAlert(params), url);
   }
 
   async function alertClipboardEventSniffing(
-    params: ClipboardEventSniffingAlertParams
+    params: ClipboardEventSniffingAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildClipboardEventSniffingAlert(params));
+    return createOptionalAlert(buildClipboardEventSniffingAlert(params), url);
   }
 
   async function alertDragEventSniffing(
-    params: DragEventSniffingAlertParams
+    params: DragEventSniffingAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildDragEventSniffingAlert(params));
+    return createOptionalAlert(buildDragEventSniffingAlert(params), url);
   }
 
   async function alertSelectionSniffing(
-    params: SelectionSniffingAlertParams
+    params: SelectionSniffingAlertParams, url?: string,
   ): Promise<SecurityAlert | null> {
-    return createOptionalAlert(buildSelectionSniffingAlert(params));
+    return createOptionalAlert(buildSelectionSniffingAlert(params), url);
   }
 
   async function updateAlertStatus(

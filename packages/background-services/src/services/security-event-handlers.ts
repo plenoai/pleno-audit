@@ -199,6 +199,13 @@ function resolvePageDomain(
   return extractDomainFromUrl(sender.tab?.url || pageUrl);
 }
 
+function resolvePageUrl(
+  sender: chrome.runtime.MessageSender,
+  pageUrl: string,
+): string {
+  return sender.tab?.url || pageUrl;
+}
+
 function sourceLabel(source?: string): string {
   return source || "unknown";
 }
@@ -219,6 +226,7 @@ export function createSecurityEventHandlers(
       sender: chrome.runtime.MessageSender,
     ): Promise<{ success: boolean }> {
       const pageDomain = resolvePageDomain(sender, data.pageUrl, deps.extractDomainFromUrl);
+      const pageUrl = resolvePageUrl(sender, data.pageUrl);
 
       await deps.getAlertManager().alertDataExfiltration({
         sourceDomain: pageDomain,
@@ -227,7 +235,7 @@ export function createSecurityEventHandlers(
         method: data.method,
         initiator: data.initiator,
         sensitiveDataTypes: data.sensitiveDataTypes,
-      });
+      }, pageUrl);
 
       if (data.sensitiveDataTypes?.length && deps.updateService) {
         deps.updateService(pageDomain, {
@@ -262,6 +270,7 @@ export function createSecurityEventHandlers(
       sender: chrome.runtime.MessageSender,
     ): Promise<{ success: boolean }> {
       const pageDomain = resolvePageDomain(sender, data.pageUrl, deps.extractDomainFromUrl);
+      const pageUrl = resolvePageUrl(sender, data.pageUrl);
 
       if (data.risks.length > 0) {
         await deps.getAlertManager().alertCredentialTheft({
@@ -272,7 +281,7 @@ export function createSecurityEventHandlers(
           isCrossOrigin: data.isCrossOrigin,
           fieldType: data.fieldType,
           risks: data.risks,
-        });
+        }, pageUrl);
 
         deps.logger.warn({
           event: "SECURITY_CREDENTIAL_THEFT_RISK_DETECTED",
@@ -295,6 +304,7 @@ export function createSecurityEventHandlers(
     ): Promise<{ success: boolean }> {
       const resourceDomain = deps.extractDomainFromUrl(data.url);
       const pageDomain = resolvePageDomain(sender, data.pageUrl, deps.extractDomainFromUrl);
+      const pageUrl = resolvePageUrl(sender, data.pageUrl);
 
       await deps.getAlertManager().alertSupplyChainRisk({
         pageDomain,
@@ -305,7 +315,7 @@ export function createSecurityEventHandlers(
         hasCrossorigin: data.hasCrossorigin,
         isCDN: data.isCDN,
         risks: data.risks,
-      });
+      }, pageUrl);
 
       deps.logger.warn({
         event: "SECURITY_SUPPLY_CHAIN_RISK_DETECTED",
@@ -326,6 +336,7 @@ export function createSecurityEventHandlers(
       sender: chrome.runtime.MessageSender,
     ): Promise<{ success: boolean }> {
       const pageDomain = resolvePageDomain(sender, data.pageUrl, deps.extractDomainFromUrl);
+      const pageUrl = resolvePageUrl(sender, data.pageUrl);
 
       await deps.getAlertManager().alertTrackingBeacon({
         sourceDomain: pageDomain,
@@ -333,7 +344,7 @@ export function createSecurityEventHandlers(
         url: data.url,
         bodySize: data.bodySize,
         initiator: data.initiator,
-      });
+      }, pageUrl);
 
       deps.logger.debug({
         event: "SECURITY_TRACKING_BEACON_DETECTED",
@@ -352,12 +363,13 @@ export function createSecurityEventHandlers(
       sender: chrome.runtime.MessageSender,
     ): Promise<{ success: boolean }> {
       const pageDomain = resolvePageDomain(sender, data.pageUrl, deps.extractDomainFromUrl);
+      const pageUrl = resolvePageUrl(sender, data.pageUrl);
 
       await deps.getAlertManager().alertClipboardHijack({
         domain: pageDomain,
         cryptoType: data.cryptoType,
         textPreview: data.text,
-      });
+      }, pageUrl);
 
       deps.logger.warn({
         event: "SECURITY_CLIPBOARD_HIJACK_DETECTED",
@@ -376,12 +388,13 @@ export function createSecurityEventHandlers(
       sender: chrome.runtime.MessageSender,
     ): Promise<{ success: boolean }> {
       const pageDomain = resolvePageDomain(sender, data.pageUrl, deps.extractDomainFromUrl);
+      const pageUrl = resolvePageUrl(sender, data.pageUrl);
 
       await deps.getAlertManager().alertXSSInjection({
         domain: pageDomain,
         injectionType: data.type,
         payloadPreview: data.payloadPreview,
-      });
+      }, pageUrl);
 
       deps.logger.warn({
         event: "SECURITY_XSS_DETECTED",
@@ -400,12 +413,13 @@ export function createSecurityEventHandlers(
       sender: chrome.runtime.MessageSender,
     ): Promise<{ success: boolean }> {
       const pageDomain = resolvePageDomain(sender, data.pageUrl, deps.extractDomainFromUrl);
+      const pageUrl = resolvePageUrl(sender, data.pageUrl);
 
       await deps.getAlertManager().alertDOMScraping({
         domain: pageDomain,
         selector: data.selector,
         callCount: data.callCount,
-      });
+      }, pageUrl);
 
       deps.logger.debug({
         event: "SECURITY_DOM_SCRAPING_DETECTED",
@@ -424,6 +438,7 @@ export function createSecurityEventHandlers(
       sender: chrome.runtime.MessageSender,
     ): Promise<{ success: boolean }> {
       const pageDomain = resolvePageDomain(sender, data.pageUrl, deps.extractDomainFromUrl);
+      const pageUrl = resolvePageUrl(sender, data.pageUrl);
 
       await deps.getAlertManager().alertSuspiciousDownload({
         domain: pageDomain,
@@ -432,7 +447,7 @@ export function createSecurityEventHandlers(
         extension: data.extension,
         size: data.size,
         mimeType: data.mimeType,
-      });
+      }, pageUrl);
 
       deps.logger.warn({
         event: "SECURITY_SUSPICIOUS_DOWNLOAD_DETECTED",
@@ -452,12 +467,13 @@ export function createSecurityEventHandlers(
       sender: chrome.runtime.MessageSender,
     ): Promise<{ success: boolean }> {
       const pageDomain = resolvePageDomain(sender, data.pageUrl ?? "", deps.extractDomainFromUrl);
+      const pageUrl = resolvePageUrl(sender, data.pageUrl ?? "");
 
       await deps.getAlertManager().alertWebSocketConnection({
         domain: pageDomain,
         hostname: data.hostname ?? "",
         isExternal: data.isExternal ?? false,
-      });
+      }, pageUrl);
 
       deps.logger.warn({
         event: "SECURITY_WEBSOCKET_CONNECTION_DETECTED",
@@ -534,12 +550,13 @@ export function createSecurityEventHandlers(
       sender: chrome.runtime.MessageSender,
     ): Promise<{ success: boolean }> {
       const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+      const pageUrl = resolvePageUrl(sender, data.pageUrl || "");
 
       await deps.getAlertManager().alertDynamicCodeExecution({
         domain: pageDomain,
         method: data.method ?? "unknown",
         codeLength: data.codeLength ?? 0,
-      });
+      }, pageUrl);
 
       deps.logger.warn({
         event: "SECURITY_DYNAMIC_CODE_EXECUTION_DETECTED",
@@ -558,11 +575,12 @@ export function createSecurityEventHandlers(
       sender: chrome.runtime.MessageSender,
     ): Promise<{ success: boolean }> {
       const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+      const pageUrl = resolvePageUrl(sender, data.pageUrl || "");
 
       await deps.getAlertManager().alertFullscreenPhishing({
         domain: pageDomain,
         element: data.element ?? "unknown",
-      });
+      }, pageUrl);
 
       deps.logger.warn({
         event: "SECURITY_FULLSCREEN_PHISHING_DETECTED",
@@ -580,10 +598,11 @@ export function createSecurityEventHandlers(
       sender: chrome.runtime.MessageSender,
     ): Promise<{ success: boolean }> {
       const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+      const pageUrl = resolvePageUrl(sender, data.pageUrl || "");
 
       await deps.getAlertManager().alertClipboardRead({
         domain: pageDomain,
-      });
+      }, pageUrl);
 
       deps.logger.warn({
         event: "SECURITY_CLIPBOARD_READ_DETECTED",
@@ -600,12 +619,13 @@ export function createSecurityEventHandlers(
       sender: chrome.runtime.MessageSender,
     ): Promise<{ success: boolean }> {
       const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+      const pageUrl = resolvePageUrl(sender, data.pageUrl || "");
 
       await deps.getAlertManager().alertGeolocationAccess({
         domain: pageDomain,
         method: data.method ?? "getCurrentPosition",
         highAccuracy: data.highAccuracy ?? false,
-      });
+      }, pageUrl);
 
       deps.logger.warn({
         event: "SECURITY_GEOLOCATION_ACCESSED",
@@ -624,13 +644,14 @@ export function createSecurityEventHandlers(
       sender: chrome.runtime.MessageSender,
     ): Promise<{ success: boolean }> {
       const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+      const pageUrl = resolvePageUrl(sender, data.pageUrl || "");
 
       await deps.getAlertManager().alertCanvasFingerprint({
         domain: pageDomain,
         callCount: data.callCount ?? 0,
         canvasWidth: data.canvasWidth ?? 0,
         canvasHeight: data.canvasHeight ?? 0,
-      });
+      }, pageUrl);
 
       deps.logger.warn({
         event: "SECURITY_CANVAS_FINGERPRINT_DETECTED",
@@ -649,11 +670,12 @@ export function createSecurityEventHandlers(
       sender: chrome.runtime.MessageSender,
     ): Promise<{ success: boolean }> {
       const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+      const pageUrl = resolvePageUrl(sender, data.pageUrl || "");
 
       await deps.getAlertManager().alertWebGLFingerprint({
         domain: pageDomain,
         parameter: data.parameter ?? 0,
-      });
+      }, pageUrl);
 
       deps.logger.warn({
         event: "SECURITY_WEBGL_FINGERPRINT_DETECTED",
@@ -672,12 +694,13 @@ export function createSecurityEventHandlers(
       sender: chrome.runtime.MessageSender,
     ): Promise<{ success: boolean }> {
       const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+      const pageUrl = resolvePageUrl(sender, data.pageUrl || "");
 
       await deps.getAlertManager().alertAudioFingerprint({
         domain: pageDomain,
         contextCount: data.contextCount ?? 0,
         sampleRate: data.sampleRate,
-      });
+      }, pageUrl);
 
       deps.logger.warn({
         event: "SECURITY_AUDIO_FINGERPRINT_DETECTED",
@@ -696,11 +719,12 @@ export function createSecurityEventHandlers(
       sender: chrome.runtime.MessageSender,
     ): Promise<{ success: boolean }> {
       const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+      const pageUrl = resolvePageUrl(sender, data.pageUrl || "");
 
       await deps.getAlertManager().alertBroadcastChannel({
         domain: pageDomain,
         channelName: data.channelName ?? "unknown",
-      });
+      }, pageUrl);
 
       deps.logger.warn({
         event: "SECURITY_BROADCAST_CHANNEL_DETECTED",
@@ -719,10 +743,11 @@ export function createSecurityEventHandlers(
       sender: chrome.runtime.MessageSender,
     ): Promise<{ success: boolean }> {
       const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+      const pageUrl = resolvePageUrl(sender, data.pageUrl || "");
 
       await deps.getAlertManager().alertWebRTCConnection({
         domain: pageDomain,
-      });
+      }, pageUrl);
 
       deps.logger.warn({
         event: "SECURITY_WEBRTC_CONNECTION_DETECTED",
@@ -740,12 +765,13 @@ export function createSecurityEventHandlers(
       sender: chrome.runtime.MessageSender,
     ): Promise<{ success: boolean }> {
       const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+      const pageUrl = resolvePageUrl(sender, data.pageUrl || "");
 
       await deps.getAlertManager().alertSendBeacon({
         domain: pageDomain,
         url: data.url ?? "",
         dataSize: data.dataSize ?? 0,
-      });
+      }, pageUrl);
 
       deps.logger.warn({
         event: "SECURITY_SEND_BEACON_DETECTED",
@@ -765,13 +791,14 @@ export function createSecurityEventHandlers(
       sender: chrome.runtime.MessageSender,
     ): Promise<{ success: boolean }> {
       const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+      const pageUrl = resolvePageUrl(sender, data.pageUrl || "");
 
       await deps.getAlertManager().alertMediaCapture({
         domain: pageDomain,
         method: data.method ?? "getUserMedia",
         audio: data.audio ?? false,
         video: data.video ?? false,
-      });
+      }, pageUrl);
 
       deps.logger.warn({
         event: "SECURITY_MEDIA_CAPTURE_DETECTED",
@@ -790,11 +817,12 @@ export function createSecurityEventHandlers(
       sender: chrome.runtime.MessageSender,
     ): Promise<{ success: boolean }> {
       const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+      const pageUrl = resolvePageUrl(sender, data.pageUrl || "");
 
       await deps.getAlertManager().alertNotificationPhishing({
         domain: pageDomain,
         title: data.title ?? "",
-      });
+      }, pageUrl);
 
       deps.logger.warn({
         event: "SECURITY_NOTIFICATION_PHISHING_DETECTED",
@@ -813,11 +841,12 @@ export function createSecurityEventHandlers(
       sender: chrome.runtime.MessageSender,
     ): Promise<{ success: boolean }> {
       const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+      const pageUrl = resolvePageUrl(sender, data.pageUrl || "");
 
       await deps.getAlertManager().alertCredentialAPI({
         domain: pageDomain,
         method: data.method ?? "get",
-      });
+      }, pageUrl);
 
       deps.logger.warn({
         event: "SECURITY_CREDENTIAL_API_DETECTED",
@@ -836,11 +865,12 @@ export function createSecurityEventHandlers(
       sender: chrome.runtime.MessageSender,
     ): Promise<{ success: boolean }> {
       const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+      const pageUrl = resolvePageUrl(sender, data.pageUrl || "");
 
       await deps.getAlertManager().alertDeviceSensor({
         domain: pageDomain,
         sensorType: data.sensorType ?? "unknown",
-      });
+      }, pageUrl);
 
       deps.logger.warn({
         event: "SECURITY_DEVICE_SENSOR_ACCESSED",
@@ -859,10 +889,11 @@ export function createSecurityEventHandlers(
       sender: chrome.runtime.MessageSender,
     ): Promise<{ success: boolean }> {
       const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+      const pageUrl = resolvePageUrl(sender, data.pageUrl || "");
 
       await deps.getAlertManager().alertDeviceEnumeration({
         domain: pageDomain,
-      });
+      }, pageUrl);
 
       deps.logger.warn({
         event: "SECURITY_DEVICE_ENUMERATION_DETECTED",
@@ -880,12 +911,13 @@ export function createSecurityEventHandlers(
       sender: chrome.runtime.MessageSender,
     ): Promise<{ success: boolean }> {
       const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+      const pageUrl = resolvePageUrl(sender, data.pageUrl || "");
 
       await deps.getAlertManager().alertStorageExfiltration({
         domain: pageDomain,
         storageType: data.storageType ?? "localStorage",
         accessCount: data.accessCount ?? 0,
-      });
+      }, pageUrl);
 
       deps.logger.warn({
         event: "SECURITY_STORAGE_EXFILTRATION_DETECTED",
@@ -905,13 +937,14 @@ export function createSecurityEventHandlers(
       sender: chrome.runtime.MessageSender,
     ): Promise<{ success: boolean }> {
       const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+      const pageUrl = resolvePageUrl(sender, data.pageUrl || "");
 
       await deps.getAlertManager().alertPrototypePollution({
         domain: pageDomain,
         target: data.target ?? "Object.prototype",
         property: data.property ?? "unknown",
         method: data.method ?? "unknown",
-      });
+      }, pageUrl);
 
       deps.logger.warn({
         event: "SECURITY_PROTOTYPE_POLLUTION_DETECTED",
@@ -932,12 +965,13 @@ export function createSecurityEventHandlers(
       sender: chrome.runtime.MessageSender,
     ): Promise<{ success: boolean }> {
       const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+      const pageUrl = resolvePageUrl(sender, data.pageUrl || "");
 
       await deps.getAlertManager().alertDNSPrefetchLeak({
         domain: pageDomain,
         rel: data.rel ?? "dns-prefetch",
         href: data.href ?? "",
-      });
+      }, pageUrl);
 
       deps.logger.warn({
         event: "SECURITY_DNS_PREFETCH_LEAK_DETECTED",
@@ -957,13 +991,14 @@ export function createSecurityEventHandlers(
       sender: chrome.runtime.MessageSender,
     ): Promise<{ success: boolean }> {
       const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+      const pageUrl = resolvePageUrl(sender, data.pageUrl || "");
 
       await deps.getAlertManager().alertFormHijack({
         domain: pageDomain,
         originalAction: data.originalAction ?? "",
         newAction: data.newAction ?? "",
         targetDomain: data.targetDomain ?? "",
-      });
+      }, pageUrl);
 
       deps.logger.warn({
         event: "SECURITY_FORM_HIJACK_DETECTED",
@@ -984,11 +1019,12 @@ export function createSecurityEventHandlers(
       sender: chrome.runtime.MessageSender,
     ): Promise<{ success: boolean }> {
       const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+      const pageUrl = resolvePageUrl(sender, data.pageUrl || "");
 
       await deps.getAlertManager().alertCSSKeylogging({
         domain: pageDomain,
         sampleRule: data.sampleRule ?? "",
-      });
+      }, pageUrl);
 
       deps.logger.warn({
         event: "SECURITY_CSS_KEYLOGGING_DETECTED",
@@ -1007,11 +1043,12 @@ export function createSecurityEventHandlers(
       sender: chrome.runtime.MessageSender,
     ): Promise<{ success: boolean }> {
       const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+      const pageUrl = resolvePageUrl(sender, data.pageUrl || "");
 
       await deps.getAlertManager().alertPerformanceObserver({
         domain: pageDomain,
         entryType: data.entryType ?? "resource",
-      });
+      }, pageUrl);
 
       deps.logger.warn({
         event: "SECURITY_PERFORMANCE_OBSERVER_DETECTED",
@@ -1030,11 +1067,12 @@ export function createSecurityEventHandlers(
       sender: chrome.runtime.MessageSender,
     ): Promise<{ success: boolean }> {
       const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+      const pageUrl = resolvePageUrl(sender, data.pageUrl || "");
 
       await deps.getAlertManager().alertPostMessageExfil({
         domain: pageDomain,
         targetOrigin: data.targetOrigin ?? "",
-      });
+      }, pageUrl);
 
       deps.logger.warn({
         event: "SECURITY_POSTMESSAGE_EXFIL_DETECTED",
@@ -1053,12 +1091,13 @@ export function createSecurityEventHandlers(
       sender: chrome.runtime.MessageSender,
     ): Promise<{ success: boolean }> {
       const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+      const pageUrl = resolvePageUrl(sender, data.pageUrl || "");
 
       await deps.getAlertManager().alertDOMClobbering({
         domain: pageDomain,
         attributeName: data.attributeName ?? "id",
         attributeValue: data.attributeValue ?? "",
-      });
+      }, pageUrl);
 
       deps.logger.warn({
         event: "SECURITY_DOM_CLOBBERING_DETECTED",
@@ -1078,13 +1117,14 @@ export function createSecurityEventHandlers(
       sender: chrome.runtime.MessageSender,
     ): Promise<{ success: boolean }> {
       const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+      const pageUrl = resolvePageUrl(sender, data.pageUrl || "");
 
       await deps.getAlertManager().alertCacheAPIAbuse({
         domain: pageDomain,
         operation: data.operation ?? "open",
         cacheName: data.cacheName ?? "",
         url: data.url,
-      });
+      }, pageUrl);
 
       deps.logger.warn({
         event: "SECURITY_CACHE_API_ABUSE_DETECTED",
@@ -1105,6 +1145,7 @@ export function createSecurityEventHandlers(
       sender: chrome.runtime.MessageSender,
     ): Promise<{ success: boolean }> {
       const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+      const pageUrl = resolvePageUrl(sender, data.pageUrl || "");
 
       await deps.getAlertManager().alertFetchExfiltration({
         domain: pageDomain,
@@ -1112,7 +1153,7 @@ export function createSecurityEventHandlers(
         mode: data.mode ?? "cors",
         reason: data.reason ?? "cross_origin_no_cors",
         bodySize: data.bodySize,
-      });
+      }, pageUrl);
 
       deps.logger.warn({
         event: "SECURITY_FETCH_EXFILTRATION_DETECTED",
@@ -1134,12 +1175,13 @@ export function createSecurityEventHandlers(
       sender: chrome.runtime.MessageSender,
     ): Promise<{ success: boolean }> {
       const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+      const pageUrl = resolvePageUrl(sender, data.pageUrl || "");
 
       await deps.getAlertManager().alertWASMExecution({
         domain: pageDomain,
         method: data.method ?? "instantiate",
         byteLength: data.byteLength ?? null,
-      });
+      }, pageUrl);
 
       deps.logger.warn({
         event: "SECURITY_WASM_EXECUTION_DETECTED",
@@ -1159,11 +1201,12 @@ export function createSecurityEventHandlers(
       sender: chrome.runtime.MessageSender,
     ): Promise<{ success: boolean }> {
       const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+      const pageUrl = resolvePageUrl(sender, data.pageUrl || "");
 
       await deps.getAlertManager().alertIntersectionObserver({
         domain: pageDomain,
         observedCount: data.observedCount ?? 0,
-      });
+      }, pageUrl);
 
       deps.logger.warn({
         event: "SECURITY_INTERSECTION_OBSERVER_DETECTED",
@@ -1182,12 +1225,13 @@ export function createSecurityEventHandlers(
       sender: chrome.runtime.MessageSender,
     ): Promise<{ success: boolean }> {
       const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+      const pageUrl = resolvePageUrl(sender, data.pageUrl || "");
 
       await deps.getAlertManager().alertIndexedDBAbuse({
         domain: pageDomain,
         dbName: data.dbName ?? "",
         version: data.version ?? null,
-      });
+      }, pageUrl);
 
       deps.logger.warn({
         event: "SECURITY_INDEXEDDB_ABUSE_DETECTED",
@@ -1207,13 +1251,14 @@ export function createSecurityEventHandlers(
       sender: chrome.runtime.MessageSender,
     ): Promise<{ success: boolean }> {
       const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+      const pageUrl = resolvePageUrl(sender, data.pageUrl || "");
 
       await deps.getAlertManager().alertHistoryManipulation({
         domain: pageDomain,
         method: data.method ?? "pushState",
         url: data.url ?? null,
         hasState: data.hasState ?? false,
-      });
+      }, pageUrl);
 
       deps.logger.warn({
         event: "SECURITY_HISTORY_MANIPULATION_DETECTED",
@@ -1234,10 +1279,11 @@ export function createSecurityEventHandlers(
       sender: chrome.runtime.MessageSender,
     ): Promise<{ success: boolean }> {
       const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+      const pageUrl = resolvePageUrl(sender, data.pageUrl || "");
 
       await deps.getAlertManager().alertMessageChannel({
         domain: pageDomain,
-      });
+      }, pageUrl);
 
       deps.logger.warn({
         event: "SECURITY_MESSAGE_CHANNEL_DETECTED",
@@ -1255,10 +1301,11 @@ export function createSecurityEventHandlers(
       sender: chrome.runtime.MessageSender,
     ): Promise<{ success: boolean }> {
       const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+      const pageUrl = resolvePageUrl(sender, data.pageUrl || "");
 
       await deps.getAlertManager().alertResizeObserver({
         domain: pageDomain,
-      });
+      }, pageUrl);
 
       deps.logger.debug({
         event: "SECURITY_RESIZE_OBSERVER_DETECTED",
@@ -1276,11 +1323,12 @@ export function createSecurityEventHandlers(
       sender: chrome.runtime.MessageSender,
     ): Promise<{ success: boolean }> {
       const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+      const pageUrl = resolvePageUrl(sender, data.pageUrl || "");
 
       await deps.getAlertManager().alertExecCommandClipboard({
         domain: pageDomain,
         command: data.command ?? "copy",
-      });
+      }, pageUrl);
 
       deps.logger.warn({
         event: "SECURITY_EXECCOMMAND_CLIPBOARD_DETECTED",
@@ -1299,11 +1347,12 @@ export function createSecurityEventHandlers(
       sender: chrome.runtime.MessageSender,
     ): Promise<{ success: boolean }> {
       const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+      const pageUrl = resolvePageUrl(sender, data.pageUrl || "");
 
       await deps.getAlertManager().alertEventSourceChannel({
         domain: pageDomain,
         url: data.url ?? "",
-      });
+      }, pageUrl);
 
       deps.logger.warn({
         event: "SECURITY_EVENTSOURCE_CHANNEL_DETECTED",
@@ -1322,11 +1371,12 @@ export function createSecurityEventHandlers(
       sender: chrome.runtime.MessageSender,
     ): Promise<{ success: boolean }> {
       const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+      const pageUrl = resolvePageUrl(sender, data.pageUrl || "");
 
       await deps.getAlertManager().alertFontFingerprint({
         domain: pageDomain,
         callCount: data.callCount ?? 0,
-      });
+      }, pageUrl);
 
       deps.logger.warn({
         event: "SECURITY_FONT_FINGERPRINT_DETECTED",
@@ -1345,11 +1395,12 @@ export function createSecurityEventHandlers(
       sender: chrome.runtime.MessageSender,
     ): Promise<{ success: boolean }> {
       const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+      const pageUrl = resolvePageUrl(sender, data.pageUrl || "");
 
       await deps.getAlertManager().alertIdleCallbackTiming({
         domain: pageDomain,
         callCount: data.callCount ?? 0,
-      });
+      }, pageUrl);
 
       deps.logger.warn({
         event: "SECURITY_IDLE_CALLBACK_TIMING_DETECTED",
@@ -1368,11 +1419,12 @@ export function createSecurityEventHandlers(
       sender: chrome.runtime.MessageSender,
     ): Promise<{ success: boolean }> {
       const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+      const pageUrl = resolvePageUrl(sender, data.pageUrl || "");
 
       await deps.getAlertManager().alertClipboardEventSniffing({
         domain: pageDomain,
         eventType: data.eventType ?? "unknown",
-      });
+      }, pageUrl);
 
       deps.logger.warn({
         event: "SECURITY_CLIPBOARD_EVENT_SNIFFING_DETECTED",
@@ -1391,11 +1443,12 @@ export function createSecurityEventHandlers(
       sender: chrome.runtime.MessageSender,
     ): Promise<{ success: boolean }> {
       const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+      const pageUrl = resolvePageUrl(sender, data.pageUrl || "");
 
       await deps.getAlertManager().alertDragEventSniffing({
         domain: pageDomain,
         eventType: data.eventType ?? "unknown",
-      });
+      }, pageUrl);
 
       deps.logger.warn({
         event: "SECURITY_DRAG_EVENT_SNIFFING_DETECTED",
@@ -1414,11 +1467,12 @@ export function createSecurityEventHandlers(
       sender: chrome.runtime.MessageSender,
     ): Promise<{ success: boolean }> {
       const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
+      const pageUrl = resolvePageUrl(sender, data.pageUrl || "");
 
       await deps.getAlertManager().alertSelectionSniffing({
         domain: pageDomain,
         eventType: data.eventType ?? "unknown",
-      });
+      }, pageUrl);
 
       deps.logger.warn({
         event: "SECURITY_SELECTION_SNIFFING_DETECTED",

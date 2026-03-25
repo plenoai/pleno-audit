@@ -69,6 +69,8 @@ export interface CreateAlertInput {
   title: string;
   description: string;
   domain: string;
+  /** Full page URL where the alert was triggered */
+  url?: string;
   details: AlertDetails;
   actions?: AlertAction[];
 }

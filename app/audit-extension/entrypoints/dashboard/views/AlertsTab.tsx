@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "preact/hooks";
+import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import type { AlertSeverity, AlertCategory } from "@libztbs/alerts";
-import { Badge, SearchInput } from "../../../components";
+import { AlertRowMenu, Badge, SearchInput } from "../../../components";
 import { FilteredTab } from "../components/FilteredTab";
 import { useTabFilter } from "../hooks/useTabFilter";
 import { truncate } from "../utils";
@@ -14,6 +14,7 @@ interface AlertItem {
   title: string;
   description: string;
   domain: string;
+  url?: string;
   timestamp: number;
   details?: Record<string, unknown>;
   count?: number;
@@ -118,6 +119,10 @@ export function AlertsTab() {
       .finally(() => setLoading(false));
   }, []);
 
+  const [dismissedPatterns, setDismissedPatterns] = useState<Set<string>>(
+    new Set(),
+  );
+
   const toggleExpand = (id: string) => {
     setExpandedIds((prev) => {
       const next = new Set(prev);
@@ -127,6 +132,83 @@ export function AlertsTab() {
     });
   };
 
+  const buildIssueUrl = useCallback((alert: AlertItem) => {
+    const label = categoryLabels[alert.category] ?? alert.category;
+    const title = `[FP] ${label}: ${alert.title}`;
+    const details = alert.details ?? {};
+    const detailLines = Object.entries(details)
+      .filter(([k]) => k !== "type")
+      .map(
+        ([k, v]) =>
+          `- ${k}: \`${typeof v === "object" ? JSON.stringify(v) : String(v)}\``,
+      )
+      .join("\n");
+
+    const version = chrome.runtime.getManifest().version;
+    const timestamp = new Date(alert.timestamp).toISOString();
+    const occurrences = alert.count ?? 1;
+
+    const body = [
+      "## False Positive Report",
+      "",
+      "| Field | Value |",
+      "| --- | --- |",
+      `| Category | ${label} (\`${alert.category}\`) |`,
+      `| Severity | ${alert.severity} |`,
+      `| URL | \`${alert.url ?? alert.domain}\` |`,
+      `| Title | ${alert.title} |`,
+      `| Occurrences | ${occurrences} |`,
+      `| Detected at | ${timestamp} |`,
+      "",
+      `> ${alert.description}`,
+      "",
+      detailLines ? `## Alert Details\n${detailLines}` : "",
+      "",
+      "## Environment",
+      "",
+      `- Extension Version: ${version}`,
+      `- User-Agent: \`${navigator.userAgent}\``,
+      "",
+      "## Why is this a false positive?",
+      "",
+      "<!-- Please describe why this alert is incorrect -->",
+      "",
+      "## Steps to Reproduce",
+      "",
+      `1. Navigate to \`${alert.url ?? alert.domain}\``,
+      "2. ",
+      "",
+    ]
+      .filter(Boolean)
+      .join("\n");
+    const params = new URLSearchParams({
+      title,
+      body,
+      labels: "false-positive",
+    });
+    return `https://github.com/plenoai/pleno-audit/issues/new?${params.toString()}`;
+  }, []);
+
+  const handleReportFP = useCallback(
+    (alert: AlertItem) => {
+      const url = buildIssueUrl(alert);
+      chrome.tabs.create({ url });
+    },
+    [buildIssueUrl],
+  );
+
+  const handleDismiss = useCallback(
+    (alert: AlertItem) => {
+      const pattern = `${alert.category}::${alert.domain}`;
+      sendMessage({
+        type: "DISMISS_ALERT_PATTERN",
+        data: { category: alert.category, domain: alert.domain },
+      }).catch(() => {});
+      setDismissedPatterns((prev) => new Set(prev).add(pattern));
+    },
+    [],
+  );
+
   const activeSeverities = useMemo(
     () => severityButtons.filter((b) => filters[b.key]).map((b) => b.key),
     [filters],
@@ -134,6 +216,12 @@ export function AlertsTab() {
 
   const filtered = useMemo(() => {
     let result = alerts;
+
+    if (dismissedPatterns.size > 0) {
+      result = result.filter(
+        (a) => !dismissedPatterns.has(`${a.category}::${a.domain}`),
+      );
+    }
 
     if (activeSeverities.length > 0) {
       result = result.filter((a) => activeSeverities.includes(a.severity));
@@ -150,7 +238,7 @@ export function AlertsTab() {
     }
 
     return result;
-  }, [alerts, activeSeverities, searchQuery]);
+  }, [alerts, activeSeverities, searchQuery, dismissedPatterns]);
 
   if (loading) {
     return (
@@ -323,6 +411,17 @@ export function AlertsTab() {
               hour: "2-digit",
               minute: "2-digit",
             }),
+        },
+        {
+          key: "actions",
+          header: "",
+          width: "40px",
+          render: (a) => (
+            <AlertRowMenu
+              onReportFP={() => handleReportFP(a)}
+              onDismiss={() => handleDismiss(a)}
+            />
+          ),
         },
       ]}
     />

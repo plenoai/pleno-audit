@@ -93,6 +93,8 @@ export interface SecurityAlert {
   title: string;
   description: string;
   domain: string;
+  /** Full page URL where the alert was triggered */
+  url?: string;
   timestamp: number;
   details: AlertDetails;
   actions: AlertAction[];

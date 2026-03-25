@@ -9,6 +9,7 @@ interface EventItem {
   title: string;
   description: string;
   domain: string;
+  url?: string;
   timestamp: number;
   details?: Record<string, unknown>;
 }
@@ -104,6 +105,14 @@ function extractPostureAlerts(
   return alerts.sort((a, b) => b.timestamp - a.timestamp);
 }
 
+const DISMISSED_PATTERNS_KEY = "pleno_dismissed_alert_patterns";
+
+async function getDismissedPatterns(): Promise<Set<string>> {
+  const result = await chrome.storage.local.get(DISMISSED_PATTERNS_KEY);
+  const patterns: string[] = result[DISMISSED_PATTERNS_KEY] ?? [];
+  return new Set(patterns);
+}
+
 export function createComputationHandlers(
   deps: RuntimeHandlerDependencies
 ): AsyncHandlerEntry[] {
@@ -112,9 +121,10 @@ export function createComputationHandlers(
       "GET_POPUP_EVENTS",
       {
         execute: async () => {
-          const [services, securityAlerts] = await Promise.all([
+          const [services, securityAlerts, dismissed] = await Promise.all([
             deps.getServices(),
             deps.getAlerts({ limit: 200 }),
+            getDismissedPatterns(),
           ]);
 
           const postureAlerts = extractPostureAlerts(services);
@@ -125,16 +135,24 @@ export function createComputationHandlers(
             title: a.title,
             description: a.description,
             domain: a.domain,
+            url: a.url,
             timestamp: a.timestamp,
             details: a.details as Record<string, unknown> | undefined,
             count: (a as { count?: number }).count,
           }));
 
           const seenIds = new Set(postureAlerts.map((a) => a.id));
-          const merged = [...postureAlerts];
+          let merged = [...postureAlerts];
           for (const a of realtimeAlerts) {
             if (!seenIds.has(a.id)) merged.push(a);
           }
+
+          if (dismissed.size > 0) {
+            merged = merged.filter(
+              (a) => !dismissed.has(`${a.category}::${a.domain}`),
+            );
+          }
+
           merged.sort((a, b) => b.timestamp - a.timestamp);
 
           const counts: Record<string, number> = {};
@@ -145,6 +163,22 @@ export function createComputationHandlers(
           return { events: merged, counts, total: merged.length };
         },
         fallback: () => ({ events: [], counts: {}, total: 0 }),
+      },
+    ],
+    [
+      "DISMISS_ALERT_PATTERN",
+      {
+        execute: async (message) => {
+          const data = message.data as { category: string; domain: string };
+          const pattern = `${data.category}::${data.domain}`;
+          const existing = await getDismissedPatterns();
+          existing.add(pattern);
+          await chrome.storage.local.set({
+            [DISMISSED_PATTERNS_KEY]: [...existing],
+          });
+          return { ok: true, pattern };
+        },
+        fallback: () => ({ ok: false }),
       },
     ],
     [
