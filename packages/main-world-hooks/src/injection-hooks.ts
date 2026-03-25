@@ -64,7 +64,15 @@ export function initInjectionHooks(emitSecurityEvent: SharedHookUtils["emitSecur
         if (typeof data === "string") estimatedSize = data.length;
         else if (data instanceof ArrayBuffer) estimatedSize = data.byteLength;
         else if (data instanceof Blob) estimatedSize = data.size;
-        if (estimatedSize > 1024) {
+        // Skip same-site beacons (first-party analytics is legitimate)
+        let sameSite = false;
+        try {
+          const targetHost = new URL(String(url), location.href).hostname;
+          const pageHost = location.hostname;
+          const getRoot = (h: string) => { const p = h.split("."); return p.length <= 2 ? h : p.slice(-2).join("."); };
+          sameSite = getRoot(targetHost) === getRoot(pageHost);
+        } catch { /* ignore */ }
+        if (estimatedSize > 1024 && !sameSite) {
           deferEmit(emitSecurityEvent, "__SEND_BEACON_DETECTED__", {
             url: String(url),
             dataSize: estimatedSize,
