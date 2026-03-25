@@ -37,7 +37,7 @@ jobs:
         run: pnpm -r --filter './packages/*' build
 
       - name: Publish unpublished versions to npm
-        run: changeset publish
+        run: pnpm publish-packages
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
