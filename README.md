@@ -2,15 +2,7 @@
 
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/plenoai/pleno-audit/badge)](https://securityscorecards.dev/viewer/?uri=github.com/plenoai/pleno-audit)
 
-Personal `#Browser Security` `#BDR` `#CASB`
-
-## Principles
-
-- Local First: すべてのデータ処理はブラウザ内で完結します。個人情報を大量に扱うため、プライバシー保護を最優先に設計されています
-- No DB: 外部から収集したブラックリスト等のDBは使用しません。基本的にヒューリスティックアルゴリズムを用います
-- Opt-in: デフォルトではブロックや通知などのアクションは行いません。影響を最小限に導入及び可視化が可能です
-
-## Screenshots
+Personal `#Browser Security` `#BDR` `#CASB` `#ZTBS`
 
 ### Services
 
@@ -36,6 +28,12 @@ Personal `#Browser Security` `#BDR` `#CASB`
 4. 右上の「デベロッパーモード」を有効にする
 5. 「パッケージ化されていない拡張機能を読み込む」をクリック
 6. 展開したフォルダを選択
+
+## Principles
+
+- Local First: すべてのデータ処理はブラウザ内で完結します。個人情報を大量に扱うため、プライバシー保護を最優先に設計されています
+- No DB: 外部から収集したブラックリスト等のDBは使用しません。基本的にヒューリスティックアルゴリズムを用います
+- Opt-in: デフォルトではブロックや通知などのアクションは行いません。影響を最小限に導入及び可視化が可能です
 
 ## License
 
