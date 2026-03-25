@@ -23,7 +23,7 @@
     "test:coverage": "vitest run --coverage",
     "changeset": "changeset",
     "version-packages": "changeset version",
-    "publish-packages": "pnpm -r --filter './packages/*' build && changeset publish"
+    "publish-packages": "changeset publish"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.6.0",

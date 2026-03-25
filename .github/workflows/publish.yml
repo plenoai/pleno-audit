@@ -8,7 +8,6 @@ concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 permissions:
   contents: write
-  pull-requests: write
   id-token: write
 
 jobs:
@@ -17,6 +16,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
 
       - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
         with:
@@ -34,19 +35,36 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Check for changesets
+        id: check
+        run: |
+          if ls .changeset/*.md 1>/dev/null 2>&1 && [ "$(ls .changeset/*.md 2>/dev/null | grep -v README.md | wc -l)" -gt 0 ]; then
+            echo "has_changesets=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_changesets=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Version packages
+        if: steps.check.outputs.has_changesets == 'true'
+        run: pnpm version-packages
+
       - name: Build packages
         run: pnpm -r --filter './packages/*' build
 
-      - name: Create Release Pull Request or Publish
-        id: changesets
-        uses: changesets/action@c8bada60c408975afd1a20b3db81d6eee6789308 # v1.4.9
-        with:
-          version: pnpm version-packages
-          publish: pnpm publish-packages
+      - name: Commit version changes
+        if: steps.check.outputs.has_changesets == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "chore: version packages" || echo "No changes to commit"
+          git push
+
+      - name: Publish to npm
+        if: steps.check.outputs.has_changesets == 'true'
+        run: pnpm publish-packages
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Phase 1: Use NPM_TOKEN for initial publish
-          # Phase 2: After setting up OIDC trusted publishing on npmjs.com,
-          #          remove NPM_TOKEN and rely on id-token permission
+          # Phase 1: NPM_TOKEN for initial publish
+          # Phase 2: Switch to OIDC trusted publishing, remove NPM_TOKEN
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
