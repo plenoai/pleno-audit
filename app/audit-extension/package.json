@@ -1,6 +1,7 @@
 {
   "name": "@pleno-audit/audit-extension",
   "version": "0.0.1",
+  "private": true,
   "type": "module",
   "scripts": {
     "prebuild:hooks": "pnpm --filter @libztbs/main-world-hooks run build:hooks",
