@@ -19,7 +19,6 @@
     "@libztbs/data-export": "workspace:*",
     "@libztbs/debug-bridge": "workspace:*",
     "@libztbs/detectors": "workspace:*",
-
     "@libztbs/extension-network-service": "workspace:*",
     "@libztbs/extension-enterprise": "workspace:*",
     "@libztbs/extension-runtime": "workspace:*",
