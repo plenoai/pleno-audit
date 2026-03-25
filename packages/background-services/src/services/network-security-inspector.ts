@@ -33,6 +33,20 @@ const SENSITIVE_CHECKS: ReadonlyArray<
   ["token", /["']token["']\s*:\s*["'][^"']+["']/i, "token"],
 ];
 
+/**
+ * Extract registrable domain (eTLD+1) from hostname.
+ * Simple heuristic: last 2 segments for standard TLDs.
+ */
+function getRegistrableDomain(hostname: string): string {
+  const parts = hostname.split(".");
+  if (parts.length <= 2) return hostname;
+  return parts.slice(-2).join(".");
+}
+
+function isSameSite(hostA: string, hostB: string): boolean {
+  return getRegistrableDomain(hostA) === getRegistrableDomain(hostB);
+}
+
 interface LoggerLike {
   debug?: (...args: unknown[]) => void;
 }
@@ -154,12 +168,13 @@ function isTrackingBeacon(
   if (bodySize >= TRACKING_BEACON_SIZE_LIMIT) {
     return false;
   }
-  // Skip same-origin beacons (first-party analytics is legitimate)
+  // Skip same-site beacons (first-party analytics is legitimate)
+  // e.g. github.com → collector.github.com is same-site
   if (pageUrl) {
     try {
       const targetHost = new URL(absoluteUrl).hostname;
       const pageHost = new URL(pageUrl).hostname;
-      if (targetHost === pageHost) return false;
+      if (isSameSite(targetHost, pageHost)) return false;
     } catch { /* ignore */ }
   }
   return TRACKING_URL_PATTERNS.test(absoluteUrl)

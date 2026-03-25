@@ -2,6 +2,11 @@
   "name": "@libztbs/battacker",
   "version": "0.0.1",
   "description": "Browser Defense Resistance Testing Core Library",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/plenoai/pleno-audit.git",
+    "directory": "packages/battacker"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -12,14 +17,14 @@
     }
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsup",
     "dev": "tsc --watch"
-  },
-  "devDependencies": {
-    "typescript": "^5.9.3"
   },
   "files": [
     "dist"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "license": "AGPL-3.0-or-later"
 }
