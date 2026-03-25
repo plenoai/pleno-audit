@@ -12,15 +12,13 @@ Personal `#Browser Security` `#BDR` `#CASB`
 
 ## Screenshots
 
-### Dashboard
+| Services | Services (dark) |
+|----------|---------|
+| ![services](./docs/assets/services.png) | ![dark](./docs/assets/dark.png) |
 
-![Dashboard](./docs/assets/dashboard.png)
-
-### Popup
-
-| Sessions | Domains | Requests |
-|----------|---------|----------|
-| ![Sessions](./docs/assets/popup-sessions.png) | ![Domains](./docs/assets/popup-domains.png) | ![Requests](./docs/assets/popup-requests.png) |
+| extensions | alerts |
+|----------|---------|
+| ![extensions](./docs/assets/extensions.png) | ![alert](./docs/assets/alerts.png) |
 
 ## インストール
 
