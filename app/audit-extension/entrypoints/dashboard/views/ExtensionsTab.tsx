@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "preact/hooks";
-import { Badge, SearchInput } from "../../../components";
+import { Badge, SearchInput, getTableCellStyles, expandArrowStyle } from "../../../components";
 import { FilteredTab } from "../components/FilteredTab";
 import { useTabFilter } from "../hooks/useTabFilter";
 import { useTheme } from "../../../lib/theme";
@@ -52,7 +52,8 @@ function getExtensionTags(ext: ExtensionInfo): ExtTag[] {
 }
 
 export function ExtensionsTab() {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
+  const cellStyles = getTableCellStyles(colors);
   const [extensions, setExtensions] = useState<ExtensionInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
@@ -167,7 +168,7 @@ export function ExtensionsTab() {
         const shown = allPerms.slice(0, 10);
         const remaining = allPerms.length - shown.length;
         return (
-          <div style={{ background: colors.bgSecondary }}>
+          <div style={cellStyles.expandContainer}>
             {shown.map((perm) => {
               const isAllUrls = perm === "<all_urls>" || perm === "*://*/*";
               const isDangerous = DANGEROUS_PERMISSIONS.some((d) => d.permission === perm && d.severity === "critical");
@@ -175,8 +176,7 @@ export function ExtensionsTab() {
                 <div
                   key={perm}
                   style={{
-                    padding: "4px 16px 4px 48px",
-                    borderBottom: `1px solid ${colors.borderLight}`,
+                    ...cellStyles.expandRow,
                     display: "flex",
                     alignItems: "center",
                     gap: "8px",
@@ -184,12 +184,8 @@ export function ExtensionsTab() {
                 >
                   <code
                     style={{
-                      fontSize: "11px",
-                      fontFamily: "monospace",
-                      color: isAllUrls || isDangerous ? "var(--danger)" : colors.textSecondary,
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
+                      ...cellStyles.mono,
+                      color: isAllUrls || isDangerous ? colors.status.danger.text : colors.textSecondary,
                     }}
                   >
                     └ {perm}
@@ -198,14 +194,7 @@ export function ExtensionsTab() {
               );
             })}
             {remaining > 0 && (
-              <div
-                style={{
-                  padding: "4px 16px 4px 48px",
-                  color: colors.textMuted,
-                  fontStyle: "italic",
-                  fontSize: "11px",
-                }}
-              >
+              <div style={cellStyles.expandRemaining}>
                 他 {remaining} 件
               </div>
             )}
@@ -238,19 +227,7 @@ export function ExtensionsTab() {
             const isExpanded = expandedIds.has(ext.id);
             return (
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <span
-                  style={{
-                    fontSize: "10px",
-                    color: colors.textSecondary,
-                    opacity: hasPerms ? 1 : 0.3,
-                    transition: "transform 0.2s",
-                    transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)",
-                    display: "inline-block",
-                    width: "12px",
-                    textAlign: "center",
-                    flexShrink: 0,
-                  }}
-                >
+                <span style={expandArrowStyle(cellStyles.expandArrowBase, isExpanded, hasPerms)}>
                   ▶
                 </span>
                 {ext.icons?.[0]?.url && (
@@ -270,9 +247,9 @@ export function ExtensionsTab() {
           width: "220px",
           render: (ext) => {
             const tags = getExtensionTags(ext);
-            if (tags.length === 0) return <span style={{ color: colors.textMuted }}>-</span>;
+            if (tags.length === 0) return <span style={cellStyles.muted}>-</span>;
             return (
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
+              <div style={cellStyles.tags}>
                 {tags.map((tag) => (
                   <Badge key={tag.label} variant={tag.variant} size="sm">{tag.label}</Badge>
                 ))}
@@ -290,12 +267,12 @@ export function ExtensionsTab() {
                 href={ext.homepageUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ color: isDark ? "#60a5fa" : "#0070f3", fontSize: "12px" }}
+                style={cellStyles.link}
               >
                 {truncate(ext.homepageUrl, 25)}
               </a>
             ) : (
-              <span style={{ color: colors.textMuted }}>-</span>
+              <span style={cellStyles.muted}>-</span>
             ),
         },
         {

@@ -2,7 +2,7 @@ export { AlertRowMenu } from "./AlertRowMenu";
 export { Badge } from "./Badge";
 export { Button } from "./Button";
 export { Card } from "./Card";
-export { DataTable } from "./DataTable";
+export { DataTable, getTableCellStyles, expandArrowStyle } from "./DataTable";
 export { SearchInput } from "./SearchInput";
 export { Select } from "./Select";
 export { Tabs } from "./Tabs";

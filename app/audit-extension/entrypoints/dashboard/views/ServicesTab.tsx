@@ -1,7 +1,9 @@
-import { useMemo, useState } from "preact/hooks";
+import { useCallback, useMemo, useState } from "preact/hooks";
 import { Globe } from "lucide-preact";
 import type { DetectedService } from "@libztbs/types";
-import { Badge, SearchInput } from "../../../components";
+import { Badge, SearchInput, getTableCellStyles, expandArrowStyle } from "../../../components";
+import { ServiceRowMenu } from "../../../components/ServiceRowMenu";
+import { sendMessage } from "../../../lib/messaging";
 import { FilteredTab } from "../components/FilteredTab";
 import { useTabFilter } from "../hooks/useTabFilter";
 import { truncate } from "../utils";
@@ -10,6 +12,7 @@ import { useTheme } from "../../../lib/theme";
 interface ServicesTabProps {
   services: DetectedService[];
   serviceConnections: Record<string, string[]>;
+  onServiceDeleted?: () => void;
 }
 
 function getServiceTags(s: DetectedService): { label: string; variant: "danger" | "warning" | "info" | "success" }[] {
@@ -19,7 +22,7 @@ function getServiceTags(s: DetectedService): { label: string; variant: "danger" 
   if (s.hasLoginPage) tags.push({ label: "ログイン", variant: "warning" });
   if (s.aiDetected?.hasAIActivity) tags.push({ label: "AI", variant: "info" });
   for (const dataType of s.sensitiveDataDetected ?? []) {
-    tags.push({ label: dataType, variant: "danger" });
+    tags.push({ label: dataType, variant: "warning" });
   }
   return tags;
 }
@@ -66,11 +69,22 @@ function getServiceRiskLevel(s: DetectedService, connectionCount: number): false
   return false;
 }
 
-export function ServicesTab({ services, serviceConnections }: ServicesTabProps) {
-  const { colors, isDark } = useTheme();
+export function ServicesTab({ services, serviceConnections, onServiceDeleted }: ServicesTabProps) {
+  const { colors } = useTheme();
+  const cellStyles = getTableCellStyles(colors);
   const { searchQuery, setSearchQuery } = useTabFilter({});
   const [expandedDomains, setExpandedDomains] = useState<Set<string>>(new Set());
   const [activeTagFilters, setActiveTagFilters] = useState<Set<string>>(new Set());
+  const [deletedDomains, setDeletedDomains] = useState<Set<string>>(new Set());
+
+  const handleDeleteService = useCallback(
+    (domain: string) => {
+      sendMessage({ type: "DELETE_SERVICE", data: { domain } }).catch(() => {});
+      setDeletedDomains((prev) => new Set(prev).add(domain));
+      onServiceDeleted?.();
+    },
+    [onServiceDeleted],
+  );
 
   const tagSummary = useMemo(() => {
     const map = new Map<string, { variant: "danger" | "warning" | "info" | "success"; count: number }>();
@@ -96,7 +110,7 @@ export function ServicesTab({ services, serviceConnections }: ServicesTabProps) 
   };
 
   const filtered = useMemo(() => {
-    let result = services;
+    let result = services.filter((s) => !deletedDomains.has(s.domain));
     if (activeTagFilters.size > 0) {
       result = result.filter((s) => {
         const tags = getServiceTags(s);
@@ -108,7 +122,7 @@ export function ServicesTab({ services, serviceConnections }: ServicesTabProps) 
       result = result.filter((s) => s.domain.toLowerCase().includes(q));
     }
     return result;
-  }, [services, searchQuery, activeTagFilters]);
+  }, [services, searchQuery, activeTagFilters, deletedDomains]);
 
   const toggleExpand = (domain: string) => {
     setExpandedDomains((prev) => {
@@ -139,40 +153,16 @@ export function ServicesTab({ services, serviceConnections }: ServicesTabProps) 
         const shown = sorted.slice(0, 10);
         const remaining = sorted.length - shown.length;
         return (
-          <div style={{ background: colors.bgSecondary }}>
+          <div style={cellStyles.expandContainer}>
             {shown.map((domain) => (
-              <div
-                key={domain}
-                style={{
-                  padding: "4px 16px 4px 48px",
-                  borderBottom: `1px solid ${colors.borderLight}`,
-                }}
-              >
-                <code
-                  style={{
-                    fontSize: "11px",
-                    fontFamily: "monospace",
-                    color: colors.textSecondary,
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                    display: "block",
-                  }}
-                  title={domain}
-                >
+              <div key={domain} style={cellStyles.expandRow}>
+                <code style={cellStyles.mono} title={domain}>
                   └ {domain}
                 </code>
               </div>
             ))}
             {remaining > 0 && (
-              <div
-                style={{
-                  padding: "4px 16px 4px 48px",
-                  color: colors.textMuted,
-                  fontStyle: "italic",
-                  fontSize: "11px",
-                }}
-              >
+              <div style={cellStyles.expandRemaining}>
                 他 {remaining} 件
               </div>
             )}
@@ -204,19 +194,7 @@ export function ServicesTab({ services, serviceConnections }: ServicesTabProps) 
             const isExpanded = expandedDomains.has(s.domain);
             return (
               <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                <span
-                  style={{
-                    fontSize: "10px",
-                    color: colors.textSecondary,
-                    opacity: hasConnections ? 1 : 0.3,
-                    transition: "transform 0.2s",
-                    transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)",
-                    display: "inline-block",
-                    width: "12px",
-                    textAlign: "center",
-                    flexShrink: 0,
-                  }}
-                >
+                <span style={expandArrowStyle(cellStyles.expandArrowBase, isExpanded, hasConnections)}>
                   ▶
                 </span>
                 {s.faviconUrl ? (
@@ -240,9 +218,9 @@ export function ServicesTab({ services, serviceConnections }: ServicesTabProps) 
           render: (s) => {
             const tags = getServiceTags(s);
             const connCount = serviceConnections[s.domain]?.length ?? 0;
-            if (tags.length === 0 && connCount === 0) return <span style={{ color: colors.textMuted }}>-</span>;
+            if (tags.length === 0 && connCount === 0) return <span style={cellStyles.muted}>-</span>;
             return (
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
+              <div style={cellStyles.tags}>
                 {connCount > 0 && (
                   <Badge variant="info" size="sm">{connCount} 通信先</Badge>
                 )}
@@ -265,7 +243,7 @@ export function ServicesTab({ services, serviceConnections }: ServicesTabProps) 
                 href={s.privacyPolicyUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ color: isDark ? "#60a5fa" : "#0070f3", fontSize: "12px" }}
+                style={cellStyles.link}
               >
                 {truncate(s.privacyPolicyUrl, 25)}
               </a>
@@ -283,7 +261,7 @@ export function ServicesTab({ services, serviceConnections }: ServicesTabProps) 
                 href={s.termsOfServiceUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ color: isDark ? "#60a5fa" : "#0070f3", fontSize: "12px" }}
+                style={cellStyles.link}
               >
                 {truncate(s.termsOfServiceUrl, 20)}
               </a>
@@ -296,6 +274,16 @@ export function ServicesTab({ services, serviceConnections }: ServicesTabProps) 
           header: "検出日時",
           width: "140px",
           render: (s) => new Date(s.detectedAt).toLocaleDateString("ja-JP"),
+        },
+        {
+          key: "actions",
+          header: "",
+          width: "36px",
+          render: (s) => (
+            <div style={cellStyles.actionsCell}>
+              <ServiceRowMenu onDelete={() => handleDeleteService(s.domain)} />
+            </div>
+          ),
         },
       ]}
     />

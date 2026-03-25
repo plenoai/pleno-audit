@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import type { AlertSeverity, AlertCategory } from "@libztbs/alerts";
-import { AlertRowMenu, Badge, SearchInput } from "../../../components";
+import { AlertRowMenu, Badge, SearchInput, getTableCellStyles } from "../../../components";
 import { FilteredTab } from "../components/FilteredTab";
 import { useTabFilter } from "../hooks/useTabFilter";
 import { truncate } from "../utils";
@@ -93,6 +93,7 @@ const severityButtons: { key: AlertSeverity; label: string }[] = [
 
 export function AlertsTab() {
   const { colors } = useTheme();
+  const cellStyles = getTableCellStyles(colors);
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
@@ -269,7 +270,7 @@ export function AlertsTab() {
         return (
           <div
             style={{
-              background: colors.bgSecondary,
+              ...cellStyles.expandContainer,
               padding: "8px 16px 8px 48px",
               borderBottom: `1px solid ${colors.borderLight}`,
             }}
@@ -299,7 +300,7 @@ export function AlertsTab() {
                   <>
                     <span
                       key={`${key}-label`}
-                      style={{ color: colors.textMuted }}
+                      style={cellStyles.muted}
                     >
                       {key}:
                     </span>
@@ -388,14 +389,7 @@ export function AlertsTab() {
           header: "対象",
           render: (a) => (
             <code
-              style={{
-                fontSize: "12px",
-                fontFamily: "monospace",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-                display: "block",
-              }}
+              style={{ ...cellStyles.mono, fontSize: "12px" }}
               title={a.title}
             >
               {truncate(a.title, 60)}

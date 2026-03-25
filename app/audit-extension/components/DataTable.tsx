@@ -46,6 +46,7 @@ function getStyles(colors: ThemeColors, isDark: boolean): Record<string, CSSProp
       padding: "12px 16px",
       borderBottom: `1px solid ${colors.borderLight}`,
       color: colors.textPrimary,
+      verticalAlign: "middle",
     },
     row: {
       transition: "background 0.1s",
@@ -99,6 +100,81 @@ function getStyles(colors: ThemeColors, isDark: boolean): Record<string, CSSProp
       color: colors.textMuted,
       cursor: "not-allowed",
     },
+  };
+}
+
+/** テーブルセル内で使う共通スタイル */
+export function getTableCellStyles(colors: ThemeColors) {
+  return {
+    /** 展開行の外枠 */
+    expandContainer: {
+      background: colors.bgSecondary,
+    } as CSSProperties,
+    /** 展開行の各アイテム */
+    expandRow: {
+      padding: "4px 16px 4px 48px",
+      borderBottom: `1px solid ${colors.borderLight}`,
+    } as CSSProperties,
+    /** 展開行の「他 N 件」テキスト */
+    expandRemaining: {
+      padding: "4px 16px 4px 48px",
+      color: colors.textMuted,
+      fontStyle: "italic",
+      fontSize: "11px",
+    } as CSSProperties,
+    /** モノスペースコード（省略付き） */
+    mono: {
+      fontSize: "11px",
+      fontFamily: "monospace",
+      color: colors.textSecondary,
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      whiteSpace: "nowrap",
+      display: "block",
+    } as CSSProperties,
+    /** リンク */
+    link: {
+      color: colors.link,
+      fontSize: "12px",
+    } as CSSProperties,
+    /** 展開矢印アイコンのベーススタイル */
+    expandArrowBase: {
+      fontSize: "10px",
+      color: colors.textSecondary,
+      display: "inline-block",
+      width: "12px",
+      textAlign: "center",
+      flexShrink: 0,
+      transition: "transform 0.2s",
+    } as CSSProperties,
+    /** タグコンテナ */
+    tags: {
+      display: "flex",
+      flexWrap: "wrap",
+      gap: "4px",
+    } as CSSProperties,
+    /** ミュートテキスト（空値の「-」等） */
+    muted: {
+      color: colors.textMuted,
+    } as CSSProperties,
+    /** アクション列の中央寄せ */
+    actionsCell: {
+      display: "flex",
+      justifyContent: "center",
+    } as CSSProperties,
+  };
+}
+
+/** 展開矢印の動的スタイルを返す */
+export function expandArrowStyle(
+  base: CSSProperties,
+  isExpanded: boolean,
+  hasExpandable: boolean,
+): CSSProperties {
+  return {
+    ...base,
+    opacity: hasExpandable ? 1 : 0.3,
+    transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)",
   };
 }
 

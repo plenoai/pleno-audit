@@ -18,6 +18,7 @@ export interface ThemeColors {
   textInverse: string;
   border: string;
   borderLight: string;
+  link: string;
   interactive: string;
   interactiveHover: string;
   scrollbar: {
@@ -52,6 +53,7 @@ export const themeColors: ThemeColors = {
   textInverse: "var(--primary-foreground)",
   border: "var(--border)",
   borderLight: "var(--border-light)",
+  link: "var(--link)",
   interactive: "var(--primary)",
   interactiveHover: "var(--muted-foreground)",
   scrollbar: {
