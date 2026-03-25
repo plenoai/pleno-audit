@@ -61,6 +61,9 @@ import type {
   ClipboardEventSniffingAlertDetails,
   DragEventSniffingAlertDetails,
   SelectionSniffingAlertDetails,
+  MessageChannelAlertDetails,
+  ResizeObserverAlertDetails,
+  ExecCommandClipboardAlertDetails,
 } from "./types.js";
 
 export interface CreateAlertInput {

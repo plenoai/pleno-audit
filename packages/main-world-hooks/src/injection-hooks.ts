@@ -94,10 +94,10 @@ export function initInjectionHooks(emitSecurityEvent: SharedHookUtils["emitSecur
   if (typeof WebAssembly !== "undefined") {
     if (typeof WebAssembly.instantiate === "function") {
       const originalInstantiate = WebAssembly.instantiate;
-      WebAssembly.instantiate = function (
+      WebAssembly.instantiate = ((
         bufferSourceOrModule: BufferSource | WebAssembly.Module,
         importObject?: WebAssembly.Imports,
-      ): Promise<WebAssembly.WebAssemblyInstantiatedSource | WebAssembly.Instance> {
+      ) => {
         const isBinary = bufferSourceOrModule instanceof ArrayBuffer
           || ArrayBuffer.isView(bufferSourceOrModule);
         const byteLength = isBinary
@@ -116,7 +116,7 @@ export function initInjectionHooks(emitSecurityEvent: SharedHookUtils["emitSecur
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any -- intentional monkey-patch of WebAssembly.instantiate
         return originalInstantiate(bufferSourceOrModule as any, importObject as any);
-      };
+      }) as typeof WebAssembly.instantiate;
     }
 
     if (typeof WebAssembly.compile === "function") {

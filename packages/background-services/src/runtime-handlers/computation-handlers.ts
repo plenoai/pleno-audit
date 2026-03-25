@@ -97,7 +97,7 @@ function extractPostureAlerts(
         description: `タイポスクワット検出（スコア: ${score}）`,
         domain: service.domain,
         timestamp: service.typosquatResult.checkedAt,
-        details: { score, confidence: service.typosquatResult.confidence, heuristics: service.typosquatResult.heuristics },
+        details: { score, confidence: service.typosquatResult.confidence },
       });
     }
   }
@@ -109,7 +109,7 @@ const DISMISSED_PATTERNS_KEY = "pleno_dismissed_alert_patterns";
 
 async function getDismissedPatterns(): Promise<Set<string>> {
   const result = await chrome.storage.local.get(DISMISSED_PATTERNS_KEY);
-  const patterns: string[] = result[DISMISSED_PATTERNS_KEY] ?? [];
+  const patterns: string[] = (result[DISMISSED_PATTERNS_KEY] as string[] | undefined) ?? [];
   return new Set(patterns);
 }
 
@@ -137,7 +137,7 @@ export function createComputationHandlers(
             domain: a.domain,
             url: a.url,
             timestamp: a.timestamp,
-            details: a.details as Record<string, unknown> | undefined,
+            details: a.details as unknown as Record<string, unknown> | undefined,
             count: (a as { count?: number }).count,
           }));
 
