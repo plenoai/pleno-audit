@@ -182,16 +182,6 @@ export interface AISensitiveDataDetectedDetails {
 // Service Aggregation (サービス集約)
 // ============================================================================
 
-/** サービスに付与されるタグ */
-export type ServiceTag =
-  | { type: "nrd"; domainAge: number | null; confidence: string }
-  | { type: "typosquat"; score: number; confidence: string }
-  | { type: "ai" }
-  | { type: "login" }
-  | { type: "privacy"; url: string }
-  | { type: "tos"; url: string }
-  | { type: "cookie"; count: number };
-
 /** 通信先情報 */
 export interface ConnectionInfo {
   domain: string;
@@ -208,7 +198,6 @@ export interface UnifiedService {
   id: string;
   source: ServiceSource;
   connections: ConnectionInfo[];
-  tags: ServiceTag[];
   lastActivity: number;
   faviconUrl?: string;
 }

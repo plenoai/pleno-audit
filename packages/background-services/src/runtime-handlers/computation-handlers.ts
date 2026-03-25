@@ -18,16 +18,6 @@ interface ConnectionInfo {
   domain: string;
 }
 
-type ServiceTag =
-  | { type: "nrd"; domainAge: number | null; confidence: string }
-  | { type: "typosquat"; score: number; confidence: string }
-  | { type: "ai" }
-  | { type: "login" }
-  | { type: "privacy"; url: string }
-  | { type: "tos"; url: string }
-  | { type: "cookie"; count: number }
-  | { type: "sensitive_data"; dataTypes: string[] };
-
 type ServiceSource =
   | { type: "domain"; domain: string; service: DetectedService }
   | { type: "extension"; extensionId: string; extensionName: string; icon?: string };
@@ -36,7 +26,6 @@ interface UnifiedService {
   id: string;
   source: ServiceSource;
   connections: ConnectionInfo[];
-  tags: ServiceTag[];
   lastActivity: number;
   faviconUrl?: string;
 }
@@ -48,24 +37,6 @@ function extractDomain(url: string): string | null {
     return null;
   }
 }
-
-function extractTags(service: DetectedService): ServiceTag[] {
-  const tags: ServiceTag[] = [];
-  if (service.nrdResult?.isNRD) {
-    tags.push({ type: "nrd", domainAge: service.nrdResult.domainAge, confidence: service.nrdResult.confidence });
-  }
-  if (service.typosquatResult?.isTyposquat) {
-    tags.push({ type: "typosquat", score: service.typosquatResult.totalScore, confidence: service.typosquatResult.confidence });
-  }
-  if (service.aiDetected?.hasAIActivity) tags.push({ type: "ai" });
-  if (service.hasLoginPage) tags.push({ type: "login" });
-  if (service.privacyPolicyUrl) tags.push({ type: "privacy", url: service.privacyPolicyUrl });
-  if (service.termsOfServiceUrl) tags.push({ type: "tos", url: service.termsOfServiceUrl });
-  if (service.cookies.length > 0) tags.push({ type: "cookie", count: service.cookies.length });
-  if (service.sensitiveDataDetected?.length) tags.push({ type: "sensitive_data", dataTypes: service.sensitiveDataDetected });
-  return tags;
-}
-
 
 /** Postureからリスク検出をAlert形式で抽出 */
 function extractPostureAlerts(
@@ -226,7 +197,6 @@ export function createComputationHandlers(
               id: `domain:${service.domain}`,
               source: { type: "domain", domain: service.domain, service },
               connections,
-              tags: extractTags(service),
               lastActivity: service.detectedAt,
               faviconUrl: service.faviconUrl ?? undefined,
             });
@@ -245,7 +215,6 @@ export function createComputationHandlers(
               id: `extension:${id}`,
               source: { type: "extension", extensionId: id, extensionName: ext.name, icon },
               connections,
-              tags: [],
               lastActivity: 0,
             });
           }

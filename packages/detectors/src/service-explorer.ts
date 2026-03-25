@@ -57,12 +57,12 @@ function getTagSet(service: UnifiedService): Set<FilterCategory> {
   const tagSet = new Set<FilterCategory>();
   if (service.source.type === "extension") {
     tagSet.add("extension");
-  }
-  for (const tag of service.tags) {
-    if (tag.type === "nrd") tagSet.add("nrd");
-    if (tag.type === "typosquat") tagSet.add("typosquat");
-    if (tag.type === "ai") tagSet.add("ai");
-    if (tag.type === "login") tagSet.add("login");
+  } else {
+    const s = service.source.service;
+    if (s.nrdResult?.isNRD) tagSet.add("nrd");
+    if (s.typosquatResult?.isTyposquat) tagSet.add("typosquat");
+    if (s.aiDetected?.hasAIActivity) tagSet.add("ai");
+    if (s.hasLoginPage) tagSet.add("login");
   }
   return tagSet;
 }

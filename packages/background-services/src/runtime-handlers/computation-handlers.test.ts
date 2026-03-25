@@ -67,10 +67,11 @@ describe("createComputationHandlers", () => {
     const deps = createMockDeps();
     const entries = createComputationHandlers(deps as unknown as RuntimeHandlerDependencies);
 
-    expect(entries).toHaveLength(3);
+    expect(entries).toHaveLength(4);
     expect(entries[0][0]).toBe("GET_POPUP_EVENTS");
     expect(entries[1][0]).toBe("DISMISS_ALERT_PATTERN");
-    expect(entries[2][0]).toBe("GET_AGGREGATED_SERVICES");
+    expect(entries[2][0]).toBe("DELETE_SERVICE");
+    expect(entries[3][0]).toBe("GET_AGGREGATED_SERVICES");
   });
 
   it("各エントリにexecuteとfallbackを持つ", () => {
@@ -347,14 +348,13 @@ describe("GET_AGGREGATED_SERVICES", () => {
         id: string;
         source: { type: string; domain: string; service: DetectedService };
         connections: unknown[];
-        tags: unknown[];
         lastActivity: number;
       }>;
 
       expect(result).toHaveLength(1);
       expect(result[0]).toMatchObject({
         id: "domain:example.com",
-        source: { type: "domain", domain: "example.com", service },
+        source: { type: "domain", domain: "example.com" },
         lastActivity: 1700000050000,
       });
     });
@@ -367,170 +367,6 @@ describe("GET_AGGREGATED_SERVICES", () => {
       const result = (await execute()) as Array<{ faviconUrl?: string }>;
 
       expect(result[0].faviconUrl).toBe("https://example.com/favicon.ico");
-    });
-  });
-
-  // -------------------------------------------------------------------------
-  // extractTags
-  // -------------------------------------------------------------------------
-
-  describe("extractTags", () => {
-    it("NRDサービスにnrdタグを付与する", async () => {
-      (deps.getServices as ReturnType<typeof vi.fn>).mockResolvedValue([
-        createService({
-          domain: "nrd.com",
-          nrdResult: { isNRD: true, confidence: "high", domainAge: 5, checkedAt: 1700000060000 },
-        }),
-      ]);
-
-      const result = (await execute()) as Array<{ tags: Array<{ type: string; domainAge?: number; confidence?: string }> }>;
-
-      expect(result[0].tags).toContainEqual({
-        type: "nrd",
-        domainAge: 5,
-        confidence: "high",
-      });
-    });
-
-    it("typosquatサービスにtyposquatタグを付与する", async () => {
-      (deps.getServices as ReturnType<typeof vi.fn>).mockResolvedValue([
-        createService({
-          domain: "typo.com",
-          typosquatResult: { isTyposquat: true, confidence: "high", totalScore: 75, checkedAt: 1700000061000 },
-        }),
-      ]);
-
-      const result = (await execute()) as Array<{ tags: Array<{ type: string; score?: number; confidence?: string }> }>;
-
-      expect(result[0].tags).toContainEqual({
-        type: "typosquat",
-        score: 75,
-        confidence: "high",
-      });
-    });
-
-    it("AI検出サービスにaiタグを付与する", async () => {
-      (deps.getServices as ReturnType<typeof vi.fn>).mockResolvedValue([
-        createService({
-          domain: "ai-service.com",
-          aiDetected: { hasAIActivity: true, lastActivityAt: 1700000062000, providers: [] },
-        }),
-      ]);
-
-      const result = (await execute()) as Array<{ tags: Array<{ type: string }> }>;
-
-      expect(result[0].tags).toContainEqual({ type: "ai" });
-    });
-
-    it("ログインページのあるサービスにloginタグを付与する", async () => {
-      (deps.getServices as ReturnType<typeof vi.fn>).mockResolvedValue([
-        createService({ domain: "login-service.com", hasLoginPage: true }),
-      ]);
-
-      const result = (await execute()) as Array<{ tags: Array<{ type: string }> }>;
-
-      expect(result[0].tags).toContainEqual({ type: "login" });
-    });
-
-    it("プライバシーポリシーURLがあるサービスにprivacyタグを付与する", async () => {
-      (deps.getServices as ReturnType<typeof vi.fn>).mockResolvedValue([
-        createService({
-          domain: "privacy-service.com",
-          privacyPolicyUrl: "https://privacy-service.com/privacy",
-        }),
-      ]);
-
-      const result = (await execute()) as Array<{ tags: Array<{ type: string; url?: string }> }>;
-
-      expect(result[0].tags).toContainEqual({
-        type: "privacy",
-        url: "https://privacy-service.com/privacy",
-      });
-    });
-
-    it("利用規約URLがあるサービスにtosタグを付与する", async () => {
-      (deps.getServices as ReturnType<typeof vi.fn>).mockResolvedValue([
-        createService({
-          domain: "tos-service.com",
-          termsOfServiceUrl: "https://tos-service.com/terms",
-        }),
-      ]);
-
-      const result = (await execute()) as Array<{ tags: Array<{ type: string; url?: string }> }>;
-
-      expect(result[0].tags).toContainEqual({
-        type: "tos",
-        url: "https://tos-service.com/terms",
-      });
-    });
-
-    it("Cookieを持つサービスにcookieタグを付与する", async () => {
-      (deps.getServices as ReturnType<typeof vi.fn>).mockResolvedValue([
-        createService({
-          domain: "cookie-service.com",
-          cookies: [
-            { name: "session", domain: "cookie-service.com", detectedAt: 1700000063000, isSession: true },
-            { name: "tracking", domain: "cookie-service.com", detectedAt: 1700000063000, isSession: false },
-          ],
-        }),
-      ]);
-
-      const result = (await execute()) as Array<{ tags: Array<{ type: string; count?: number }> }>;
-
-      expect(result[0].tags).toContainEqual({ type: "cookie", count: 2 });
-    });
-
-    it("isNRD: falseのNRD結果にはnrdタグを付与しない", async () => {
-      (deps.getServices as ReturnType<typeof vi.fn>).mockResolvedValue([
-        createService({
-          domain: "safe.com",
-          nrdResult: { isNRD: false, confidence: "high", domainAge: 365, checkedAt: 1700000064000 },
-        }),
-      ]);
-
-      const result = (await execute()) as Array<{ tags: Array<{ type: string }> }>;
-
-      expect(result[0].tags.find((t) => t.type === "nrd")).toBeUndefined();
-    });
-
-    it("hasAIActivity: falseのAI結果にはaiタグを付与しない", async () => {
-      (deps.getServices as ReturnType<typeof vi.fn>).mockResolvedValue([
-        createService({
-          domain: "no-ai.com",
-          aiDetected: { hasAIActivity: false, lastActivityAt: 0, providers: [] },
-        }),
-      ]);
-
-      const result = (await execute()) as Array<{ tags: Array<{ type: string }> }>;
-
-      expect(result[0].tags.find((t) => t.type === "ai")).toBeUndefined();
-    });
-
-    it("複数のタグ条件を同時に満たすサービスに全タグを付与する", async () => {
-      (deps.getServices as ReturnType<typeof vi.fn>).mockResolvedValue([
-        createService({
-          domain: "multi.com",
-          hasLoginPage: true,
-          privacyPolicyUrl: "https://multi.com/privacy",
-          termsOfServiceUrl: "https://multi.com/tos",
-          cookies: [{ name: "sid", domain: "multi.com", detectedAt: 1700000065000, isSession: true }],
-          nrdResult: { isNRD: true, confidence: "medium", domainAge: 10, checkedAt: 1700000065000 },
-          typosquatResult: { isTyposquat: true, confidence: "low", totalScore: 30, checkedAt: 1700000065000 },
-          aiDetected: { hasAIActivity: true, lastActivityAt: 1700000065000, providers: [] },
-        }),
-      ]);
-
-      const result = (await execute()) as Array<{ tags: Array<{ type: string }> }>;
-      const tagTypes = result[0].tags.map((t) => t.type);
-
-      expect(tagTypes).toContain("nrd");
-      expect(tagTypes).toContain("typosquat");
-      expect(tagTypes).toContain("ai");
-      expect(tagTypes).toContain("login");
-      expect(tagTypes).toContain("privacy");
-      expect(tagTypes).toContain("tos");
-      expect(tagTypes).toContain("cookie");
-      expect(result[0].tags).toHaveLength(7);
     });
   });
 
@@ -589,7 +425,6 @@ describe("GET_AGGREGATED_SERVICES", () => {
         id: string;
         source: { type: string; extensionId: string; extensionName: string; icon?: string };
         connections: Array<{ domain: string }>;
-        tags: unknown[];
         lastActivity: number;
       }>;
 
@@ -603,7 +438,6 @@ describe("GET_AGGREGATED_SERVICES", () => {
           extensionName: "Ad Blocker",
           icon: "chrome-extension://ext-abc/icon32.png",
         },
-        tags: [],
         lastActivity: 0,
       });
       expect(extService!.connections).toContainEqual({ domain: "example.com" });
