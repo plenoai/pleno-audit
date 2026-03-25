@@ -1,8 +1,7 @@
 import { motion } from 'framer-motion';
-import { Shield, Lock, ArrowRight, Eye, AlertTriangle, Zap, Chrome, Github, Star } from 'lucide-react';
+import { Shield, Lock, ArrowRight, Eye, AlertTriangle, Zap, Chrome, Github } from 'lucide-react';
 import Footer from '../components/Footer';
 import { Link } from 'react-router-dom';
-import { useEffect, useState } from 'react';
 
 const GITHUB_URL = 'https://github.com/plenoai/pleno-audit';
 
@@ -73,48 +72,27 @@ const FeatureCard = ({
 );
 
 // Header Component
-const Header = () => {
-  const [starCount, setStarCount] = useState<number | null>(null);
-
-  useEffect(() => {
-    fetch('https://api.github.com/repos/plenoai/pleno-audit')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.stargazers_count !== undefined) {
-          setStarCount(data.stargazers_count);
-        }
-      })
-      .catch(() => { });
-  }, []);
-
-  return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-md border-b border-[#eaeaea] dark:border-[#333]">
-      <div className="container mx-auto max-w-6xl px-4 md:px-6">
-        <div className="flex items-center justify-between h-14">
-          <Link to="/" className="flex items-center gap-2">
-            <Shield className="h-5 w-5 text-[#171717] dark:text-[#ededed]" />
-            <span className="font-medium text-[#171717] dark:text-[#ededed]">Pleno Audit</span>
-          </Link>
-          <a
-            href={GITHUB_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[#eaeaea] dark:border-[#333] bg-white dark:bg-[#171717] hover:bg-[#f5f5f5] dark:hover:bg-[#2a2a2a] transition-colors"
-          >
-            <Github className="h-4 w-4 text-[#171717] dark:text-[#ededed]" />
-            <span className="text-sm font-medium text-[#171717] dark:text-[#ededed]">GitHub</span>
-            {starCount !== null && (
-              <span className="flex items-center gap-1 text-sm text-[#666] dark:text-[#8f8f8f]">
-                <Star className="h-3 w-3" />
-                {starCount}
-              </span>
-            )}
-          </a>
-        </div>
+const Header = () => (
+  <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-md border-b border-[#eaeaea] dark:border-[#333]">
+    <div className="container mx-auto max-w-6xl px-4 md:px-6">
+      <div className="flex items-center justify-between h-14">
+        <Link to="/" className="flex items-center gap-2">
+          <Shield className="h-5 w-5 text-[#171717] dark:text-[#ededed]" />
+          <span className="font-medium text-[#171717] dark:text-[#ededed]">Pleno Audit</span>
+        </Link>
+        <a
+          href={GITHUB_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[#eaeaea] dark:border-[#333] bg-white dark:bg-[#171717] hover:bg-[#f5f5f5] dark:hover:bg-[#2a2a2a] transition-colors"
+        >
+          <Github className="h-4 w-4 text-[#171717] dark:text-[#ededed]" />
+          <span className="text-sm font-medium text-[#171717] dark:text-[#ededed]">GitHub</span>
+        </a>
       </div>
-    </header>
-  );
-};
+    </div>
+  </header>
+);
 
 // Hero Section
 const HeroSection = () => (

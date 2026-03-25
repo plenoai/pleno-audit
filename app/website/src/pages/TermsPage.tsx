@@ -80,7 +80,7 @@ const ListItem = ({
 );
 
 export default function TermsPage() {
-  const lastUpdated = '2025年1月11日';
+  const lastUpdated = '2026年3月26日';
 
   return (
     <div className="min-h-screen flex flex-col bg-white dark:bg-[#0a0a0a]">

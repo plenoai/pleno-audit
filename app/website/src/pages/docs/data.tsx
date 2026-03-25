@@ -102,7 +102,7 @@ export const GETTING_STARTED_STEPS: GettingStartedStep[] = [
   {
     step: 1,
     title: 'Chrome拡張機能をインストール',
-    description: 'Chrome Web Storeから拡張機能をインストールします。',
+    description: 'GitHubリリースページから最新版をダウンロードしてインストールします。',
     cta: {
       href: 'https://github.com/plenoai/pleno-audit/releases',
       label: 'GitHubリリースを開く',
@@ -243,23 +243,23 @@ export const TECH_STACK_ROWS: TechStackRow[] = [
 export const PACKAGE_ITEMS: PackageItem[] = [
   {
     icon: Database,
-    title: 'lib/detectors',
+    title: 'packages/detectors',
     description: 'CASBドメイン（サービス検出、認証検出）',
   },
   {
     icon: Shield,
-    title: 'lib/csp',
+    title: 'packages/csp',
     description: 'CSP監査（違反検出、ポリシー生成）',
   },
   {
     icon: AlertTriangle,
-    title: 'lib/nrd, typosquat',
+    title: 'packages/nrd, packages/typosquat',
     description: 'ドメイン検出アルゴリズム',
   },
   {
     icon: Zap,
-    title: 'lib/ai-detector',
-    description: 'AIサービス検出アルゴリズム',
+    title: 'packages/ai-detector',
+    description: 'AIサービス検出・DLPアルゴリズム',
   },
   {
     icon: Chrome,
