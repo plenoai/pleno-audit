@@ -131,7 +131,7 @@ describe("detectSensitiveData", () => {
       const text = "Card: 4111 1111 1111 1111";
       const results = detectSensitiveData(text);
 
-      expect(results.some((r) => r.pattern === "Possible Card Number")).toBe(true);
+      expect(results.some((r) => r.pattern === "Credit Card Number")).toBe(true);
     });
 
     it("detects Japanese bank account", () => {

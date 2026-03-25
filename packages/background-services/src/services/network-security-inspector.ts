@@ -2,6 +2,7 @@ import type {
   DataExfiltrationData,
   TrackingBeaconData,
 } from "./security-event-handlers.js";
+import { containsCreditCard } from "@libztbs/ai-detector";
 
 const DATA_EXFILTRATION_THRESHOLD = 10 * 1024;
 const TRACKING_BEACON_SIZE_LIMIT = 2048;
@@ -9,6 +10,7 @@ const TRACKING_BEACON_SIZE_LIMIT = 2048;
 const TRACKING_URL_PATTERNS = /\/tracking[/.]|\/beacon[/.]|\/analytics[/.]|\/pixel[/.]|\/telemetry[/.]|[?&](?:utm_|_ga=|fbclid=)/i;
 // Payload patterns: require 2+ tracking-specific keys together (single "event" is too common)
 const TRACKING_PAYLOAD_PATTERNS = /(?:["'](?:user_id|visitor_id|tracking_id|_ga|utm_source|fbclid|gclid)["'])/i;
+
 // Each entry: [cheapGuard, regex] — guard is checked with indexOf before running regex
 const SENSITIVE_CHECKS: ReadonlyArray<
   readonly [guard: string, pattern: RegExp, type: string]
@@ -23,8 +25,7 @@ const SENSITIVE_CHECKS: ReadonlyArray<
     /[A-Za-z0-9._%+-]+@[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)*\.[A-Za-z]{2,}/,
     "email",
   ],
-  ["4", /4[0-9]{3}[- ]?[0-9]{4}[- ]?[0-9]{4}[- ]?[0-9]{4}/, "credit_card"],
-  ["5", /5[1-5][0-9]{2}[- ]?[0-9]{4}[- ]?[0-9]{4}[- ]?[0-9]{4}/, "credit_card"],
+  // credit_card is handled separately via containsCreditCard() from @libztbs/ai-detector
   ["-", /\d{3}-\d{2}-\d{4}/, "ssn"],
   ["password", /["']password["']\s*:\s*["'][^"']+["']/i, "password"],
   ["api", /["']api[_-]?key["']\s*:\s*["'][^"']+["']/i, "api_key"],
@@ -126,6 +127,13 @@ export function detectSensitiveData(bodySample: string): string[] {
   }
   const types: string[] = [];
   const seen = new Set<string>();
+
+  // Credit card: delegated to @libztbs/ai-detector (Luhn-validated, boundary-checked)
+  if (containsCreditCard(bodySample)) {
+    types.push("credit_card");
+    seen.add("credit_card");
+  }
+
   for (const [guard, pattern, type] of SENSITIVE_CHECKS) {
     if (seen.has(type)) continue;
     if (!bodySample.includes(guard)) continue;

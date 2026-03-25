@@ -332,7 +332,7 @@ describe("detectSensitiveData", () => {
   it("各パターンを正しく検出する", () => {
     expect(detectSensitiveData("user@example.com")).toContain("email");
     expect(detectSensitiveData("4111 1111 1111 1111")).toContain("credit_card");
-    expect(detectSensitiveData("5211-1111-1111-1111")).toContain("credit_card");
+    expect(detectSensitiveData("5425-2334-3010-9903")).toContain("credit_card");
     expect(detectSensitiveData("123-45-6789")).toContain("ssn");
     expect(detectSensitiveData('"password": "hunter2"')).toContain("password");
     expect(detectSensitiveData('"api_key": "abc123"')).toContain("api_key");
@@ -353,16 +353,21 @@ describe("detectSensitiveData", () => {
     expect(result.filter((t) => t === "credit_card")).toHaveLength(1);
   });
 
-  it("Visa カード番号 (4xxx) を検出する", () => {
+  it("Visa カード番号 (4xxx, Luhn valid) を検出する", () => {
     expect(detectSensitiveData("card: 4539578763621486")).toContain("credit_card");
   });
 
-  it("Mastercard カード番号 (51xx-55xx) を検出する", () => {
+  it("Mastercard カード番号 (51xx-55xx, Luhn valid) を検出する", () => {
     expect(detectSensitiveData("card: 5425233430109903")).toContain("credit_card");
   });
 
   it("ハイフン区切りのクレジットカード番号を検出する", () => {
     expect(detectSensitiveData("4539-5787-6362-1486")).toContain("credit_card");
+  });
+
+  it("Luhn checksum に失敗する16桁数値はcredit_cardと判定しない", () => {
+    // 4111111111111112 is Luhn-invalid (last digit changed from valid 1 to 2)
+    expect(detectSensitiveData("4111111111111112")).not.toContain("credit_card");
   });
 
   it("SSNパターン (xxx-xx-xxxx) を検出する", () => {
@@ -382,6 +387,24 @@ describe("detectSensitiveData", () => {
     ];
     for (const text of normalTexts) {
       expect(detectSensitiveData(text)).toEqual([]);
+    }
+  });
+
+  it("Snowflake ID等の長い数値列でcredit_card偽陽性を出さない", () => {
+    const fpTexts = [
+      // Twitter/X Snowflake IDs
+      '{"user_id":"4194304000123456789"}',
+      '{"tweet_id":"5123456789012345678"}',
+      // Unix timestamps in nanoseconds
+      '{"ts":4111111111111111000}',
+      // Random 16-digit numbers that fail Luhn
+      "4111111111111112",
+      "5211111111111112",
+      // Numbers embedded in longer sequences
+      "id=41111111111111119999",
+    ];
+    for (const text of fpTexts) {
+      expect(detectSensitiveData(text)).not.toContain("credit_card");
     }
   });
 

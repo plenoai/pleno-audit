@@ -50,6 +50,8 @@ export interface DLPRule {
   entropyThreshold?: number;
   /** Cheap indexOf guards — regex only runs if any keyword found in text. */
   keywords?: string[];
+  /** Post-match validator. If provided, match is only accepted when validator returns true. */
+  validator?: (matchedText: string) => boolean;
 }
 
 /**
@@ -232,20 +234,12 @@ const BASE_DLP_RULES: DLPRule[] = [
   {
     id: "base-credit-card-number",
     name: "Credit Card Number",
-    description: "クレジットカード番号",
+    description: "クレジットカード番号（Visa/Mastercard/Amex、Luhn検証済み）",
     classification: "financial",
-    pattern: /(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13})/g,
+    pattern: /(?<!\d)(?:4[0-9]{3}|5[1-5][0-9]{2}|3[47][0-9]{2})[- ]?[0-9]{4}[- ]?[0-9]{4}[- ]?[0-9]{1,4}(?!\d)/g,
     confidence: "high",
     enabled: true,
-  },
-  {
-    id: "base-possible-card-number",
-    name: "Possible Card Number",
-    description: "カード番号の可能性",
-    classification: "financial",
-    pattern: /[0-9]{4}[-\s]?[0-9]{4}[-\s]?[0-9]{4}[-\s]?[0-9]{4}/g,
-    confidence: "medium",
-    enabled: true,
+    validator: (match) => passesLuhn(match.replace(/[- ]/g, "")),
   },
   {
     id: "base-bank-account",
@@ -595,6 +589,50 @@ const RULE_CATALOG = {
 } as const;
 
 // ============================================================================
+// Credit Card Validation (Luhn algorithm)
+// ============================================================================
+
+/**
+ * Luhn チェックサムで数値列がクレジットカード番号として妥当か検証する。
+ * ネットワーク検査・DLP双方で共有される唯一の実装。
+ */
+export function passesLuhn(digits: string): boolean {
+  let sum = 0;
+  let double = false;
+  for (let i = digits.length - 1; i >= 0; i--) {
+    let d = digits.charCodeAt(i) - 48; // '0' = 48
+    if (double) {
+      d *= 2;
+      if (d > 9) d -= 9;
+    }
+    sum += d;
+    double = !double;
+  }
+  return sum % 10 === 0;
+}
+
+/**
+ * Credit card regex with negative lookbehind/lookahead to prevent matching
+ * inside longer numeric sequences (e.g. Snowflake IDs, timestamps).
+ * Visa (4xxx) and Mastercard (51xx-55xx), with optional separators.
+ */
+export const CREDIT_CARD_PATTERN = /(?<!\d)(?:4[0-9]{3}|5[1-5][0-9]{2})[- ]?[0-9]{4}[- ]?[0-9]{4}[- ]?[0-9]{4}(?!\d)/g;
+
+/**
+ * テキスト内にLuhn-validなクレジットカード番号が含まれるか判定する。
+ */
+export function containsCreditCard(text: string): boolean {
+  if (!text.includes("4") && !text.includes("5")) return false;
+  CREDIT_CARD_PATTERN.lastIndex = 0;
+  let m: RegExpExecArray | null;
+  while ((m = CREDIT_CARD_PATTERN.exec(text)) !== null) {
+    const digits = m[0].replace(/[- ]/g, "");
+    if (passesLuhn(digits)) return true;
+  }
+  return false;
+}
+
+// ============================================================================
 // Sensitive Data Detection Functions
 // ============================================================================
 
@@ -665,6 +703,9 @@ function scanRules<T>(
       ) {
         continue;
       }
+      if (rule.validator && !rule.validator(match[0])) {
+        continue;
+      }
       results.push(onMatch(rule, match));
     }
   }
@@ -677,7 +718,8 @@ function hasAnyMatch(text: string, rules: DLPRule[]): boolean {
       continue;
     }
 
-    if (rule.entropyThreshold === undefined) {
+    const needsPostCheck = rule.entropyThreshold !== undefined || rule.validator !== undefined;
+    if (!needsPostCheck) {
       const regex = new RegExp(rule.pattern.source, rule.pattern.flags);
       if (regex.test(text)) {
         return true;
@@ -686,9 +728,16 @@ function hasAnyMatch(text: string, rules: DLPRule[]): boolean {
       const regex = new RegExp(rule.pattern.source, rule.pattern.flags);
       let match: RegExpExecArray | null;
       while ((match = regex.exec(text)) !== null) {
-        if (calculateShannonEntropy(match[0]) >= rule.entropyThreshold) {
-          return true;
+        if (
+          rule.entropyThreshold !== undefined &&
+          calculateShannonEntropy(match[0]) < rule.entropyThreshold
+        ) {
+          continue;
         }
+        if (rule.validator && !rule.validator(match[0])) {
+          continue;
+        }
+        return true;
       }
     }
   }
