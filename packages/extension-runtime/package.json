@@ -1,24 +1,71 @@
 {
   "name": "@libztbs/extension-runtime",
   "version": "0.0.1",
+  "license": "AGPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/plenoai/pleno-audit.git",
+    "directory": "packages/extension-runtime"
+  },
   "type": "module",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./logger": "./src/logger.ts",
-    "./storage": "./src/storage.ts",
-    "./storage-types": "./src/storage-types.ts",
-    "./network": "./src/network-monitor.ts",
-    "./cooldown": "./src/cooldown-manager.ts",
-    "./browser": "./src/browser-adapter.ts",
-    "./cookie": "./src/cookie-monitor.ts",
-    "./stats": "./src/extension-stats-analyzer.ts",
-    "./risk": "./src/extension-risk-analyzer.ts",
-    "./suspicious": "./src/suspicious-pattern-detector.ts",
-    "./doh": "./src/doh-monitor.ts",
-    "./errors": "./src/errors.ts",
-    "./offscreen": "./src/offscreen/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./logger": {
+      "types": "./dist/logger.d.ts",
+      "import": "./dist/logger.js"
+    },
+    "./storage": {
+      "types": "./dist/storage.d.ts",
+      "import": "./dist/storage.js"
+    },
+    "./storage-types": {
+      "types": "./dist/storage-types.d.ts",
+      "import": "./dist/storage-types.js"
+    },
+    "./cooldown": {
+      "types": "./dist/cooldown-manager.d.ts",
+      "import": "./dist/cooldown-manager.js"
+    },
+    "./browser": {
+      "types": "./dist/browser-adapter.d.ts",
+      "import": "./dist/browser-adapter.js"
+    },
+    "./cookie": {
+      "types": "./dist/cookie-monitor.d.ts",
+      "import": "./dist/cookie-monitor.js"
+    },
+    "./stats": {
+      "types": "./dist/extension-stats-analyzer.d.ts",
+      "import": "./dist/extension-stats-analyzer.js"
+    },
+    "./risk": {
+      "types": "./dist/extension-risk-analyzer.d.ts",
+      "import": "./dist/extension-risk-analyzer.js"
+    },
+    "./suspicious": {
+      "types": "./dist/suspicious-pattern-detector.d.ts",
+      "import": "./dist/suspicious-pattern-detector.js"
+    },
+    "./doh": {
+      "types": "./dist/doh-monitor.d.ts",
+      "import": "./dist/doh-monitor.js"
+    },
+    "./errors": {
+      "types": "./dist/errors.d.ts",
+      "import": "./dist/errors.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "dependencies": {
     "@libztbs/ai-detector": "workspace:*",

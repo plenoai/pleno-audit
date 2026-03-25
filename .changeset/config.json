@@ -1,0 +1,21 @@
+{
+  "$schema": "https://unpkg.com/@changesets/config@3.1.1/schema.json",
+  "changelog": [
+    "@changesets/changelog-github",
+    { "repo": "plenoai/pleno-audit" }
+  ],
+  "commit": false,
+  "fixed": [],
+  "linked": [],
+  "access": "public",
+  "baseBranch": "main",
+  "updateInternalDependencies": "patch",
+  "ignore": [
+    "@pleno-audit/audit-extension",
+    "@libztbs/battacker-extension",
+    "pleno-audit-website",
+    "@pleno-audit/debugger",
+    "@libztbs/battacker-web",
+    "@libztbs/battacker-e2e"
+  ]
+}
