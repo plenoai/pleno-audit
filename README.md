@@ -12,13 +12,19 @@ Personal `#Browser Security` `#BDR` `#CASB`
 
 ## Screenshots
 
-| Services | Services (dark) |
-|----------|---------|
-| ![services](./docs/assets/services.png) | ![dark](./docs/assets/dark.png) |
+### Services
 
-| extensions | alerts |
-|----------|---------|
-| ![extensions](./docs/assets/extensions.png) | ![alert](./docs/assets/alerts.png) |
+![services](./docs/assets/services.png)
+
+![dark](./docs/assets/dark.png)
+
+### Extensions
+
+![extensions](./docs/assets/extensions.png)
+
+### Alerts
+
+![alerts](./docs/assets/alerts.png)
 
 ## インストール
 
@@ -30,10 +36,6 @@ Personal `#Browser Security` `#BDR` `#CASB`
 4. 右上の「デベロッパーモード」を有効にする
 5. 「パッケージ化されていない拡張機能を読み込む」をクリック
 6. 展開したフォルダを選択
-
-## Documentation
-
-詳細な設計判断については [ADR (Architecture Decision Records)](./docs/adr/README.md) を参照してください。
 
 ## License
 
