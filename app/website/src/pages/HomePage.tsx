@@ -167,8 +167,8 @@ const HeroSection = () => (
       >
         <div className="relative z-10 mx-auto max-w-5xl overflow-hidden rounded-2xl border border-[#eaeaea] dark:border-[#333] bg-white dark:bg-[#171717] p-2 shadow-lg dark:shadow-none">
           <img
-            src={`${import.meta.env.BASE_URL}dashboard.png`}
-            alt="Security Dashboard"
+            src={`${import.meta.env.BASE_URL}services.png`}
+            alt="Services Screenshot"
             className="w-full rounded-xl"
           />
         </div>
