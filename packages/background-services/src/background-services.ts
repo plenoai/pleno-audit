@@ -1,4 +1,5 @@
-import { queryExistingCookies, type Logger } from "@libztbs/extension-runtime";
+import type { Logger } from "@libztbs/extension-runtime";
+import { queryExistingCookies } from "@libztbs/extension-analyzers";
 import { createBackgroundServiceContext } from "./background-services/context.js";
 import {
   checkAIServicePolicy,

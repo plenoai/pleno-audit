@@ -5,20 +5,22 @@ import { DEFAULT_NRD_CONFIG } from "@libztbs/nrd";
 import { DEFAULT_TYPOSQUAT_CONFIG } from "@libztbs/typosquat";
 import type { CSPViolation } from "@libztbs/csp";
 import {
-  startCookieMonitor,
-  onCookieChange,
   getStorage,
   setStorage,
   clearAllStorage,
   createLogger,
   DEFAULT_DETECTION_CONFIG,
   DEFAULT_NOTIFICATION_CONFIG,
-  createDoHMonitor,
-  registerDoHMonitorListener,
   OperationGuard,
-  type DoHMonitor,
   type DoHRequestRecord,
 } from "@libztbs/extension-runtime";
+import {
+  startCookieMonitor,
+  onCookieChange,
+  createDoHMonitor,
+  registerDoHMonitorListener,
+  type DoHMonitor,
+} from "@libztbs/extension-analyzers";
 import { getSSOManager, getEnterpriseManager } from "@libztbs/extension-enterprise";
 
 const logger = createLogger("background");

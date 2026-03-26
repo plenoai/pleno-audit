@@ -18,10 +18,12 @@ import type {
 } from "@libztbs/extension-runtime";
 import {
   createLogger,
+} from "@libztbs/extension-runtime";
+import {
   globalExtensionStatsCache,
   detectAllSuspiciousPatterns,
   DEFAULT_SUSPICIOUS_PATTERN_CONFIG,
-} from "@libztbs/extension-runtime";
+} from "@libztbs/extension-analyzers";
 
 // Internal modules
 import { state, excludedExtensions, clearGlobalCallbacks } from "./state.js";

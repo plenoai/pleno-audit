@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "@libztbs/ai-detector": "workspace:*",
+    "@libztbs/extension-analyzers": "workspace:*",
     "@libztbs/alerts": "workspace:*",
     "@libztbs/types": "workspace:*",
     "@libztbs/csp": "workspace:*",

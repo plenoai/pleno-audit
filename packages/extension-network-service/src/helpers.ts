@@ -1,7 +1,5 @@
-import {
-  analyzeInstalledExtension,
-  type NetworkRequestRecord,
-} from "@libztbs/extension-runtime";
+import type { NetworkRequestRecord } from "@libztbs/extension-runtime";
+import { analyzeInstalledExtension } from "@libztbs/extension-analyzers";
 
 export type ExtensionAnalysisRequest =
   Parameters<typeof analyzeInstalledExtension>[1][number];

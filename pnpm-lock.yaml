@@ -74,6 +74,9 @@ importers:
       '@libztbs/detectors':
         specifier: ^0.1.0
         version: 0.1.0
+      '@libztbs/extension-analyzers':
+        specifier: workspace:^
+        version: link:../../packages/extension-analyzers
       '@libztbs/extension-enterprise':
         specifier: ^0.1.0
         version: 0.1.0
@@ -248,14 +251,15 @@ importers:
 
   packages/ai-detector:
     dependencies:
-      '@libztbs/alerts':
-        specifier: workspace:*
-        version: link:../alerts
       '@libztbs/types':
         specifier: workspace:*
         version: link:../types
 
-  packages/alerts: {}
+  packages/alerts:
+    dependencies:
+      '@libztbs/types':
+        specifier: workspace:*
+        version: link:../types
 
   packages/background-services:
     dependencies:
@@ -271,6 +275,9 @@ importers:
       '@libztbs/detectors':
         specifier: workspace:*
         version: link:../detectors
+      '@libztbs/extension-analyzers':
+        specifier: workspace:*
+        version: link:../extension-analyzers
       '@libztbs/extension-runtime':
         specifier: workspace:*
         version: link:../extension-runtime
@@ -302,6 +309,18 @@ importers:
         specifier: workspace:*
         version: link:../types
 
+  packages/extension-analyzers:
+    dependencies:
+      '@libztbs/detectors':
+        specifier: workspace:*
+        version: link:../detectors
+      '@libztbs/extension-runtime':
+        specifier: workspace:*
+        version: link:../extension-runtime
+      '@libztbs/types':
+        specifier: workspace:*
+        version: link:../types
+
   packages/extension-enterprise:
     dependencies:
       '@libztbs/extension-runtime':
@@ -313,6 +332,9 @@ importers:
       '@libztbs/alerts':
         specifier: workspace:*
         version: link:../alerts
+      '@libztbs/extension-analyzers':
+        specifier: workspace:*
+        version: link:../extension-analyzers
       '@libztbs/extension-runtime':
         specifier: workspace:*
         version: link:../extension-runtime

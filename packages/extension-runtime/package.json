@@ -35,26 +35,6 @@
       "types": "./dist/browser-adapter.d.ts",
       "import": "./dist/browser-adapter.js"
     },
-    "./cookie": {
-      "types": "./dist/cookie-monitor.d.ts",
-      "import": "./dist/cookie-monitor.js"
-    },
-    "./stats": {
-      "types": "./dist/extension-stats-analyzer.d.ts",
-      "import": "./dist/extension-stats-analyzer.js"
-    },
-    "./risk": {
-      "types": "./dist/extension-risk-analyzer.d.ts",
-      "import": "./dist/extension-risk-analyzer.js"
-    },
-    "./suspicious": {
-      "types": "./dist/suspicious-pattern-detector.d.ts",
-      "import": "./dist/suspicious-pattern-detector.js"
-    },
-    "./doh": {
-      "types": "./dist/doh-monitor.d.ts",
-      "import": "./dist/doh-monitor.js"
-    },
     "./errors": {
       "types": "./dist/errors.d.ts",
       "import": "./dist/errors.js"

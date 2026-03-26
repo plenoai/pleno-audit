@@ -12,14 +12,6 @@ export {
   clearAllStorage,
 } from "./storage.js";
 
-// Cookie Monitor
-export {
-  startCookieMonitor,
-  onCookieChange,
-  queryExistingCookies,
-  type CookieChangeCallback,
-} from "./cookie-monitor.js";
-
 // Browser Adapter
 export {
   createBrowserAdapter,
@@ -55,49 +47,6 @@ export {
   DEFAULT_NOTIFICATION_CONFIG,
 } from "./storage-types.js";
 
-// Extension Stats Analyzer
-export {
-  generateExtensionStats,
-  generateDailyTimeSeries,
-  generateWeeklyTimeSeries,
-  generateDashboardStats,
-  ExtensionStatsCache,
-  globalExtensionStatsCache,
-  type ExtensionStats,
-  type TimeSeriesData,
-  type DashboardStats,
-} from "./extension-stats-analyzer.js";
-
-// Suspicious Pattern Detector
-export {
-  detectAllSuspiciousPatterns,
-  detectBulkRequests,
-  detectLateNightActivity,
-  detectEncodedParameters,
-  detectDomainDiversity,
-  DEFAULT_SUSPICIOUS_PATTERN_CONFIG,
-  type SuspiciousPattern,
-  type SuspiciousPatternConfig,
-} from "./suspicious-pattern-detector.js";
-
-// Extension Risk Analyzer
-export {
-  DANGEROUS_PERMISSIONS,
-  analyzePermissions,
-  analyzeNetworkActivity,
-  calculateRiskScore,
-  generateRiskFlags,
-  analyzeExtensionRisk,
-  analyzeInstalledExtension,
-  type PermissionRiskCategory,
-  type PermissionRisk,
-  type PermissionRiskLevel,
-  getPermissionRiskLevel,
-  type ExtensionRiskAnalysis,
-  type NetworkRisk,
-  type RiskFlag,
-} from "./extension-risk-analyzer.js";
-
 // Messaging (content script → background)
 export {
   isRuntimeAvailable,
@@ -126,29 +75,16 @@ export {
   type CooldownManagerConfig,
 } from "./cooldown-manager.js";
 
-// DoH Monitor
-export {
-  createDoHMonitor,
-  registerDoHMonitorListener,
-  clearDoHCallbacks,
-  detectDoHRequest,
-  MAX_STORED_DOH_REQUESTS,
-  DOH_URL_PATTERNS,
-  type DoHMonitor,
-} from "./doh-monitor.js";
-
+// Re-export types from @libztbs/types for backward compatibility
 export type {
   DoHRequestRecord,
   DoHDetectionMethod,
-} from "./storage-types.js";
-
-export type {
   EnterpriseManagedConfig,
   EnterpriseStatus,
   EnterpriseSSOConfig,
   EnterprisePolicyConfig,
   EnterpriseReportingConfig,
-} from "./storage-types.js";
+} from "@libztbs/types";
 
 // Operation Guard
 export { OperationGuard } from "./operation-guard.js";

@@ -4,7 +4,8 @@ import { FilteredTab } from "../components/FilteredTab";
 import { useTabFilter } from "../hooks/useTabFilter";
 import { useTheme } from "../../../lib/theme";
 import { truncate } from "../utils";
-import { createLogger, getPermissionRiskLevel, DANGEROUS_PERMISSIONS } from "@libztbs/extension-runtime";
+import { createLogger } from "@libztbs/extension-runtime";
+import { getPermissionRiskLevel, DANGEROUS_PERMISSIONS } from "@libztbs/extension-analyzers";
 
 const logger = createLogger("extensions-tab");
 

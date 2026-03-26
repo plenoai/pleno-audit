@@ -26,6 +26,7 @@
     "access": "public"
   },
   "dependencies": {
+    "@libztbs/extension-analyzers": "workspace:*",
     "@libztbs/extension-runtime": "workspace:*",
     "@libztbs/alerts": "workspace:*"
   }

@@ -22,6 +22,9 @@
   "scripts": {
     "build": "tsup"
   },
+  "dependencies": {
+    "@libztbs/types": "workspace:*"
+  },
   "publishConfig": {
     "access": "public"
   }

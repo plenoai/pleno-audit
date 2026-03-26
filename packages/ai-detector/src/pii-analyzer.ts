@@ -17,7 +17,7 @@ import {
 import {
   scoreToRiskLevel5,
   type RiskLevel5,
-} from "@libztbs/alerts";
+} from "@libztbs/types";
 
 /**
  * AIプロンプトの機密情報検出結果

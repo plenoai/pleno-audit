@@ -14,6 +14,7 @@
   "dependencies": {
     "@libztbs/ai-detector": "^0.1.0",
     "@libztbs/alerts": "^0.1.0",
+    "@libztbs/extension-analyzers": "workspace:^",
     "@libztbs/background-services": "^0.1.0",
     "@libztbs/types": "^0.1.0",
     "@libztbs/csp": "^0.1.0",

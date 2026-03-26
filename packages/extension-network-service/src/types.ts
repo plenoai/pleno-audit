@@ -2,9 +2,9 @@ import type { AlertManager } from "@libztbs/alerts";
 import type {
   CooldownManager,
   DetectionConfig,
-  ExtensionRiskAnalysis,
   NetworkRequestRecord,
 } from "@libztbs/extension-runtime";
+import type { ExtensionRiskAnalysis } from "@libztbs/extension-analyzers";
 import type { NetworkMonitor } from "./network-monitor/types.js";
 import type { ExtensionStats, NetworkRequestQueryOptions } from "./helpers.js";
 

@@ -6,9 +6,11 @@
 
 import type {
   NetworkRequestRecord,
+} from "@libztbs/extension-runtime";
+import type {
   DashboardStats,
   SuspiciousPattern,
-} from "@libztbs/extension-runtime";
+} from "@libztbs/extension-analyzers";
 
 // Re-export for convenience
 export type {

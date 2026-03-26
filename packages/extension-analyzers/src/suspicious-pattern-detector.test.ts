@@ -7,7 +7,7 @@ import {
   detectAllSuspiciousPatterns,
   DEFAULT_SUSPICIOUS_PATTERN_CONFIG,
 } from "./suspicious-pattern-detector.js";
-import type { ExtensionRequestRecord } from "./storage-types.js";
+import type { ExtensionRequestRecord } from "@libztbs/types";
 
 function createRecord(
   overrides: Partial<ExtensionRequestRecord> = {}

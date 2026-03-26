@@ -1,6 +1,6 @@
 import type { CookieInfo, DetectedService } from "@libztbs/types";
 import type { Logger } from "@libztbs/extension-runtime";
-import { queryExistingCookies } from "@libztbs/extension-runtime";
+import { queryExistingCookies } from "@libztbs/extension-analyzers";
 import type { PageAnalysis, StorageData } from "./types.js";
 
 export interface PageAnalysisDependencies {

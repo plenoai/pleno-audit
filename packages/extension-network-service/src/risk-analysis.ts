@@ -1,7 +1,7 @@
 import {
   analyzeInstalledExtension,
   type ExtensionRiskAnalysis,
-} from "@libztbs/extension-runtime";
+} from "@libztbs/extension-analyzers";
 import {
   getUniqueDomains,
   groupRequestsByExtensionId,

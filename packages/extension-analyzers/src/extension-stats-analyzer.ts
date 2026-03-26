@@ -8,8 +8,8 @@
  * - detectedBy別の内訳
  */
 
-import type { ExtensionRequestRecord } from "./storage-types.js";
-import { createLogger } from "./logger.js";
+import type { ExtensionRequestRecord } from "@libztbs/types";
+import { createLogger } from "@libztbs/extension-runtime/logger";
 
 const logger = createLogger("extension-stats-analyzer");
 

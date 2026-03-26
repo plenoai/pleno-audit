@@ -5,11 +5,11 @@
  * 特定のサービスリストを持たず、汎用的に検出
  */
 
-import { createLogger } from "./logger.js";
+import { createLogger } from "@libztbs/extension-runtime/logger";
 import type {
   DoHDetectionMethod,
   DoHRequestRecord,
-} from "./storage-types.js";
+} from "@libztbs/types";
 
 const logger = createLogger("doh-monitor");
 

@@ -1,0 +1,53 @@
+{
+  "name": "@libztbs/extension-analyzers",
+  "version": "0.1.0",
+  "license": "AGPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/plenoai/pleno-audit.git",
+    "directory": "packages/extension-analyzers"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./stats": {
+      "types": "./dist/extension-stats-analyzer.d.ts",
+      "import": "./dist/extension-stats-analyzer.js"
+    },
+    "./risk": {
+      "types": "./dist/extension-risk-analyzer.d.ts",
+      "import": "./dist/extension-risk-analyzer.js"
+    },
+    "./suspicious": {
+      "types": "./dist/suspicious-pattern-detector.d.ts",
+      "import": "./dist/suspicious-pattern-detector.js"
+    },
+    "./doh": {
+      "types": "./dist/doh-monitor.d.ts",
+      "import": "./dist/doh-monitor.js"
+    },
+    "./cookie": {
+      "types": "./dist/cookie-monitor.d.ts",
+      "import": "./dist/cookie-monitor.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@libztbs/types": "workspace:*",
+    "@libztbs/extension-runtime": "workspace:*",
+    "@libztbs/detectors": "workspace:*"
+  }
+}

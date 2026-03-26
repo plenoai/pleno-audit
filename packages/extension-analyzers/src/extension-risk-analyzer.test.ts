@@ -9,7 +9,7 @@ import {
   type PermissionRisk,
   type NetworkRisk,
 } from "./extension-risk-analyzer.js";
-import type { ExtensionRequestRecord } from "./storage-types.js";
+import type { ExtensionRequestRecord } from "@libztbs/types";
 
 describe("DANGEROUS_PERMISSIONS", () => {
   it("contains critical permissions", () => {

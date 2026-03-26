@@ -7,11 +7,11 @@
  * - リスクスコア算出
  */
 
-import type { ExtensionRequestRecord } from "./storage-types.js";
+import type { ExtensionRequestRecord } from "@libztbs/types";
 import {
   scoreToExtensionRiskLevel,
   type ExtensionRiskLevel,
-} from "@libztbs/alerts";
+} from "@libztbs/types";
 
 // ============================================================================
 // Risk Categories

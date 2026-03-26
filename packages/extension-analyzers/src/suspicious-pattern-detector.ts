@@ -8,8 +8,8 @@
  * 4. 通信先の多様性分析（DGA可能性）
  */
 
-import type { ExtensionRequestRecord } from "./storage-types.js";
-import { createLogger } from "./logger.js";
+import type { ExtensionRequestRecord } from "@libztbs/types";
+import { createLogger } from "@libztbs/extension-runtime/logger";
 
 const logger = createLogger("suspicious-pattern-detector");
 

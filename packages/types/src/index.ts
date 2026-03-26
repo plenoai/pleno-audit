@@ -205,3 +205,169 @@ export interface UnifiedService {
 /** ソートタイプ */
 export type SortType = "activity" | "connections" | "name";
 
+// ============================================================================
+// Network & Extension Request Records
+// ============================================================================
+
+/** リクエストの発信元タイプ */
+export type InitiatorType = "extension" | "page" | "browser" | "unknown";
+
+/**
+ * Network Request Record - 全ネットワークリクエストの統一型
+ */
+export interface NetworkRequestRecord {
+  id: string;
+  timestamp: number;
+  url: string;
+  method: string;
+  domain: string;
+  resourceType: string;
+  /** リクエスト発信元 (chrome-extension://xxx, https://xxx, null) */
+  initiator: string | null;
+  /** 発信元タイプ */
+  initiatorType: InitiatorType;
+  /** 拡張機能の場合のID */
+  extensionId?: string;
+  /** 拡張機能の場合の名前 */
+  extensionName?: string;
+  /** タブID (-1 = Service Worker) */
+  tabId: number;
+  /** フレームID (0 = main frame) */
+  frameId: number;
+  /** 検出方法 */
+  detectedBy: "webRequest" | "declarativeNetRequest";
+}
+
+export interface ExtensionRequestRecord {
+  id: string;
+  extensionId: string;
+  extensionName: string;
+  timestamp: number;
+  url: string;
+  method: string;
+  resourceType: string;
+  domain: string;
+  statusCode?: number;
+  /** 検出方法: webRequest または declarativeNetRequest */
+  detectedBy?: "webRequest" | "declarativeNetRequest";
+}
+
+// ============================================================================
+// DoH Detection Records
+// ============================================================================
+
+export type DoHDetectionMethod =
+  | "content-type"
+  | "accept-header"
+  | "url-path"
+  | "dns-param";
+
+export interface DoHRequestRecord {
+  id: string;
+  timestamp: number;
+  url: string;
+  domain: string;
+  method: string;
+  detectionMethod: DoHDetectionMethod;
+  initiator?: string;
+}
+
+// ============================================================================
+// Detection & Notification Config
+// ============================================================================
+
+export interface DetectionConfig {
+  enableNRD: boolean;
+  enableTyposquat: boolean;
+  enableAI: boolean;
+}
+
+export const DEFAULT_DETECTION_CONFIG: DetectionConfig = {
+  enableNRD: false,
+  enableTyposquat: true,
+  enableAI: true,
+};
+
+/**
+ * 通知設定（デフォルト無効）
+ */
+export interface NotificationConfig {
+  enabled: boolean;
+}
+
+export const DEFAULT_NOTIFICATION_CONFIG: NotificationConfig = {
+  enabled: false,
+};
+
+/**
+ * アラートクールダウン永続化用
+ */
+export interface AlertCooldownData {
+  [key: string]: number;
+}
+
+// ============================================================================
+// Enterprise Configuration
+// ============================================================================
+
+export interface EnterpriseSSOConfig {
+  provider?: "oidc" | "saml";
+  required?: boolean;
+  clientId?: string;
+  authority?: string;
+  scope?: string;
+  entityId?: string;
+  entryPoint?: string;
+  issuer?: string;
+}
+
+export interface EnterprisePolicyConfig {
+  allowedDomains?: string[];
+  blockedDomains?: string[];
+  allowedAIProviders?: string[];
+  blockedAIProviders?: string[];
+}
+
+export interface EnterpriseReportingConfig {
+  endpoint?: string;
+  apiKey?: string;
+  enabled?: boolean;
+  batchSize?: number;
+  flushIntervalSeconds?: number;
+}
+
+export interface EnterpriseManagedConfig {
+  sso?: EnterpriseSSOConfig;
+  settings?: {
+    locked?: boolean;
+    enableNRD?: boolean;
+    enableTyposquat?: boolean;
+    enableAI?: boolean;
+    enableNotifications?: boolean;
+  };
+  reporting?: EnterpriseReportingConfig;
+  policy?: EnterprisePolicyConfig;
+}
+
+export interface EnterpriseStatus {
+  isManaged: boolean;
+  ssoRequired: boolean;
+  settingsLocked: boolean;
+  config: EnterpriseManagedConfig | null;
+}
+
+// ============================================================================
+// Scoring Utilities
+// ============================================================================
+
+export {
+  scoreToRiskLevel5,
+  scoreToExtensionRiskLevel,
+  getStatusBadge,
+  RISK_SCORE_THRESHOLDS,
+  type RiskLevel5,
+  type ExtensionRiskLevel,
+  type StatusBadge,
+  type StatusBadgeVariant,
+} from "./scoring.js";
+
