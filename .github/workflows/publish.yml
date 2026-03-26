@@ -36,5 +36,10 @@ jobs:
       - name: Build packages
         run: pnpm -r --filter './packages/*' build
 
-      - name: Publish unpublished versions to npm
-        run: pnpm -r --filter './packages/*' publish --access public --no-git-checks --provenance
+      - name: Publish packages to npm
+        run: |
+          for dir in packages/*/; do
+            pkg_name=$(node -p "require('./${dir}package.json').name")
+            echo "Publishing ${pkg_name}..."
+            (cd "${dir}" && npm publish --access public --provenance) || echo "Skipped ${pkg_name} (already published or not configured)"
+          done
