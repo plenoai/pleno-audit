@@ -17,6 +17,8 @@ libztbsだけでブラウザセキュリティ拡張機能を構築可能。
 - `packages/alerts/` - Posture/Policy/Alertセキュリティ基盤（@libztbs/alerts）
 - `packages/battacker/` - ブラウザ防御耐性テスト（@libztbs/battacker）
 - `packages/data-export/` - セキュリティデータエクスポート（@libztbs/data-export）
+- `packages/extension-analyzers/` - 拡張機能分析：リスク評価・統計分析・DoH監視（@libztbs/extension-analyzers）
+- `packages/main-world-hooks/` - メインワールドセキュリティフック：API監視・フィンガープリント検出（@libztbs/main-world-hooks）
 
 #### 拡張機能ランタイム
 - `packages/extension-runtime/` - 拡張機能ランタイム（@libztbs/extension-runtime）

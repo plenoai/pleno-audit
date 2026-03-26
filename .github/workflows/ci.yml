@@ -63,7 +63,7 @@ jobs:
         run: pnpm lint
 
       - name: Check unsafe spread patterns
-        run: bash scripts/check-unsafe-spread.sh
+        run: bash .github/scripts/check-unsafe-spread.sh
 
   build:
     name: Build
