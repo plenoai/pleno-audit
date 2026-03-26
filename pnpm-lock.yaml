@@ -54,44 +54,44 @@ importers:
   app/audit-extension:
     dependencies:
       '@libztbs/ai-detector':
-        specifier: workspace:*
-        version: link:../../packages/ai-detector
+        specifier: ^0.1.0
+        version: 0.1.0
       '@libztbs/alerts':
-        specifier: workspace:*
-        version: link:../../packages/alerts
+        specifier: ^0.1.0
+        version: 0.1.0
       '@libztbs/background-services':
-        specifier: workspace:*
-        version: link:../../packages/background-services
+        specifier: ^0.1.0
+        version: 0.1.0
       '@libztbs/csp':
-        specifier: workspace:*
-        version: link:../../packages/csp
+        specifier: ^0.1.0
+        version: 0.1.0
       '@libztbs/data-export':
-        specifier: workspace:*
-        version: link:../../packages/data-export
+        specifier: ^0.1.0
+        version: 0.1.0
       '@libztbs/debug-bridge':
-        specifier: workspace:*
-        version: link:../../packages/debug-bridge
+        specifier: ^0.1.0
+        version: 0.1.0
       '@libztbs/detectors':
-        specifier: workspace:*
-        version: link:../../packages/detectors
+        specifier: ^0.1.0
+        version: 0.1.0
       '@libztbs/extension-enterprise':
-        specifier: workspace:*
-        version: link:../../packages/extension-enterprise
+        specifier: ^0.1.0
+        version: 0.1.0
       '@libztbs/extension-network-service':
-        specifier: workspace:*
-        version: link:../../packages/extension-network-service
+        specifier: ^0.1.0
+        version: 0.1.0
       '@libztbs/extension-runtime':
-        specifier: workspace:*
-        version: link:../../packages/extension-runtime
+        specifier: ^0.1.0
+        version: 0.1.0
       '@libztbs/nrd':
-        specifier: workspace:*
-        version: link:../../packages/nrd
+        specifier: ^0.1.0
+        version: 0.1.0
       '@libztbs/types':
-        specifier: workspace:*
-        version: link:../../packages/types
+        specifier: ^0.1.0
+        version: 0.1.0
       '@libztbs/typosquat':
-        specifier: workspace:*
-        version: link:../../packages/typosquat
+        specifier: ^0.1.0
+        version: 0.1.0
       lucide-preact:
         specifier: ^0.577.0
         version: 0.577.0(preact@10.29.0)
@@ -112,8 +112,8 @@ importers:
   app/battacker-e2e:
     dependencies:
       '@libztbs/battacker':
-        specifier: workspace:*
-        version: link:../../packages/battacker
+        specifier: ^0.1.0
+        version: 0.1.0
     devDependencies:
       '@playwright/test':
         specifier: ^1.58.2
@@ -131,11 +131,11 @@ importers:
   app/battacker-extension:
     dependencies:
       '@libztbs/battacker':
-        specifier: workspace:*
-        version: link:../../packages/battacker
+        specifier: ^0.1.0
+        version: 0.1.0
       '@libztbs/extension-runtime':
-        specifier: workspace:*
-        version: link:../../packages/extension-runtime
+        specifier: ^0.1.0
+        version: 0.1.0
       motion:
         specifier: ^12.38.0
         version: 12.38.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -153,8 +153,8 @@ importers:
   app/battacker-web:
     dependencies:
       '@libztbs/battacker':
-        specifier: workspace:*
-        version: link:../../packages/battacker
+        specifier: ^0.1.0
+        version: 0.1.0
       framer-motion:
         specifier: ^12.38.0
         version: 12.38.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -191,8 +191,8 @@ importers:
         version: 8.19.0
     devDependencies:
       '@libztbs/extension-runtime':
-        specifier: workspace:*
-        version: link:../../packages/extension-runtime
+        specifier: ^0.1.0
+        version: 0.1.0
       '@types/node':
         specifier: ^25.5.0
         version: 25.5.0
@@ -970,6 +970,48 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
+
+  '@libztbs/ai-detector@0.1.0':
+    resolution: {integrity: sha512-N82HOUMItr9QiEeCLsXjzaoKEaQHDpsjxoWvhvHeEZhdmojaXrQeJdC0592s27spTKLLUZpRGOumAciR9qqNRg==}
+
+  '@libztbs/alerts@0.1.0':
+    resolution: {integrity: sha512-72YXs8g8bmZpCwQ+2gatdFW5uBHev8AwvWIslQO8cmRAOrL5SzUNkkyrfXDKeD3syAqe/5+94so2fMT7ttMVWw==}
+
+  '@libztbs/background-services@0.1.0':
+    resolution: {integrity: sha512-VmqcStRjdbOwZbyOTvrs3c1odwKx8twZ0/y1jrWsKG67EzBGiKOBUsqEzB0gSFLFBPuPItbZIYftvexTJK1aGA==}
+
+  '@libztbs/battacker@0.1.0':
+    resolution: {integrity: sha512-BQEHh5jNGrTUdAHQgoj1jmic2y6Z5VJXdmCnKjhCSwtYyQ0u2zj5OWjS/v/GH/5eZu0CECniPcKh26fDRuZ1qg==}
+
+  '@libztbs/csp@0.1.0':
+    resolution: {integrity: sha512-XCEPZxKqBE/xbsvk+QgR7/t9Pn9kCID6UHNpXG9JQ3OQDZMv2e2/X+X8KTqN4BlxfSK4FQJC4TAaHq/IaIXDAQ==}
+
+  '@libztbs/data-export@0.1.0':
+    resolution: {integrity: sha512-qj2++EGnIEW1XWDIvHQLy53mRh/nAIDalwUjtRWCQuJBZ+HeE0RxABXYw5NCkOh2ryzFL19NArvnQSDfQTOMpA==}
+
+  '@libztbs/debug-bridge@0.1.0':
+    resolution: {integrity: sha512-KIemwv8jrOfUfB8oj/eKFNdEUUrI65tDc/grVhMw3moIb+NT0+b3V5fdEaRJ59ZJanQ86+YJgv0sOqXLuggH+g==}
+
+  '@libztbs/detectors@0.1.0':
+    resolution: {integrity: sha512-Frl5ovYZ8oO2Fzveh/0RF564wI6UUJkwsGT+DuvpIlEdC/Frus+VuTy3xfrHE4Qy5pcTuyLZ4ba9Sn1O+k8Otg==}
+
+  '@libztbs/extension-enterprise@0.1.0':
+    resolution: {integrity: sha512-oc0VnI0ftjpqw7KuhIm05D1aau5x744CpGvICgIuhVcKUpcI1zLlCpO2THf+fElJtob/Z4L7oL42RLR1vP7RpA==}
+
+  '@libztbs/extension-network-service@0.1.0':
+    resolution: {integrity: sha512-tXlwobjZdHTWCV/3olQ4CfCGmVujCwxnQBsV+sdxfRa9PmrQsbtQib/gD0UF2MTBtgfDVTbZQOteiBHVq3nwmA==}
+
+  '@libztbs/extension-runtime@0.1.0':
+    resolution: {integrity: sha512-+42tDK91NjfVlhWsv1QcdU6Tm1OFWmNlLJ2kuIwt9i6BfDVvJhUOdhAKXS78sZA/771dCWXiEUVYhsHbLy5teg==}
+
+  '@libztbs/nrd@0.1.0':
+    resolution: {integrity: sha512-soxDfpt+Y1VxUWrsQYmfTwQ4kSruxYnD4yn00ZVlIG6l464/7tSD35ZM/BxKK/H+i9cZaxm48Xyp7fhNC8HW3g==}
+
+  '@libztbs/types@0.1.0':
+    resolution: {integrity: sha512-BdFt41OMR0llu0V77mJa8t+TBn1jYo+CJOujyoaBI9qnoywbcmbt/HapnRMyXqmio+ZbAsv/MxR5c7Jd1zeecA==}
+
+  '@libztbs/typosquat@0.1.0':
+    resolution: {integrity: sha512-zE7hqAMwWCvoO6CeSxUTB/RkeK9yOVg4WdJkTkuDAN7/Smr4IPsWQDV0bihMG/pphWxjACfLoeA8Zcm1ThVLVQ==}
 
   '@manypkg/find-root@1.1.0':
     resolution: {integrity: sha512-mki5uBvhHzO8kYYix/WRy2WX8S3B5wdVSc9D6KcU5lQNglP2yt58/VfLuAK49glRXChosY8ap2oJ1qgma3GUVA==}
@@ -4652,6 +4694,62 @@ snapshots:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
+
+  '@libztbs/ai-detector@0.1.0':
+    dependencies:
+      '@libztbs/alerts': 0.1.0
+      '@libztbs/types': 0.1.0
+
+  '@libztbs/alerts@0.1.0': {}
+
+  '@libztbs/background-services@0.1.0':
+    dependencies:
+      '@libztbs/ai-detector': 0.1.0
+      '@libztbs/alerts': 0.1.0
+      '@libztbs/csp': 0.1.0
+      '@libztbs/detectors': 0.1.0
+      '@libztbs/extension-runtime': 0.1.0
+      '@libztbs/nrd': 0.1.0
+      '@libztbs/types': 0.1.0
+      '@libztbs/typosquat': 0.1.0
+
+  '@libztbs/battacker@0.1.0': {}
+
+  '@libztbs/csp@0.1.0': {}
+
+  '@libztbs/data-export@0.1.0': {}
+
+  '@libztbs/debug-bridge@0.1.0':
+    dependencies:
+      '@libztbs/extension-runtime': 0.1.0
+
+  '@libztbs/detectors@0.1.0':
+    dependencies:
+      '@libztbs/types': 0.1.0
+
+  '@libztbs/extension-enterprise@0.1.0':
+    dependencies:
+      '@libztbs/extension-runtime': 0.1.0
+
+  '@libztbs/extension-network-service@0.1.0':
+    dependencies:
+      '@libztbs/alerts': 0.1.0
+      '@libztbs/extension-runtime': 0.1.0
+
+  '@libztbs/extension-runtime@0.1.0':
+    dependencies:
+      '@libztbs/ai-detector': 0.1.0
+      '@libztbs/alerts': 0.1.0
+      '@libztbs/csp': 0.1.0
+      '@libztbs/detectors': 0.1.0
+      '@libztbs/nrd': 0.1.0
+      '@libztbs/types': 0.1.0
+
+  '@libztbs/nrd@0.1.0': {}
+
+  '@libztbs/types@0.1.0': {}
+
+  '@libztbs/typosquat@0.1.0': {}
 
   '@manypkg/find-root@1.1.0':
     dependencies:
