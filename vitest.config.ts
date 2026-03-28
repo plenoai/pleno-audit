@@ -16,13 +16,7 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "json", "html"],
       include: ["packages/*/src/**/*.ts"],
-      exclude: [
-        "**/*.test.ts",
-        "**/*.spec.ts",
-        "**/index.ts",
-        // Chrome APIグルーのみのファイル — 振る舞いテスト不要
-        "**/service-filters.ts",
-      ],
+      exclude: ["**/*.test.ts", "**/*.spec.ts", "**/index.ts"],
       thresholds: {
         // Per-package thresholds: detection packages hold 90%+, others ratcheted to current levels
         "packages/nrd/src/**": {
