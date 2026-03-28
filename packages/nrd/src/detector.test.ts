@@ -13,6 +13,9 @@ import { queryRDAP, extractRegistrationDate } from "./rdap.js";
 const mockQueryRDAP = queryRDAP as ReturnType<typeof vi.fn>;
 const mockExtractRegistrationDate = extractRegistrationDate as ReturnType<typeof vi.fn>;
 
+// テスト全体で固定時刻を使用（CI環境でのフレーク防止）
+const FIXED_NOW = new Date("2025-03-15T12:00:00Z").getTime();
+
 function createMockCache(): NRDCache & { store: Map<string, NRDResult> } {
   const store = new Map<string, NRDResult>();
   return {
@@ -37,16 +40,17 @@ describe("createNRDDetector", () => {
   beforeEach(() => {
     cache = createMockCache();
     vi.clearAllMocks();
+    vi.useFakeTimers({ now: FIXED_NOW });
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     vi.resetAllMocks();
   });
 
   describe("checkDomain", () => {
     it("returns NRD result for newly registered domain", async () => {
-      const now = new Date();
-      const tenDaysAgo = new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000);
+      const tenDaysAgo = new Date(FIXED_NOW - 10 * 24 * 60 * 60 * 1000);
       const registrationDate = tenDaysAgo.toISOString();
 
       mockQueryRDAP.mockResolvedValue({ events: [{ eventAction: "registration" }] });
@@ -64,8 +68,7 @@ describe("createNRDDetector", () => {
     });
 
     it("returns non-NRD result for old domain", async () => {
-      const now = new Date();
-      const oneYearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+      const oneYearAgo = new Date(FIXED_NOW - 365 * 24 * 60 * 60 * 1000);
       const registrationDate = oneYearAgo.toISOString();
 
       mockQueryRDAP.mockResolvedValue({ events: [] });
@@ -205,8 +208,7 @@ describe("createNRDDetector", () => {
         thresholdDays: 7, // Stricter threshold
       };
 
-      const now = new Date();
-      const tenDaysAgo = new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000);
+      const tenDaysAgo = new Date(FIXED_NOW - 10 * 24 * 60 * 60 * 1000);
       mockQueryRDAP.mockResolvedValue({ events: [] });
       mockExtractRegistrationDate.mockReturnValue(tenDaysAgo.toISOString());
 
@@ -221,13 +223,10 @@ describe("createNRDDetector", () => {
       mockQueryRDAP.mockResolvedValue({ events: [] });
       mockExtractRegistrationDate.mockReturnValue(null);
 
-      const before = Date.now();
       const detector = createNRDDetector(defaultConfig, cache);
       const result = await detector.checkDomain("test.com");
-      const after = Date.now();
 
-      expect(result.checkedAt).toBeGreaterThanOrEqual(before);
-      expect(result.checkedAt).toBeLessThanOrEqual(after);
+      expect(result.checkedAt).toBe(FIXED_NOW);
     });
   });
 
@@ -285,11 +284,15 @@ describe("NRD threshold edge cases", () => {
   beforeEach(() => {
     cache = createMockCache();
     vi.clearAllMocks();
+    vi.useFakeTimers({ now: FIXED_NOW });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it("domain exactly at threshold is NRD", async () => {
-    const now = new Date();
-    const exactlyThresholdDays = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const exactlyThresholdDays = new Date(FIXED_NOW - 30 * 24 * 60 * 60 * 1000);
     mockQueryRDAP.mockResolvedValue({ events: [] });
     mockExtractRegistrationDate.mockReturnValue(exactlyThresholdDays.toISOString());
 
@@ -300,8 +303,7 @@ describe("NRD threshold edge cases", () => {
   });
 
   it("domain one day over threshold is not NRD", async () => {
-    const now = new Date();
-    const justOverThreshold = new Date(now.getTime() - 31 * 24 * 60 * 60 * 1000);
+    const justOverThreshold = new Date(FIXED_NOW - 31 * 24 * 60 * 60 * 1000);
     mockQueryRDAP.mockResolvedValue({ events: [] });
     mockExtractRegistrationDate.mockReturnValue(justOverThreshold.toISOString());
 

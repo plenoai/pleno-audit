@@ -173,4 +173,4 @@ jobs:
         run: pnpm -r --filter './packages/*' build
 
       - name: Run property-based tests
-        run: pnpm vitest run packages/nrd/src/suspicious.property.ts packages/typosquat/src/heuristics.property.ts packages/ai-detector/src/sensitive-data-detector.property.ts packages/ai-detector/src/provider-classifier.property.ts
+        run: pnpm vitest run packages/nrd/src/suspicious.property.ts packages/typosquat/src/heuristics.property.ts packages/ai-detector/src/sensitive-data-detector.property.ts packages/ai-detector/src/provider-classifier.property.ts packages/detectors/src/security-patterns.property.ts

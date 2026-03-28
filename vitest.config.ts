@@ -16,7 +16,13 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "json", "html"],
       include: ["packages/*/src/**/*.ts"],
-      exclude: ["**/*.test.ts", "**/*.spec.ts", "**/index.ts"],
+      exclude: [
+        "**/*.test.ts",
+        "**/*.spec.ts",
+        "**/index.ts",
+        // Chrome APIグルーのみのファイル — 振る舞いテスト不要
+        "**/service-filters.ts",
+      ],
       thresholds: {
         // Per-package thresholds: detection packages hold 90%+, others ratcheted to current levels
         "packages/nrd/src/**": {
@@ -50,10 +56,10 @@ export default defineConfig({
           statements: 75,
         },
         "packages/extension-runtime/src/**": {
-          lines: 40,
-          functions: 50,
-          branches: 40,
-          statements: 40,
+          lines: 65,
+          functions: 70,
+          branches: 65,
+          statements: 65,
         },
       },
     },

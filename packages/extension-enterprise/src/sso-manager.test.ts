@@ -12,7 +12,7 @@
  * - fetch API
  * - 実際の認証フロー
  */
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 // Mock logger
 vi.mock("@libztbs/extension-runtime", () => ({
@@ -55,10 +55,17 @@ vi.stubGlobal("fetch", vi.fn());
 
 import { createSSOManager, type SSOSession } from "./sso-manager.js";
 
+const FIXED_NOW = new Date("2025-03-15T12:00:00Z").getTime();
+
 describe("SSOManager", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.useFakeTimers({ now: FIXED_NOW });
     mockChrome.storage.local.get.mockResolvedValue({});
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   /**
@@ -374,6 +381,13 @@ describe("SSOManager", () => {
  * SSOManagerから利用する設計が推奨されます。
  */
 describe("SSO Security Logic (standalone)", () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ now: FIXED_NOW });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
   /**
    * PKCE code_verifier検証
    * RFC 7636: 43-128文字、[A-Za-z0-9-._~]のみ
