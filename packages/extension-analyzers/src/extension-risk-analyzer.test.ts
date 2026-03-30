@@ -3,6 +3,8 @@ import {
   analyzePermissions,
   analyzeNetworkActivity,
   calculateRiskScore,
+  scoreToRiskLevel,
+  getPermissionRiskLevel,
   generateRiskFlags,
   analyzeExtensionRisk,
   DANGEROUS_PERMISSIONS,
@@ -253,6 +255,47 @@ describe("calculateRiskScore", () => {
       permRisks.push({ permission: `test${i}`, category: "data_access", severity: "critical", description: "test" });
     }
     expect(calculateRiskScore(permRisks, [])).toBe(100);
+  });
+});
+
+describe("scoreToRiskLevel", () => {
+  it("returns critical for score >= 80", () => {
+    expect(scoreToRiskLevel(80)).toBe("critical");
+    expect(scoreToRiskLevel(100)).toBe("critical");
+  });
+
+  it("returns high for score 60-79", () => {
+    expect(scoreToRiskLevel(60)).toBe("high");
+    expect(scoreToRiskLevel(79)).toBe("high");
+  });
+
+  it("returns medium for score 40-59", () => {
+    expect(scoreToRiskLevel(40)).toBe("medium");
+    expect(scoreToRiskLevel(59)).toBe("medium");
+  });
+
+  it("returns low for score 20-39", () => {
+    expect(scoreToRiskLevel(20)).toBe("low");
+    expect(scoreToRiskLevel(39)).toBe("low");
+  });
+
+  it("returns safe for score < 20", () => {
+    expect(scoreToRiskLevel(0)).toBe("safe");
+    expect(scoreToRiskLevel(19)).toBe("safe");
+  });
+});
+
+describe("getPermissionRiskLevel", () => {
+  it("returns low when no risky permissions exist", () => {
+    expect(getPermissionRiskLevel(["unknown_permission"])).toBe("low");
+  });
+
+  it("returns highest severity across standard and host permissions", () => {
+    expect(getPermissionRiskLevel(["cookies"], ["<all_urls>"])).toBe("critical");
+  });
+
+  it("returns medium when medium severity is the highest match", () => {
+    expect(getPermissionRiskLevel(["tabs"])).toBe("medium");
   });
 });
 
