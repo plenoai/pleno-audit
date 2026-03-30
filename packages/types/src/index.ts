@@ -54,6 +54,8 @@ export interface DetectedService {
   domain: string;
   detectedAt: number;
   hasLoginPage: boolean;
+  hasPasskey?: boolean;
+  hasSAML?: boolean;
   privacyPolicyUrl: string | null;
   termsOfServiceUrl: string | null;
   faviconUrl?: string | null;
@@ -110,6 +112,8 @@ export interface LoginDetectedDetails {
   hasPasswordInput: boolean;
   isLoginUrl: boolean;
   formAction: string | null;
+  hasPasskey: boolean;
+  hasSAML: boolean;
 }
 
 /** プライバシーポリシー発見の詳細 */
@@ -370,4 +374,3 @@ export {
   type StatusBadge,
   type StatusBadgeVariant,
 } from "./scoring.js";
-
