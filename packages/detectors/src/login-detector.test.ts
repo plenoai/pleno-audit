@@ -6,13 +6,15 @@ function createMockDOMAdapter(options: {
   passwordInputs?: Array<{ closest: (selector: string) => unknown }>;
   location?: { origin: string; pathname: string; href: string };
   socialLoginButtons?: Array<{ textContent: string }>;
-  webAuthnElements?: Element[];
+  passkeyElements?: Element[];
+  samlFormFields?: Element[];
 }): DOMAdapter {
   const {
     passwordInputs = [],
     location = { origin: "https://example.com", pathname: "/", href: "https://example.com/" },
     socialLoginButtons = [],
-    webAuthnElements = [],
+    passkeyElements = [],
+    samlFormFields = [],
   } = options;
 
   return {
@@ -25,7 +27,13 @@ function createMockDOMAdapter(options: {
         return socialLoginButtons as unknown as NodeListOf<Element>;
       }
       if (selector.includes('webauthn') || selector.includes('passkey')) {
-        return webAuthnElements as unknown as NodeListOf<Element>;
+        return passkeyElements as unknown as NodeListOf<Element>;
+      }
+      if (selector.includes('SAMLResponse') || selector.includes('SAMLRequest') || selector.includes('RelayState')) {
+        return samlFormFields as unknown as NodeListOf<Element>;
+      }
+      if (selector.includes('saml')) {
+        return samlFormFields as unknown as NodeListOf<Element>;
       }
       return [] as unknown as NodeListOf<Element>;
     }),
@@ -367,15 +375,40 @@ describe("createLoginDetector", () => {
       expect(result.hasSocialLogin).toBe(true);
     });
 
-    it("detects WebAuthn support", () => {
+    it("detects Passkey support", () => {
       const mockElement = {} as Element;
       const dom = createMockDOMAdapter({
-        webAuthnElements: [mockElement],
+        passkeyElements: [mockElement],
       });
       const detector = createLoginDetector(dom);
       const result = detector.detectLoginPage();
 
-      expect(result.hasWebAuthn).toBe(true);
+      expect(result.hasPasskey).toBe(true);
+    });
+
+    it("detects SAML via form field", () => {
+      const mockElement = {} as Element;
+      const dom = createMockDOMAdapter({
+        samlFormFields: [mockElement],
+      });
+      const detector = createLoginDetector(dom);
+      const result = detector.detectLoginPage();
+
+      expect(result.hasSAML).toBe(true);
+    });
+
+    it("detects SAML via URL query parameter", () => {
+      const dom = createMockDOMAdapter({
+        location: {
+          origin: "https://idp.example.com",
+          pathname: "/sso",
+          href: "https://idp.example.com/sso?SAMLRequest=abc123",
+        },
+      });
+      const detector = createLoginDetector(dom);
+      const result = detector.detectLoginPage();
+
+      expect(result.hasSAML).toBe(true);
     });
 
     it("isLoginPage returns true with social login", () => {
@@ -389,10 +422,20 @@ describe("createLoginDetector", () => {
       expect(detector.isLoginPage()).toBe(true);
     });
 
-    it("isLoginPage returns true with WebAuthn", () => {
+    it("isLoginPage returns true with Passkey", () => {
       const mockElement = {} as Element;
       const dom = createMockDOMAdapter({
-        webAuthnElements: [mockElement],
+        passkeyElements: [mockElement],
+      });
+      const detector = createLoginDetector(dom);
+
+      expect(detector.isLoginPage()).toBe(true);
+    });
+
+    it("isLoginPage returns true with SAML", () => {
+      const mockElement = {} as Element;
+      const dom = createMockDOMAdapter({
+        samlFormFields: [mockElement],
       });
       const detector = createLoginDetector(dom);
 

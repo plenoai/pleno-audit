@@ -22,12 +22,34 @@ export function createLoginDetector(dom: DOMAdapter) {
     return oauthElements.length > 0;
   }
 
-  function detectWebAuthn(): boolean {
-    // WebAuthn対応ページの検出
-    const webAuthnIndicators = dom.querySelectorAll(
-      '[autocomplete*="webauthn"], [data-webauthn], [class*="webauthn"], [class*="passkey"]'
+  function detectPasskey(): boolean {
+    // Passkey / WebAuthn対応ページの検出
+    const passkeyIndicators = dom.querySelectorAll(
+      '[autocomplete*="webauthn"], [data-webauthn], [class*="webauthn"], [class*="passkey"], [data-passkey]'
     );
-    return webAuthnIndicators.length > 0;
+    return passkeyIndicators.length > 0;
+  }
+
+  function detectSAML(): boolean {
+    // SAML アサーションフォームフィールドの検出（IdP/SP-initiated SSO）
+    const samlFormFields = dom.querySelectorAll(
+      '[name="SAMLResponse"], [name="SAMLRequest"], [name="RelayState"]'
+    );
+    if (samlFormFields.length > 0) return true;
+
+    // SAML固有のclass/data属性
+    const samlElements = dom.querySelectorAll(
+      '[class*="saml"], [data-saml], [id*="saml"]'
+    );
+    if (samlElements.length > 0) return true;
+
+    // URLクエリパラメータでのSAML検出
+    const currentUrl = dom.getLocation().href;
+    if (/[?&]SAMLRequest=/i.test(currentUrl) || /[?&]SAMLResponse=/i.test(currentUrl)) {
+      return true;
+    }
+
+    return false;
   }
 
   function detectLoginPage(): LoginDetectionResult {
@@ -49,7 +71,8 @@ export function createLoginDetector(dom: DOMAdapter) {
     const urlIndicatesLogin = isLoginUrl(currentUrl);
 
     const hasSocialLogin = detectSocialLogin();
-    const hasWebAuthn = detectWebAuthn();
+    const hasPasskey = detectPasskey();
+    const hasSAML = detectSAML();
 
     return {
       hasLoginForm,
@@ -57,7 +80,8 @@ export function createLoginDetector(dom: DOMAdapter) {
       isLoginUrl: urlIndicatesLogin,
       formAction,
       hasSocialLogin,
-      hasWebAuthn,
+      hasPasskey,
+      hasSAML,
     };
   }
 
@@ -67,7 +91,8 @@ export function createLoginDetector(dom: DOMAdapter) {
       result.hasPasswordInput ||
       result.isLoginUrl ||
       result.hasSocialLogin ||
-      result.hasWebAuthn
+      result.hasPasskey ||
+      result.hasSAML
     );
   }
 
