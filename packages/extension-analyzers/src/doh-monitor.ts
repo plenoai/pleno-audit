@@ -16,8 +16,6 @@ const logger = createLogger("doh-monitor");
 /** DoHリクエストの最大保持数 */
 export const MAX_STORED_DOH_REQUESTS = 1000;
 
-export const MAX_STORED_DOH_REQUESTS = DEFAULT_DOH_MONITOR_CONFIG.maxStoredRequests;
-
 /**
  * DoHリクエストを検出するためのURLパターン
  * 全URLではなく、DoHの可能性があるURLのみをフィルタリング

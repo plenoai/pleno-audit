@@ -40,6 +40,7 @@ export {
   analyzePermissions,
   analyzeNetworkActivity,
   calculateRiskScore,
+  scoreToRiskLevel,
   generateRiskFlags,
   analyzeExtensionRisk,
   analyzeInstalledExtension,

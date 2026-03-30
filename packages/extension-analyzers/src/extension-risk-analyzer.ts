@@ -386,28 +386,12 @@ export function calculateRiskScore(
   return Math.min(100, score);
 }
 
-
-/**
- * パーミッションリストから最も高いリスクレベルを判定
- *
- * @param permissions - 通常のパーミッション
- * @param hostPermissions - ホストパーミッション
- * @returns 4段階リスクレベル
- */
-export type PermissionRiskLevel = "critical" | "high" | "medium" | "low";
-
-export function getPermissionRiskLevel(
-  permissions: string[],
-  hostPermissions: string[] = [],
-): PermissionRiskLevel {
-  const risks = analyzePermissions([...permissions, ...hostPermissions]);
-  if (risks.length === 0) return "low";
-
-  const severityOrder: PermissionRiskLevel[] = ["critical", "high", "medium", "low"];
-  for (const level of severityOrder) {
-    if (risks.some((risk) => risk.severity === level)) return level;
-  }
-  return "low";
+export function scoreToRiskLevel(score: number): "critical" | "high" | "medium" | "low" | "safe" {
+  if (score >= 80) return "critical";
+  if (score >= 60) return "high";
+  if (score >= 40) return "medium";
+  if (score >= 20) return "low";
+  return "safe";
 }
 
 /**

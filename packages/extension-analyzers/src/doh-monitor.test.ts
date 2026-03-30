@@ -3,7 +3,6 @@ import {
   detectDoHRequest,
   createDoHMonitor,
   clearDoHCallbacks,
-  DEFAULT_DOH_MONITOR_CONFIG,
   MAX_STORED_DOH_REQUESTS,
 } from "./doh-monitor.js";
 
@@ -110,7 +109,7 @@ describe("createDoHMonitor", () => {
   });
 
   it("exposes default max stored request count", () => {
-    expect(MAX_STORED_DOH_REQUESTS).toBe(DEFAULT_DOH_MONITOR_CONFIG.maxStoredRequests);
+    expect(MAX_STORED_DOH_REQUESTS).toBe(1000);
   });
 
   describe("lifecycle", () => {
