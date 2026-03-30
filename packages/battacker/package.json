@@ -1,6 +1,6 @@
 {
   "name": "@libztbs/battacker",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Browser Defense Resistance Testing Core Library",
   "repository": {
     "type": "git",
