@@ -30,7 +30,7 @@
     "preact": "^10.29.0"
   },
   "devDependencies": {
-    "@preact/preset-vite": "^2.10.4",
+    "@preact/preset-vite": "^2.10.5",
     "typescript": "^5.9.3",
     "wxt": "^0.20.20"
   }

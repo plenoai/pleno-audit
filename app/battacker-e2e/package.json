@@ -16,8 +16,8 @@
     "@libztbs/battacker": "^0.1.0"
   },
   "devDependencies": {
-    "@playwright/test": "^1.58.2",
-    "playwright": "^1.58.2",
+    "@playwright/test": "^1.59.0",
+    "playwright": "^1.59.0",
     "tsx": "^4.19.0",
     "typescript": "^5.9.3"
   }
