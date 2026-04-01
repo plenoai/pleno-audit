@@ -16,7 +16,7 @@ const MAX_BODY_SAMPLE = 10000;
 
 // ===== Lightweight AI URL Detection =====
 // string.includes による O(n) 判定。regex/JSON.parse は使わない。
-const AI_URL_MARKERS = [
+export const AI_URL_MARKERS = [
   "api.openai.com",
   "chatgpt.com/backend-api",
   "api.anthropic.com",
@@ -39,14 +39,14 @@ const AI_URL_MARKERS = [
   "/v1/messages",
 ];
 
-function isLikelyAIUrl(url: string): boolean {
+export function isLikelyAIUrl(url: string): boolean {
   for (let i = 0; i < AI_URL_MARKERS.length; i++) {
     if (url.includes(AI_URL_MARKERS[i])) return true;
   }
   return false;
 }
 
-function getBodySample(body: unknown): string | undefined {
+export function getBodySample(body: unknown): string | undefined {
   if (typeof body === "string") return body.length <= MAX_BODY_SAMPLE ? body : body.substring(0, MAX_BODY_SAMPLE);
   return undefined;
 }

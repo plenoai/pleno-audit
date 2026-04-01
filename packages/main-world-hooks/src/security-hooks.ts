@@ -15,26 +15,26 @@ import { type SharedHookUtils } from "./shared.js";
 
 // ===== Constants =====
 
-const KNOWN_CDNS = [
+export const KNOWN_CDNS = [
   "cdnjs.cloudflare.com", "cdn.jsdelivr.net", "unpkg.com", "ajax.googleapis.com",
   "code.jquery.com", "stackpath.bootstrapcdn.com", "maxcdn.bootstrapcdn.com",
   "cdn.bootcdn.net", "lib.baomitu.com", "cdn.staticfile.org",
 ];
 
-const SENSITIVE_TYPES = ["password", "email", "tel", "credit-card"];
-const SENSITIVE_NAMES = [
+export const SENSITIVE_TYPES = ["password", "email", "tel", "credit-card"];
+export const SENSITIVE_NAMES = [
   "password", "passwd", "pwd", "pass", "secret", "token", "api_key", "apikey",
   "credit", "card", "cvv", "ssn", "otp", "pin", "auth", "credential", "2fa", "mfa",
 ];
 
-const CRYPTO_PATTERNS: Record<string, RegExp> = {
+export const CRYPTO_PATTERNS: Record<string, RegExp> = {
   bitcoin: /^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$/,
   ethereum: /^0x[a-fA-F0-9]{40}$/,
   litecoin: /^[LM3][a-km-zA-HJ-NP-Z1-9]{26,33}$/,
   ripple: /^r[0-9a-zA-Z]{24,34}$/,
 };
 
-const SUSPICIOUS_EXTENSIONS = [".exe", ".msi", ".bat", ".ps1", ".cmd", ".scr", ".vbs", ".js", ".jar", ".dll"];
+export const SUSPICIOUS_EXTENSIONS = [".exe", ".msi", ".bat", ".ps1", ".cmd", ".scr", ".vbs", ".js", ".jar", ".dll"];
 
 // ===== Helpers =====
 
@@ -44,7 +44,7 @@ function deferEmit(emitSecurityEvent: SharedHookUtils["emitSecurityEvent"], name
 
 // ===== Supply Chain Risk =====
 
-function checkSupplyChainRisk(
+export function checkSupplyChainRisk(
   emitSecurityEvent: SharedHookUtils["emitSecurityEvent"],
   element: HTMLScriptElement | HTMLLinkElement,
   resourceType: string,
@@ -76,7 +76,7 @@ function checkSupplyChainRisk(
   }
 }
 
-function hasSensitiveFields(form: HTMLFormElement): { hasSensitive: boolean; fieldType: string | null } {
+export function hasSensitiveFields(form: HTMLFormElement): { hasSensitive: boolean; fieldType: string | null } {
   for (const input of form.querySelectorAll("input")) {
     const type = (input.type || "").toLowerCase();
     const name = (input.name || "").toLowerCase();

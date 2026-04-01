@@ -340,3 +340,137 @@ describe("SUSPICIOUS_TLDS", () => {
     expect(SUSPICIOUS_TLDS.has("de")).toBe(false);
   });
 });
+
+describe("edge cases: malformed input", () => {
+  describe("calculateEntropy", () => {
+    it("handles very long strings without error", () => {
+      const longStr = "a".repeat(10000) + "b".repeat(10000);
+      const result = calculateEntropy(longStr);
+      expect(result).toBeGreaterThanOrEqual(0);
+      expect(result).toBeLessThanOrEqual(1);
+    });
+
+    it("handles unicode characters", () => {
+      expect(calculateEntropy("日本語テスト")).toBeGreaterThan(0);
+    });
+
+    it("handles emoji", () => {
+      expect(calculateEntropy("🎉🎊🎈")).toBeGreaterThan(0);
+    });
+
+    it("handles mixed unicode and ascii", () => {
+      const result = calculateEntropy("abc日本語xyz");
+      expect(result).toBeGreaterThan(0);
+      expect(result).toBeLessThanOrEqual(1);
+    });
+  });
+
+  describe("extractSLD", () => {
+    it("handles domain with only dots", () => {
+      const result = extractSLD("...");
+      expect(typeof result).toBe("string");
+    });
+
+    it("handles empty string", () => {
+      const result = extractSLD("");
+      expect(typeof result).toBe("string");
+    });
+
+    it("handles domain with many subdomains", () => {
+      expect(extractSLD("a.b.c.d.e.example.com")).toBe("example");
+    });
+
+    it("handles domain with trailing dot (FQDN)", () => {
+      // FQDN format: "example.com."
+      const result = extractSLD("example.com.");
+      expect(typeof result).toBe("string");
+    });
+  });
+
+  describe("extractTLD", () => {
+    it("handles empty string", () => {
+      const result = extractTLD("");
+      expect(typeof result).toBe("string");
+    });
+
+    it("handles domain with no dots", () => {
+      expect(extractTLD("localhost")).toBe("localhost");
+    });
+  });
+
+  describe("hasExcessiveHyphens", () => {
+    it("handles empty string", () => {
+      expect(hasExcessiveHyphens("")).toBe(false);
+    });
+
+    it("handles string of only hyphens", () => {
+      expect(hasExcessiveHyphens("---")).toBe(true);
+    });
+
+    it("handles single hyphen", () => {
+      expect(hasExcessiveHyphens("-")).toBe(true); // leading and trailing
+    });
+  });
+
+  describe("hasExcessiveNumbers", () => {
+    it("handles empty string", () => {
+      // empty string: ratio = 0/0, which is NaN
+      const result = hasExcessiveNumbers("");
+      expect(typeof result).toBe("boolean");
+    });
+
+    it("handles single digit", () => {
+      // "1" has ratio 1/1 = 100%, exceeds 30%
+      expect(hasExcessiveNumbers("1")).toBe(true);
+    });
+
+    it("handles boundary: exactly 3 consecutive digits", () => {
+      // "abc123def" = 3 consecutive, below 4+ threshold
+      // ratio = 3/9 = 33%, exceeds 30%
+      expect(hasExcessiveNumbers("abc123def")).toBe(true);
+    });
+  });
+
+  describe("isRandomLooking", () => {
+    it("handles empty string", () => {
+      const result = isRandomLooking("");
+      expect(typeof result).toBe("boolean");
+    });
+
+    it("handles string with only vowels", () => {
+      expect(isRandomLooking("aeiouaeiou")).toBe(false);
+    });
+
+    it("handles exactly 4 consecutive consonants (below threshold)", () => {
+      // "bcdf" = 4 consonants, threshold is 5+
+      // but 4 chars with 0 vowels triggers the no-vowel check (length >= 3)
+      expect(isRandomLooking("bcdf")).toBe(true);
+    });
+  });
+
+  describe("calculateSuspiciousScore", () => {
+    it("handles single-char domain", () => {
+      const result = calculateSuspiciousScore("a.com");
+      expect(result.totalScore).toBeGreaterThanOrEqual(0);
+      expect(result.totalScore).toBeLessThanOrEqual(100);
+    });
+
+    it("handles unicode domain", () => {
+      const result = calculateSuspiciousScore("日本語.com");
+      expect(result.totalScore).toBeGreaterThanOrEqual(0);
+    });
+
+    it("handles domain with only numbers in SLD", () => {
+      const result = calculateSuspiciousScore("123456.xyz");
+      expect(result.hasExcessiveNumbers).toBe(true);
+      expect(result.suspiciousTLD).toBe(true);
+    });
+
+    it("accumulates maximum possible score without exceeding 100", () => {
+      // Domain with all risk factors: random + hyphens + numbers + suspicious TLD + short
+      const result = calculateSuspiciousScore("x--12345.xyz");
+      expect(result.totalScore).toBeLessThanOrEqual(100);
+      expect(result.totalScore).toBeGreaterThan(50);
+    });
+  });
+});

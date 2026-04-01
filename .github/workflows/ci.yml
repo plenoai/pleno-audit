@@ -36,8 +36,8 @@ jobs:
       - name: Prepare WXT types
         run: pnpm --filter @pleno-audit/audit-extension exec wxt prepare
 
-      - name: Run tests
-        run: pnpm test
+      - name: Run tests with coverage
+        run: pnpm test:coverage
 
   lint:
     name: Lint
@@ -173,4 +173,31 @@ jobs:
         run: pnpm -r --filter './packages/*' build
 
       - name: Run property-based tests
-        run: pnpm vitest run packages/nrd/src/suspicious.property.ts packages/typosquat/src/heuristics.property.ts packages/ai-detector/src/sensitive-data-detector.property.ts packages/ai-detector/src/provider-classifier.property.ts packages/detectors/src/security-patterns.property.ts
+        run: pnpm vitest run --include 'packages/**/*.property.ts'
+
+  mutation:
+    name: Mutation Testing
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
+        with:
+          version: 9
+
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm -r --filter './packages/*' build
+
+      - name: Run mutation testing
+        run: pnpm test:mutation

@@ -21,6 +21,7 @@
     "test:all": "pnpm test && pnpm test:ui",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "test:mutation": "stryker run",
     "changeset": "changeset",
     "version-packages": "changeset version",
     "publish-packages": "changeset publish"
@@ -28,6 +29,9 @@
   "devDependencies": {
     "@changesets/changelog-github": "^0.6.0",
     "@changesets/cli": "^2.30.0",
+    "@stryker-mutator/core": "^9.6.0",
+    "@stryker-mutator/typescript-checker": "^9.6.0",
+    "@stryker-mutator/vitest-runner": "^9.6.0",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/preact": "^3.2.4",
     "@types/chrome": "^0.1.38",

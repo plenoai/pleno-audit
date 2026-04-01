@@ -5,11 +5,15 @@ import {
   isSuspiciousMixedScript,
   detectLatinHomoglyphs,
   detectCyrillicHomoglyphs,
+  detectGreekHomoglyphs,
+  detectJapaneseHomoglyphs,
   isPunycodeDomain,
   decodePunycode,
   calculateTyposquatHeuristics,
   isHighRiskTyposquat,
   CYRILLIC_TO_LATIN,
+  GREEK_TO_LATIN,
+  JAPANESE_HOMOGLYPHS,
 } from "./heuristics.js";
 import { DEFAULT_TYPOSQUAT_CONFIG } from "./types.js";
 
@@ -167,5 +171,144 @@ describe("CYRILLIC_TO_LATIN", () => {
     expect(CYRILLIC_TO_LATIN.get("а")).toBe("a");
     expect(CYRILLIC_TO_LATIN.get("о")).toBe("o");
     expect(CYRILLIC_TO_LATIN.get("е")).toBe("e");
+  });
+});
+
+describe("detectGreekHomoglyphs", () => {
+  it("detects Greek omicron as Latin o", () => {
+    const matches = detectGreekHomoglyphs("g\u03BFogle"); // ο (omicron)
+    expect(matches.length).toBeGreaterThan(0);
+    expect(matches.some(m => m.original === "\u03BF" && m.possibleReplacement === "o")).toBe(true);
+  });
+
+  it("detects multiple Greek homoglyphs", () => {
+    // α (alpha), ο (omicron), ι (iota)
+    const matches = detectGreekHomoglyphs("\u03B1\u03BF\u03B9");
+    expect(matches.length).toBe(3);
+  });
+
+  it("returns empty for pure latin", () => {
+    const matches = detectGreekHomoglyphs("google");
+    expect(matches.length).toBe(0);
+  });
+
+  it("detects uppercase Greek homoglyphs", () => {
+    const matches = detectGreekHomoglyphs("\u0391\u0392"); // Α, Β
+    expect(matches.length).toBe(2);
+  });
+});
+
+describe("detectJapaneseHomoglyphs", () => {
+  it("detects fullwidth Latin characters", () => {
+    const matches = detectJapaneseHomoglyphs("\uFF47\uFF4F\uFF4F\uFF47\uFF4C\uFF45"); // ｇｏｏｇｌｅ
+    expect(matches.length).toBe(6);
+  });
+
+  it("detects katakana long vowel mark as hyphen", () => {
+    const matches = detectJapaneseHomoglyphs("test\u30FCdomain"); // ー
+    expect(matches.length).toBe(1);
+    expect(matches[0].possibleReplacement).toBe("-");
+  });
+
+  it("detects fullwidth digits", () => {
+    const matches = detectJapaneseHomoglyphs("\uFF11\uFF12\uFF13"); // １２３
+    expect(matches.length).toBe(3);
+  });
+
+  it("returns empty for normal ascii", () => {
+    const matches = detectJapaneseHomoglyphs("google.com");
+    expect(matches.length).toBe(0);
+  });
+});
+
+describe("isSuspiciousMixedScript", () => {
+  it("returns true for latin+greek mix", () => {
+    expect(isSuspiciousMixedScript(new Set(["latin", "greek"]))).toBe(true);
+  });
+
+  it("returns false for CJK combinations", () => {
+    expect(isSuspiciousMixedScript(new Set(["cjk", "hiragana", "katakana"]))).toBe(false);
+  });
+});
+
+describe("getCharacterScript", () => {
+  it("detects greek characters", () => {
+    expect(getCharacterScript("\u03B1")).toBe("greek"); // alpha
+    expect(getCharacterScript("\u03BF")).toBe("greek"); // omicron
+  });
+
+  it("detects fullwidth as CJK", () => {
+    expect(getCharacterScript("\uFF41")).toBe("cjk"); // ａ
+  });
+
+  it("returns unknown for control characters", () => {
+    expect(getCharacterScript("\u0000")).toBe("unknown");
+    expect(getCharacterScript("\u0001")).toBe("unknown");
+  });
+
+  it("returns unknown for special symbols", () => {
+    expect(getCharacterScript("@")).toBe("unknown");
+    expect(getCharacterScript("#")).toBe("unknown");
+  });
+});
+
+describe("edge cases: malformed input", () => {
+  it("calculateTyposquatHeuristics handles empty domain", () => {
+    const result = calculateTyposquatHeuristics("", DEFAULT_TYPOSQUAT_CONFIG);
+    expect(result.totalScore).toBeGreaterThanOrEqual(0);
+    expect(result.totalScore).toBeLessThanOrEqual(100);
+  });
+
+  it("calculateTyposquatHeuristics handles dots-only domain", () => {
+    const result = calculateTyposquatHeuristics("...", DEFAULT_TYPOSQUAT_CONFIG);
+    expect(result.totalScore).toBeGreaterThanOrEqual(0);
+  });
+
+  it("detectLatinHomoglyphs detects sequence at label start", () => {
+    // "rn" at the beginning of label - dangerous (like "rnicrosoft")
+    const matches = detectLatinHomoglyphs("rnicrosoft");
+    const sequenceMatches = matches.filter(m => m.type === "latin_sequence");
+    expect(sequenceMatches.length).toBeGreaterThan(0);
+    expect(sequenceMatches[0].original).toBe("rn");
+    expect(sequenceMatches[0].possibleReplacement).toBe("m");
+  });
+
+  it("detectLatinHomoglyphs detects vv sequence", () => {
+    const matches = detectLatinHomoglyphs("vvitter");
+    const sequenceMatches = matches.filter(m => m.type === "latin_sequence" && m.original === "vv");
+    expect(sequenceMatches.length).toBe(1);
+  });
+
+  it("calculateTyposquatHeuristics gives high score for Cyrillic mixed-script attack", () => {
+    // "аррlе.com" with Cyrillic а, р, р
+    const scores = calculateTyposquatHeuristics("\u0430\u0440\u0440le.com", DEFAULT_TYPOSQUAT_CONFIG);
+    expect(scores.hasMixedScript).toBe(true);
+    expect(scores.breakdown.cyrillicHomoglyphs).toBeGreaterThan(0);
+    expect(scores.breakdown.mixedScript).toBe(40);
+    expect(scores.totalScore).toBeGreaterThanOrEqual(40);
+  });
+
+  it("calculateTyposquatHeuristics gives high score for Greek mixed-script", () => {
+    // "g\u03BF\u03BFgle.com" with Greek omicron
+    const scores = calculateTyposquatHeuristics("g\u03BF\u03BFgle.com", DEFAULT_TYPOSQUAT_CONFIG);
+    expect(scores.hasMixedScript).toBe(true);
+    expect(scores.breakdown.greekHomoglyphs).toBeGreaterThan(0);
+    expect(scores.breakdown.mixedScript).toBe(40);
+  });
+
+  it("decodePunycode handles completely invalid domain", () => {
+    const result = decodePunycode("xn--invalid!!!@@@");
+    expect(typeof result).toBe("string");
+  });
+
+  it("GREEK_TO_LATIN contains expected mappings", () => {
+    expect(GREEK_TO_LATIN.get("\u03BF")).toBe("o"); // omicron
+    expect(GREEK_TO_LATIN.get("\u03B1")).toBe("a"); // alpha
+    expect(GREEK_TO_LATIN.get("\u039F")).toBe("O"); // Omicron uppercase
+  });
+
+  it("JAPANESE_HOMOGLYPHS contains fullwidth mappings", () => {
+    expect(JAPANESE_HOMOGLYPHS.get("\uFF41")).toEqual(["a"]); // ａ
+    expect(JAPANESE_HOMOGLYPHS.get("\u30FC")).toEqual(["-"]); // ー
   });
 });

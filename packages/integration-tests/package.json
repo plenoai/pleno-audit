@@ -1,0 +1,6 @@
+{
+  "name": "@libztbs/integration-tests",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module"
+}

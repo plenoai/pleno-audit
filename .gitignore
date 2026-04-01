@@ -9,3 +9,6 @@ app/audit-extension/public/sql-wasm.wasm
 
 # Scan data (raw results from security scanners)
 docs/scan-data/
+
+# Reports (mutation testing, coverage)
+reports/

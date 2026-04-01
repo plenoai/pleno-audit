@@ -43,7 +43,7 @@ function emitSecurityEvent(eventName: string, data: Record<string, unknown>): vo
  * Lightweight body size estimation — no Blob allocation, no iteration.
  * Used for synchronous hot-path only. Exact size is not needed.
  */
-function getBodySize(body: unknown): number {
+export function getBodySize(body: unknown): number {
   if (!body) return 0;
   if (typeof body === "string") return body.length;
   if (body instanceof Blob) return body.size;
@@ -56,7 +56,7 @@ function getBodySize(body: unknown): number {
 /**
  * Body sample extraction — called only in deferred context (requestIdleCallback).
  */
-function getBodySample(body: unknown): string {
+export function getBodySample(body: unknown): string {
   if (!body) return "";
   if (typeof body === "string") return body.slice(0, INSPECTION_BODY_SAMPLE_LIMIT);
   if (body instanceof URLSearchParams) return body.toString().slice(0, INSPECTION_BODY_SAMPLE_LIMIT);

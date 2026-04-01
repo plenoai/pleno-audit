@@ -95,6 +95,10 @@ pnpm --filter @pleno-audit/debugger start status
 2. featureブランチで開発・テスト
 3. mainにPR作成 → マージ → release自動作成
 
+## テスト
+
+@docs/TESTING.md
+
 ## ADR
 
 @docs/adr/README.md

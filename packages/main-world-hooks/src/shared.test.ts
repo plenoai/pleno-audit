@@ -18,7 +18,7 @@ vi.stubGlobal("CustomEvent", class MockCustomEvent {
 });
 vi.stubGlobal("dispatchEvent", mockDispatchEvent);
 
-import { createSharedHookUtils } from "./shared.js";
+import { createSharedHookUtils, getBodySample } from "./shared.js";
 
 describe("getBodySize", () => {
   const { getBodySize } = createSharedHookUtils();
@@ -134,5 +134,33 @@ describe("scheduleNetworkInspection", () => {
       pageUrl: "https://example.com",
     });
     expect(mockDispatchEvent).not.toHaveBeenCalled();
+  });
+});
+
+describe("getBodySample (shared)", () => {
+  it("returns empty string for null/undefined", () => {
+    expect(getBodySample(null)).toBe("");
+    expect(getBodySample(undefined)).toBe("");
+  });
+
+  it("returns string body truncated to 4096 chars", () => {
+    const body = "x".repeat(10000);
+    expect(getBodySample(body).length).toBe(4096);
+  });
+
+  it("returns short string body as-is", () => {
+    expect(getBodySample("hello")).toBe("hello");
+  });
+
+  it("returns empty for Blob", () => {
+    expect(getBodySample(new Blob(["data"]))).toBe("");
+  });
+
+  it("returns empty for ArrayBuffer", () => {
+    expect(getBodySample(new ArrayBuffer(8))).toBe("");
+  });
+
+  it("returns empty for plain objects", () => {
+    expect(getBodySample({ key: "value" })).toBe("");
   });
 });

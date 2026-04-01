@@ -1,0 +1,163 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`CSPAnalyzer snapshot tests > empty reports generate consistent policy 1`] = `
+{
+  "base-uri": [
+    "'self'",
+  ],
+  "default-src": [
+    "'self'",
+  ],
+  "frame-ancestors": [
+    "'self'",
+  ],
+  "script-src": [
+    "'self'",
+    "'unsafe-inline'",
+  ],
+  "style-src": [
+    "'self'",
+    "'unsafe-inline'",
+  ],
+}
+`;
+
+exports[`CSPAnalyzer snapshot tests > empty reports generate consistent policy 2`] = `"default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; frame-ancestors 'self'; base-uri 'self'"`;
+
+exports[`CSPAnalyzer snapshot tests > generatePolicy output structure matches snapshot (non-strict) 1`] = `
+{
+  "base-uri": [
+    "'self'",
+  ],
+  "default-src": [
+    "'self'",
+  ],
+  "frame-ancestors": [
+    "'self'",
+  ],
+  "img-src": [
+    "'self'",
+    "*.tracker.com",
+  ],
+  "script-src": [
+    "'self'",
+    "*.example.com",
+    "*.analytics.com",
+  ],
+  "style-src": [
+    "'self'",
+    "'unsafe-inline'",
+  ],
+}
+`;
+
+exports[`CSPAnalyzer snapshot tests > generatePolicy output structure matches snapshot (non-strict) 2`] = `
+[
+  {
+    "directive": "style-src",
+    "message": "style-src contains 'unsafe-inline'. This reduces CSP protection.",
+    "severity": "high",
+    "suggestion": "Use 'nonce-<base64>' or 'sha256-<hash>' instead",
+  },
+  {
+    "directive": "object-src",
+    "message": "Missing recommended directive: object-src",
+    "severity": "medium",
+    "suggestion": "Add object-src to your policy",
+  },
+  {
+    "directive": "object-src",
+    "message": "object-src should be set to 'none' unless plugins are required",
+    "severity": "low",
+    "suggestion": "Set object-src to 'none'",
+  },
+]
+`;
+
+exports[`CSPAnalyzer snapshot tests > generatePolicy output structure matches snapshot (non-strict) 3`] = `
+{
+  "byDirective": {
+    "img-src": 1,
+    "script-src": 1,
+    "unknown": 1,
+  },
+  "byDomain": {
+    "api.analytics.com": 1,
+    "cdn.example.com": 1,
+    "images.tracker.com": 1,
+  },
+  "cspViolations": 2,
+  "networkRequests": 1,
+  "totalReports": 3,
+  "uniqueDomains": [
+    "cdn.example.com",
+    "images.tracker.com",
+    "api.analytics.com",
+  ],
+}
+`;
+
+exports[`CSPAnalyzer snapshot tests > generatePolicy output structure matches snapshot (strict mode) 1`] = `
+{
+  "base-uri": [
+    "'self'",
+  ],
+  "default-src": [
+    "'self'",
+  ],
+  "frame-ancestors": [
+    "'self'",
+  ],
+  "img-src": [
+    "'self'",
+    "https://images.tracker.com",
+  ],
+  "report-to": [
+    "csp-endpoint",
+  ],
+  "report-uri": [
+    "/csp-violations",
+  ],
+  "script-src": [
+    "'self'",
+    "https://cdn.example.com",
+    "https://api.analytics.com",
+  ],
+  "style-src": [
+    "'self'",
+  ],
+  "upgrade-insecure-requests": [],
+}
+`;
+
+exports[`CSPAnalyzer snapshot tests > generatePolicy output structure matches snapshot (strict mode) 2`] = `
+[
+  {
+    "directive": "object-src",
+    "message": "Missing recommended directive: object-src",
+    "severity": "medium",
+    "suggestion": "Add object-src to your policy",
+  },
+  {
+    "directive": "object-src",
+    "message": "object-src should be set to 'none' unless plugins are required",
+    "severity": "low",
+    "suggestion": "Set object-src to 'none'",
+  },
+]
+`;
+
+exports[`CSPAnalyzer snapshot tests > generatePolicyByDomain output matches snapshot 1`] = `2`;
+
+exports[`CSPAnalyzer snapshot tests > generatePolicyByDomain output matches snapshot 2`] = `
+[
+  {
+    "domain": "site1.com",
+    "reportCount": 2,
+  },
+  {
+    "domain": "site2.com",
+    "reportCount": 1,
+  },
+]
+`;

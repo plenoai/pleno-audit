@@ -1,0 +1,226 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`data-export snapshot tests > CSV exports > alerts CSV matches snapshot 1`] = `
+"ID,Title,Severity,Category,Description,Domain,Timestamp,Status
+a1,Data Exfiltration Detected,critical,exfiltration,Sensitive data sent to external domain,evil.com,2023-11-14T22:13:20.000Z,active"
+`;
+
+exports[`data-export snapshot tests > CSV exports > permissions CSV matches snapshot 1`] = `
+"Extension ID,Extension Name,Risk Score,Risk Level,Permissions,Findings Count,Analyzed At
+ext-abc123,Suspicious Extension,85,high,tabs; webRequest; webRequestBlocking; <all_urls>,7,2023-11-14T22:13:20.000Z"
+`;
+
+exports[`data-export snapshot tests > CSV exports > services CSV matches snapshot 1`] = `
+"Domain,First Seen,Last Seen,Has Login,Has Privacy Policy,Has ToS,Is NRD,NRD Confidence,Is Typosquat,Typosquat Confidence,Cookie Count,Risk Score
+example.com,2023-11-14T22:13:20.000Z,2023-11-14T22:15:00.000Z,true,true,false,false,,false,,5,20
+suspicious.xyz,2023-11-14T22:13:20.000Z,2023-11-14T22:14:10.000Z,false,false,false,true,85,true,72,0,90"
+`;
+
+exports[`data-export snapshot tests > CSV exports > violations CSV matches snapshot 1`] = `
+"ID,Type,Domain,Severity,Description,Timestamp,Acknowledged
+v1,nrd,suspicious.xyz,high,Newly registered domain detected,2023-11-14T22:13:20.000Z,false"
+`;
+
+exports[`data-export snapshot tests > report exports > HTML report structure matches snapshot 1`] = `
+"<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pleno Audit Security Report</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "IBM Plex Sans", "Noto Sans JP", "Segoe UI", sans-serif;
+      background: #f8fafc;
+      color: #0f172a;
+      line-height: 1.55;
+      padding: 24px 20px;
+    }
+    .container { max-width: 1080px; margin: 0 auto; }
+    h1, h2, h3 { margin-bottom: 16px; }
+    h1 { font-size: 28px; border-bottom: 2px solid #cbd5e1; padding-bottom: 14px; }
+    h2 { font-size: 20px; margin-top: 28px; color: #334155; }
+    .meta { color: #64748b; font-size: 14px; margin-bottom: 24px; }
+    .score-card {
+      background: #ffffff;
+      border: 1px solid #dbe4ee;
+      border-left: 6px solid #eab308;
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 24px;
+    }
+    .score { font-size: 60px; font-weight: 700; color: #eab308; letter-spacing: -0.02em; }
+    .score-label { color: #64748b; font-size: 13px; }
+    .stats { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; }
+    .stat-card {
+      flex: 1 1 180px;
+      min-width: 180px;
+      background: #ffffff;
+      border: 1px solid #dbe4ee;
+      border-radius: 8px;
+      padding: 14px;
+      text-align: center;
+    }
+    .stat-value { font-size: 24px; font-weight: 700; color: #0f172a; }
+    .stat-label { font-size: 12px; color: #64748b; }
+    table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #dbe4ee; }
+    th { background: #f1f5f9; font-weight: 600; font-size: 12px; color: #334155; text-transform: uppercase; }
+    td { font-size: 14px; }
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .badge-critical { background: #fee2e2; color: #991b1b; }
+    .badge-high { background: #ffedd5; color: #9a3412; }
+    .badge-medium { background: #fef9c3; color: #854d0e; }
+    .badge-low { background: #dcfce7; color: #166534; }
+    .footer { margin-top: 44px; padding-top: 20px; border-top: 1px solid #dbe4ee; color: #64748b; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Pleno Audit Security Report</h1>
+    <div class="meta">
+      Generated: 2023/11/15 7:13:20 |
+      Period: 2023/11/14 - 2023/11/15
+    </div>
+
+    <div class="score-card">
+      <div class="score">65</div>
+      <div class="score-label">Security Score</div>
+    </div>
+
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-value">2</div>
+        <div class="stat-label">Services</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">1</div>
+        <div class="stat-label">Violations</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">1</div>
+        <div class="stat-label">Alerts</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">1</div>
+        <div class="stat-label">Permissions</div>
+      </div>
+    </div>
+
+    
+    <h2>Detected Services</h2>
+    <table>
+      <thead>
+        <tr><th>Domain</th><th>Risk</th><th>NRD</th><th>Typosquat</th><th>Login</th></tr>
+      </thead>
+      <tbody>
+        
+          <tr>
+            <td>example.com</td>
+            <td>20</td>
+            <td>No</td>
+            <td>No</td>
+            <td>Yes</td>
+          </tr>
+        
+          <tr>
+            <td>suspicious.xyz</td>
+            <td>90</td>
+            <td><span class="badge badge-high">Yes</span></td>
+            <td><span class="badge badge-medium">Yes</span></td>
+            <td>No</td>
+          </tr>
+        
+      </tbody>
+    </table>
+    
+
+    
+    <h2>Policy Violations</h2>
+    <table>
+      <thead>
+        <tr><th>Type</th><th>Domain</th><th>Severity</th><th>Description</th></tr>
+      </thead>
+      <tbody>
+        
+          <tr>
+            <td>nrd</td>
+            <td>suspicious.xyz</td>
+            <td><span class="badge badge-high">high</span></td>
+            <td>Newly registered domain detected</td>
+          </tr>
+        
+      </tbody>
+    </table>
+    
+
+    <div class="footer">
+      Report generated by Pleno Audit v1.0.0
+    </div>
+  </div>
+</body>
+</html>"
+`;
+
+exports[`data-export snapshot tests > report exports > markdown report matches snapshot 1`] = `
+"# Pleno Audit Security Report
+
+Generated: 2023/11/15 7:13:20
+Period: 2023/11/14 - 2023/11/15
+
+## Summary
+
+- **Security Score**: 65/100
+- **Total Services**: 2
+- **Total Violations**: 1
+- **Total Alerts**: 1
+
+### Risk Distribution
+
+- critical: 1
+- high: 1
+- medium: 0
+- low: 0
+
+### Top Risks
+
+1. NRD detected: suspicious.xyz
+1. Data exfiltration to evil.com
+
+## Detected Services
+
+| Domain | Risk Score | NRD | Typosquat | Login |
+|--------|------------|-----|-----------|-------|
+| example.com | 20 | No | No | Yes |
+| suspicious.xyz | 90 | Yes | Yes | No |
+
+## Policy Violations
+
+### nrd - suspicious.xyz
+- **Severity**: high
+- **Description**: Newly registered domain detected
+- **Time**: 2023/11/15 7:13:20
+
+## Security Alerts
+
+| Severity | Title | Domain | Status |
+|----------|-------|--------|--------|
+| critical | Data Exfiltration Detected | evil.com | active |
+
+## Extension Permissions
+
+### Suspicious Extension
+- **Risk Level**: high (85/100)
+- **Findings**: 7
+- **Permissions**: tabs, webRequest, webRequestBlocking, <all_urls>
+
+---
+*Report generated by Pleno Audit*"
+`;

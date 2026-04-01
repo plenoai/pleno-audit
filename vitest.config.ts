@@ -55,6 +55,31 @@ export default defineConfig({
           branches: 65,
           statements: 65,
         },
+        // Ratcheted to current coverage (5% floor below actuals) — raise as tests are added
+        "packages/csp/src/**": {
+          lines: 75,
+          functions: 55,
+          branches: 55,
+          statements: 75,
+        },
+        "packages/alerts/src/**": {
+          lines: 70,
+          functions: 45,
+          branches: 45,
+          statements: 70,
+        },
+        "packages/extension-analyzers/src/**": {
+          lines: 75,
+          functions: 70,
+          branches: 75,
+          statements: 75,
+        },
+        "packages/main-world-hooks/src/**": {
+          lines: 5,
+          functions: 5,
+          branches: 5,
+          statements: 5,
+        },
       },
     },
   },
