@@ -107,28 +107,6 @@ const severityButtons: { key: AlertSeverity; label: string }[] = [
   { key: "info", label: "Info" },
 ];
 
-function SeverityBar({ severity }: { severity: AlertSeverity }) {
-  const { colors } = useTheme();
-  const colorMap: Record<AlertSeverity, string> = {
-    critical: colors.dot.danger,
-    high: colors.dot.warning,
-    medium: colors.dot.info,
-    low: colors.dot.success,
-    info: colors.dot.default,
-  };
-  return (
-    <span
-      style={{
-        width: "3px",
-        alignSelf: "stretch",
-        borderRadius: "2px",
-        background: colorMap[severity],
-        flexShrink: 0,
-      }}
-    />
-  );
-}
-
 function AlertRow({
   alert,
   isSelected,
@@ -179,9 +157,6 @@ function AlertRow({
           }
           style={{ flexShrink: 0, cursor: "pointer", accentColor: colors.interactive }}
         />
-
-        {/* Severity bar */}
-        <SeverityBar severity={alert.severity} />
 
         {/* Severity badge */}
         <Badge variant={severityVariant[alert.severity]} size="sm">
