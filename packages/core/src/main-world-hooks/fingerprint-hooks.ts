@@ -13,7 +13,7 @@ export function initFingerprintHooks(emitSecurityEvent: SharedHookUtils["emitSec
   const originalToDataURL = HTMLCanvasElement.prototype.toDataURL;
   HTMLCanvasElement.prototype.toDataURL = function (...args: Parameters<typeof originalToDataURL>) {
     if (this.width <= 256 && this.height <= 64) {
-      emitSecurityEvent("__CANVAS_FINGERPRINT_DETECTED__", { w: this.width, h: this.height, ts: Date.now() });
+      emitSecurityEvent("__CANVAS_FINGERPRINT_DETECTED__", { canvasWidth: this.width, canvasHeight: this.height, callCount: 1, timestamp: Date.now() });
     }
     return originalToDataURL.apply(this, args);
   };

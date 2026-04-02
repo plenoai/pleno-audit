@@ -646,9 +646,14 @@ export function createSecurityEventHandlers(
       const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
       const pageUrl = resolvePageUrl(sender, data.pageUrl || "");
 
+      const callCount = data.callCount ?? 0;
+      if (callCount < 1) {
+        return { success: true };
+      }
+
       await deps.getAlertManager().alertCanvasFingerprint({
         domain: pageDomain,
-        callCount: data.callCount ?? 0,
+        callCount,
         canvasWidth: data.canvasWidth ?? 0,
         canvasHeight: data.canvasHeight ?? 0,
       }, pageUrl);
