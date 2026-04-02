@@ -193,6 +193,109 @@ export function createInMemoryAlertStore(): AlertStore {
 }
 
 /**
+ * Persistent alert store options
+ */
+export interface PersistentAlertStoreOptions {
+  maxAlerts?: number;
+  load: () => Promise<SecurityAlert[]>;
+  save: (alerts: SecurityAlert[]) => Promise<void>;
+}
+
+const DEFAULT_MAX_ALERTS = 500;
+
+/**
+ * Persistent alert store backed by chrome.storage.local
+ *
+ * Keeps an in-memory Map for fast reads and persists to storage on writes.
+ * Enforces a max alert count, evicting oldest alerts first.
+ */
+export function createPersistentAlertStore(
+  options: PersistentAlertStoreOptions,
+): AlertStore {
+  const { load, save, maxAlerts = DEFAULT_MAX_ALERTS } = options;
+  const alerts: Map<string, SecurityAlert> = new Map();
+  let initialized = false;
+  let pendingSave: ReturnType<typeof setTimeout> | null = null;
+
+  async function ensureLoaded(): Promise<void> {
+    if (initialized) return;
+    const stored = await load();
+    for (const alert of stored) {
+      alerts.set(alert.id, alert);
+    }
+    initialized = true;
+  }
+
+  function scheduleSave(): void {
+    if (pendingSave !== null) return;
+    pendingSave = setTimeout(() => {
+      pendingSave = null;
+      const all = Array.from(alerts.values());
+      all.sort((a, b) => b.timestamp - a.timestamp);
+      void save(all);
+    }, 1000);
+  }
+
+  function evictOldest(): void {
+    if (alerts.size <= maxAlerts) return;
+    const sorted = Array.from(alerts.values()).sort(
+      (a, b) => a.timestamp - b.timestamp,
+    );
+    const toRemove = sorted.slice(0, alerts.size - maxAlerts);
+    for (const alert of toRemove) {
+      alerts.delete(alert.id);
+    }
+  }
+
+  return {
+    async getAlerts(options) {
+      await ensureLoaded();
+      let result = Array.from(alerts.values());
+
+      if (options?.status) {
+        result = result.filter((a) => options.status!.includes(a.status));
+      }
+
+      result.sort((a, b) => b.timestamp - a.timestamp);
+
+      if (options?.limit) {
+        result = result.slice(0, options.limit);
+      }
+
+      return result;
+    },
+
+    async addAlert(alert) {
+      await ensureLoaded();
+      alerts.set(alert.id, alert);
+      evictOldest();
+      scheduleSave();
+    },
+
+    async updateAlert(id, updates) {
+      await ensureLoaded();
+      const alert = alerts.get(id);
+      if (alert) {
+        alerts.set(id, { ...alert, ...updates });
+        scheduleSave();
+      }
+    },
+
+    async deleteAlert(id) {
+      await ensureLoaded();
+      alerts.delete(id);
+      scheduleSave();
+    },
+
+    async getAlertCount(status) {
+      await ensureLoaded();
+      if (!status) return alerts.size;
+      return Array.from(alerts.values()).filter((a) => status.includes(a.status)).length;
+    },
+  };
+}
+
+/**
  * Alert event listener
  */
 export type AlertListener = (alert: SecurityAlert) => void;

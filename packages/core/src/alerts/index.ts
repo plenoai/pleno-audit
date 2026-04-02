@@ -52,9 +52,11 @@ export { DEFAULT_ALERT_CONFIG, DEFAULT_ALERT_RULES } from "./types.js";
 export {
   createAlertManager,
   createInMemoryAlertStore,
+  createPersistentAlertStore,
   type AlertManager,
   type AlertStore,
   type AlertListener,
+  type PersistentAlertStoreOptions,
 } from "./alert-manager.js";
 
 // Policy Types

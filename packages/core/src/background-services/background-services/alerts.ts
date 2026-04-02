@@ -1,7 +1,8 @@
-import { DEFAULT_NOTIFICATION_CONFIG, getStorage } from "../../extension-runtime/index.js";
+import { DEFAULT_NOTIFICATION_CONFIG, getStorage, getStorageKey, queueStorageOperation, setStorage } from "../../extension-runtime/index.js";
 import {
   DEFAULT_POLICY_CONFIG,
   createAlertManager,
+  createPersistentAlertStore,
   createPolicyManager,
   type AlertManager,
   type PolicyManager,
@@ -35,12 +36,20 @@ async function alertPolicyViolations(
 
 export function getAlertManager(state: BackgroundServiceState): AlertManager {
   if (!state.alertManager) {
-    state.alertManager = createAlertManager({
-      enabled: true,
-      showNotifications: true,
-      playSound: false,
-      rules: [],
+    const store = createPersistentAlertStore({
+      load: () => getStorageKey("alerts") as Promise<SecurityAlert[]>,
+      save: (alerts) => queueStorageOperation(() => setStorage({ alerts })),
     });
+
+    state.alertManager = createAlertManager(
+      {
+        enabled: true,
+        showNotifications: true,
+        playSound: false,
+        rules: [],
+      },
+      store,
+    );
 
     state.alertManager.subscribe((alert: SecurityAlert) => {
       void showChromeNotification(state, alert);

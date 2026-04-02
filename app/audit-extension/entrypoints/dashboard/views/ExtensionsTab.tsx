@@ -1,11 +1,11 @@
 import { useState, useEffect, useMemo } from "preact/hooks";
-import { Badge, SearchInput, getTableCellStyles, expandArrowStyle } from "../../../components";
+import { Badge, SearchInput, LoadingState, getTableCellStyles, expandArrowStyle } from "../../../components";
 import { FilteredTab } from "../components/FilteredTab";
 import { useTabFilter } from "../hooks/useTabFilter";
-import { useTheme } from "../../../lib/theme";
+import { useTheme, spacing, fontSize } from "../../../lib/theme";
 import { truncate } from "../utils";
 import { createLogger } from "libztbs/extension-runtime";
-import { getPermissionRiskLevel, DANGEROUS_PERMISSIONS } from "libztbs/extension-analyzers";
+import { getPermissionRiskLevel, DANGEROUS_PERMISSIONS, type PermissionRiskLevel } from "libztbs/extension-analyzers";
 
 const logger = createLogger("extensions-tab");
 
@@ -30,6 +30,22 @@ type TagVariant = "danger" | "warning" | "info" | "success";
 interface ExtTag {
   label: string;
   variant: TagVariant;
+}
+
+const RISK_LEVEL_ORDER: Record<PermissionRiskLevel, number> = {
+  critical: 0,
+  high: 1,
+  medium: 2,
+  low: 3,
+};
+
+function getRiskLabel(level: PermissionRiskLevel): { text: string; variant: "danger" | "warning" | "info" | "default" } {
+  switch (level) {
+    case "critical": return { text: "High", variant: "danger" };
+    case "high": return { text: "Medium", variant: "warning" };
+    case "medium":
+    case "low": return { text: "Low", variant: "info" };
+  }
 }
 
 function getExtensionTags(ext: ExtensionInfo): ExtTag[] {
@@ -92,7 +108,6 @@ export function ExtensionsTab() {
     })();
   }, []);
 
-  /** 全拡張機能のタグを集計 → {label, variant, count} */
   const tagSummary = useMemo(() => {
     const map = new Map<string, { variant: TagVariant; count: number }>();
     for (const ext of extensions) {
@@ -137,6 +152,12 @@ export function ExtensionsTab() {
           ext.hostPermissions.some((p) => p.toLowerCase().includes(q)),
       );
     }
+    // Sort by risk level descending
+    result = [...result].sort((a, b) => {
+      const levelA = RISK_LEVEL_ORDER[getPermissionRiskLevel(a.permissions, a.hostPermissions)];
+      const levelB = RISK_LEVEL_ORDER[getPermissionRiskLevel(b.permissions, b.hostPermissions)];
+      return levelA - levelB;
+    });
     return result;
   }, [extensions, searchQuery, activeTagFilters]);
 
@@ -150,26 +171,51 @@ export function ExtensionsTab() {
   };
 
   if (loading) {
-    return <div style={{ color: colors.textSecondary, textAlign: "center", padding: "24px" }}>読み込み中...</div>;
+    return <LoadingState />;
   }
 
   return (
     <FilteredTab
       data={filtered}
       rowKey={(ext) => ext.id}
-      rowHighlight={(ext) => getPermissionRiskLevel(ext.permissions, ext.hostPermissions) === "critical"}
-      onRowClick={(ext) => {
-        const allPerms = [...ext.permissions, ...ext.hostPermissions];
-        if (allPerms.length > 0) toggleExpand(ext.id);
-      }}
+      rowHighlight={() => false}
+      onRowClick={(ext) => toggleExpand(ext.id)}
       expandRow={(ext) => {
         if (!expandedIds.has(ext.id)) return null;
         const allPerms = [...ext.permissions, ...ext.hostPermissions];
-        if (allPerms.length === 0) return null;
+        const hasPerms = allPerms.length > 0;
+        const hasHomepage = !!ext.homepageUrl;
+
+        if (!hasPerms && !hasHomepage) return null;
+
         const shown = allPerms.slice(0, 10);
         const remaining = allPerms.length - shown.length;
+
         return (
           <div style={cellStyles.expandContainer}>
+            {/* Homepage link */}
+            {hasHomepage && (
+              <div
+                style={{
+                  ...cellStyles.expandRow,
+                  display: "flex",
+                  gap: spacing.sm,
+                  fontSize: fontSize.sm,
+                }}
+              >
+                <span style={{ color: colors.textMuted }}>HP:</span>
+                <a
+                  href={ext.homepageUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={cellStyles.link}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {truncate(ext.homepageUrl!, 60)}
+                </a>
+              </div>
+            )}
+            {/* Permissions */}
             {shown.map((perm) => {
               const isAllUrls = perm === "<all_urls>" || perm === "*://*/*";
               const isDangerous = DANGEROUS_PERMISSIONS.some((d) => d.permission === perm && d.severity === "critical");
@@ -220,22 +266,36 @@ export function ExtensionsTab() {
       }
       columns={[
         {
+          key: "risk",
+          header: "リスク",
+          width: "70px",
+          render: (ext) => {
+            const level = getPermissionRiskLevel(ext.permissions, ext.hostPermissions);
+            const risk = getRiskLabel(level);
+            return <Badge variant={risk.variant} size="sm">{risk.text}</Badge>;
+          },
+        },
+        {
           key: "name",
           header: "拡張機能名",
           render: (ext) => {
             const allPerms = [...ext.permissions, ...ext.hostPermissions];
-            const hasPerms = allPerms.length > 0;
             const isExpanded = expandedIds.has(ext.id);
             return (
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <span style={expandArrowStyle(cellStyles.expandArrowBase, isExpanded, hasPerms)}>
+                <span
+                  style={{
+                    ...cellStyles.expandArrowBase,
+                    transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)",
+                  }}
+                >
                   ▶
                 </span>
                 {ext.icons?.[0]?.url && (
                   <img src={ext.icons[0].url} alt="" style={{ width: "16px", height: "16px" }} />
                 )}
                 <span>{ext.name}</span>
-                {hasPerms && (
+                {allPerms.length > 0 && (
                   <Badge variant={allPerms.length > 10 ? "warning" : "info"} size="sm">{allPerms.length}</Badge>
                 )}
               </div>
@@ -257,24 +317,6 @@ export function ExtensionsTab() {
               </div>
             );
           },
-        },
-        {
-          key: "homepage",
-          header: "ホームページ",
-          width: "160px",
-          render: (ext) =>
-            ext.homepageUrl ? (
-              <a
-                href={ext.homepageUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={cellStyles.link}
-              >
-                {truncate(ext.homepageUrl, 25)}
-              </a>
-            ) : (
-              <span style={cellStyles.muted}>-</span>
-            ),
         },
         {
           key: "version",

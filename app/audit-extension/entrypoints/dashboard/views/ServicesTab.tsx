@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from "preact/hooks";
 import { Globe } from "lucide-preact";
+import type { AlertSeverity } from "libztbs/alerts";
 import type { DetectedService } from "libztbs/types";
 import { Badge, SearchInput, getTableCellStyles, expandArrowStyle } from "../../../components";
 import { ServiceRowMenu } from "../../../components/ServiceRowMenu";
@@ -7,11 +8,20 @@ import { sendMessage } from "../../../lib/messaging";
 import { FilteredTab } from "../components/FilteredTab";
 import { useTabFilter } from "../hooks/useTabFilter";
 import { truncate } from "../utils";
-import { useTheme } from "../../../lib/theme";
+import { useTheme, spacing, fontSize } from "../../../lib/theme";
+
+interface DomainAlertSummary {
+  total: number;
+  maxSeverity: AlertSeverity;
+  bySeverity: Record<AlertSeverity, number>;
+  categories: string[];
+}
 
 interface ServicesTabProps {
   services: DetectedService[];
   serviceConnections: Record<string, string[]>;
+  alertsByDomain?: Record<string, DomainAlertSummary>;
+  onNavigateToAlerts?: (domain: string) => void;
   onServiceDeleted?: () => void;
 }
 
@@ -27,18 +37,41 @@ function getServiceTags(s: DetectedService): { label: string; variant: "danger" 
   return tags;
 }
 
-/**
- * サービスのリスクスコアを算出（0-100）
- *
- * - NRD: +40（新規ドメインはフィッシングリスク大）
- *   - confidence high: +10, medium: +5
- *   - domainAge < 30日: +5
- * - Typosquat: +35（typosquatResult.totalScoreで加重）
- * - AI: +5（情報漏洩リスクはあるが基本的なリスクは低い）
- * - Login: +5（認証情報の存在、ただしloginページは一般的）
- * - プライバシーポリシー/利用規約なし: 各+3（コンプライアンスリスク）
- */
-function getServiceRiskScore(s: DetectedService, connectionCount: number): number {
+const SEVERITY_WEIGHT: Record<string, number> = {
+  critical: 20,
+  high: 10,
+  medium: 5,
+  low: 2,
+  info: 0,
+};
+
+const SEVERITY_ORDER: AlertSeverity[] = ["critical", "high", "medium", "low", "info"];
+
+const categoryLabels: Record<string, string> = {
+  nrd: "NRD",
+  typosquat: "Typosquat",
+  ai_sensitive: "AI",
+  csp_violation: "CSP",
+  shadow_ai: "DoH",
+  data_exfiltration: "Exfil",
+  credential_theft: "Cred",
+  xss_injection: "XSS",
+  dom_scraping: "DOM",
+  clipboard_hijack: "Clip",
+  canvas_fingerprint: "Canvas",
+  webgl_fingerprint: "WebGL",
+  audio_fingerprint: "Audio",
+  tracking_beacon: "Beacon",
+  supply_chain: "Supply",
+  dynamic_code_execution: "Eval",
+  fullscreen_phishing: "Phish",
+};
+
+function getServiceRiskScore(
+  s: DetectedService,
+  connectionCount: number,
+  alertSummary?: DomainAlertSummary,
+): number {
   let score = 0;
 
   if (s.nrdResult?.isNRD) {
@@ -58,18 +91,81 @@ function getServiceRiskScore(s: DetectedService, connectionCount: number): numbe
   if (!s.termsOfServiceUrl) score += 3;
   if (connectionCount > 20) score += 3;
 
+  if (alertSummary && alertSummary.total > 0) {
+    score += SEVERITY_WEIGHT[alertSummary.maxSeverity] ?? 0;
+  }
+
   return Math.min(100, score);
 }
 
-function getServiceRiskLevel(s: DetectedService, connectionCount: number): false | "danger" | "warning" | "info" {
-  const score = getServiceRiskScore(s, connectionCount);
+function getServiceRiskLevel(
+  s: DetectedService,
+  connectionCount: number,
+  alertSummary?: DomainAlertSummary,
+): false | "danger" | "warning" | "info" {
+  const score = getServiceRiskScore(s, connectionCount, alertSummary);
   if (score >= 40) return "danger";
   if (score >= 15) return "warning";
   if (score >= 8) return "info";
   return false;
 }
 
-export function ServicesTab({ services, serviceConnections, onServiceDeleted }: ServicesTabProps) {
+function getRiskLabel(score: number): { text: string; variant: "danger" | "warning" | "info" | "default" } {
+  if (score >= 40) return { text: "High", variant: "danger" };
+  if (score >= 15) return { text: "Medium", variant: "warning" };
+  if (score >= 8) return { text: "Low", variant: "info" };
+  return { text: "None", variant: "default" };
+}
+
+/** Severity dots: compact display of per-severity counts */
+function SeverityDots({ summary }: { summary: DomainAlertSummary }) {
+  const { colors } = useTheme();
+  const colorMap: Record<AlertSeverity, string> = {
+    critical: colors.dot.danger,
+    high: colors.dot.warning,
+    medium: colors.dot.info,
+    low: colors.dot.success,
+    info: colors.dot.default,
+  };
+  const nonZero = SEVERITY_ORDER.filter((s) => summary.bySeverity[s] > 0);
+  if (nonZero.length === 0) return null;
+
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+      {nonZero.map((s) => (
+        <span
+          key={s}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "2px",
+            fontSize: fontSize.xs,
+            color: colors.textSecondary,
+          }}
+          title={`${s}: ${summary.bySeverity[s]}`}
+        >
+          <span
+            style={{
+              width: "6px",
+              height: "6px",
+              borderRadius: "50%",
+              background: colorMap[s],
+            }}
+          />
+          {summary.bySeverity[s]}
+        </span>
+      ))}
+    </span>
+  );
+}
+
+export function ServicesTab({
+  services,
+  serviceConnections,
+  alertsByDomain,
+  onNavigateToAlerts,
+  onServiceDeleted,
+}: ServicesTabProps) {
   const { colors } = useTheme();
   const cellStyles = getTableCellStyles(colors);
   const { searchQuery, setSearchQuery } = useTabFilter({});
@@ -121,17 +217,20 @@ export function ServicesTab({ services, serviceConnections, onServiceDeleted }: 
       const q = searchQuery.toLowerCase();
       result = result.filter((s) => s.domain.toLowerCase().includes(q));
     }
+    // Sort by risk score descending
+    result = [...result].sort((a, b) => {
+      const scoreA = getServiceRiskScore(a, serviceConnections[a.domain]?.length ?? 0, alertsByDomain?.[a.domain]);
+      const scoreB = getServiceRiskScore(b, serviceConnections[b.domain]?.length ?? 0, alertsByDomain?.[b.domain]);
+      return scoreB - scoreA;
+    });
     return result;
-  }, [services, searchQuery, activeTagFilters, deletedDomains]);
+  }, [services, searchQuery, activeTagFilters, deletedDomains, serviceConnections, alertsByDomain]);
 
   const toggleExpand = (domain: string) => {
     setExpandedDomains((prev) => {
       const next = new Set(prev);
-      if (next.has(domain)) {
-        next.delete(domain);
-      } else {
-        next.add(domain);
-      }
+      if (next.has(domain)) next.delete(domain);
+      else next.add(domain);
       return next;
     });
   };
@@ -140,32 +239,129 @@ export function ServicesTab({ services, serviceConnections, onServiceDeleted }: 
     <FilteredTab
       data={filtered}
       rowKey={(s) => s.domain}
-      rowHighlight={(s) => getServiceRiskLevel(s, serviceConnections[s.domain]?.length ?? 0)}
-      onRowClick={(s) => {
-        const destinations = serviceConnections[s.domain];
-        if (destinations && destinations.length > 0) toggleExpand(s.domain);
-      }}
+      rowHighlight={() => false}
+      onRowClick={(s) => toggleExpand(s.domain)}
       expandRow={(s) => {
         if (!expandedDomains.has(s.domain)) return null;
         const destinations = serviceConnections[s.domain];
-        if (!destinations || destinations.length === 0) return null;
-        const sorted = [...destinations].sort();
-        const shown = sorted.slice(0, 10);
-        const remaining = sorted.length - shown.length;
+        const alertSummary = alertsByDomain?.[s.domain];
+        const hasDestinations = destinations && destinations.length > 0;
+        const hasAlerts = alertSummary && alertSummary.total > 0;
+        const hasLinks = s.privacyPolicyUrl || s.termsOfServiceUrl;
+
+        if (!hasDestinations && !hasAlerts && !hasLinks) return null;
+
         return (
           <div style={cellStyles.expandContainer}>
-            {shown.map((domain) => (
-              <div key={domain} style={cellStyles.expandRow}>
-                <code style={cellStyles.mono} title={domain}>
-                  └ {domain}
-                </code>
-              </div>
-            ))}
-            {remaining > 0 && (
-              <div style={cellStyles.expandRemaining}>
-                他 {remaining} 件
+            {/* Alert summary with navigate link */}
+            {hasAlerts && (
+              <div
+                style={{
+                  ...cellStyles.expandRow,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: spacing.sm,
+                }}
+              >
+                <span style={{ fontSize: fontSize.sm, color: colors.textSecondary }}>
+                  アラート:
+                </span>
+                <SeverityDots summary={alertSummary} />
+                {alertSummary.categories.slice(0, 4).map((cat) => (
+                  <Badge key={cat} variant="info" size="sm">
+                    {categoryLabels[cat] ?? cat}
+                  </Badge>
+                ))}
+                {alertSummary.categories.length > 4 && (
+                  <span style={{ fontSize: fontSize.xs, color: colors.textMuted }}>
+                    +{alertSummary.categories.length - 4}
+                  </span>
+                )}
+                {onNavigateToAlerts && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onNavigateToAlerts(s.domain);
+                    }}
+                    style={{
+                      marginLeft: "auto",
+                      padding: `2px ${spacing.sm}`,
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: "4px",
+                      background: colors.bgPrimary,
+                      color: colors.link,
+                      fontSize: fontSize.sm,
+                      cursor: "pointer",
+                    }}
+                  >
+                    トリアージ →
+                  </button>
+                )}
               </div>
             )}
+            {/* Links */}
+            {hasLinks && (
+              <div
+                style={{
+                  ...cellStyles.expandRow,
+                  display: "flex",
+                  gap: spacing.lg,
+                  fontSize: fontSize.sm,
+                }}
+              >
+                {s.privacyPolicyUrl && (
+                  <span>
+                    <span style={{ color: colors.textMuted }}>PP: </span>
+                    <a
+                      href={s.privacyPolicyUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={cellStyles.link}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {truncate(s.privacyPolicyUrl, 40)}
+                    </a>
+                  </span>
+                )}
+                {s.termsOfServiceUrl && (
+                  <span>
+                    <span style={{ color: colors.textMuted }}>ToS: </span>
+                    <a
+                      href={s.termsOfServiceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={cellStyles.link}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {truncate(s.termsOfServiceUrl, 40)}
+                    </a>
+                  </span>
+                )}
+              </div>
+            )}
+            {/* Connections */}
+            {hasDestinations && (() => {
+              const sorted = [...destinations].sort();
+              const shown = sorted.slice(0, 10);
+              const remaining = sorted.length - shown.length;
+              return (
+                <>
+                  {shown.map((domain) => (
+                    <div key={domain} style={cellStyles.expandRow}>
+                      <code style={cellStyles.mono} title={domain}>
+                        └ {domain}
+                      </code>
+                    </div>
+                  ))}
+                  {remaining > 0 && (
+                    <div style={cellStyles.expandRemaining}>
+                      他 {remaining} 件
+                    </div>
+                  )}
+                </>
+              );
+            })()}
           </div>
         );
       }}
@@ -187,14 +383,32 @@ export function ServicesTab({ services, serviceConnections, onServiceDeleted }: 
       }
       columns={[
         {
+          key: "risk",
+          header: "リスク",
+          width: "70px",
+          render: (s) => {
+            const score = getServiceRiskScore(
+              s,
+              serviceConnections[s.domain]?.length ?? 0,
+              alertsByDomain?.[s.domain],
+            );
+            const risk = getRiskLabel(score);
+            return <Badge variant={risk.variant} size="sm">{risk.text}</Badge>;
+          },
+        },
+        {
           key: "domain",
           header: "ドメイン",
           render: (s) => {
-            const hasConnections = (serviceConnections[s.domain]?.length ?? 0) > 0;
             const isExpanded = expandedDomains.has(s.domain);
             return (
               <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                <span style={expandArrowStyle(cellStyles.expandArrowBase, isExpanded, hasConnections)}>
+                <span
+                  style={{
+                    ...cellStyles.expandArrowBase,
+                    transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)",
+                  }}
+                >
                   ▶
                 </span>
                 {s.faviconUrl ? (
@@ -212,9 +426,21 @@ export function ServicesTab({ services, serviceConnections, onServiceDeleted }: 
           },
         },
         {
+          key: "alerts",
+          header: "アラート",
+          width: "140px",
+          render: (s) => {
+            const summary = alertsByDomain?.[s.domain];
+            if (!summary || summary.total === 0) {
+              return <span style={cellStyles.muted}>-</span>;
+            }
+            return <SeverityDots summary={summary} />;
+          },
+        },
+        {
           key: "tags",
           header: "タグ",
-          width: "180px",
+          width: "200px",
           render: (s) => {
             const tags = getServiceTags(s);
             const connCount = serviceConnections[s.domain]?.length ?? 0;
@@ -234,45 +460,9 @@ export function ServicesTab({ services, serviceConnections, onServiceDeleted }: 
           },
         },
         {
-          key: "privacy",
-          header: "プライバシーポリシー",
-          width: "160px",
-          render: (s) =>
-            s.privacyPolicyUrl ? (
-              <a
-                href={s.privacyPolicyUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={cellStyles.link}
-              >
-                {truncate(s.privacyPolicyUrl, 25)}
-              </a>
-            ) : (
-              "-"
-            ),
-        },
-        {
-          key: "tos",
-          header: "利用規約",
-          width: "140px",
-          render: (s) =>
-            s.termsOfServiceUrl ? (
-              <a
-                href={s.termsOfServiceUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={cellStyles.link}
-              >
-                {truncate(s.termsOfServiceUrl, 20)}
-              </a>
-            ) : (
-              "-"
-            ),
-        },
-        {
           key: "detected",
           header: "検出日時",
-          width: "140px",
+          width: "100px",
           render: (s) => new Date(s.detectedAt).toLocaleDateString("ja-JP"),
         },
         {

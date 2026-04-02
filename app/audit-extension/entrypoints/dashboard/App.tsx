@@ -1,4 +1,5 @@
-import { useState } from "preact/hooks";
+import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
+import type { AlertSeverity } from "libztbs/alerts";
 import { ThemeContext, useThemeState } from "../../lib/theme";
 import { ErrorBoundary, NotificationBanner, Sidebar, useNotifications } from "../../components";
 import { SkeletonDashboard } from "../../components/Skeleton";
@@ -14,6 +15,22 @@ import { ExtensionsTab } from "./views/ExtensionsTab";
 import { AlertsTab } from "./views/AlertsTab";
 import { SettingsTab } from "./views/SettingsTab";
 import { ServicesTab } from "./views";
+import { sendMessage } from "../../lib/messaging";
+
+const SEVERITY_RANK: Record<string, number> = {
+  critical: 0,
+  high: 1,
+  medium: 2,
+  low: 3,
+  info: 4,
+};
+
+interface DomainAlertSummary {
+  total: number;
+  maxSeverity: AlertSeverity;
+  bySeverity: Record<AlertSeverity, number>;
+  categories: string[];
+}
 
 function DashboardContent() {
   const styles = createDashboardStyles();
@@ -26,6 +43,49 @@ function DashboardContent() {
     addNotification,
     setActiveTab,
   });
+
+  const [alertEvents, setAlertEvents] = useState<{ domain: string; severity: AlertSeverity; category: string }[]>([]);
+
+  useEffect(() => {
+    sendMessage<{ events: { domain: string; severity: AlertSeverity; category: string }[] }>({
+      type: "GET_POPUP_EVENTS",
+    })
+      .then((res) => setAlertEvents(res.events))
+      .catch(() => {});
+  }, []);
+
+  const alertsByDomain = useMemo(() => {
+    const map: Record<string, DomainAlertSummary> = {};
+    for (const e of alertEvents) {
+      const existing = map[e.domain];
+      if (existing) {
+        existing.total++;
+        if (SEVERITY_RANK[e.severity] < SEVERITY_RANK[existing.maxSeverity]) {
+          existing.maxSeverity = e.severity;
+        }
+        existing.bySeverity[e.severity] = (existing.bySeverity[e.severity] ?? 0) + 1;
+        if (!existing.categories.includes(e.category)) {
+          existing.categories.push(e.category);
+        }
+      } else {
+        map[e.domain] = {
+          total: 1,
+          maxSeverity: e.severity,
+          bySeverity: { critical: 0, high: 0, medium: 0, low: 0, info: 0, [e.severity]: 1 },
+          categories: [e.category],
+        };
+      }
+    }
+    return map;
+  }, [alertEvents]);
+
+  const navigateToAlerts = useCallback((domain: string) => {
+    setActiveTab("alerts");
+    window.location.hash = "alerts";
+    // Store domain filter for AlertsTab to pick up
+    sessionStorage.setItem("alertDomainFilter", domain);
+    window.dispatchEvent(new Event("alertDomainFilter"));
+  }, [setActiveTab]);
 
   const { handleClearData, handleExportJSON } = useDashboardActions({
     reports: dashboard.reports,
@@ -71,6 +131,8 @@ function DashboardContent() {
             <ServicesTab
               services={dashboard.services}
               serviceConnections={dashboard.serviceConnections}
+              alertsByDomain={alertsByDomain}
+              onNavigateToAlerts={navigateToAlerts}
             />
           )}
 
