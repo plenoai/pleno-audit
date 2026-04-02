@@ -1,8 +1,8 @@
-import { createLogger } from "@libztbs/extension-runtime";
+import { createLogger } from "libztbs/extension-runtime";
 import { useState, useEffect } from "preact/hooks";
 import { motion } from "motion/react";
-import type { DefenseScore, ScanProgressEvent, AttackCategory } from "@libztbs/battacker";
-import { CATEGORY_LABELS } from "@libztbs/battacker";
+import type { DefenseScore, ScanProgressEvent, AttackCategory } from "libztbs/battacker";
+import { CATEGORY_LABELS } from "libztbs/battacker";
 
 const logger = createLogger("battacker-popup");
 

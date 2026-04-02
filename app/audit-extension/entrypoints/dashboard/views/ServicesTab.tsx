@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from "preact/hooks";
 import { Globe } from "lucide-preact";
-import type { DetectedService } from "@libztbs/types";
+import type { DetectedService } from "libztbs/types";
 import { Badge, SearchInput, getTableCellStyles, expandArrowStyle } from "../../../components";
 import { ServiceRowMenu } from "../../../components/ServiceRowMenu";
 import { sendMessage } from "../../../lib/messaging";

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
-import type { AlertSeverity, AlertCategory } from "@libztbs/alerts";
+import type { AlertSeverity, AlertCategory } from "libztbs/alerts";
 import { AlertRowMenu, Badge, SearchInput, getTableCellStyles } from "../../../components";
 import { FilteredTab } from "../components/FilteredTab";
 import { useTabFilter } from "../hooks/useTabFilter";

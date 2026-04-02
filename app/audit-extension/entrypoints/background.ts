@@ -1,9 +1,9 @@
-import type { DetectedService } from "@libztbs/types";
-import type { CapturedAIPrompt } from "@libztbs/ai-detector";
-import { DEFAULT_AI_MONITOR_CONFIG } from "@libztbs/ai-detector";
-import { DEFAULT_NRD_CONFIG } from "@libztbs/nrd";
-import { DEFAULT_TYPOSQUAT_CONFIG } from "@libztbs/typosquat";
-import type { CSPViolation } from "@libztbs/csp";
+import type { DetectedService } from "libztbs/types";
+import type { CapturedAIPrompt } from "libztbs/ai-detector";
+import { DEFAULT_AI_MONITOR_CONFIG } from "libztbs/ai-detector";
+import { DEFAULT_NRD_CONFIG } from "libztbs/nrd";
+import { DEFAULT_TYPOSQUAT_CONFIG } from "libztbs/typosquat";
+import type { CSPViolation } from "libztbs/csp";
 import {
   getStorage,
   setStorage,
@@ -13,15 +13,15 @@ import {
   DEFAULT_NOTIFICATION_CONFIG,
   OperationGuard,
   type DoHRequestRecord,
-} from "@libztbs/extension-runtime";
+} from "libztbs/extension-runtime";
 import {
   startCookieMonitor,
   onCookieChange,
   createDoHMonitor,
   registerDoHMonitorListener,
   type DoHMonitor,
-} from "@libztbs/extension-analyzers";
-import { getSSOManager, getEnterpriseManager } from "@libztbs/extension-enterprise";
+} from "libztbs/extension-analyzers";
+import { getSSOManager, getEnterpriseManager } from "libztbs/extension-enterprise";
 
 const logger = createLogger("background");
 import {
@@ -59,12 +59,12 @@ import {
   type CanvasFingerprintData,
   type WebGLFingerprintData,
   type AudioFingerprintData,
-} from "@libztbs/background-services";
+} from "libztbs/background-services";
 import {
   createExtensionNetworkService,
   registerNetworkMonitorListener,
   type ExtensionStats,
-} from "@libztbs/extension-network-service";
+} from "libztbs/extension-network-service";
 
 
 const backgroundServices = createBackgroundServices(logger);
@@ -234,7 +234,7 @@ function initializeDebugBridge(): void {
   if (!import.meta.env.DEV) {
     return;
   }
-  void import("@libztbs/debug-bridge").then(({ initDebugBridge }) => {
+  void import("libztbs/debug-bridge").then(({ initDebugBridge }) => {
     initDebugBridge({
       getNetworkRequests,
     });

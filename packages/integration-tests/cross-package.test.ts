@@ -13,34 +13,34 @@ import { describe, it, expect } from "vitest";
 import {
   calculateSuspiciousScore,
   isHighRiskDomain,
-} from "../nrd/src/suspicious.js";
+} from "../core/src/nrd/suspicious.js";
 
 // typosquat
 import {
   calculateTyposquatHeuristics,
   isHighRiskTyposquat,
   DEFAULT_TYPOSQUAT_CONFIG,
-} from "../typosquat/src/index.js";
+} from "../core/src/typosquat/index.js";
 
 // csp
-import { CSPAnalyzer } from "../csp/src/analyzer.js";
+import { CSPAnalyzer } from "../core/src/csp/analyzer.js";
 
 // data-export
 import {
   exportData,
   exportReportToMarkdown,
   toJSON,
-} from "../data-export/src/exporter.js";
+} from "../core/src/data-export/exporter.js";
 
 // types (shared)
 import {
   scoreToRiskLevel5,
   RISK_SCORE_THRESHOLDS,
-} from "../types/src/scoring.js";
-import type { DetectedService } from "../types/src/index.js";
+} from "../core/src/types/scoring.js";
+import type { DetectedService } from "../core/src/types/index.js";
 
 // alerts
-import { scoreToRiskLevel5 as alertsScoreToRiskLevel5 } from "../alerts/src/scoring-utils.js";
+import { scoreToRiskLevel5 as alertsScoreToRiskLevel5 } from "../core/src/alerts/scoring-utils.js";
 
 // ---------------------------------------------------------------------------
 // 1. nrd + typosquat combined scoring

@@ -153,7 +153,7 @@ async function setupBrowserWithExtensions(): Promise<TestContext> {
     throw new Error(`Audit extension not found. Run: pnpm --filter @pleno-audit/audit-extension build`);
   }
   if (!existsSync(BATTACKER_EXTENSION_PATH)) {
-    throw new Error(`Battacker extension not found. Run: pnpm --filter @libztbs/battacker-extension build`);
+    throw new Error(`Battacker extension not found. Run: pnpm --filter libztbs/battacker-extension build`);
   }
 
   const { server, port } = await startTestServer();

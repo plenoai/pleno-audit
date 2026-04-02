@@ -1,0 +1,149 @@
+{
+  "name": "libztbs",
+  "version": "1.0.0",
+  "description": "Zero Trust Browser Security - Core Library",
+  "license": "AGPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/plenoai/pleno-audit.git",
+    "directory": "packages/core"
+  },
+  "type": "module",
+  "main": "./dist/types/index.js",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    "./types": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/types/index.js"
+    },
+    "./detectors": {
+      "types": "./dist/detectors/index.d.ts",
+      "import": "./dist/detectors/index.js"
+    },
+    "./detectors/types": {
+      "types": "./dist/detectors/types.d.ts",
+      "import": "./dist/detectors/types.js"
+    },
+    "./detectors/patterns": {
+      "types": "./dist/detectors/patterns.d.ts",
+      "import": "./dist/detectors/patterns.js"
+    },
+    "./csp": {
+      "types": "./dist/csp/index.d.ts",
+      "import": "./dist/csp/index.js"
+    },
+    "./csp/types": {
+      "types": "./dist/csp/types.d.ts",
+      "import": "./dist/csp/types.js"
+    },
+    "./nrd": {
+      "types": "./dist/nrd/index.d.ts",
+      "import": "./dist/nrd/index.js"
+    },
+    "./typosquat": {
+      "types": "./dist/typosquat/index.d.ts",
+      "import": "./dist/typosquat/index.js"
+    },
+    "./ai-detector": {
+      "types": "./dist/ai-detector/index.d.ts",
+      "import": "./dist/ai-detector/index.js"
+    },
+    "./alerts": {
+      "types": "./dist/alerts/index.d.ts",
+      "import": "./dist/alerts/index.js"
+    },
+    "./battacker": {
+      "types": "./dist/battacker/index.d.ts",
+      "import": "./dist/battacker/index.js"
+    },
+    "./data-export": {
+      "types": "./dist/data-export/index.d.ts",
+      "import": "./dist/data-export/index.js"
+    },
+    "./extension-analyzers": {
+      "types": "./dist/extension-analyzers/index.d.ts",
+      "import": "./dist/extension-analyzers/index.js"
+    },
+    "./extension-analyzers/stats": {
+      "types": "./dist/extension-analyzers/stats.d.ts",
+      "import": "./dist/extension-analyzers/stats.js"
+    },
+    "./extension-analyzers/risk": {
+      "types": "./dist/extension-analyzers/risk.d.ts",
+      "import": "./dist/extension-analyzers/risk.js"
+    },
+    "./extension-analyzers/suspicious": {
+      "types": "./dist/extension-analyzers/suspicious.d.ts",
+      "import": "./dist/extension-analyzers/suspicious.js"
+    },
+    "./extension-analyzers/doh": {
+      "types": "./dist/extension-analyzers/doh.d.ts",
+      "import": "./dist/extension-analyzers/doh.js"
+    },
+    "./extension-analyzers/cookie": {
+      "types": "./dist/extension-analyzers/cookie.d.ts",
+      "import": "./dist/extension-analyzers/cookie.js"
+    },
+    "./main-world-hooks": {
+      "types": "./dist/main-world-hooks/index.d.ts",
+      "import": "./dist/main-world-hooks/index.js"
+    },
+    "./extension-runtime": {
+      "types": "./dist/extension-runtime/index.d.ts",
+      "import": "./dist/extension-runtime/index.js"
+    },
+    "./extension-runtime/logger": {
+      "types": "./dist/extension-runtime/logger.d.ts",
+      "import": "./dist/extension-runtime/logger.js"
+    },
+    "./extension-runtime/storage": {
+      "types": "./dist/extension-runtime/storage.d.ts",
+      "import": "./dist/extension-runtime/storage.js"
+    },
+    "./extension-runtime/storage-types": {
+      "types": "./dist/extension-runtime/storage-types.d.ts",
+      "import": "./dist/extension-runtime/storage-types.js"
+    },
+    "./extension-runtime/cooldown": {
+      "types": "./dist/extension-runtime/cooldown-manager.d.ts",
+      "import": "./dist/extension-runtime/cooldown-manager.js"
+    },
+    "./extension-runtime/browser": {
+      "types": "./dist/extension-runtime/browser-adapter.d.ts",
+      "import": "./dist/extension-runtime/browser-adapter.js"
+    },
+    "./extension-runtime/errors": {
+      "types": "./dist/extension-runtime/errors.d.ts",
+      "import": "./dist/extension-runtime/errors.js"
+    },
+    "./background-services": {
+      "types": "./dist/background-services/index.d.ts",
+      "import": "./dist/background-services/index.js"
+    },
+    "./extension-network-service": {
+      "types": "./dist/extension-network-service/index.d.ts",
+      "import": "./dist/extension-network-service/index.js"
+    },
+    "./extension-enterprise": {
+      "types": "./dist/extension-enterprise/index.d.ts",
+      "import": "./dist/extension-enterprise/index.js"
+    },
+    "./debug-bridge": {
+      "types": "./dist/debug-bridge/index.d.ts",
+      "import": "./dist/debug-bridge/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "build:hooks": "node build-hooks.mjs"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "esbuild": "^0.27.0"
+  }
+}

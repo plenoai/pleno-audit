@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
-import type { CSPReport, CSPViolation, NetworkRequest } from "@libztbs/csp";
-import { extractDirectives, computeDirectiveStats, computeDomainViolationStats } from "@libztbs/csp";
-import type { DetectedService } from "@libztbs/types";
-import { createLogger } from "@libztbs/extension-runtime";
-import { filterNRDServices, filterLoginServices, filterTyposquatServices, filterAIServices } from "@libztbs/detectors";
+import type { CSPReport, CSPViolation, NetworkRequest } from "libztbs/csp";
+import { extractDirectives, computeDirectiveStats, computeDomainViolationStats } from "libztbs/csp";
+import type { DetectedService } from "libztbs/types";
+import { createLogger } from "libztbs/extension-runtime";
+import { filterNRDServices, filterLoginServices, filterTyposquatServices, filterAIServices } from "libztbs/detectors";
 import type { Notification } from "../../../components/NotificationBanner";
 import type { TabType } from "../types";
 

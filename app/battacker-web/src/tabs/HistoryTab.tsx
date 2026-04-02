@@ -1,4 +1,4 @@
-import type { DefenseScore } from "@libztbs/battacker";
+import type { DefenseScore } from "libztbs/battacker";
 
 export function HistoryTab({ history }: { history: DefenseScore[] }) {
   if (history.length === 0) {

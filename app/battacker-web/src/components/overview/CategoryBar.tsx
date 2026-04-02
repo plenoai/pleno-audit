@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
-import type { CategoryScore } from "@libztbs/battacker";
-import { CATEGORY_LABELS } from "@libztbs/battacker";
+import type { CategoryScore } from "libztbs/battacker";
+import { CATEGORY_LABELS } from "libztbs/battacker";
 
 export function CategoryBarWithSkeleton({
   category,

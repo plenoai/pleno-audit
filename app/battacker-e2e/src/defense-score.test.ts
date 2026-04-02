@@ -32,7 +32,7 @@ import {
   CATEGORY_LABELS,
   scoreToGrade,
   SEVERITY_SCORES,
-} from "@libztbs/battacker";
+} from "libztbs/battacker";
 
 // ============================================================================
 // E2E Test Types

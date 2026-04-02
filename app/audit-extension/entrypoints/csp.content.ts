@@ -4,8 +4,8 @@
  * Main world custom events are handled by security-bridge.content.ts.
  */
 
-import type { CSPViolation } from "@libztbs/csp";
-import { fireMessage } from "@libztbs/extension-runtime";
+import type { CSPViolation } from "libztbs/csp";
+import { fireMessage } from "libztbs/extension-runtime";
 
 function extractDomain(url: string): string {
   try {

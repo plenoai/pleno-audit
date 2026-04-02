@@ -6,7 +6,7 @@
   ],
   "commit": false,
   "fixed": [],
-  "linked": [],
+  "linked": [["libztbs"]],
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",

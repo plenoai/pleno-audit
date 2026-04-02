@@ -13,11 +13,11 @@
     "install-host": "tsx src/install.ts"
   },
   "dependencies": {
+    "libztbs": "workspace:*",
     "commander": "^14.0.3",
     "ws": "^8.20.0"
   },
   "devDependencies": {
-    "@libztbs/extension-runtime": "^0.2.0",
     "@types/node": "^25.5.0",
     "@types/ws": "^8.18.0",
     "tsx": "^4.21.0",

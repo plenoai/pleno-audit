@@ -11,8 +11,7 @@
     "build:all": "wxt build && wxt build -b firefox"
   },
   "dependencies": {
-    "@libztbs/battacker": "^0.2.0",
-    "@libztbs/extension-runtime": "^0.2.0",
+    "libztbs": "workspace:*",
     "motion": "^12.38.0",
     "preact": "^10.29.0"
   },
