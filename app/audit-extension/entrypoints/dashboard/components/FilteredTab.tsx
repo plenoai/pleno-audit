@@ -1,6 +1,6 @@
 import type { ComponentChildren } from "preact";
 import { DataTable } from "../../../components";
-import { useTheme } from "../../../lib/theme";
+import { useTheme, spacing } from "../../../lib/theme";
 
 interface Column<T> {
   key: string;
@@ -38,9 +38,9 @@ export function FilteredTab<T>({
         <div
           style={{
             display: "flex",
-            gap: "12px",
+            gap: spacing.sm,
             alignItems: "center",
-            marginBottom: "16px",
+            marginBottom: spacing.md,
             flexWrap: "wrap" as const,
           }}
         >

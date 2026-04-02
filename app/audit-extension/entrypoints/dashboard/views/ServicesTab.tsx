@@ -8,7 +8,7 @@ import { sendMessage } from "../../../lib/messaging";
 import { FilteredTab } from "../components/FilteredTab";
 import { useTabFilter } from "../hooks/useTabFilter";
 import { truncate } from "../utils";
-import { useTheme, spacing, fontSize } from "../../../lib/theme";
+import { useTheme, spacing, fontSize, borderRadius } from "../../../lib/theme";
 
 interface DomainAlertSummary {
   total: number;
@@ -131,7 +131,7 @@ function SeverityDots({ summary }: { summary: DomainAlertSummary }) {
   if (nonZero.length === 0) return null;
 
   return (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+    <span style={{ display: "inline-flex", alignItems: "center", gap: spacing.xs }}>
       {nonZero.map((s) => (
         <span
           key={s}
@@ -288,7 +288,7 @@ export function ServicesTab({
                       marginLeft: "auto",
                       padding: `2px ${spacing.sm}`,
                       border: `1px solid ${colors.border}`,
-                      borderRadius: "4px",
+                      borderRadius: borderRadius.sm,
                       background: colors.bgPrimary,
                       color: colors.link,
                       fontSize: fontSize.sm,
@@ -402,7 +402,7 @@ export function ServicesTab({
           render: (s) => {
             const isExpanded = expandedDomains.has(s.domain);
             return (
-              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: spacing.xs }}>
                 <span
                   style={{
                     ...cellStyles.expandArrowBase,
@@ -420,7 +420,7 @@ export function ServicesTab({
                 ) : (
                   <Globe size={12} style={{ flexShrink: 0, color: colors.textMuted }} />
                 )}
-                <code style={{ fontSize: "12px" }}>{s.domain}</code>
+                <code style={{ fontSize: fontSize.md }}>{s.domain}</code>
               </div>
             );
           },

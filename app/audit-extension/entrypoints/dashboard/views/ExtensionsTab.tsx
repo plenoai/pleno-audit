@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "preact/hooks";
 import { Badge, SearchInput, LoadingState, getTableCellStyles, expandArrowStyle } from "../../../components";
 import { FilteredTab } from "../components/FilteredTab";
 import { useTabFilter } from "../hooks/useTabFilter";
-import { useTheme, spacing, fontSize } from "../../../lib/theme";
+import { useTheme, spacing, fontSize, borderRadius } from "../../../lib/theme";
 import { truncate } from "../utils";
 import { createLogger } from "libztbs/extension-runtime";
 import { getPermissionRiskLevel, DANGEROUS_PERMISSIONS, type PermissionRiskLevel } from "libztbs/extension-analyzers";
@@ -226,7 +226,7 @@ export function ExtensionsTab() {
                     ...cellStyles.expandRow,
                     display: "flex",
                     alignItems: "center",
-                    gap: "8px",
+                    gap: spacing.sm,
                   }}
                 >
                   <code
@@ -282,7 +282,7 @@ export function ExtensionsTab() {
             const allPerms = [...ext.permissions, ...ext.hostPermissions];
             const isExpanded = expandedIds.has(ext.id);
             return (
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: spacing.sm }}>
                 <span
                   style={{
                     ...cellStyles.expandArrowBase,
@@ -322,7 +322,7 @@ export function ExtensionsTab() {
           key: "version",
           header: "バージョン",
           width: "100px",
-          render: (ext) => <code style={{ fontSize: "11px" }}>{ext.version}</code>,
+          render: (ext) => <code style={{ fontSize: fontSize.sm }}>{ext.version}</code>,
         },
       ]}
     />

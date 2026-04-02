@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "preact/hooks";
 import { sendMessage } from "../../../lib/messaging";
-import { useTheme } from "../../../lib/theme";
+import { useTheme, spacing, fontSize, borderRadius } from "../../../lib/theme";
 import {
   createLogger,
   DEFAULT_DETECTION_CONFIG,
@@ -31,16 +31,16 @@ function ToggleRow({
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        padding: "8px 10px",
+        padding: `${spacing.sm} ${spacing.lg}`,
         background: colors.bgSecondary,
-        borderRadius: "6px",
-        fontSize: "12px",
+        borderRadius: borderRadius.md,
+        fontSize: fontSize.md,
         cursor: "pointer",
       }}
     >
       <div style={{ display: "flex", flexDirection: "column", gap: "2px", flex: 1 } as CSSProperties}>
-        <span style={{ fontSize: "12px", fontWeight: 500, color: colors.textPrimary }}>{title}</span>
-        <span style={{ fontSize: "10px", opacity: 0.7, color: colors.textSecondary }}>{desc}</span>
+        <span style={{ fontSize: fontSize.md, fontWeight: 500, color: colors.textPrimary }}>{title}</span>
+        <span style={{ fontSize: fontSize.xs, color: colors.textSecondary }}>{desc}</span>
       </div>
       <input
         type="checkbox"
@@ -90,14 +90,14 @@ export function SettingsTab() {
       style={{
         background: colors.bgPrimary,
         border: `1px solid ${colors.border}`,
-        borderRadius: "8px",
-        padding: "24px",
+        borderRadius: borderRadius.lg,
+        padding: spacing.xl,
         display: "flex",
         flexDirection: "column",
-        gap: "6px",
+        gap: spacing.xs,
       }}
     >
-      <span style={{ fontSize: "11px", fontWeight: 600, color: colors.textPrimary, marginBottom: "2px", display: "block" } as CSSProperties}>
+      <span style={{ fontSize: fontSize.sm, fontWeight: 600, color: colors.textPrimary, marginBottom: spacing.xs, display: "block" } as CSSProperties}>
         アラートルール
       </span>
 
@@ -105,7 +105,7 @@ export function SettingsTab() {
       <ToggleRow title="Typosquat検出" desc="偽装ドメインを検出しアラート" checked={detectionConfig.enableTyposquat} onChange={() => saveDetection({ ...detectionConfig, enableTyposquat: !detectionConfig.enableTyposquat })} colors={colors} />
       <ToggleRow title="AIプロンプト監視" desc="AI入力に含まれる機密データを検出しアラート" checked={detectionConfig.enableAI} onChange={() => saveDetection({ ...detectionConfig, enableAI: !detectionConfig.enableAI })} colors={colors} />
 
-      <span style={{ fontSize: "11px", fontWeight: 600, color: colors.textPrimary, marginTop: "10px", marginBottom: "2px", display: "block" } as CSSProperties}>
+      <span style={{ fontSize: fontSize.sm, fontWeight: 600, color: colors.textPrimary, marginTop: spacing.md, marginBottom: spacing.xs, display: "block" } as CSSProperties}>
         通知
       </span>
 

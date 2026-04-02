@@ -1,6 +1,6 @@
 import type { CSSProperties } from "preact/compat";
 import { useState, useMemo } from "preact/hooks";
-import { useTheme, type ThemeColors } from "../lib/theme";
+import { useTheme, type ThemeColors, spacing, fontSize, borderRadius } from "../lib/theme";
 
 interface Column<T> {
   key: string;
@@ -25,25 +25,25 @@ function getStyles(colors: ThemeColors, isDark: boolean): Record<string, CSSProp
     container: {
       background: colors.bgPrimary,
       border: `1px solid ${colors.border}`,
-      borderRadius: "8px",
+      borderRadius: borderRadius.lg,
       overflow: "hidden",
     },
     table: {
       width: "100%",
       borderCollapse: "collapse",
-      fontSize: "13px",
+      fontSize: fontSize.base,
     },
     th: {
       background: colors.bgSecondary,
       borderBottom: `1px solid ${colors.border}`,
-      padding: "12px 16px",
+      padding: `${spacing.sm} ${spacing.lg}`,
       textAlign: "left",
-      fontSize: "12px",
+      fontSize: fontSize.sm,
       fontWeight: 500,
       color: colors.textSecondary,
     },
     td: {
-      padding: "12px 16px",
+      padding: `${spacing.sm} ${spacing.lg}`,
       borderBottom: `1px solid ${colors.borderLight}`,
       color: colors.textPrimary,
       verticalAlign: "middle",
@@ -61,42 +61,42 @@ function getStyles(colors: ThemeColors, isDark: boolean): Record<string, CSSProp
       background: isDark ? "#0a2a3d" : "#eff6ff",
     },
     empty: {
-      padding: "48px",
+      padding: spacing.xxl,
       textAlign: "center",
       color: colors.textMuted,
-      fontSize: "14px",
+      fontSize: fontSize.lg,
     },
     pagination: {
       display: "flex",
       justifyContent: "space-between",
       alignItems: "center",
-      padding: "12px 16px",
+      padding: `${spacing.sm} ${spacing.lg}`,
       borderTop: `1px solid ${colors.border}`,
       background: colors.bgSecondary,
     },
     pageInfo: {
-      fontSize: "13px",
+      fontSize: fontSize.base,
       color: colors.textSecondary,
     },
     pageButtons: {
       display: "flex",
-      gap: "8px",
+      gap: spacing.sm,
     },
     pageBtn: {
-      padding: "6px 12px",
+      padding: `${spacing.xs} ${spacing.md}`,
       border: `1px solid ${colors.border}`,
-      borderRadius: "6px",
+      borderRadius: borderRadius.md,
       background: colors.bgPrimary,
-      fontSize: "12px",
+      fontSize: fontSize.md,
       color: colors.textPrimary,
       cursor: "pointer",
     },
     pageBtnDisabled: {
-      padding: "6px 12px",
+      padding: `${spacing.xs} ${spacing.md}`,
       border: `1px solid ${colors.border}`,
-      borderRadius: "6px",
+      borderRadius: borderRadius.md,
       background: colors.bgSecondary,
-      fontSize: "12px",
+      fontSize: fontSize.md,
       color: colors.textMuted,
       cursor: "not-allowed",
     },
@@ -112,19 +112,19 @@ export function getTableCellStyles(colors: ThemeColors) {
     } as CSSProperties,
     /** 展開行の各アイテム */
     expandRow: {
-      padding: "4px 16px 4px 48px",
+      padding: `${spacing.xs} ${spacing.lg} ${spacing.xs} 48px`,
       borderBottom: `1px solid ${colors.borderLight}`,
     } as CSSProperties,
     /** 展開行の「他 N 件」テキスト */
     expandRemaining: {
-      padding: "4px 16px 4px 48px",
+      padding: `${spacing.xs} ${spacing.lg} ${spacing.xs} 48px`,
       color: colors.textMuted,
       fontStyle: "italic",
-      fontSize: "11px",
+      fontSize: fontSize.sm,
     } as CSSProperties,
     /** モノスペースコード（省略付き） */
     mono: {
-      fontSize: "11px",
+      fontSize: fontSize.sm,
       fontFamily: "monospace",
       color: colors.textSecondary,
       overflow: "hidden",
@@ -135,14 +135,14 @@ export function getTableCellStyles(colors: ThemeColors) {
     /** リンク */
     link: {
       color: colors.link,
-      fontSize: "12px",
+      fontSize: fontSize.md,
     } as CSSProperties,
     /** 展開矢印アイコンのベーススタイル */
     expandArrowBase: {
-      fontSize: "10px",
+      fontSize: fontSize.xs,
       color: colors.textSecondary,
       display: "inline-block",
-      width: "12px",
+      width: spacing.md,
       textAlign: "center",
       flexShrink: 0,
       transition: "transform 0.2s",
@@ -151,7 +151,7 @@ export function getTableCellStyles(colors: ThemeColors) {
     tags: {
       display: "flex",
       flexWrap: "wrap",
-      gap: "4px",
+      gap: spacing.xs,
     } as CSSProperties,
     /** ミュートテキスト（空値の「-」等） */
     muted: {
