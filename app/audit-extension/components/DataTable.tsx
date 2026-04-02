@@ -20,7 +20,7 @@ interface DataTableProps<T> {
   onRowClick?: (item: T) => void;
 }
 
-function getStyles(colors: ThemeColors, isDark: boolean): Record<string, CSSProperties> {
+function getStyles(colors: ThemeColors): Record<string, CSSProperties> {
   return {
     container: {
       background: colors.bgPrimary,
@@ -52,13 +52,13 @@ function getStyles(colors: ThemeColors, isDark: boolean): Record<string, CSSProp
       transition: "background 0.1s",
     },
     rowHighlightDanger: {
-      background: isDark ? "#3d1a1a" : "#fef2f2",
+      background: colors.status.danger.bg,
     },
     rowHighlightWarning: {
-      background: isDark ? "#3d3a0a" : "#fffbe6",
+      background: colors.status.warning.bg,
     },
     rowHighlightInfo: {
-      background: isDark ? "#0a2a3d" : "#eff6ff",
+      background: colors.status.info.bg,
     },
     empty: {
       padding: spacing.xxl,
@@ -188,8 +188,8 @@ export function DataTable<T>({
   expandRow,
   onRowClick,
 }: DataTableProps<T>) {
-  const { colors, isDark } = useTheme();
-  const styles = getStyles(colors, isDark);
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const [page, setPage] = useState(0);
 
   const totalPages = Math.ceil(data.length / pageSize);
