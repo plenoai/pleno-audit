@@ -13,7 +13,7 @@
     "comparison": "npx tsx src/comparison-report.ts"
   },
   "dependencies": {
-    "@libztbs/battacker": "^0.1.0"
+    "@libztbs/battacker": "^0.2.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.59.0",
