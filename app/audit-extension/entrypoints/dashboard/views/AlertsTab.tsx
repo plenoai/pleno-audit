@@ -581,7 +581,7 @@ export function AlertsTab() {
       {filtered.length === 0 ? (
         <EmptyState
           title="検出されたアラートはありません"
-          description="セキュリティアラートが検出されると、重要度順に表示されます"
+          description="セキュリティアラートが検出されると表示されます"
         />
       ) : (
         <div
@@ -612,7 +612,7 @@ export function AlertsTab() {
               style={{ cursor: "pointer", accentColor: colors.interactive }}
             />
             <span style={{ flex: 1 }}>
-              {filtered.length}件のアラート（重要度順）
+              {filtered.length}件のアラート
             </span>
           </div>
 
