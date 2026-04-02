@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "prebuild:hooks": "node ../../packages/main-world-hooks/build.mjs",
+    "prebuild:hooks": "node ../../packages/core/build-hooks.mjs",
     "dev": "pnpm prebuild:hooks && wxt",
     "dev:firefox": "pnpm prebuild:hooks && wxt -b firefox",
     "build": "pnpm prebuild:hooks && wxt build",
@@ -12,20 +12,7 @@
     "build:all": "wxt build && wxt build -b firefox"
   },
   "dependencies": {
-    "@libztbs/ai-detector": "^0.2.0",
-    "@libztbs/alerts": "^0.2.0",
-    "@libztbs/extension-analyzers": "^0.2.0",
-    "@libztbs/background-services": "^0.2.0",
-    "@libztbs/types": "^0.2.0",
-    "@libztbs/csp": "^0.2.0",
-    "@libztbs/data-export": "^0.2.0",
-    "@libztbs/debug-bridge": "^0.2.0",
-    "@libztbs/detectors": "^0.2.0",
-    "@libztbs/extension-network-service": "^0.2.0",
-    "@libztbs/extension-enterprise": "^0.2.0",
-    "@libztbs/extension-runtime": "^0.2.0",
-    "@libztbs/nrd": "^0.2.0",
-    "@libztbs/typosquat": "^0.2.0",
+    "libztbs": "workspace:*",
     "lucide-preact": "^0.577.0",
     "preact": "^10.29.0"
   },

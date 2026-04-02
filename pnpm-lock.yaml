@@ -62,48 +62,9 @@ importers:
 
   app/audit-extension:
     dependencies:
-      '@libztbs/ai-detector':
-        specifier: ^0.2.0
-        version: link:../../packages/ai-detector
-      '@libztbs/alerts':
-        specifier: ^0.2.0
-        version: link:../../packages/alerts
-      '@libztbs/background-services':
-        specifier: ^0.2.0
-        version: link:../../packages/background-services
-      '@libztbs/csp':
-        specifier: ^0.2.0
-        version: link:../../packages/csp
-      '@libztbs/data-export':
-        specifier: ^0.2.0
-        version: link:../../packages/data-export
-      '@libztbs/debug-bridge':
-        specifier: ^0.2.0
-        version: link:../../packages/debug-bridge
-      '@libztbs/detectors':
-        specifier: ^0.2.0
-        version: link:../../packages/detectors
-      '@libztbs/extension-analyzers':
-        specifier: ^0.2.0
-        version: link:../../packages/extension-analyzers
-      '@libztbs/extension-enterprise':
-        specifier: ^0.2.0
-        version: link:../../packages/extension-enterprise
-      '@libztbs/extension-network-service':
-        specifier: ^0.2.0
-        version: link:../../packages/extension-network-service
-      '@libztbs/extension-runtime':
-        specifier: ^0.2.0
-        version: link:../../packages/extension-runtime
-      '@libztbs/nrd':
-        specifier: ^0.2.0
-        version: link:../../packages/nrd
-      '@libztbs/types':
-        specifier: ^0.2.0
-        version: link:../../packages/types
-      '@libztbs/typosquat':
-        specifier: ^0.2.0
-        version: link:../../packages/typosquat
+      libztbs:
+        specifier: workspace:*
+        version: link:../../packages/core
       lucide-preact:
         specifier: ^0.577.0
         version: 0.577.0(preact@10.29.0)
@@ -123,9 +84,9 @@ importers:
 
   app/battacker-e2e:
     dependencies:
-      '@libztbs/battacker':
-        specifier: ^0.2.0
-        version: link:../../packages/battacker
+      libztbs:
+        specifier: workspace:*
+        version: link:../../packages/core
     devDependencies:
       '@playwright/test':
         specifier: ^1.59.0
@@ -142,12 +103,9 @@ importers:
 
   app/battacker-extension:
     dependencies:
-      '@libztbs/battacker':
-        specifier: ^0.2.0
-        version: link:../../packages/battacker
-      '@libztbs/extension-runtime':
-        specifier: ^0.2.0
-        version: link:../../packages/extension-runtime
+      libztbs:
+        specifier: workspace:*
+        version: link:../../packages/core
       motion:
         specifier: ^12.38.0
         version: 12.38.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -164,12 +122,12 @@ importers:
 
   app/battacker-web:
     dependencies:
-      '@libztbs/battacker':
-        specifier: ^0.2.0
-        version: link:../../packages/battacker
       framer-motion:
         specifier: ^12.38.0
         version: 12.38.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      libztbs:
+        specifier: workspace:*
+        version: link:../../packages/core
       react:
         specifier: ^19.2.4
         version: 19.2.4
@@ -198,13 +156,13 @@ importers:
       commander:
         specifier: ^14.0.3
         version: 14.0.3
+      libztbs:
+        specifier: workspace:*
+        version: link:../../packages/core
       ws:
         specifier: ^8.20.0
         version: 8.20.0
     devDependencies:
-      '@libztbs/extension-runtime':
-        specifier: ^0.2.0
-        version: link:../../packages/extension-runtime
       '@types/node':
         specifier: ^25.5.0
         version: 25.5.0
@@ -258,132 +216,15 @@ importers:
         specifier: ^7.3.1
         version: 7.3.1(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(tsx@4.21.0)
 
-  packages/ai-detector:
-    dependencies:
-      '@libztbs/types':
-        specifier: workspace:*
-        version: link:../types
-
-  packages/alerts:
-    dependencies:
-      '@libztbs/types':
-        specifier: workspace:*
-        version: link:../types
-
-  packages/background-services:
-    dependencies:
-      '@libztbs/ai-detector':
-        specifier: workspace:*
-        version: link:../ai-detector
-      '@libztbs/alerts':
-        specifier: workspace:*
-        version: link:../alerts
-      '@libztbs/csp':
-        specifier: workspace:*
-        version: link:../csp
-      '@libztbs/detectors':
-        specifier: workspace:*
-        version: link:../detectors
-      '@libztbs/extension-analyzers':
-        specifier: workspace:*
-        version: link:../extension-analyzers
-      '@libztbs/extension-runtime':
-        specifier: workspace:*
-        version: link:../extension-runtime
-      '@libztbs/nrd':
-        specifier: workspace:*
-        version: link:../nrd
-      '@libztbs/types':
-        specifier: workspace:*
-        version: link:../types
-      '@libztbs/typosquat':
-        specifier: workspace:*
-        version: link:../typosquat
-
-  packages/battacker: {}
-
-  packages/csp: {}
-
-  packages/data-export: {}
-
-  packages/debug-bridge:
-    dependencies:
-      '@libztbs/extension-runtime':
-        specifier: workspace:*
-        version: link:../extension-runtime
-
-  packages/detectors:
-    dependencies:
-      '@libztbs/types':
-        specifier: workspace:*
-        version: link:../types
-
-  packages/extension-analyzers:
-    dependencies:
-      '@libztbs/detectors':
-        specifier: workspace:*
-        version: link:../detectors
-      '@libztbs/extension-runtime':
-        specifier: workspace:*
-        version: link:../extension-runtime
-      '@libztbs/types':
-        specifier: workspace:*
-        version: link:../types
-
-  packages/extension-enterprise:
-    dependencies:
-      '@libztbs/extension-runtime':
-        specifier: workspace:*
-        version: link:../extension-runtime
-
-  packages/extension-network-service:
-    dependencies:
-      '@libztbs/alerts':
-        specifier: workspace:*
-        version: link:../alerts
-      '@libztbs/extension-analyzers':
-        specifier: workspace:*
-        version: link:../extension-analyzers
-      '@libztbs/extension-runtime':
-        specifier: workspace:*
-        version: link:../extension-runtime
-
-  packages/extension-runtime:
-    dependencies:
-      '@libztbs/ai-detector':
-        specifier: workspace:*
-        version: link:../ai-detector
-      '@libztbs/alerts':
-        specifier: workspace:*
-        version: link:../alerts
-      '@libztbs/csp':
-        specifier: workspace:*
-        version: link:../csp
-      '@libztbs/detectors':
-        specifier: workspace:*
-        version: link:../detectors
-      '@libztbs/nrd':
-        specifier: workspace:*
-        version: link:../nrd
-      '@libztbs/types':
-        specifier: workspace:*
-        version: link:../types
-
-  packages/integration-tests: {}
-
-  packages/main-world-hooks:
+  packages/core:
     devDependencies:
       esbuild:
         specifier: ^0.27.0
         version: 0.27.5
 
-  packages/nrd: {}
+  packages/integration-tests: {}
 
   packages/test-utils: {}
-
-  packages/types: {}
-
-  packages/typosquat: {}
 
 packages:
 

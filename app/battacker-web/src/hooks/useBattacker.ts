@@ -5,7 +5,7 @@ import {
   runAllTests,
   calculateDefenseScore,
   createWebStorage,
-} from "@libztbs/battacker";
+} from "libztbs/battacker";
 
 const storage = createWebStorage();
 

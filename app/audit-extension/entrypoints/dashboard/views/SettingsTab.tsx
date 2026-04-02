@@ -7,7 +7,7 @@ import {
   type DetectionConfig,
   DEFAULT_NOTIFICATION_CONFIG,
   type NotificationConfig,
-} from "@libztbs/extension-runtime";
+} from "libztbs/extension-runtime";
 import type { CSSProperties } from "preact/compat";
 
 const logger = createLogger("dashboard-settings");

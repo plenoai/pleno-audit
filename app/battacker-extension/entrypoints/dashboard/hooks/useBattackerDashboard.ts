@@ -1,6 +1,6 @@
-import { createLogger } from "@libztbs/extension-runtime";
+import { createLogger } from "libztbs/extension-runtime";
 import { useCallback, useEffect, useState } from "preact/hooks";
-import type { DefenseScore, ScanProgressEvent } from "@libztbs/battacker";
+import type { DefenseScore, ScanProgressEvent } from "libztbs/battacker";
 import type { ScanState } from "../types";
 
 const logger = createLogger("battacker-dashboard");

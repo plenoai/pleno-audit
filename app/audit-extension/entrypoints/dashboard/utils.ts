@@ -1,6 +1,6 @@
 import type { TabType } from "./types";
 import { validTabs } from "./constants";
-export { getStatusBadge } from "@libztbs/alerts";
+export { getStatusBadge } from "libztbs/alerts";
 
 export function truncate(str: string, len: number): string {
   return str && str.length > len ? str.substring(0, len) + "..." : str || "";

@@ -1,5 +1,5 @@
-import { createLogger, isManifestV3, getBrowserAPI } from "@libztbs/extension-runtime";
-import type { DefenseScore, ScanProgressEvent } from "@libztbs/battacker";
+import { createLogger, isManifestV3, getBrowserAPI } from "libztbs/extension-runtime";
+import type { DefenseScore, ScanProgressEvent } from "libztbs/battacker";
 
 const logger = createLogger("battacker");
 
