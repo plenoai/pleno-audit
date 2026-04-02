@@ -36,6 +36,14 @@ export const CRYPTO_PATTERNS: Record<string, RegExp> = {
 
 export const SUSPICIOUS_EXTENSIONS = [".exe", ".msi", ".bat", ".ps1", ".cmd", ".scr", ".vbs", ".js", ".jar", ".dll"];
 
+/** XSSインジェクションパターン（security-patterns.ts と同期すること） */
+export const XSS_PATTERNS: RegExp[] = [
+  /<script[^>]*>[^<]+/i,
+  /javascript:\s*[^"'\s]/i,
+  /on(error|load)\s*=\s*["'][^"']*eval/i,
+  /<iframe[^>]*src\s*=\s*["']?javascript:/i,
+];
+
 // ===== Helpers =====
 
 function deferEmit(emitSecurityEvent: SharedHookUtils["emitSecurityEvent"], name: string, data: Record<string, unknown>): void {
@@ -92,6 +100,28 @@ export function hasSensitiveFields(form: HTMLFormElement): { hasSensitive: boole
 }
 
 export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecurityEvent"]): void {
+  // ===== Reflected XSS Detection (URL query / fragment) =====
+  const checkUrlXSS = () => {
+    for (const [source, value] of [["url_query", location.search], ["url_fragment", location.hash]] as const) {
+      if (!value) continue;
+      let decoded: string;
+      try { decoded = decodeURIComponent(value); } catch { decoded = value; }
+      for (const pattern of XSS_PATTERNS) {
+        if (pattern.test(decoded)) {
+          deferEmit(emitSecurityEvent, "__XSS_DETECTED__", {
+            source,
+            type: "reflected_xss",
+            payloadPreview: decoded.slice(0, 200),
+            timestamp: Date.now(),
+            pageUrl: window.location.href,
+          });
+          return;
+        }
+      }
+    }
+  };
+  checkUrlXSS();
+
   // ===== Supply Chain Risk - DOM Observer =====
   const observer = new MutationObserver((mutations) => {
     for (const mutation of mutations) {

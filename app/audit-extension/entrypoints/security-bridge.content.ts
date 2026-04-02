@@ -51,7 +51,7 @@ export default defineContentScript({
       "__NETWORK_INSPECTION_REQUEST__",
       "__CLIPBOARD_HIJACK_DETECTED__",
       // Cookie Access hook removed (handled by chrome.cookies.onChanged)
-      // XSS via innerHTML removed (prototype modification triggers anti-tamper SDKs)
+      "__XSS_DETECTED__",
       "__DOM_SCRAPING_DETECTED__",
       "__SUSPICIOUS_DOWNLOAD_DETECTED__",
       "__WORKER_CREATED__",
