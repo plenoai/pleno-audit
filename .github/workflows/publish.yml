@@ -34,9 +34,9 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build packages
-        run: pnpm -r --filter './packages/*' build
+        run: pnpm --filter libztbs build
 
       - name: Publish packages to npm
-        run: pnpm -r --filter './packages/*' publish --access public --provenance --no-git-checks
+        run: pnpm --filter libztbs publish --access public --provenance --no-git-checks
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: "true"
