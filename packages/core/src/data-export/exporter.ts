@@ -144,10 +144,10 @@ export function exportReportToMarkdown(report: SecurityReport): string {
   lines.push("# Pleno Audit Security Report");
   lines.push("");
   lines.push(
-    `Generated: ${new Date(report.metadata.generatedAt).toLocaleString("ja-JP")}`
+    `Generated: ${new Date(report.metadata.generatedAt).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" })}`
   );
   lines.push(
-    `Period: ${new Date(report.metadata.reportPeriod.start).toLocaleDateString("ja-JP")} - ${new Date(report.metadata.reportPeriod.end).toLocaleDateString("ja-JP")}`
+    `Period: ${new Date(report.metadata.reportPeriod.start).toLocaleDateString("ja-JP", { timeZone: "Asia/Tokyo" })} - ${new Date(report.metadata.reportPeriod.end).toLocaleDateString("ja-JP", { timeZone: "Asia/Tokyo" })}`
   );
   lines.push("");
 
@@ -204,7 +204,7 @@ export function exportReportToMarkdown(report: SecurityReport): string {
       lines.push(`- **Severity**: ${violation.severity}`);
       lines.push(`- **Description**: ${violation.description}`);
       lines.push(
-        `- **Time**: ${new Date(violation.timestamp).toLocaleString("ja-JP")}`
+        `- **Time**: ${new Date(violation.timestamp).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" })}`
       );
       lines.push("");
     }
@@ -342,8 +342,8 @@ export function exportReportToHTML(report: SecurityReport): string {
   <div class="container">
     <h1>Pleno Audit Security Report</h1>
     <div class="meta">
-      Generated: ${new Date(report.metadata.generatedAt).toLocaleString("ja-JP")} |
-      Period: ${new Date(report.metadata.reportPeriod.start).toLocaleDateString("ja-JP")} - ${new Date(report.metadata.reportPeriod.end).toLocaleDateString("ja-JP")}
+      Generated: ${new Date(report.metadata.generatedAt).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" })} |
+      Period: ${new Date(report.metadata.reportPeriod.start).toLocaleDateString("ja-JP", { timeZone: "Asia/Tokyo" })} - ${new Date(report.metadata.reportPeriod.end).toLocaleDateString("ja-JP", { timeZone: "Asia/Tokyo" })}
     </div>
 
     <div class="score-card">

@@ -31,27 +31,27 @@
     },
     // Logger package - console is the output mechanism
     {
-      "files": ["packages/extension-runtime/src/logger.ts"],
+      "files": ["packages/core/src/extension-runtime/logger.ts"],
       "rules": { "no-console": "off" }
     },
     // Debug bridge - needs console before logger is connected, and WebSocket for debug
     {
-      "files": ["packages/debug-bridge/src/**/*"],
+      "files": ["packages/core/src/debug-bridge/**/*"],
       "rules": { "no-console": "off", "no-restricted-globals": "off" }
     },
     // RDAP API query for NRD detection (default: OFF)
     {
-      "files": ["packages/nrd/src/rdap.ts"],
+      "files": ["packages/core/src/nrd/rdap.ts"],
       "rules": { "no-restricted-globals": "off" }
     },
     // Remote API client (default: local mode)
     {
-      "files": ["packages/extension-enterprise/src/api-client.ts"],
+      "files": ["packages/core/src/extension-enterprise/api-client.ts"],
       "rules": { "no-restricted-globals": "off" }
     },
     // CSP violation report sender (default: OFF)
     {
-      "files": ["packages/csp/src/reporter.ts"],
+      "files": ["packages/core/src/csp/reporter.ts"],
       "rules": { "no-restricted-globals": "off" }
     },
     // Web API interceptor for monitoring (no actual communication)
@@ -61,12 +61,12 @@
     },
     // Main-world hooks - security detection hooks that intentionally reference browser APIs
     {
-      "files": ["packages/main-world-hooks/src/**/*"],
+      "files": ["packages/core/src/main-world-hooks/**/*"],
       "rules": { "no-restricted-globals": "off" }
     },
     // Main-world hooks build script - console is intentional for build output
     {
-      "files": ["packages/main-world-hooks/build.mjs"],
+      "files": ["packages/core/build-hooks.mjs"],
       "rules": { "no-console": "off" }
     },
     // Landing page website (separate from extension)
@@ -81,12 +81,12 @@
     },
     // Battacker package - attack simulations require network access and console for payload simulation
     {
-      "files": ["packages/battacker/**/*"],
+      "files": ["packages/core/src/battacker/**/*"],
       "rules": { "no-console": "off", "no-restricted-globals": "off" }
     },
     // SSO Manager - requires OAuth token exchange (enterprise feature, default: OFF)
     {
-      "files": ["packages/extension-enterprise/src/sso-manager.ts"],
+      "files": ["packages/core/src/extension-enterprise/sso-manager.ts"],
       "rules": { "no-restricted-globals": "off" }
     },
     // Debug WebSocket - developer tooling for debugging
@@ -101,12 +101,12 @@
     },
     // Test files - allow mocking fetch/WebSocket and console for test output
     {
-      "files": ["*.test.ts", "*.spec.ts"],
+      "files": ["*.test.ts", "*.spec.ts", "*.property.ts"],
       "rules": { "no-console": "off", "no-restricted-globals": "off" }
     },
     // Lib test files
     {
-      "files": ["packages/**/*.test.ts"],
+      "files": ["packages/**/*.test.ts", "packages/**/*.property.ts"],
       "rules": { "no-console": "off", "no-restricted-globals": "off" }
     },
     // App test files

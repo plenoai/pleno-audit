@@ -10,6 +10,7 @@ import * as fc from "fast-check";
 import {
   containsXSSPattern,
   hasSensitiveField,
+  SENSITIVE_FIELD_NAMES,
   detectCryptoAddress,
   isSuspiciousFileExtension,
   isKnownCDN,
@@ -85,7 +86,7 @@ describe("containsXSSPattern - property tests", () => {
 describe("hasSensitiveField - property tests", () => {
   const nonSensitiveTypeArb = fc.constantFrom("text", "number", "checkbox", "radio", "submit", "hidden", "date", "range");
   const nonSensitiveNameArb = fc.stringMatching(/^[a-z]{3,10}$/).filter(
-    (name) => !["password", "passwd", "pwd", "pass", "secret", "token", "apikey", "credit", "card", "cvv", "ssn", "otp", "pin", "auth", "credential"].some((p) => name.includes(p)),
+    (name) => !SENSITIVE_FIELD_NAMES.some((p) => name.includes(p)),
   );
 
   it("returns false for non-sensitive field combinations", () => {

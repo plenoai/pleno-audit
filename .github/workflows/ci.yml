@@ -173,7 +173,7 @@ jobs:
         run: pnpm -r --filter './packages/*' build
 
       - name: Run property-based tests
-        run: pnpm vitest run --include 'packages/**/*.property.ts'
+        run: pnpm vitest run '.property.'
 
   mutation:
     name: Mutation Testing
