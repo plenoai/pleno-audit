@@ -156,7 +156,7 @@ async function simulateInnerHTMLInjection(): Promise<AttackResult> {
 
     // Try to inject HTML
     const maliciousHTML =
-      '<img src=x onerror="alert(\'XSS\')" /> <script>console.log("injected")</script>';
+      '<img src=x onerror="window.__battacker_xss_test__=true" /> <script>window.__battacker_xss_test__=true</script>';
     container.innerHTML = maliciousHTML;
 
     const hasScript = container.querySelector("script");
