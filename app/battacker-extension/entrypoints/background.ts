@@ -24,21 +24,46 @@ interface TargetTabResult {
 }
 
 async function findTargetTab(): Promise<TargetTabResult | null> {
-  const activeTabs = await chrome.tabs.query({ active: true, currentWindow: true });
-  const activeTab = activeTabs[0];
+  const currentWindowTabs = await chrome.tabs.query({ active: true, currentWindow: true });
+  const currentTab = currentWindowTabs[0];
 
-  if (activeTab?.url && isTestableUrl(activeTab.url)) {
-    logger.debug(`Using active tab: ${activeTab.url}`);
-    return { targetTab: activeTab };
+  if (currentTab?.url && isTestableUrl(currentTab.url)) {
+    logger.debug(`Using active tab in current window: ${currentTab.url}`);
+    return { targetTab: currentTab };
   }
 
-  logger.info("Dashboard detected, opening test target page...");
+  // Panel/dashboard context: search active tabs across all windows
+  const allActiveTabs = await chrome.tabs.query({ active: true });
+
+  let lastFocusedWindowId: number | undefined;
+  try {
+    const lastFocused = await chrome.windows.getLastFocused({ populate: false });
+    lastFocusedWindowId = lastFocused.id;
+  } catch {
+    // ignore
+  }
+
+  const testableTabs = allActiveTabs
+    .filter((tab) => tab.url && isTestableUrl(tab.url))
+    .sort((a, b) => {
+      const aInLast = a.windowId === lastFocusedWindowId ? 0 : 1;
+      const bInLast = b.windowId === lastFocusedWindowId ? 0 : 1;
+      return aInLast - bInLast;
+    });
+
+  if (testableTabs.length > 0) {
+    const bestTab = testableTabs[0];
+    logger.debug(`Using active tab from another window: ${bestTab.url}`);
+    return { targetTab: bestTab };
+  }
+
+  logger.info("No testable tab found in any window, opening test target page...");
   const targetTab = await openTestTargetTab();
   if (!targetTab) return null;
 
   return {
     targetTab,
-    returnToTabId: activeTab?.id,
+    returnToTabId: currentTab?.id,
   };
 }
 
