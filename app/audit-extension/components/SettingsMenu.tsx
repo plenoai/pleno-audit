@@ -6,9 +6,10 @@ import { ThemeToggle } from "./ThemeToggle";
 interface Props {
   onClearData: () => void;
   onExport?: () => void;
+  onImport?: () => Promise<{ success: boolean; message: string }>;
 }
 
-export function SettingsMenu({ onClearData, onExport }: Props) {
+export function SettingsMenu({ onClearData, onExport, onImport }: Props) {
   const { colors } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -80,6 +81,28 @@ export function SettingsMenu({ onClearData, onExport }: Props) {
                   </svg>
                 </span>
                 エクスポート
+              </button>
+            </div>
+          )}
+
+          {onImport && (
+            <div style={{ padding: "4px", borderBottom: `1px solid ${colors.border}` }}>
+              <button
+                className="hover-bg"
+                onClick={async () => {
+                  setIsOpen(false);
+                  await onImport();
+                }}
+                style={{ width: "100%", padding: "8px 12px", background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", color: colors.textPrimary, borderRadius: "4px", textAlign: "left" }}
+              >
+                <span style={{ width: "16px", display: "flex", justifyContent: "center" }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="17 8 12 3 7 8" />
+                    <line x1="12" y1="3" x2="12" y2="15" />
+                  </svg>
+                </span>
+                インポート
               </button>
             </div>
           )}

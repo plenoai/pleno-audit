@@ -40,6 +40,16 @@ export {
   exportReportToHTML,
 } from "./exporter.js";
 
+// Importer functions
+export {
+  validateImportData,
+  mergeServices,
+  mergeConnections,
+  type ExportedData,
+  type ImportResult,
+  type ImportValidationResult,
+} from "./importer.js";
+
 // Audit log exporter functions
 export {
   exportAIPromptsToCSV,

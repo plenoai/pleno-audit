@@ -50,5 +50,13 @@ export function createCspHandlers(
       execute: () => deps.clearAllData(),
       fallback: () => ({ success: false }),
     }],
+    ["IMPORT_DATA", {
+      execute: (message) => deps.importData(message.data as {
+        services: Record<string, unknown>[];
+        serviceConnections?: Record<string, string[]>;
+        extensionConnections?: Record<string, string[]>;
+      }),
+      fallback: () => ({ success: false, counts: { services: 0, serviceConnections: 0, extensionConnections: 0 } }),
+    }],
   ];
 }

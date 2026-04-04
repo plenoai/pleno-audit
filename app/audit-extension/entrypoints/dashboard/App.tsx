@@ -99,9 +99,11 @@ function DashboardContent({ animationEnabled, setAnimationEnabled }: { animation
     window.dispatchEvent(new Event("alertDomainFilter"));
   }, [setActiveTab]);
 
-  const { handleClearData, handleExportJSON } = useDashboardActions({
+  const { handleClearData, handleExportJSON, handleImportJSON } = useDashboardActions({
     reports: dashboard.reports,
     services: dashboard.services,
+    serviceConnections: dashboard.serviceConnections,
+    extensionConnections: dashboard.extensionConnections,
     loadData: dashboard.loadData,
   });
 
@@ -140,6 +142,7 @@ function DashboardContent({ animationEnabled, setAnimationEnabled }: { animation
         onRefresh={dashboard.loadData}
         onClearData={handleClearData}
         onExport={handleExportJSON}
+        onImport={handleImportJSON}
       />
       <div style={styles.body}>
         <Sidebar tabs={tabs} activeTab={activeTab} onChange={(id) => setActiveTab(id as TabType)} />

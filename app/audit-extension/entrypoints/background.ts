@@ -295,6 +295,56 @@ async function clearAllData(): Promise<{ success: boolean }> {
   });
 }
 
+async function importData(data: {
+  services: Record<string, unknown>[];
+  serviceConnections?: Record<string, string[]>;
+  extensionConnections?: Record<string, string[]>;
+}): Promise<{ success: boolean; counts: { services: number; serviceConnections: number; extensionConnections: number } }> {
+  try {
+    const { mergeServices, mergeConnections } = await import("libztbs/data-export");
+    const storage = await getStorage();
+    const existingServices = (storage.services || {}) as Record<string, DetectedService>;
+
+    const mergedServices = mergeServices(existingServices, data.services as unknown as DetectedService[]);
+    await setStorage({ services: mergedServices });
+
+    let scCount = 0;
+    let ecCount = 0;
+
+    if (data.serviceConnections) {
+      const existing = (await chrome.storage.local.get("serviceConnections")).serviceConnections || {};
+      const merged = mergeConnections(existing, data.serviceConnections);
+      await chrome.storage.local.set({ serviceConnections: merged });
+      scCount = Object.keys(data.serviceConnections).length;
+    }
+
+    if (data.extensionConnections) {
+      const existing = (await chrome.storage.local.get("extensionConnections")).extensionConnections || {};
+      const merged = mergeConnections(existing, data.extensionConnections);
+      await chrome.storage.local.set({ extensionConnections: merged });
+      ecCount = Object.keys(data.extensionConnections).length;
+    }
+
+    logger.info("Data imported successfully", {
+      services: data.services.length,
+      serviceConnections: scCount,
+      extensionConnections: ecCount,
+    });
+
+    return {
+      success: true,
+      counts: {
+        services: data.services.length,
+        serviceConnections: scCount,
+        extensionConnections: ecCount,
+      },
+    };
+  } catch (error) {
+    logger.error("Failed to import data:", error);
+    return { success: false, counts: { services: 0, serviceConnections: 0, extensionConnections: 0 } };
+  }
+}
+
 // Main world hooks are enabled for detection, while heavy processing is shifted to async handlers.
 
 const handleDebugBridgeForward = createDebugBridgeHandler();
@@ -474,6 +524,7 @@ handleNetworkInspection: (data, sender) => networkSecurityInspector.handleNetwor
     saveGeneratedCSPPolicy: cspReportingService.saveGeneratedCSPPolicy,
     clearCSPData: cspReportingService.clearCSPData,
     clearAllData,
+    importData,
     getSSOManager,
     getEnterpriseManager,
     getDetectionConfig: backgroundConfig.getDetectionConfig,

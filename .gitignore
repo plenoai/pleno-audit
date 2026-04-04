@@ -13,3 +13,5 @@ docs/scan-data/
 
 # Reports (mutation testing, coverage)
 reports/
+
+sample-casb-export-2026-04-04.json

@@ -13,6 +13,7 @@ import { browserCommand } from "./commands/browser.js";
 import { dohCommand } from "./commands/doh.js";
 import { networkCommand } from "./commands/network.js";
 import { devCommand } from "./commands/dev.js";
+import { dataCommand } from "./commands/data.js";
 
 const program = new Command();
 
@@ -46,6 +47,9 @@ program.addCommand(dohCommand);
 
 // Network Monitor
 program.addCommand(networkCommand);
+
+// Data export/import
+program.addCommand(dataCommand);
 
 // Development environment
 program.addCommand(devCommand);

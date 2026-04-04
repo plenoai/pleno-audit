@@ -129,6 +129,7 @@ handleNetworkInspection: (data: unknown, sender: chrome.runtime.MessageSender) =
   saveGeneratedCSPPolicy: (result: unknown) => Promise<void>;
   clearCSPData: () => { success: boolean };
   clearAllData: () => Promise<{ success: boolean }>;
+  importData: (data: { services: Record<string, unknown>[]; serviceConnections?: Record<string, string[]>; extensionConnections?: Record<string, string[]> }) => Promise<{ success: boolean; counts: { services: number; serviceConnections: number; extensionConnections: number } }>;
 
   getSSOManager: () => Promise<{
     getStatus: () => Promise<unknown>;

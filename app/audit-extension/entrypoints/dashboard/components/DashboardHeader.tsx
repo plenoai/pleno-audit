@@ -11,6 +11,7 @@ interface DashboardHeaderProps {
   onRefresh: () => void;
   onClearData: () => void;
   onExport: () => void;
+  onImport: () => Promise<{ success: boolean; message: string }>;
 }
 
 export function DashboardHeader({
@@ -21,6 +22,7 @@ export function DashboardHeader({
   onRefresh,
   onClearData,
   onExport,
+  onImport,
 }: DashboardHeaderProps) {
   const { colors } = useTheme();
 
@@ -66,7 +68,7 @@ export function DashboardHeader({
               }}
             />
           </button>
-          <SettingsMenu onClearData={onClearData} onExport={onExport} />
+          <SettingsMenu onClearData={onClearData} onExport={onExport} onImport={onImport} />
         </div>
       </div>
     </header>

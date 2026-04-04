@@ -4,6 +4,7 @@ import { getSnapshot } from "./snapshot.js";
 import { getStorageKeys, getStorageValue, setStorageValue, clearStorage } from "./storage.js";
 import { getServices, getService, clearServices } from "./services.js";
 import { openTab } from "./tabs.js";
+import { exportData, importData } from "./data-transfer.js";
 
 export type DebugHandlerRegistry = Record<string, DebugHandler>;
 
@@ -27,6 +28,12 @@ export function createDebugHandlers(logger: Logger, deps?: DebugBridgeDeps): Deb
     DEBUG_SERVICES_GET: async (data) => getService(data as { domain: string }),
     DEBUG_SERVICES_CLEAR: async () => clearServices(),
     DEBUG_TAB_OPEN: async (data) => openTab(data as { url: string }),
+    DEBUG_EXPORT_DATA: async () => exportData(),
+    DEBUG_IMPORT_DATA: async (data) => importData(data as {
+      services: Record<string, unknown>[];
+      serviceConnections?: Record<string, string[]>;
+      extensionConnections?: Record<string, string[]>;
+    }),
     DEBUG_NETWORK_REQUESTS_GET: async (data) => {
       const params = data as { limit?: number; initiatorType?: string };
       if (!deps?.getNetworkRequests) {
