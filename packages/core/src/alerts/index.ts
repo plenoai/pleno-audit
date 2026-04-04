@@ -46,6 +46,8 @@ export type {
   AlertRule,
   AlertCondition,
   AlertConfig,
+  DismissReason,
+  DismissRecord,
 } from "./types.js";
 
 export { DEFAULT_ALERT_CONFIG, DEFAULT_ALERT_RULES } from "./types.js";

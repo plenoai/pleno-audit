@@ -50,11 +50,11 @@ function DLPModelCard({
         ? colors.dot.info
         : colors.dot.default;
   const statusText = modelStatus.ready
-    ? "推論可能"
+    ? "動作中"
     : isLoading
       ? "読み込み中..."
       : modelStatus.downloaded
-        ? "キャッシュ済み"
+        ? "ダウンロード済み"
         : "未ダウンロード";
 
   return (
@@ -80,9 +80,9 @@ function DLPModelCard({
             </span>
             <span style={{ fontSize: "10px", color: colors.textSecondary }}>
               {modelStatus.ready
-                ? "NERモデル動作中"
+                ? "PII検出が有効です"
                 : modelStatus.downloaded
-                  ? "キャッシュからロード可能"
+                  ? "読み込みが必要です"
                   : "初回ダウンロード 約9MB"}
             </span>
           </div>
@@ -188,13 +188,17 @@ export function SettingsTab({ animationEnabled, onAnimationToggle }: { animation
   const loadModelFromCache = useCallback(async () => {
     setModelDownloading(true);
     try {
+      logger.info("DLP model load: sending DOWNLOAD_DLP_MODEL");
       const result = await sendMessage<{ success: boolean }>({ type: "DOWNLOAD_DLP_MODEL" });
+      logger.info("DLP model load: response", result);
       if (result?.success) {
         const s = await sendMessage<ModelStatus>({ type: "GET_DLP_MODEL_STATUS" });
         if (s) setModelStatus(s);
+      } else {
+        logger.error("DLP model load: failed", result);
       }
     } catch (err) {
-      logger.error("Model load from cache failed", err);
+      logger.error("DLP model load: exception", err);
     } finally {
       setModelDownloading(false);
     }

@@ -6,6 +6,7 @@ import type {
   DetectedService,
   AIMonitorConfig,
   DetectionConfig,
+  DLPServerConfig,
 } from "./storage-types.js";
 import {
   DEFAULT_DETECTION_CONFIG,
@@ -13,7 +14,7 @@ import {
 } from "./storage-types.js";
 import type { NRDConfig } from "../nrd/index.js";
 import { DEFAULT_NRD_CONFIG } from "../nrd/index.js";
-import { DEFAULT_AI_MONITOR_CONFIG } from "../ai-detector/index.js";
+import { DEFAULT_AI_MONITOR_CONFIG, DEFAULT_DLP_SERVER_CONFIG } from "../ai-detector/index.js";
 import { getBrowserAPI } from "./browser-adapter.js";
 
 const STORAGE_KEYS = [
@@ -22,10 +23,12 @@ const STORAGE_KEYS = [
   "alerts",
   "generatedCSPPolicy",
   "aiMonitorConfig",
+  "dlpServerConfig",
   "nrdConfig",
   "detectionConfig",
   "notificationConfig",
   "alertCooldown",
+  "disabledAlertCategories",
 ] as const;
 type StorageKey = (typeof STORAGE_KEYS)[number];
 
@@ -49,6 +52,8 @@ export async function getStorage(): Promise<StorageData> {
     alerts: (result.alerts as StorageData["alerts"]) || [],
     aiMonitorConfig:
       (result.aiMonitorConfig as AIMonitorConfig) || DEFAULT_AI_MONITOR_CONFIG,
+    dlpServerConfig:
+      (result.dlpServerConfig as DLPServerConfig) || DEFAULT_DLP_SERVER_CONFIG,
     nrdConfig: (result.nrdConfig as NRDConfig) || DEFAULT_NRD_CONFIG,
     detectionConfig:
       (result.detectionConfig as DetectionConfig) || DEFAULT_DETECTION_CONFIG,
@@ -56,6 +61,7 @@ export async function getStorage(): Promise<StorageData> {
       (result.notificationConfig as StorageData["notificationConfig"]) ||
       DEFAULT_NOTIFICATION_CONFIG,
     alertCooldown: (result.alertCooldown as StorageData["alertCooldown"]) || {},
+    disabledAlertCategories: (result.disabledAlertCategories as string[]) || [],
   };
 }
 
@@ -73,10 +79,12 @@ export async function getStorageKey<K extends StorageKey>(
     services: {},
     alerts: [],
     aiMonitorConfig: DEFAULT_AI_MONITOR_CONFIG,
+    dlpServerConfig: DEFAULT_DLP_SERVER_CONFIG,
     nrdConfig: DEFAULT_NRD_CONFIG,
     detectionConfig: DEFAULT_DETECTION_CONFIG,
     notificationConfig: DEFAULT_NOTIFICATION_CONFIG,
     alertCooldown: {},
+    disabledAlertCategories: [],
   };
   return (result[key] as StorageData[K]) ?? defaults[key];
 }
@@ -108,10 +116,12 @@ export async function clearAllStorage(options?: { preserveTheme?: boolean }): Pr
     services: {},
     alerts: [],
     aiMonitorConfig: DEFAULT_AI_MONITOR_CONFIG,
+    dlpServerConfig: DEFAULT_DLP_SERVER_CONFIG,
     nrdConfig: DEFAULT_NRD_CONFIG,
     detectionConfig: DEFAULT_DETECTION_CONFIG,
     notificationConfig: DEFAULT_NOTIFICATION_CONFIG,
     alertCooldown: {},
+    disabledAlertCategories: [],
   };
 
   await api.storage.local.set(defaultSettings);

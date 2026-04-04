@@ -3,6 +3,7 @@ export { Badge } from "./Badge";
 export { Button } from "./Button";
 export { Card } from "./Card";
 export { DataTable, getTableCellStyles, expandArrowStyle } from "./DataTable";
+export { DismissDialog } from "./DismissDialog";
 export { SearchInput } from "./SearchInput";
 export { Select } from "./Select";
 export { Tabs } from "./Tabs";
