@@ -722,3 +722,34 @@ export const DEFAULT_ALERT_RULES: AlertRule[] = [
     ],
   },
 ];
+
+/**
+ * Dismiss reason categories (GitHub Code Scanning compatible)
+ */
+export type DismissReason =
+  | "false_positive"  // 誤検知
+  | "wont_fix"        // リスク受容
+  | "used_in_tests";  // テスト環境
+
+/**
+ * Structured dismiss record
+ */
+export interface DismissRecord {
+  /** Dismiss pattern key: "category::domain" */
+  pattern: string;
+  /** Categorized reason */
+  reason: DismissReason;
+  /** Optional free-text comment */
+  comment?: string;
+  /** Timestamp when dismissed */
+  dismissedAt: number;
+  /** Timestamp when reopened (undefined = still dismissed) */
+  reopenedAt?: number;
+  /** Alert metadata snapshot for display */
+  alertSnapshot: {
+    category: string;
+    domain: string;
+    severity: AlertSeverity;
+    title: string;
+  };
+}

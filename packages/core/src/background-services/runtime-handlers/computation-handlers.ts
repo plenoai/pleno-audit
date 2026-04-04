@@ -68,12 +68,59 @@ function extractPostureAlerts(
   return alerts.sort((a, b) => b.timestamp - a.timestamp);
 }
 
-const DISMISSED_PATTERNS_KEY = "pleno_dismissed_alert_patterns";
+const DISMISS_RECORDS_KEY = "pleno_dismiss_records";
+const OLD_DISMISSED_PATTERNS_KEY = "pleno_dismissed_alert_patterns";
+
+interface DismissRecordStorage {
+  pattern: string;
+  reason: string;
+  comment?: string;
+  dismissedAt: number;
+  reopenedAt?: number;
+  alertSnapshot: {
+    category: string;
+    domain: string;
+    severity: string;
+    title: string;
+  };
+}
+
+async function migrateDismissedPatterns(): Promise<void> {
+  const result = await chrome.storage.local.get([OLD_DISMISSED_PATTERNS_KEY, DISMISS_RECORDS_KEY]);
+  const oldPatterns: string[] = (result[OLD_DISMISSED_PATTERNS_KEY] as string[] | undefined) ?? [];
+  if (oldPatterns.length === 0) return;
+
+  const existing: DismissRecordStorage[] = (result[DISMISS_RECORDS_KEY] as DismissRecordStorage[] | undefined) ?? [];
+  const existingSet = new Set(existing.map((r) => r.pattern));
+  const newRecords = [...existing];
+
+  for (const pattern of oldPatterns) {
+    if (existingSet.has(pattern)) continue;
+    const [category, ...domainParts] = pattern.split("::");
+    const domain = domainParts.join("::");
+    newRecords.push({
+      pattern,
+      reason: "wont_fix",
+      dismissedAt: Date.now(),
+      alertSnapshot: { category, domain, severity: "medium", title: domain },
+    });
+  }
+
+  await chrome.storage.local.set({ [DISMISS_RECORDS_KEY]: newRecords });
+  await chrome.storage.local.remove(OLD_DISMISSED_PATTERNS_KEY);
+}
+
+async function getDismissRecords(): Promise<DismissRecordStorage[]> {
+  await migrateDismissedPatterns();
+  const result = await chrome.storage.local.get(DISMISS_RECORDS_KEY);
+  return (result[DISMISS_RECORDS_KEY] as DismissRecordStorage[] | undefined) ?? [];
+}
 
 async function getDismissedPatterns(): Promise<Set<string>> {
-  const result = await chrome.storage.local.get(DISMISSED_PATTERNS_KEY);
-  const patterns: string[] = (result[DISMISSED_PATTERNS_KEY] as string[] | undefined) ?? [];
-  return new Set(patterns);
+  const records = await getDismissRecords();
+  return new Set(
+    records.filter((r) => r.reopenedAt == null).map((r) => r.pattern),
+  );
 }
 
 export function createComputationHandlers(
@@ -133,19 +180,116 @@ export function createComputationHandlers(
       {
         execute: async (message) => {
           const data = message.data as
-            | { category: string; domain: string }
-            | { patterns: { category: string; domain: string }[] };
-          const existing = await getDismissedPatterns();
+            | { category: string; domain: string; severity?: string; title?: string; reason?: string; comment?: string }
+            | { patterns: { category: string; domain: string; severity?: string; title?: string }[]; reason?: string; comment?: string };
+
+          const records = await getDismissRecords();
+          const existingSet = new Set(records.map((r) => r.pattern));
+          const reason = ("reason" in data && data.reason) ? data.reason : "wont_fix";
+          const comment = ("comment" in data && data.comment) ? data.comment : undefined;
+          const now = Date.now();
+
           if ("patterns" in data) {
             for (const p of data.patterns) {
-              existing.add(`${p.category}::${p.domain}`);
+              const pattern = `${p.category}::${p.domain}`;
+              if (existingSet.has(pattern)) {
+                // Reopen済みの場合は新しいレコードとして再dismiss
+                const idx = records.findIndex((r) => r.pattern === pattern && r.reopenedAt != null);
+                if (idx >= 0) {
+                  records[idx] = {
+                    ...records[idx],
+                    reason,
+                    comment,
+                    dismissedAt: now,
+                    reopenedAt: undefined,
+                  };
+                }
+                continue;
+              }
+              records.push({
+                pattern,
+                reason,
+                comment,
+                dismissedAt: now,
+                alertSnapshot: {
+                  category: p.category,
+                  domain: p.domain,
+                  severity: p.severity ?? "medium",
+                  title: p.title ?? p.domain,
+                },
+              });
             }
           } else {
-            existing.add(`${data.category}::${data.domain}`);
+            const pattern = `${data.category}::${data.domain}`;
+            if (existingSet.has(pattern)) {
+              const idx = records.findIndex((r) => r.pattern === pattern && r.reopenedAt != null);
+              if (idx >= 0) {
+                records[idx] = {
+                  ...records[idx],
+                  reason,
+                  comment,
+                  dismissedAt: now,
+                  reopenedAt: undefined,
+                };
+              }
+            } else {
+              records.push({
+                pattern,
+                reason,
+                comment,
+                dismissedAt: now,
+                alertSnapshot: {
+                  category: data.category,
+                  domain: data.domain,
+                  severity: data.severity ?? "medium",
+                  title: data.title ?? data.domain,
+                },
+              });
+            }
           }
-          await chrome.storage.local.set({
-            [DISMISSED_PATTERNS_KEY]: [...existing],
-          });
+
+          await chrome.storage.local.set({ [DISMISS_RECORDS_KEY]: records });
+          return { ok: true };
+        },
+        fallback: () => ({ ok: false }),
+      },
+    ],
+    [
+      "REOPEN_DISMISSED_PATTERN",
+      {
+        execute: async (message) => {
+          const data = message.data as { pattern: string };
+          const records = await getDismissRecords();
+          const idx = records.findIndex(
+            (r) => r.pattern === data.pattern && r.reopenedAt == null,
+          );
+          if (idx >= 0) {
+            records[idx] = { ...records[idx], reopenedAt: Date.now() };
+            await chrome.storage.local.set({ [DISMISS_RECORDS_KEY]: records });
+          }
+          return { ok: true };
+        },
+        fallback: () => ({ ok: false }),
+      },
+    ],
+    [
+      "GET_DISMISS_RECORDS",
+      {
+        execute: async () => {
+          const records = await getDismissRecords();
+          return records;
+        },
+        fallback: () => [],
+      },
+    ],
+    [
+      "DELETE_DISMISS_RECORD",
+      {
+        execute: async (message) => {
+          const data = message.data as { pattern: string };
+          const records = await getDismissRecords();
+          const filtered = records.filter((r) => r.pattern !== data.pattern);
+          await chrome.storage.local.set({ [DISMISS_RECORDS_KEY]: filtered });
           return { ok: true };
         },
         fallback: () => ({ ok: false }),
