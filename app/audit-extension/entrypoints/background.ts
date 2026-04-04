@@ -225,16 +225,21 @@ const aiPromptMonitorService = createAIPromptMonitorService({
 // DLP: Offscreen Document 経由で推論（Service WorkerにXHR/WASMがないため）
 const dlpModelManager = createDLPModelManager();
 
+let offscreenReady = false;
+
 async function ensureDLPOffscreen(): Promise<void> {
-  const contexts = await chrome.offscreen.getContexts({
-    contextTypes: [chrome.offscreen.ContextType.WORKERS as chrome.offscreen.ContextType],
-  });
-  if (contexts.length > 0) return;
-  await chrome.offscreen.createDocument({
-    url: "dlp-offscreen.html",
-    reasons: [chrome.offscreen.Reason.WORKERS as chrome.offscreen.Reason],
-    justification: "DLP NER inference requires XMLHttpRequest and WASM (unavailable in Service Worker)",
-  });
+  if (offscreenReady) return;
+  try {
+    await chrome.offscreen.createDocument({
+      url: "dlp-offscreen.html",
+      reasons: ["WORKERS" as chrome.offscreen.Reason],
+      justification: "DLP NER inference via ONNX Runtime WASM",
+    });
+    logger.debug("DLP offscreen document created");
+  } catch {
+    // Already exists — ok
+  }
+  offscreenReady = true;
 }
 
 async function sendToDLPOffscreen<T>(action: string, data?: unknown): Promise<T> {

@@ -112,7 +112,16 @@ export function createDLPScanner(initialConfig?: Partial<DLPServerConfig>): DLPS
   async function initPipeline(
     onProgress?: (progress: { status: string; progress?: number }) => void,
   ): Promise<void> {
-    const { pipeline } = await import("@huggingface/transformers");
+    const { pipeline, env } = await import("@huggingface/transformers");
+
+    // Chrome拡張のCSPでCDN fetchがブロックされるため、バンドル済みWASMを使用
+    if (typeof chrome !== "undefined" && chrome.runtime?.getURL) {
+      const wasmConfig = env.backends.onnx.wasm;
+      if (wasmConfig) {
+        wasmConfig.wasmPaths = chrome.runtime.getURL("/");
+      }
+    }
+
     nerPipeline = (await pipeline("token-classification", MODEL_ID, {
       dtype: "q8",
       progress_callback: onProgress,
