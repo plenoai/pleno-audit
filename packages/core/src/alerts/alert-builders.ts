@@ -1376,6 +1376,9 @@ export interface StorageExfiltrationAlertParams {
   domain: string;
   storageType: string;
   accessCount: number;
+  accessedKeys?: string[];
+  callerOrigin?: string;
+  partyContext?: "first-party" | "third-party" | "unknown";
 }
 
 const STORAGE_EXFILTRATION_ALERT_DEFINITION: AlertDefinition<
@@ -1384,17 +1387,25 @@ const STORAGE_EXFILTRATION_ALERT_DEFINITION: AlertDefinition<
 > = {
   category: "storage_exfiltration",
   detailsType: "storage_exfiltration",
-  build: (params) => ({
-    severity: "high",
-    title: `ストレージ大量アクセス検出: ${params.domain}`,
-    description: `${params.storageType}に短時間で${params.accessCount}回アクセス`,
-    domain: params.domain,
-    details: {
+  build: (params) => {
+    const partyLabel = params.partyContext === "third-party" ? "（3rd-party）"
+      : params.partyContext === "first-party" ? "（1st-party）" : "";
+    return {
+      severity: params.partyContext === "third-party" ? "high" : "medium",
+      title: `ストレージ大量アクセス検出: ${params.domain}${partyLabel}`,
+      description: `${params.storageType}に短時間で${params.accessCount}回アクセス`
+        + (params.callerOrigin && params.callerOrigin !== "unknown" ? ` from ${params.callerOrigin}` : ""),
       domain: params.domain,
-      storageType: params.storageType,
-      accessCount: params.accessCount,
-    },
-  }),
+      details: {
+        domain: params.domain,
+        storageType: params.storageType,
+        accessCount: params.accessCount,
+        accessedKeys: params.accessedKeys,
+        callerOrigin: params.callerOrigin,
+        partyContext: params.partyContext,
+      },
+    };
+  },
 };
 
 export const buildStorageExfiltrationAlert = createAlertBuilder(

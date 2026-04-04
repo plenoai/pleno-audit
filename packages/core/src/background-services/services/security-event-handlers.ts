@@ -931,7 +931,10 @@ export function createSecurityEventHandlers(
     },
 
     async handleStorageExfiltration(
-      data: { storageType?: string; accessCount?: number; timestamp?: number; pageUrl?: string; source?: string },
+      data: {
+        storageType?: string; accessCount?: number; timestamp?: number; pageUrl?: string; source?: string;
+        accessedKeys?: string[]; callerOrigin?: string; partyContext?: string;
+      },
       sender: chrome.runtime.MessageSender,
     ): Promise<{ success: boolean }> {
       const pageDomain = resolvePageDomain(sender, data.pageUrl || "", deps.extractDomainFromUrl);
@@ -941,6 +944,9 @@ export function createSecurityEventHandlers(
         domain: pageDomain,
         storageType: data.storageType ?? "localStorage",
         accessCount: data.accessCount ?? 0,
+        accessedKeys: data.accessedKeys,
+        callerOrigin: data.callerOrigin,
+        partyContext: data.partyContext as "first-party" | "third-party" | "unknown" | undefined,
       }, pageUrl);
 
       deps.logger.warn({
@@ -950,6 +956,9 @@ export function createSecurityEventHandlers(
           domain: pageDomain,
           storageType: data.storageType,
           accessCount: data.accessCount,
+          accessedKeys: data.accessedKeys,
+          callerOrigin: data.callerOrigin,
+          partyContext: data.partyContext,
         },
       });
 

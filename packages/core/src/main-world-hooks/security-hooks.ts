@@ -247,13 +247,46 @@ export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecuri
     if (!storage) continue;
     let accessCount = 0;
     let accessResetTime = Date.now();
+    const accessedKeys: string[] = [];
     const originalGetItem = storage.getItem.bind(storage);
     storage.getItem = function (key: string) {
       const now = Date.now();
-      if (now - accessResetTime > 3000) { accessCount = 0; accessResetTime = now; }
+      if (now - accessResetTime > 3000) {
+        accessCount = 0;
+        accessResetTime = now;
+        accessedKeys.length = 0;
+      }
+      if (accessedKeys.length < 10) accessedKeys.push(key);
       if (++accessCount === 50) {
+        // Extract caller origin from Error stack (lightweight — no regex in main world)
+        let callerOrigin = "unknown";
+        try {
+          const stack = new Error().stack || "";
+          const lines = stack.split("\n");
+          // Skip first 2 lines (Error + this function), find first external caller
+          for (let i = 2; i < lines.length; i++) {
+            const httpIdx = lines[i].indexOf("http");
+            if (httpIdx === -1) continue;
+            const urlPart = lines[i].slice(httpIdx).split(")")[0].split(" ")[0];
+            try {
+              callerOrigin = new URL(urlPart).origin;
+            } catch {
+              callerOrigin = urlPart.slice(0, 100);
+            }
+            break;
+          }
+        } catch { /* ignore */ }
+
+        const pageOrigin = window.location.origin;
+        const partyContext = callerOrigin === "unknown"
+          ? "unknown"
+          : callerOrigin === pageOrigin ? "first-party" : "third-party";
+
         deferEmit(emitSecurityEvent, "__STORAGE_EXFILTRATION_DETECTED__", {
           storageType, accessCount, timestamp: now, pageUrl: window.location.href,
+          accessedKeys: accessedKeys.slice(),
+          callerOrigin,
+          partyContext,
         });
       }
       return originalGetItem(key);
