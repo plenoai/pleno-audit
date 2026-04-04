@@ -1,7 +1,6 @@
 import type { DetectedService } from "libztbs/types";
 import type { CapturedAIPrompt } from "libztbs/ai-detector";
 import { DEFAULT_AI_MONITOR_CONFIG, createDLPScanner, DEFAULT_DLP_SERVER_CONFIG, type DLPServerConfig, createDLPModelManager } from "libztbs/ai-detector";
-import { createWasmTokenizer, type WasmTokenizerInstance } from "../lib/wasm-tokenizer.js";
 import { DEFAULT_NRD_CONFIG } from "libztbs/nrd";
 import { DEFAULT_TYPOSQUAT_CONFIG } from "libztbs/typosquat";
 import type { CSPViolation } from "libztbs/csp";
@@ -223,10 +222,9 @@ const aiPromptMonitorService = createAIPromptMonitorService({
   getAlertManager: backgroundAlerts.getAlertManager,
 });
 
-// DLP Scanner (pleno-anonymize DLP連携)
+// DLP Scanner (Transformers.js pipeline)
 const dlpScanner = createDLPScanner();
 const dlpModelManager = createDLPModelManager();
-let wasmTokenizerInstance: WasmTokenizerInstance | null = null;
 
 const domainRiskService = createDomainRiskService({
   logger,
@@ -349,33 +347,22 @@ function initializeBackgroundServices(): void {
     .catch((error) => logger.error("Extension monitor init failed:", error));
   redirectMonitor.start();
 
-  // DLP Scanner: ストレージから設定を復元
+  // DLP Scanner: ストレージから設定を復元し、キャッシュ済みモデルがあればpipeline初期化
   void getStorage("dlpServerConfig").then(async (data) => {
     if (data.dlpServerConfig) {
       dlpScanner.updateConfig(data.dlpServerConfig);
-      if (data.dlpServerConfig.enabled && data.dlpServerConfig.useLocalModel) {
-        // ローカルモデルが有効な場合、自動ロード
+      if (data.dlpServerConfig.enabled) {
         try {
-          const downloaded = await dlpModelManager.isDownloaded();
-          if (downloaded) {
-            const model = await dlpModelManager.load();
-            try {
-              const wasmBytes = await dlpModelManager.loadWasm();
-              wasmTokenizerInstance = createWasmTokenizer(wasmBytes);
-              dlpScanner.setLocalModel(model, wasmTokenizerInstance);
-              logger.info("DLP local model + WASM tokenizer auto-loaded");
-            } catch {
-              // WASM not available (legacy download without WASM) — fallback to JS tokenizer
-              dlpScanner.setLocalModel(model);
-              logger.info("DLP local model auto-loaded (JS tokenizer fallback)");
-            }
+          const cached = await dlpModelManager.isDownloaded();
+          if (cached) {
+            dlpModelManager.setLoading();
+            await dlpScanner.initPipeline();
+            dlpModelManager.setReady();
+            logger.info("DLP Transformers.js pipeline auto-loaded from cache");
           }
         } catch (err) {
-          logger.debug("DLP local model auto-load skipped:", err);
+          logger.debug("DLP pipeline auto-load skipped:", err);
         }
-      }
-      if (data.dlpServerConfig.enabled && !data.dlpServerConfig.useLocalModel) {
-        void dlpScanner.verifyConnection();
       }
     }
   }).catch((err) => logger.debug("DLP config load skipped:", err));
@@ -495,19 +482,17 @@ handleNetworkInspection: (data, sender) => networkSecurityInspector.handleNetwor
       dlpScanner.updateConfig(merged);
       return { success: true };
     },
-    testDLPConnection: async () => {
-      const connected = await dlpScanner.verifyConnection();
-      return { connected };
-    },
-    downloadDLPModel: async (modelUrl: string, wasmUrl: string) => {
+    downloadDLPModel: async () => {
       try {
-        await dlpModelManager.download(modelUrl, wasmUrl);
-        const model = await dlpModelManager.load();
-        const wasmBytes = await dlpModelManager.loadWasm();
-        wasmTokenizerInstance = createWasmTokenizer(wasmBytes);
-        dlpScanner.setLocalModel(model, wasmTokenizerInstance);
+        dlpModelManager.setLoading();
+        await dlpScanner.initPipeline((progress) => {
+          logger.debug("DLP model download progress", progress);
+        });
+        dlpModelManager.setReady();
         return { success: true };
       } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        dlpModelManager.setError(message);
         logger.error("DLP model download failed", error);
         return { success: false };
       }
@@ -518,32 +503,11 @@ handleNetworkInspection: (data, sender) => networkSecurityInspector.handleNetwor
     },
     deleteDLPModel: async () => {
       try {
-        if (wasmTokenizerInstance) {
-          wasmTokenizerInstance.dispose();
-          wasmTokenizerInstance = null;
-        }
-        dlpScanner.setLocalModel(null);
+        await dlpScanner.disposePipeline();
         await dlpModelManager.delete();
         return { success: true };
       } catch (error) {
         logger.error("DLP model delete failed", error);
-        return { success: false };
-      }
-    },
-    loadDLPModel: async () => {
-      try {
-        const model = await dlpModelManager.load();
-        try {
-          const wasmBytes = await dlpModelManager.loadWasm();
-          wasmTokenizerInstance = createWasmTokenizer(wasmBytes);
-          dlpScanner.setLocalModel(model, wasmTokenizerInstance);
-        } catch {
-          // WASM not available — fallback to JS tokenizer
-          dlpScanner.setLocalModel(model);
-        }
-        return { success: true };
-      } catch (error) {
-        logger.error("DLP model load failed", error);
         return { success: false };
       }
     },

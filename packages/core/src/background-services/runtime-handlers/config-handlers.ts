@@ -33,15 +33,8 @@ export function createConfigurationHandlers(
       execute: (message) => deps.setDLPServerConfig(message.data as Partial<DLPServerConfig>),
       fallback: () => ({ success: false }),
     }],
-    ["TEST_DLP_CONNECTION", {
-      execute: () => deps.testDLPConnection(),
-      fallback: () => ({ connected: false }),
-    }],
     ["DOWNLOAD_DLP_MODEL", {
-      execute: (message) => {
-        const data = message.data as { modelUrl: string; wasmUrl: string };
-        return deps.downloadDLPModel(data.modelUrl, data.wasmUrl);
-      },
+      execute: () => deps.downloadDLPModel(),
       fallback: () => ({ success: false }),
     }],
     ["GET_DLP_MODEL_STATUS", {
@@ -50,10 +43,6 @@ export function createConfigurationHandlers(
     }],
     ["DELETE_DLP_MODEL", {
       execute: () => deps.deleteDLPModel(),
-      fallback: () => ({ success: false }),
-    }],
-    ["LOAD_DLP_MODEL", {
-      execute: () => deps.loadDLPModel(),
       fallback: () => ({ success: false }),
     }],
     ["GET_DISABLED_ALERT_CATEGORIES", {

@@ -1,20 +1,26 @@
 /**
  * DLP Scanner
  *
- * pleno-anonymizeを利用したDLPスキャナー。
+ * Transformers.js を利用したブラウザ内DLPスキャナー。
  * クリップボードコピーやフォーム送信時のテキストをスキャンし、
  * PII（個人情報）が含まれている場合にアラートを生成する。
  */
 
 import { createLogger } from "../extension-runtime/logger.js";
-import { createDLPClient, type DLPClient, type DLPEntity } from "./dlp-client.js";
-import type { NERModel } from "./dlp-local-ner.js";
-import { convertWasmTokens, type WasmTokenResult } from "./dlp-tokenizer.js";
 
 const logger = createLogger("dlp-scanner");
 
 /** スキャン対象のコンテキスト */
 export type ScanContext = "clipboard" | "form" | "ai_prompt";
+
+/** 検出されたエンティティ */
+export interface DLPEntity {
+  entity_type: string;
+  start: number;
+  end: number;
+  score: number;
+  text: string;
+}
 
 /** スキャン結果 */
 export interface DLPScanResult {
@@ -26,26 +32,18 @@ export interface DLPScanResult {
   scannedAt: number;
 }
 
-/** DLP Server設定（StorageDataに保存） */
+/** DLP設定（StorageDataに保存） */
 export interface DLPServerConfig {
   enabled: boolean;
-  serverUrl: string;
   language: "ja" | "en";
-  /** サーバー接続済みか（ヘルスチェック成功後にtrue） */
-  serverConnected: boolean;
-  /** ローカルNERモデルを使用するか */
-  useLocalModel: boolean;
-  /** ローカルモデルのロードが完了しているか */
-  localModelReady: boolean;
+  /** pipeline初期化済みか */
+  modelReady: boolean;
 }
 
 export const DEFAULT_DLP_SERVER_CONFIG: DLPServerConfig = {
   enabled: false,
-  serverUrl: "http://localhost:8080",
   language: "ja",
-  serverConnected: false,
-  useLocalModel: false,
-  localModelReady: false,
+  modelReady: false,
 };
 
 /** テキスト長の上限（パフォーマンス保護） */
@@ -76,40 +74,56 @@ export function getEntityLabel(entityType: string): string {
   return ENTITY_LABELS[entityType] ?? entityType;
 }
 
-export interface WasmTokenizerLike {
-  tokenize(text: string): WasmTokenResult[];
+const MODEL_ID = "0xhikae/ja-ner-onnx";
+
+/** Transformers.js pipeline の型（動的インポートのため軽量定義） */
+interface TokenClassificationResult {
+  entity_group: string;
+  score: number;
+  word: string;
+  start: number;
+  end: number;
 }
 
-export function createDLPScanner(initialConfig?: Partial<DLPServerConfig>) {
-  const config: DLPServerConfig = { ...DEFAULT_DLP_SERVER_CONFIG, ...initialConfig };
-  let client: DLPClient = createDLPClient({
-    serverUrl: config.serverUrl,
-  });
-  let localModel: NERModel | null = null;
-  let wasmTokenizer: WasmTokenizerLike | null = null;
+type NERPipeline = (
+  text: string,
+  options?: { aggregation_strategy?: string },
+) => Promise<TokenClassificationResult[]>;
 
-  /** ローカルNERモデルとオプションのWASMトークナイザを設定する */
-  function setLocalModel(model: NERModel | null, wasm?: WasmTokenizerLike | null) {
-    localModel = model;
-    wasmTokenizer = wasm ?? null;
-    config.localModelReady = model !== null;
+export interface DLPScanner {
+  scan: (
+    text: string,
+    context: ScanContext,
+    domain: string,
+    url?: string,
+  ) => Promise<DLPScanResult | null>;
+  initPipeline: (
+    onProgress?: (progress: { status: string; progress?: number }) => void,
+  ) => Promise<void>;
+  disposePipeline: () => Promise<void>;
+  updateConfig: (newConfig: Partial<DLPServerConfig>) => void;
+  getConfig: () => DLPServerConfig;
+}
+
+export function createDLPScanner(initialConfig?: Partial<DLPServerConfig>): DLPScanner {
+  const config: DLPServerConfig = { ...DEFAULT_DLP_SERVER_CONFIG, ...initialConfig };
+  let nerPipeline: NERPipeline | null = null;
+
+  async function initPipeline(
+    onProgress?: (progress: { status: string; progress?: number }) => void,
+  ): Promise<void> {
+    const { pipeline } = await import("@huggingface/transformers");
+    nerPipeline = (await pipeline("token-classification", MODEL_ID, {
+      dtype: "q8",
+      progress_callback: onProgress,
+    })) as unknown as NERPipeline;
+    config.modelReady = true;
+    logger.info("Transformers.js NER pipeline initialized");
   }
 
-  async function verifyConnection(): Promise<boolean> {
-    try {
-      const healthy = await client.checkHealth();
-      if (!healthy) {
-        config.serverConnected = false;
-        return false;
-      }
-      const ready = await client.checkReady();
-      config.serverConnected = ready;
-      return ready;
-    } catch (error) {
-      logger.warn("DLP server connection failed", error);
-      config.serverConnected = false;
-      return false;
-    }
+  async function disposePipeline(): Promise<void> {
+    nerPipeline = null;
+    config.modelReady = false;
   }
 
   async function scan(
@@ -118,8 +132,7 @@ export function createDLPScanner(initialConfig?: Partial<DLPServerConfig>) {
     domain: string,
     url?: string,
   ): Promise<DLPScanResult | null> {
-    const useLocal = config.useLocalModel && config.localModelReady && localModel !== null;
-    if (!config.enabled || (!config.serverConnected && !useLocal)) {
+    if (!config.enabled || !nerPipeline) {
       return null;
     }
 
@@ -132,27 +145,15 @@ export function createDLPScanner(initialConfig?: Partial<DLPServerConfig>) {
     }
 
     try {
-      let entities: DLPEntity[];
+      const results = await nerPipeline(trimmed, { aggregation_strategy: "simple" });
 
-      if (useLocal && localModel) {
-        // ローカルNERモデルで推論（WASMトークナイザ優先）
-        const nerEntities = wasmTokenizer
-          ? localModel.predictWithFeatures(convertWasmTokens(wasmTokenizer.tokenize(trimmed)))
-          : localModel.predict(trimmed);
-        entities = nerEntities.map((e) => ({
-          entity_type: e.label,
-          start: e.start,
-          end: e.end,
-          score: e.score,
-          text: e.text,
-        }));
-      } else {
-        // リモートサーバーで推論
-        entities = await client.analyze({
-          text: trimmed,
-          language: config.language,
-        });
-      }
+      const entities: DLPEntity[] = results.map((r) => ({
+        entity_type: r.entity_group,
+        start: r.start,
+        end: r.end,
+        score: r.score,
+        text: trimmed.slice(r.start, r.end),
+      }));
 
       if (entities.length === 0) {
         return null;
@@ -183,12 +184,7 @@ export function createDLPScanner(initialConfig?: Partial<DLPServerConfig>) {
   }
 
   function updateConfig(newConfig: Partial<DLPServerConfig>) {
-    const serverChanged = newConfig.serverUrl && newConfig.serverUrl !== config.serverUrl;
     Object.assign(config, newConfig);
-    if (serverChanged) {
-      client = createDLPClient({ serverUrl: config.serverUrl });
-      config.serverConnected = false;
-    }
   }
 
   function getConfig(): DLPServerConfig {
@@ -197,11 +193,9 @@ export function createDLPScanner(initialConfig?: Partial<DLPServerConfig>) {
 
   return {
     scan,
-    verifyConnection,
+    initPipeline,
+    disposePipeline,
     updateConfig,
     getConfig,
-    setLocalModel,
   };
 }
-
-export type DLPScanner = ReturnType<typeof createDLPScanner>;

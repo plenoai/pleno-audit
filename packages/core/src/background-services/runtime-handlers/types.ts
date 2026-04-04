@@ -178,12 +178,10 @@ handleNetworkInspection: (data: unknown, sender: chrome.runtime.MessageSender) =
 
   getDLPServerConfig: () => Promise<DLPServerConfig>;
   setDLPServerConfig: (config: Partial<DLPServerConfig>) => Promise<{ success: boolean }>;
-  testDLPConnection: () => Promise<{ connected: boolean }>;
 
-  downloadDLPModel: (modelUrl: string, wasmUrl: string) => Promise<{ success: boolean }>;
+  downloadDLPModel: () => Promise<{ success: boolean }>;
   getDLPModelStatus: () => Promise<ModelStatus>;
   deleteDLPModel: () => Promise<{ success: boolean }>;
-  loadDLPModel: () => Promise<{ success: boolean }>;
 
   getServiceConnections: () => Promise<Record<string, string[]>>;
   getExtensionConnections: () => Promise<Record<string, string[]>>;

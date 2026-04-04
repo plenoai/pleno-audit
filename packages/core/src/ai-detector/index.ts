@@ -94,45 +94,17 @@ export {
   type DomainVisitData,
 } from "./policy-generator.js";
 
-// DLP Client (pleno-anonymize DLP — detect only)
-export {
-  createDLPClient,
-  type DLPClient,
-  type DLPClientConfig,
-  type DLPEntity,
-  type DLPAnalyzeRequest,
-} from "./dlp-client.js";
-
-// DLP Scanner
+// DLP Scanner (Transformers.js pipeline)
 export {
   createDLPScanner,
   getEntityLabel,
   DEFAULT_DLP_SERVER_CONFIG,
   type DLPScanner,
   type DLPServerConfig,
-  type WasmTokenizerLike,
+  type DLPEntity,
   type ScanContext,
   type DLPScanResult,
 } from "./dlp-scanner.js";
-
-// DLP Tokenizer (local NER)
-export {
-  tokenize,
-  murmurhash2_64a,
-  murmurhash3_x64_128_uint64,
-  hashEmbedIndices,
-  HASH_EMBED_SEEDS,
-  convertWasmTokens,
-  type WasmTokenResult,
-} from "./dlp-tokenizer.js";
-
-// DLP Local NER
-export {
-  loadNERModel,
-  type NERModel,
-  type NEREntity,
-  type NERModelConfig,
-} from "./dlp-local-ner.js";
 
 // DLP Model Manager
 export {

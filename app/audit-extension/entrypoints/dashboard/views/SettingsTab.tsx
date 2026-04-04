@@ -21,10 +21,118 @@ const DETECTION_CONFIG_MAP: Record<string, keyof DetectionConfig> = {
   shadow_ai: "enableAI",
 };
 
-const DLP_MODEL_URL = "https://huggingface.co/0xhikae/ja-ner-ja/resolve/main/model-browser.bin";
-const DLP_WASM_URL = "https://huggingface.co/0xhikae/ja-ner-ja/resolve/main/pleno_tokenizer_wasm_bg.wasm";
-
 const logger = createLogger("dashboard-settings");
+
+function DLPModelCard({
+  modelStatus,
+  modelDownloading,
+  onDownload,
+  onDelete,
+  colors,
+}: {
+  modelStatus: ModelStatus;
+  modelDownloading: boolean;
+  onDownload: () => void;
+  onDelete: () => void;
+  colors: ReturnType<typeof useTheme>["colors"];
+}) {
+  const isLoading = modelDownloading || modelStatus.loading;
+  const statusStyle = modelStatus.ready
+    ? colors.status.success
+    : isLoading
+      ? colors.status.warning
+      : colors.status.default;
+  const dotColor = modelStatus.ready
+    ? colors.dot.success
+    : isLoading
+      ? colors.dot.warning
+      : modelStatus.downloaded
+        ? colors.dot.info
+        : colors.dot.default;
+  const statusText = modelStatus.ready
+    ? "推論可能"
+    : isLoading
+      ? "読み込み中..."
+      : modelStatus.downloaded
+        ? "キャッシュ済み"
+        : "未ダウンロード";
+
+  return (
+    <div style={{ padding: `${spacing.sm} ${spacing.lg}` } as CSSProperties}>
+      <div style={{
+        padding: spacing.md,
+        background: statusStyle.bg,
+        border: `1px solid ${statusStyle.border}`,
+        borderRadius: borderRadius.md,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: spacing.sm,
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: spacing.sm, flex: 1, minWidth: 0 }}>
+          <span style={{
+            width: "8px", height: "8px", borderRadius: "50%", flexShrink: 0,
+            background: dotColor,
+          }} />
+          <div style={{ display: "flex", flexDirection: "column", gap: "1px" } as CSSProperties}>
+            <span style={{ fontSize: fontSize.xs, fontWeight: 600, color: statusStyle.text }}>
+              {statusText}
+            </span>
+            <span style={{ fontSize: "10px", color: colors.textSecondary }}>
+              {modelStatus.ready
+                ? "NERモデル動作中"
+                : modelStatus.downloaded
+                  ? "キャッシュからロード可能"
+                  : "初回ダウンロード 約9MB"}
+            </span>
+          </div>
+        </div>
+        {modelStatus.ready ? (
+          <button
+            type="button"
+            onClick={onDelete}
+            style={{
+              padding: `${spacing.xs} ${spacing.sm}`,
+              background: colors.bgPrimary,
+              border: `1px solid ${colors.border}`,
+              borderRadius: borderRadius.sm,
+              color: colors.textPrimary,
+              fontSize: fontSize.xs,
+              fontWeight: 500,
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+            }}
+          >
+            削除
+          </button>
+        ) : (
+          <button
+            type="button"
+            disabled={isLoading}
+            onClick={onDownload}
+            style={{
+              padding: `${spacing.xs} ${spacing.sm}`,
+              background: isLoading ? colors.status.warning.bg : colors.interactive,
+              border: isLoading ? `1px solid ${colors.status.warning.border}` : "none",
+              borderRadius: borderRadius.sm,
+              color: isLoading ? colors.status.warning.text : colors.textInverse,
+              fontSize: fontSize.xs,
+              fontWeight: 500,
+              cursor: isLoading ? "wait" : "pointer",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {isLoading
+              ? "読み込み中..."
+              : modelStatus.downloaded
+                ? "読み込み"
+                : "ダウンロード"}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
 
 function ToggleRow({
   title,
@@ -72,11 +180,25 @@ export function SettingsTab({ animationEnabled, onAnimationToggle }: { animation
   const [detectionConfig, setDetectionConfig] = useState<DetectionConfig>(DEFAULT_DETECTION_CONFIG);
   const [notificationConfig, setNotificationConfig] = useState<NotificationConfig>(DEFAULT_NOTIFICATION_CONFIG);
   const [dlpConfig, setDlpConfig] = useState<DLPServerConfig>(DEFAULT_DLP_SERVER_CONFIG);
-  const [dlpStatus, setDlpStatus] = useState<"disconnected" | "connecting" | "connected">("disconnected");
   const [modelStatus, setModelStatus] = useState<ModelStatus>({ downloaded: false, loading: false, ready: false });
   const [modelDownloading, setModelDownloading] = useState(false);
   const [disabledCategories, setDisabledCategories] = useState<Set<string>>(new Set());
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+
+  const loadModelFromCache = useCallback(async () => {
+    setModelDownloading(true);
+    try {
+      const result = await sendMessage<{ success: boolean }>({ type: "DOWNLOAD_DLP_MODEL" });
+      if (result?.success) {
+        const s = await sendMessage<ModelStatus>({ type: "GET_DLP_MODEL_STATUS" });
+        if (s) setModelStatus(s);
+      }
+    } catch (err) {
+      logger.error("Model load from cache failed", err);
+    } finally {
+      setModelDownloading(false);
+    }
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -92,9 +214,14 @@ export function SettingsTab({ animationEnabled, onAnimationToggle }: { animation
         setNotificationConfig(notification);
         if (dlp) {
           setDlpConfig(dlp);
-          setDlpStatus(dlp.serverConnected ? "connected" : "disconnected");
         }
-        if (mStatus) setModelStatus(mStatus);
+        if (mStatus) {
+          setModelStatus(mStatus);
+          // キャッシュ済みだがpipeline未初期化の場合、自動でロードを試みる
+          if (dlp?.enabled && mStatus.downloaded && !mStatus.ready && !mStatus.loading) {
+            void loadModelFromCache();
+          }
+        }
         // DetectionConfigのフラグとdisabledAlertCategoriesを統合
         const merged = new Set(disabled ?? []);
         if (!detection.enableNRD) merged.add("nrd");
@@ -105,7 +232,7 @@ export function SettingsTab({ animationEnabled, onAnimationToggle }: { animation
         logger.error("Failed to load settings", error);
       }
     })();
-  }, []);
+  }, [loadModelFromCache]);
 
   const saveDetection = useCallback(async (config: DetectionConfig) => {
     setDetectionConfig(config);
@@ -173,19 +300,6 @@ export function SettingsTab({ animationEnabled, onAnimationToggle }: { animation
       saveDetection({ ...detectionConfig, ...configUpdates });
     }
   }, [disabledCategories, detectionConfig, saveDetection]);
-
-  const testDlpConnection = useCallback(async () => {
-    setDlpStatus("connecting");
-    try {
-      const result = await sendMessage<{ connected: boolean }>({ type: "TEST_DLP_CONNECTION" });
-      setDlpStatus(result?.connected ? "connected" : "disconnected");
-      if (result?.connected) {
-        saveDlpConfig({ ...dlpConfig, serverConnected: true });
-      }
-    } catch {
-      setDlpStatus("disconnected");
-    }
-  }, [dlpConfig, saveDlpConfig]);
 
   return (
     <div
@@ -288,189 +402,39 @@ export function SettingsTab({ animationEnabled, onAnimationToggle }: { animation
         );
       })}
 
-      {/* TODO: DLP機能が完成次第コメントアウトを解除する
       <span style={{ fontSize: fontSize.sm, fontWeight: 600, color: colors.textPrimary, marginTop: spacing.md, marginBottom: spacing.xs, display: "block" } as CSSProperties}>
-        DLP（データ漏洩防止）
+        DLP
       </span>
 
       <ToggleRow
-        title="NER PII検出"
-        desc="クリップボード・フォームの個人情報（氏名・住所等）を検出"
+        title="PII検出"
+        desc="クリップボードコピーやフォーム送信時に個人情報の漏洩を検出"
         checked={dlpConfig.enabled}
-        onChange={() => {
-          const next = { ...dlpConfig, enabled: !dlpConfig.enabled };
+        onChange={async () => {
+          const enabling = !dlpConfig.enabled;
+          const next = { ...dlpConfig, enabled: enabling };
           saveDlpConfig(next);
-          saveDetection({ ...detectionConfig, enableDLPServer: next.enabled });
+          // 有効化時にキャッシュ済みモデルがあれば自動ロード
+          if (enabling && modelStatus.downloaded && !modelStatus.ready && !modelDownloading) {
+            void loadModelFromCache();
+          }
         }}
         colors={colors}
       />
 
       {dlpConfig.enabled && (
-        <div style={{ padding: `${spacing.sm} ${spacing.lg}`, display: "flex", flexDirection: "column", gap: spacing.sm } as CSSProperties}>
-          <div style={{
-            padding: spacing.sm,
-            background: colors.bgSecondary,
-            borderRadius: borderRadius.md,
-            display: "flex",
-            flexDirection: "column",
-            gap: spacing.sm,
-          } as CSSProperties}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <div style={{ display: "flex", flexDirection: "column", gap: "2px" } as CSSProperties}>
-                <span style={{ fontSize: fontSize.xs, fontWeight: 500, color: colors.textPrimary }}>
-                  ローカルNERモデル
-                </span>
-                <span style={{ fontSize: "10px", color: colors.textSecondary }}>
-                  ブラウザ内推論（CNN, ~6MB）
-                </span>
-              </div>
-              {modelStatus.downloaded ? (
-                <div style={{ display: "flex", gap: spacing.xs }}>
-                  {!modelStatus.ready && !modelStatus.loading && (
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        try {
-                          await sendMessage({ type: "LOAD_DLP_MODEL" });
-                          const s = await sendMessage<ModelStatus>({ type: "GET_DLP_MODEL_STATUS" });
-                          if (s) setModelStatus(s);
-                          saveDlpConfig({ ...dlpConfig, useLocalModel: true, localModelReady: true });
-                        } catch { }
-                      }}
-                      style={{
-                        padding: `2px ${spacing.xs}`,
-                        background: colors.accent,
-                        border: "none",
-                        borderRadius: borderRadius.sm,
-                        color: "#fff",
-                        fontSize: "10px",
-                        cursor: "pointer",
-                      }}
-                    >
-                      ロード
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      await sendMessage({ type: "DELETE_DLP_MODEL" });
-                      setModelStatus({ downloaded: false, loading: false, ready: false });
-                      saveDlpConfig({ ...dlpConfig, useLocalModel: false, localModelReady: false });
-                    }}
-                    style={{
-                      padding: `2px ${spacing.xs}`,
-                      background: "transparent",
-                      border: `1px solid ${colors.border}`,
-                      borderRadius: borderRadius.sm,
-                      color: colors.textSecondary,
-                      fontSize: "10px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    削除
-                  </button>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  disabled={modelDownloading}
-                  onClick={async () => {
-                    setModelDownloading(true);
-                    try {
-                      const result = await sendMessage<{ success: boolean }>({ type: "DOWNLOAD_DLP_MODEL", data: { modelUrl: DLP_MODEL_URL, wasmUrl: DLP_WASM_URL } });
-                      if (result?.success) {
-                        const s = await sendMessage<ModelStatus>({ type: "GET_DLP_MODEL_STATUS" });
-                        if (s) setModelStatus(s);
-                        saveDlpConfig({ ...dlpConfig, useLocalModel: true, localModelReady: true });
-                      }
-                    } catch (err) {
-                      logger.error("Model download failed", err);
-                    } finally {
-                      setModelDownloading(false);
-                    }
-                  }}
-                  style={{
-                    padding: `2px ${spacing.sm}`,
-                    background: colors.accent,
-                    border: "none",
-                    borderRadius: borderRadius.sm,
-                    color: "#fff",
-                    fontSize: "10px",
-                    cursor: modelDownloading ? "wait" : "pointer",
-                    opacity: modelDownloading ? 0.6 : 1,
-                  }}
-                >
-                  {modelDownloading ? "ダウンロード中..." : "モデルをダウンロード"}
-                </button>
-              )}
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: spacing.xs, fontSize: "10px" }}>
-              <span style={{
-                width: "6px", height: "6px", borderRadius: "50%", display: "inline-block",
-                background: modelStatus.ready ? "var(--success)" : modelStatus.downloaded ? "var(--warning)" : "var(--muted)",
-              }} />
-              <span style={{ color: colors.textSecondary }}>
-                {modelStatus.ready
-                  ? `推論可能${modelStatus.modelSize ? ` (${(modelStatus.modelSize / 1024 / 1024).toFixed(1)}MB)` : ""}`
-                  : modelStatus.loading
-                    ? "ロード中..."
-                    : modelStatus.downloaded
-                      ? "ダウンロード済み（未ロード）"
-                      : "未ダウンロード"}
-              </span>
-            </div>
-          </div>
-
-          {!dlpConfig.useLocalModel && (
-            <>
-              <div style={{ display: "flex", alignItems: "center", gap: spacing.sm }}>
-                <input
-                  type="text"
-                  value={dlpConfig.serverUrl}
-                  onInput={(e) => saveDlpConfig({ ...dlpConfig, serverUrl: (e.target as HTMLInputElement).value })}
-                  placeholder="http://localhost:8080"
-                  style={{
-                    flex: 1,
-                    padding: `${spacing.xs} ${spacing.sm}`,
-                    background: colors.bgSecondary,
-                    border: `1px solid ${colors.border}`,
-                    borderRadius: borderRadius.md,
-                    color: colors.textPrimary,
-                    fontSize: fontSize.xs,
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={testDlpConnection}
-                  disabled={dlpStatus === "connecting"}
-                  style={{
-                    padding: `${spacing.xs} ${spacing.sm}`,
-                    background: colors.bgSecondary,
-                    border: `1px solid ${colors.border}`,
-                    borderRadius: borderRadius.md,
-                    color: colors.textPrimary,
-                    fontSize: fontSize.xs,
-                    cursor: dlpStatus === "connecting" ? "wait" : "pointer",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {dlpStatus === "connecting" ? "接続中..." : "接続テスト"}
-                </button>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: spacing.xs, fontSize: fontSize.xs }}>
-                <span style={{
-                  width: "8px", height: "8px", borderRadius: "50%", display: "inline-block",
-                  background: dlpStatus === "connected" ? "var(--success)" : dlpStatus === "connecting" ? "var(--warning)" : "var(--danger)",
-                }} />
-                <span style={{ color: colors.textSecondary }}>
-                  {dlpStatus === "connected" ? "サーバー接続済み" : dlpStatus === "connecting" ? "接続確認中" : "未接続"}
-                </span>
-              </div>
-            </>
-          )}
-        </div>
+        <DLPModelCard
+          modelStatus={modelStatus}
+          modelDownloading={modelDownloading}
+          onDownload={() => void loadModelFromCache()}
+          onDelete={async () => {
+            await sendMessage({ type: "DELETE_DLP_MODEL" });
+            setModelStatus({ downloaded: false, loading: false, ready: false });
+            saveDlpConfig({ ...dlpConfig, modelReady: false });
+          }}
+          colors={colors}
+        />
       )}
-      */}
 
       <span style={{ fontSize: fontSize.sm, fontWeight: 600, color: colors.textPrimary, marginTop: spacing.md, marginBottom: spacing.xs, display: "block" } as CSSProperties}>
         通知
