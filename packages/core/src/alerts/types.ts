@@ -374,6 +374,12 @@ export interface StorageExfiltrationAlertDetails {
   domain: string;
   storageType: string;
   accessCount: number;
+  /** アクセスされたキーのサンプル（最大10件） */
+  accessedKeys?: string[];
+  /** getItemを呼び出したスクリプトのオリジン（Error stackから推定） */
+  callerOrigin?: string;
+  /** 1st-party / 3rd-party / unknown */
+  partyContext?: "first-party" | "third-party" | "unknown";
 }
 
 export interface CredentialAPIAlertDetails {
