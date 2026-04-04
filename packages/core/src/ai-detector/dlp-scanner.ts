@@ -158,13 +158,15 @@ export function createDLPScanner(initialConfig?: Partial<DLPServerConfig>): DLPS
     try {
       const results = await nerPipeline(trimmed, { aggregation_strategy: "simple" });
 
-      const entities: DLPEntity[] = results.map((r) => ({
-        entity_type: r.entity_group,
-        start: r.start,
-        end: r.end,
-        score: r.score,
-        text: trimmed.slice(r.start, r.end),
-      }));
+      const entities: DLPEntity[] = results
+        .filter((r) => r.entity_group != null && r.entity_group !== "")
+        .map((r) => ({
+          entity_type: r.entity_group,
+          start: r.start,
+          end: r.end,
+          score: r.score,
+          text: trimmed.slice(r.start, r.end),
+        }));
 
       if (entities.length === 0) {
         return null;

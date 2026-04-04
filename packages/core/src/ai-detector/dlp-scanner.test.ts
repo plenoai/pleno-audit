@@ -72,6 +72,48 @@ describe("createDLPScanner", () => {
     expect(result!.language).toBe("ja");
   });
 
+  it("scan filters out entities with null/undefined entity_group (#407)", async () => {
+    const pipelineResults = [
+      { entity_group: "PERSON", start: 0, end: 4, score: 0.95, word: "田中太郎" },
+      { entity_group: undefined, start: 5, end: 10, score: 0.3, word: "anomaly" },
+      { entity_group: null, start: 11, end: 16, score: 0.2, word: "noise" },
+      { entity_group: "", start: 17, end: 22, score: 0.1, word: "empty" },
+      { entity_group: "EMAIL_ADDRESS", start: 23, end: 41, score: 0.99, word: "a@example.com" },
+    ];
+    mockPipeline.mockResolvedValue(pipelineResults);
+
+    const scanner = createDLPScanner({ enabled: true });
+    await scanner.initPipeline();
+    const result = await scanner.scan(
+      "田中太郎 anomaly noise empty a@example.com",
+      "clipboard",
+      "example.com",
+    );
+
+    expect(result).not.toBeNull();
+    expect(result!.entities).toHaveLength(2);
+    expect(result!.entities[0]!.entity_type).toBe("PERSON");
+    expect(result!.entities[1]!.entity_type).toBe("EMAIL_ADDRESS");
+    // entityTypes に null/undefined/"" が含まれないことを検証
+    const entityTypes = result!.entities.map(e => e.entity_type);
+    expect(entityTypes).not.toContain(null);
+    expect(entityTypes).not.toContain(undefined);
+    expect(entityTypes).not.toContain("");
+  });
+
+  it("scan returns null when all entities have invalid entity_group", async () => {
+    const pipelineResults = [
+      { entity_group: undefined, start: 0, end: 5, score: 0.3, word: "noise" },
+      { entity_group: null, start: 6, end: 11, score: 0.2, word: "noise" },
+    ];
+    mockPipeline.mockResolvedValue(pipelineResults);
+
+    const scanner = createDLPScanner({ enabled: true });
+    await scanner.initPipeline();
+    const result = await scanner.scan("noise noise", "clipboard", "example.com");
+    expect(result).toBeNull();
+  });
+
   it("scan truncates long text", async () => {
     mockPipeline.mockResolvedValue([]);
     const scanner = createDLPScanner({ enabled: true });

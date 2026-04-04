@@ -633,24 +633,24 @@ export default defineBackground(() => {
         }).then(async (res) => {
           const result = res?.result;
           if (result) {
-            const entityTypes = [...new Set(result.entities.map(e => e.entity_type))];
-            let maskedSample: string | undefined;
-            if (result.entities.length > 0) {
-              const sorted = [...result.entities].sort((a, b) => b.start - a.start);
+            const validEntities = result.entities.filter(e => e.entity_type != null && e.entity_type !== "");
+            if (validEntities.length > 0) {
+              const entityTypes = [...new Set(validEntities.map(e => e.entity_type))];
+              const sorted = [...validEntities].sort((a, b) => b.start - a.start);
               let masked = data.text!;
               for (const ent of sorted) {
                 masked = masked.slice(0, ent.start) + `[${ent.entity_type}]` + masked.slice(ent.end);
               }
-              maskedSample = masked.length > 200 ? masked.slice(0, 200) + "…" : masked;
+              const maskedSample = masked.length > 200 ? masked.slice(0, 200) + "…" : masked;
+              await backgroundAlerts.getAlertManager().alertDLPPIIDetected({
+                domain: result.domain,
+                scanContext: result.context,
+                entityTypes,
+                entityCount: validEntities.length,
+                language: result.language,
+                maskedSample,
+              }, result.url);
             }
-            await backgroundAlerts.getAlertManager().alertDLPPIIDetected({
-              domain: result.domain,
-              scanContext: result.context,
-              entityTypes,
-              entityCount: result.entities.length,
-              language: result.language,
-              maskedSample,
-            }, result.url);
           }
           sendResponse({ success: true });
         }).catch((err) => {
