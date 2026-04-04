@@ -36,6 +36,17 @@ export const CRYPTO_PATTERNS: Record<string, RegExp> = {
 
 export const SUSPICIOUS_EXTENSIONS = [".exe", ".msi", ".bat", ".ps1", ".cmd", ".scr", ".vbs", ".js", ".jar", ".dll"];
 
+export const OAUTH_PATH_SEGMENTS = ["/callback", "/auth", "/oauth", "/authorize", "/sso", "/token"];
+
+/** OAuth 2.0 Authorization Code callback の簡易判定（RFC 6749 §4.1.2） */
+export function looksLikeOAuthCallback(url: URL): boolean {
+  const code = url.searchParams.get("code");
+  const hasState = url.searchParams.has("state");
+  if (!hasState || code === null || code.length < 8) return false;
+  const path = url.pathname.toLowerCase();
+  return OAUTH_PATH_SEGMENTS.some(seg => path.includes(seg));
+}
+
 /** XSSインジェクションパターン（security-patterns.ts と同期すること） */
 export const XSS_PATTERNS: RegExp[] = [
   /<script[^>]*>[^<]+/i,
@@ -315,7 +326,7 @@ export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecuri
               ? new URL(this.action, window.location.origin)
               : null;
             const isOriginChange = currentAction !== null && newAction.origin !== currentAction.origin;
-            if (isOriginChange) {
+            if (isOriginChange && !looksLikeOAuthCallback(newAction)) {
               deferEmit(emitSecurityEvent, "__FORM_HIJACK_DETECTED__", {
                 originalAction: this.action,
                 newAction: value,

@@ -10,6 +10,8 @@ import {
   SENSITIVE_NAMES,
   CRYPTO_PATTERNS,
   SUSPICIOUS_EXTENSIONS,
+  OAUTH_PATH_SEGMENTS,
+  looksLikeOAuthCallback,
   hasSensitiveFields,
 } from "./security-hooks.js";
 
@@ -111,6 +113,61 @@ describe("SUSPICIOUS_EXTENSIONS", () => {
   it("handles double extension filenames", () => {
     const ext = "." + "document.pdf.exe".split(".").pop()!.toLowerCase();
     expect(SUSPICIOUS_EXTENSIONS.includes(ext)).toBe(true);
+  });
+});
+
+describe("OAUTH_PATH_SEGMENTS", () => {
+  it("includes standard OAuth path segments", () => {
+    for (const seg of ["/callback", "/auth", "/oauth", "/authorize", "/sso", "/token"]) {
+      expect(OAUTH_PATH_SEGMENTS).toContain(seg);
+    }
+  });
+});
+
+describe("looksLikeOAuthCallback", () => {
+  it("detects OAuth 2.0 Authorization Code callback", () => {
+    const url = new URL("https://secure.freee.co.jp/walletables/auth/netbk/callback?code=AAPF4FuzGkP31wgpJPNICDV7ArM8hss2&state=e57dff8188c04e94a7fd2b1c4279415f");
+    expect(looksLikeOAuthCallback(url)).toBe(true);
+  });
+
+  it("detects callback with minimum code length (8 chars)", () => {
+    const url = new URL("https://example.com/oauth/callback?code=12345678&state=abc");
+    expect(looksLikeOAuthCallback(url)).toBe(true);
+  });
+
+  it("rejects short code (< 8 chars)", () => {
+    const url = new URL("https://example.com/auth/callback?code=JP&state=abc");
+    expect(looksLikeOAuthCallback(url)).toBe(false);
+  });
+
+  it("rejects missing state parameter", () => {
+    const url = new URL("https://example.com/auth/callback?code=AAPF4FuzGkP31wgp");
+    expect(looksLikeOAuthCallback(url)).toBe(false);
+  });
+
+  it("rejects missing code parameter", () => {
+    const url = new URL("https://example.com/auth/callback?state=e57dff81");
+    expect(looksLikeOAuthCallback(url)).toBe(false);
+  });
+
+  it("rejects URL without query params", () => {
+    const url = new URL("https://example.com/some/page");
+    expect(looksLikeOAuthCallback(url)).toBe(false);
+  });
+
+  it("rejects non-OAuth path with code+state", () => {
+    const url = new URL("https://evil.com/search?code=AAPF4FuzGkP31wgp&state=abc");
+    expect(looksLikeOAuthCallback(url)).toBe(false);
+  });
+
+  it("rejects attacker URL without OAuth path", () => {
+    const url = new URL("https://evil.com/steal?code=AAPF4FuzGkP31wgp&state=abc");
+    expect(looksLikeOAuthCallback(url)).toBe(false);
+  });
+
+  it("matches case-insensitively on path", () => {
+    const url = new URL("https://example.com/OAuth/Callback?code=AAPF4FuzGkP31wgp&state=abc");
+    expect(looksLikeOAuthCallback(url)).toBe(true);
   });
 });
 

@@ -869,6 +869,21 @@
     }
 
     // ============================================================
+    // Pattern 35: OAuth form redirect (cross-origin with code+state)
+    // OAuth 2.0 Authorization Code flow changes form action cross-origin
+    // FormHijack hook must NOT fire when URL has OAuth callback signature
+    // ============================================================
+    function oauthFormRedirect() {
+      var form = document.createElement("form");
+      form.action = "/original-action";
+      document.body.appendChild(form);
+      // Simulate OAuth redirect: change action to cross-origin OAuth callback
+      form.action = "https://secure.example.com/auth/callback?code=AAPF4FuzGkP31wgpXYZ123abc&state=e57dff8188c04e94a7fd2b1c4279415f";
+      form.remove();
+      record("OAuth Form Redirect", true, "Cross-origin form action with code+state+OAuth path (no alert expected)");
+    }
+
+    // ============================================================
     // Run all patterns on page load
     // ============================================================
     function runAll() {
@@ -905,6 +920,7 @@
       dynamicCDNScript();
       spaStateManagement();
       normalEventListeners();
+      oauthFormRedirect();
       // Boundary value tests run after a 6-second delay to ensure
       // ALL time windows have reset (cookie/storage: 3s, QSA/events: 5s).
       // This prevents pattern interaction from crossing thresholds.
