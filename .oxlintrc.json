@@ -84,6 +84,11 @@
       "files": ["packages/core/src/battacker/**/*"],
       "rules": { "no-console": "off", "no-restricted-globals": "off" }
     },
+    // DLP Client - communicates with local pleno-anonymize server (default: OFF, user opt-in)
+    {
+      "files": ["packages/core/src/ai-detector/dlp-client.ts"],
+      "rules": { "no-restricted-globals": "off" }
+    },
     // SSO Manager - requires OAuth token exchange (enterprise feature, default: OFF)
     {
       "files": ["packages/core/src/extension-enterprise/sso-manager.ts"],
