@@ -288,6 +288,7 @@ export function SettingsTab({ animationEnabled, onAnimationToggle }: { animation
         );
       })}
 
+      {/* TODO: DLP機能が完成次第コメントアウトを解除する
       <span style={{ fontSize: fontSize.sm, fontWeight: 600, color: colors.textPrimary, marginTop: spacing.md, marginBottom: spacing.xs, display: "block" } as CSSProperties}>
         DLP（データ漏洩防止）
       </span>
@@ -306,7 +307,6 @@ export function SettingsTab({ animationEnabled, onAnimationToggle }: { animation
 
       {dlpConfig.enabled && (
         <div style={{ padding: `${spacing.sm} ${spacing.lg}`, display: "flex", flexDirection: "column", gap: spacing.sm } as CSSProperties}>
-          {/* ローカルモデル セクション */}
           <div style={{
             padding: spacing.sm,
             background: colors.bgSecondary,
@@ -335,7 +335,7 @@ export function SettingsTab({ animationEnabled, onAnimationToggle }: { animation
                           const s = await sendMessage<ModelStatus>({ type: "GET_DLP_MODEL_STATUS" });
                           if (s) setModelStatus(s);
                           saveDlpConfig({ ...dlpConfig, useLocalModel: true, localModelReady: true });
-                        } catch { /* noop */ }
+                        } catch { }
                       }}
                       style={{
                         padding: `2px ${spacing.xs}`,
@@ -404,7 +404,6 @@ export function SettingsTab({ animationEnabled, onAnimationToggle }: { animation
                 </button>
               )}
             </div>
-            {/* ステータス */}
             <div style={{ display: "flex", alignItems: "center", gap: spacing.xs, fontSize: "10px" }}>
               <span style={{
                 width: "6px", height: "6px", borderRadius: "50%", display: "inline-block",
@@ -422,7 +421,6 @@ export function SettingsTab({ animationEnabled, onAnimationToggle }: { animation
             </div>
           </div>
 
-          {/* サーバーモード（フォールバック） */}
           {!dlpConfig.useLocalModel && (
             <>
               <div style={{ display: "flex", alignItems: "center", gap: spacing.sm }}>
@@ -472,6 +470,7 @@ export function SettingsTab({ animationEnabled, onAnimationToggle }: { animation
           )}
         </div>
       )}
+      */}
 
       <span style={{ fontSize: fontSize.sm, fontWeight: 600, color: colors.textPrimary, marginTop: spacing.md, marginBottom: spacing.xs, display: "block" } as CSSProperties}>
         通知
