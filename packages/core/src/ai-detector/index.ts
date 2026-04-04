@@ -94,6 +94,26 @@ export {
   type DomainVisitData,
 } from "./policy-generator.js";
 
+// DLP Client (pleno-anonymize DLP — detect only)
+export {
+  createDLPClient,
+  type DLPClient,
+  type DLPClientConfig,
+  type DLPEntity,
+  type DLPAnalyzeRequest,
+} from "./dlp-client.js";
+
+// DLP Scanner
+export {
+  createDLPScanner,
+  getEntityLabel,
+  DEFAULT_DLP_SERVER_CONFIG,
+  type DLPScanner,
+  type DLPServerConfig,
+  type ScanContext,
+  type DLPScanResult,
+} from "./dlp-scanner.js";
+
 // AI Pattern Analyzer
 export {
   createAIPatternAnalyzer,

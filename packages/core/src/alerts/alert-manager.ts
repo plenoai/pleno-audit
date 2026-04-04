@@ -71,6 +71,7 @@ import type {
   DragEventSniffingAlertParams,
   SelectionSniffingAlertParams,
   OpenRedirectAlertParams,
+  DLPPIIDetectedAlertParams,
 } from "./alert-builders.js";
 import {
   buildNRDAlert,
@@ -129,6 +130,7 @@ import {
   buildDragEventSniffingAlert,
   buildSelectionSniffingAlert,
   buildOpenRedirectAlert,
+  buildDLPPIIDetectedAlert,
 } from "./alert-builders.js";
 
 /**
@@ -768,6 +770,12 @@ export function createAlertManager(
     return createOptionalAlert(buildOpenRedirectAlert(params), url);
   }
 
+  async function alertDLPPIIDetected(
+    params: DLPPIIDetectedAlertParams, url?: string,
+  ): Promise<SecurityAlert | null> {
+    return createOptionalAlert(buildDLPPIIDetectedAlert(params), url);
+  }
+
   async function updateAlertStatus(
     alertId: string,
     status: AlertStatus
@@ -866,6 +874,7 @@ export function createAlertManager(
     alertDragEventSniffing,
     alertSelectionSniffing,
     alertOpenRedirect,
+    alertDLPPIIDetected,
     updateAlertStatus,
     getAlerts,
     getAlertCount,

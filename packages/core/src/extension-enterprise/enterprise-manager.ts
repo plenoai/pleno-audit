@@ -211,6 +211,7 @@ class EnterpriseManager {
       enableNRD: managed.enableNRD ?? userConfig.enableNRD,
       enableTyposquat: managed.enableTyposquat ?? userConfig.enableTyposquat,
       enableAI: managed.enableAI ?? userConfig.enableAI,
+      enableDLPServer: userConfig.enableDLPServer,
     };
   }
 

@@ -8,6 +8,7 @@
 import { getSharedHooks } from "./shared.js";
 import { initAIHooks } from "./ai-hooks.js";
 import { initSecurityHooks } from "./security-hooks.js";
+import { setupDLPHooks } from "./dlp-hooks.js";
 
 ;(function () {
   "use strict";
@@ -17,4 +18,5 @@ import { initSecurityHooks } from "./security-hooks.js";
   const shared = getSharedHooks();
   initAIHooks(shared);
   initSecurityHooks(shared.emitSecurityEvent);
+  setupDLPHooks(shared);
 })();

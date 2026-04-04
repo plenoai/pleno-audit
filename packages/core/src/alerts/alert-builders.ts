@@ -62,6 +62,7 @@ import type {
   DragEventSniffingAlertDetails,
   SelectionSniffingAlertDetails,
   OpenRedirectAlertDetails,
+  DLPPIIDetectedAlertDetails,
   MessageChannelAlertDetails,
   ResizeObserverAlertDetails,
   ExecCommandClipboardAlertDetails,
@@ -2163,4 +2164,59 @@ const OPEN_REDIRECT_ALERT_DEFINITION: AlertDefinition<
 
 export const buildOpenRedirectAlert = createAlertBuilder(
   OPEN_REDIRECT_ALERT_DEFINITION
+);
+
+// ============================================================================
+// DLP PII Detected Alert (pleno-anonymize DLP)
+// ============================================================================
+
+const SCAN_CONTEXT_LABELS: Record<string, string> = {
+  clipboard: "クリップボード",
+  form: "フォーム",
+  ai_prompt: "AIプロンプト",
+};
+
+export interface DLPPIIDetectedAlertParams {
+  domain: string;
+  scanContext: "clipboard" | "form" | "ai_prompt";
+  entityTypes: string[];
+  entityCount: number;
+  language: "ja" | "en";
+}
+
+const DLP_PII_DETECTED_ALERT_DEFINITION: AlertDefinition<
+  DLPPIIDetectedAlertParams,
+  DLPPIIDetectedAlertDetails
+> = {
+  category: "dlp_pii_detected",
+  detailsType: "dlp_pii_detected",
+  build: (params, helpers) => {
+    const hasHighRisk = params.entityTypes.some(t =>
+      ["MY_NUMBER", "CREDIT_CARD", "BANK_ACCOUNT", "PASSPORT", "DRIVER_LICENSE", "HEALTH_INSURANCE"].includes(t)
+    );
+    const severity = helpers.resolveSeverity(
+      [[hasHighRisk, "critical"]],
+      "high"
+    );
+
+    const contextLabel = SCAN_CONTEXT_LABELS[params.scanContext] ?? params.scanContext;
+    const typeSummary = params.entityTypes.join(", ");
+
+    return {
+      severity,
+      title: `PII検出（${contextLabel}）: ${params.domain}`,
+      description: `${contextLabel}から${params.entityCount}件の個人情報を検出: ${typeSummary}`,
+      domain: params.domain,
+      details: {
+        scanContext: params.scanContext,
+        entityTypes: params.entityTypes,
+        entityCount: params.entityCount,
+        language: params.language,
+      },
+    };
+  },
+};
+
+export const buildDLPPIIDetectedAlert = createAlertBuilder(
+  DLP_PII_DETECTED_ALERT_DEFINITION
 );

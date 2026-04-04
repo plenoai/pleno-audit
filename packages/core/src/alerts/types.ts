@@ -71,7 +71,8 @@ export type AlertCategory =
   | "clipboard_event_sniffing" // Clipboard event listener sniffing (copy/cut/paste) — burst >10 in 5s
   | "drag_event_sniffing" // Drag-and-drop event listener data theft (dragstart/drop) — burst >10 in 5s
   | "selection_sniffing" // Selection API keylogging (selectionchange) — burst >10 in 5s
-  | "open_redirect"; // Open redirect via URL parameter to external domain
+  | "open_redirect" // Open redirect via URL parameter to external domain
+  | "dlp_pii_detected"; // PII detected by pleno-anonymize DLP server
 
 /**
  * Alert status
@@ -165,7 +166,8 @@ export type AlertDetails =
   | ClipboardEventSniffingAlertDetails
   | DragEventSniffingAlertDetails
   | SelectionSniffingAlertDetails
-  | OpenRedirectAlertDetails;
+  | OpenRedirectAlertDetails
+  | DLPPIIDetectedAlertDetails;
 
 export interface NRDAlertDetails {
   type: "nrd";
@@ -578,6 +580,18 @@ export interface OpenRedirectAlertDetails {
   redirectUrl: string;
   parameterName: string;
   isExternal: boolean;
+}
+
+export interface DLPPIIDetectedAlertDetails {
+  type: "dlp_pii_detected";
+  /** スキャンコンテキスト（clipboard / form / ai_prompt） */
+  scanContext: "clipboard" | "form" | "ai_prompt";
+  /** 検出されたエンティティ種別 */
+  entityTypes: string[];
+  /** 検出数 */
+  entityCount: number;
+  /** 検出言語 */
+  language: "ja" | "en";
 }
 
 /**

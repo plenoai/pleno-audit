@@ -2,6 +2,7 @@ import type {
   DetectionConfig,
   NotificationConfig,
 } from "../../extension-runtime/index.js";
+import type { DLPServerConfig } from "../../ai-detector/index.js";
 import type { AsyncHandlerEntry, RuntimeHandlerDependencies } from "./types.js";
 
 export function createConfigurationHandlers(
@@ -23,6 +24,18 @@ export function createConfigurationHandlers(
     ["SET_NOTIFICATION_CONFIG", {
       execute: (message) => deps.setNotificationConfig(message.data as Partial<NotificationConfig>),
       fallback: () => ({ success: false }),
+    }],
+    ["GET_DLP_SERVER_CONFIG", {
+      execute: () => deps.getDLPServerConfig(),
+      fallback: () => null,
+    }],
+    ["SET_DLP_SERVER_CONFIG", {
+      execute: (message) => deps.setDLPServerConfig(message.data as Partial<DLPServerConfig>),
+      fallback: () => ({ success: false }),
+    }],
+    ["TEST_DLP_CONNECTION", {
+      execute: () => deps.testDLPConnection(),
+      fallback: () => ({ connected: false }),
     }],
   ];
 }

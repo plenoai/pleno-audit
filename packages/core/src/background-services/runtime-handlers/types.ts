@@ -1,5 +1,5 @@
 import type { DetectedService } from "../../types/index.js";
-import type { AIMonitorConfig, CapturedAIPrompt } from "../../ai-detector/index.js";
+import type { AIMonitorConfig, CapturedAIPrompt, DLPServerConfig } from "../../ai-detector/index.js";
 import type { NRDConfig } from "../../nrd/index.js";
 import type { TyposquatConfig } from "../../typosquat/index.js";
 import type {
@@ -172,6 +172,10 @@ handleNetworkInspection: (data: unknown, sender: chrome.runtime.MessageSender) =
   setNotificationConfig: (
     config: Partial<NotificationConfig>,
   ) => Promise<{ success: boolean }>;
+
+  getDLPServerConfig: () => Promise<DLPServerConfig>;
+  setDLPServerConfig: (config: Partial<DLPServerConfig>) => Promise<{ success: boolean }>;
+  testDLPConnection: () => Promise<{ connected: boolean }>;
 
   getServiceConnections: () => Promise<Record<string, string[]>>;
   getExtensionConnections: () => Promise<Record<string, string[]>>;
