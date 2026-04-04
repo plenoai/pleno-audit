@@ -8,7 +8,7 @@ import {
   Download,
   Server,
   Database,
-  Chrome,
+  AppWindow,
   Globe,
   FileText,
   Scan,
@@ -154,7 +154,7 @@ export const GETTING_STARTED_STEPS: GettingStartedStep[] = [
     cta: {
       href: 'https://github.com/plenoai/pleno-audit/releases',
       label: 'GitHubリリースを開く',
-      icon: Chrome,
+      icon: AppWindow,
     },
   },
   {
@@ -450,7 +450,7 @@ export const PACKAGE_ITEMS: PackageItem[] = [
     description: 'エンタープライズ機能（OIDC・SAML SSO、管理構成）',
   },
   {
-    icon: Chrome,
+    icon: AppWindow,
     title: 'app/audit-extension',
     description: 'Chrome/Firefox拡張機能（WXT + Preact）',
   },
