@@ -231,44 +231,63 @@ function AlertRow({
       </div>
 
       {/* Expanded details */}
-      {isExpanded && detailEntries.length > 0 && (
+      {isExpanded && (
         <div
           style={{
             padding: `0 ${spacing.lg} ${spacing.sm} 48px`,
             background: colors.bgSecondary,
           }}
         >
-          <div
+          {detailEntries.length > 0 && (
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "auto 1fr",
+                gap: "2px 12px",
+                fontSize: fontSize.sm,
+                fontFamily: "monospace",
+                marginBottom: spacing.sm,
+              }}
+            >
+              {detailEntries.map(([key, value]) => (
+                <>
+                  <span key={`${key}-label`} style={{ color: colors.textMuted }}>
+                    {key}:
+                  </span>
+                  <span
+                    key={`${key}-value`}
+                    style={{
+                      color: colors.textPrimary,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                    title={String(value)}
+                  >
+                    {typeof value === "object"
+                      ? JSON.stringify(value)
+                      : String(value)}
+                  </span>
+                </>
+              ))}
+            </div>
+          )}
+          <a
+            href={`https://plenoai.github.io/pleno-audit/alerts/${alert.category}`}
+            target="_blank"
+            rel="noopener noreferrer"
             style={{
-              display: "grid",
-              gridTemplateColumns: "auto 1fr",
-              gap: "2px 12px",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "4px",
               fontSize: fontSize.sm,
-              fontFamily: "monospace",
+              color: colors.interactive,
+              textDecoration: "none",
+              padding: `${spacing.xs} 0`,
             }}
           >
-            {detailEntries.map(([key, value]) => (
-              <>
-                <span key={`${key}-label`} style={{ color: colors.textMuted }}>
-                  {key}:
-                </span>
-                <span
-                  key={`${key}-value`}
-                  style={{
-                    color: colors.textPrimary,
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}
-                  title={String(value)}
-                >
-                  {typeof value === "object"
-                    ? JSON.stringify(value)
-                    : String(value)}
-                </span>
-              </>
-            ))}
-          </div>
+            プレイブックを見る ↗
+          </a>
         </div>
       )}
     </div>
