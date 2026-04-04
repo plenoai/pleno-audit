@@ -6,7 +6,7 @@
   ],
   "testRunner": "vitest",
   "vitest": {
-    "configFile": "vitest.config.ts"
+    "configFile": "vitest.stryker.config.ts"
   },
   "mutate": [
     "packages/core/src/nrd/**/*.ts",
