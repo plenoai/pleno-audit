@@ -116,11 +116,13 @@ export function createDLPScanner(initialConfig?: Partial<DLPServerConfig>): DLPS
 
     // Chrome拡張: CDN blocked by CSP → バンドル済みWASMを使用
     // Worker内のdynamic importも制限されるため proxy=false でメインスレッド実行
+    // offscreen documentはcross-origin isolatedでないため SharedArrayBuffer不可 → numThreads=1
     if (typeof chrome !== "undefined" && chrome.runtime?.getURL) {
       const wasmConfig = env.backends.onnx.wasm;
       if (wasmConfig) {
         wasmConfig.wasmPaths = chrome.runtime.getURL("/");
         wasmConfig.proxy = false;
+        wasmConfig.numThreads = 1;
       }
     }
 
