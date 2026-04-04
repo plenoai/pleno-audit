@@ -71,3 +71,13 @@ export {
   queryExistingCookies,
   type CookieChangeCallback,
 } from "./cookie-monitor.js";
+
+// Extension Lifecycle Monitor
+export {
+  startExtensionLifecycleMonitor,
+  stopExtensionLifecycleMonitor,
+  onExtensionLifecycle,
+  type ExtensionLifecycleEventType,
+  type ExtensionLifecycleEvent,
+  type ExtensionLifecycleCallback,
+} from "./extension-lifecycle-monitor.js";

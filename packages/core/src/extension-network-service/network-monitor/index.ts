@@ -20,6 +20,9 @@ import {
   globalExtensionStatsCache,
   detectAllSuspiciousPatterns,
   DEFAULT_SUSPICIOUS_PATTERN_CONFIG,
+  startExtensionLifecycleMonitor,
+  stopExtensionLifecycleMonitor,
+  onExtensionLifecycle,
 } from "../../extension-analyzers/index.js";
 
 // Internal modules
@@ -61,27 +64,7 @@ export function createNetworkMonitor(
 ): import("./types.js").NetworkMonitor {
   state.ownExtensionId = ownExtensionId;
 
-  function handleInstalled(info: chrome.management.ExtensionInfo): void {
-    if (info.type !== "extension") return;
-    if (info.id === ownExtensionId) return;
-    if (excludedExtensions.has(info.id)) return;
-
-    refreshExtensionList().catch((error) => {
-      logger.debug("Failed to refresh extension list on install", error);
-    });
-    addDNRRuleForExtension(info.id).catch((error) => {
-      logger.debug(`Failed to add DNR rule for ${info.id}`, error);
-    });
-  }
-
-  function handleUninstalled(extensionId: string): void {
-    refreshExtensionList().catch((error) => {
-      logger.debug("Failed to refresh extension list on uninstall", error);
-    });
-    removeDNRRuleForExtension(extensionId).catch((error) => {
-      logger.debug(`Failed to remove DNR rule for ${extensionId}`, error);
-    });
-  }
+  let unsubscribeLifecycle: (() => void) | undefined;
 
   return {
     async start() {
@@ -102,8 +85,30 @@ export function createNetworkMonitor(
       }
 
       if (!state.managementListenersRegistered) {
-        chrome.management.onInstalled.addListener(handleInstalled);
-        chrome.management.onUninstalled.addListener(handleUninstalled);
+        startExtensionLifecycleMonitor(ownExtensionId);
+        unsubscribeLifecycle = onExtensionLifecycle((event) => {
+          if (excludedExtensions.has(event.extensionId)) return;
+
+          if (event.type === "installed" || event.type === "enabled") {
+            refreshExtensionList().catch((error) => {
+              logger.debug(`Failed to refresh extension list on ${event.type}`, error);
+            });
+            if (event.type === "installed") {
+              addDNRRuleForExtension(event.extensionId).catch((error) => {
+                logger.debug(`Failed to add DNR rule for ${event.extensionId}`, error);
+              });
+            }
+          } else if (event.type === "uninstalled" || event.type === "disabled") {
+            refreshExtensionList().catch((error) => {
+              logger.debug(`Failed to refresh extension list on ${event.type}`, error);
+            });
+            if (event.type === "uninstalled") {
+              removeDNRRuleForExtension(event.extensionId).catch((error) => {
+                logger.debug(`Failed to remove DNR rule for ${event.extensionId}`, error);
+              });
+            }
+          }
+        });
         state.managementListenersRegistered = true;
       }
 
@@ -119,8 +124,9 @@ export function createNetworkMonitor(
 
     async stop() {
       if (state.managementListenersRegistered) {
-        chrome.management.onInstalled.removeListener(handleInstalled);
-        chrome.management.onUninstalled.removeListener(handleUninstalled);
+        unsubscribeLifecycle?.();
+        unsubscribeLifecycle = undefined;
+        stopExtensionLifecycleMonitor();
         state.managementListenersRegistered = false;
       }
       clearGlobalCallbacks();
