@@ -131,32 +131,29 @@ export default function AlertsIndexPage() {
           </p>
 
         {/* Alert cards */}
-        <div className="grid gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
           {filtered.map((playbook) => (
             <Link
               key={playbook.id}
               to={`/alerts/${playbook.id}`}
-              className="group flex items-center justify-between gap-4 rounded-xl border border-[#eaeaea] dark:border-[#333] bg-white dark:bg-[#111] p-5 hover:border-[#171717] dark:hover:border-[#ededed] transition-colors"
+              className="group flex flex-col rounded-xl border border-[#eaeaea] dark:border-[#333] bg-white dark:bg-[#111] p-4 hover:border-[#171717] dark:hover:border-[#ededed] transition-colors"
             >
-              <div className="min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <span
-                    className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${SEVERITY_STYLES[playbook.severity]}`}
-                  >
-                    {playbook.severity}
-                  </span>
-                  <span className="text-xs font-mono text-[#999] dark:text-[#666]">
-                    {playbook.id}
-                  </span>
-                </div>
-                <h3 className="font-medium text-[#171717] dark:text-[#ededed] truncate">
-                  {playbook.title}
-                </h3>
-                <p className="text-sm text-[#666] dark:text-[#8f8f8f] truncate">
-                  {playbook.description}
-                </p>
+              <div className="flex items-center gap-2 mb-2">
+                <span
+                  className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${SEVERITY_STYLES[playbook.severity]}`}
+                >
+                  {playbook.severity}
+                </span>
+                <span className="text-xs font-mono text-[#999] dark:text-[#666] truncate">
+                  {playbook.id}
+                </span>
               </div>
-              <ArrowRight className="h-4 w-4 shrink-0 text-[#ccc] dark:text-[#444] group-hover:text-[#171717] dark:group-hover:text-[#ededed] transition-colors" />
+              <h3 className="font-medium text-sm text-[#171717] dark:text-[#ededed] line-clamp-1">
+                {playbook.title}
+              </h3>
+              <p className="text-xs text-[#666] dark:text-[#8f8f8f] line-clamp-2 mt-1">
+                {playbook.description}
+              </p>
             </Link>
           ))}
         </div>
