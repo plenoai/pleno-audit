@@ -41,6 +41,7 @@ export type {
   DeviceEnumerationAlertDetails,
   StorageExfiltrationAlertDetails,
   OpenRedirectAlertDetails,
+  DLPPIIDetectedAlertDetails,
   AlertAction,
   AlertRule,
   AlertCondition,

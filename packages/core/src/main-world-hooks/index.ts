@@ -15,3 +15,4 @@ export { initFingerprintHooks } from "./fingerprint-hooks.js";
 export { initWebSocketHooks } from "./websocket-hooks.js";
 export { initWorkerHooks } from "./worker-hooks.js";
 export { initInjectionHooks } from "./injection-hooks.js";
+export { setupDLPHooks } from "./dlp-hooks.js";

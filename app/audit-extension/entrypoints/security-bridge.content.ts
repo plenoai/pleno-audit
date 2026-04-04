@@ -75,6 +75,9 @@ export default defineContentScript({
       "__WASM_EXECUTION_DETECTED__",
       "__EXECCOMMAND_DETECTED__",
       // addEventListener hooks removed (anti-tamper compatibility)
+      // DLP hooks
+      "__DLP_CLIPBOARD_COPY__",
+      "__DLP_FORM_SUBMIT__",
     ];
 
     const signal = abortController.signal;
