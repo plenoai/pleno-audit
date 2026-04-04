@@ -1,5 +1,9 @@
 {
   "$schema": "https://raw.githubusercontent.com/stryker-mutator/stryker/master/packages/api/schema/stryker-core.schema.json",
+  "plugins": [
+    "@stryker-mutator/vitest-runner",
+    "@stryker-mutator/typescript-checker"
+  ],
   "testRunner": "vitest",
   "vitest": {
     "configFile": "vitest.config.ts"

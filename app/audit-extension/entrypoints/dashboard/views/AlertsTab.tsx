@@ -614,7 +614,7 @@ function AlertDetailSidebar({
           対応方針の詳細を見る ↗
         </a>
       </div>
-    </div>,
+    </div>
   );
 }
 
