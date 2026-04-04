@@ -5,12 +5,13 @@ import Footer from '../components/Footer';
 import DocSidebar from './docs/DocSidebar';
 import OverviewSection from './docs/sections/OverviewSection';
 import GettingStartedSection from './docs/sections/GettingStartedSection';
-import FeaturesSection from './docs/sections/FeaturesSection';
+import DomainSection from './docs/sections/DomainSection';
 import ArchitectureSection from './docs/sections/ArchitectureSection';
 import PrivacySection from './docs/sections/PrivacySection';
 import {
   MAIN_SECTION_BY_SUBSECTION,
   SUBSECTION_IDS,
+  DOMAIN_METADATA,
 } from './docs/data';
 
 type SectionRenderer = () => JSX.Element;
@@ -21,16 +22,25 @@ type SectionDefinition = {
   subsectionId?: string;
 };
 
+const domainRenderer = (domainId: string) => () => <DomainSection domainId={domainId} />;
+
+const DOMAIN_IDS = Object.keys(DOMAIN_METADATA);
+
 const SECTION_DEFINITIONS: SectionDefinition[] = [
   { id: 'overview', render: OverviewSection },
   { id: 'getting-started', render: GettingStartedSection },
-  { id: 'features', render: FeaturesSection },
-  { id: 'shadow-it', render: FeaturesSection, subsectionId: 'shadow-it' },
-  { id: 'csp', render: FeaturesSection, subsectionId: 'csp' },
-  { id: 'phishing', render: FeaturesSection, subsectionId: 'phishing' },
-  { id: 'ai-prompt', render: FeaturesSection, subsectionId: 'ai-prompt' },
-  { id: 'auth', render: FeaturesSection, subsectionId: 'auth' },
-  { id: 'dashboard', render: FeaturesSection, subsectionId: 'dashboard' },
+  ...DOMAIN_IDS.flatMap((domainId) => {
+    const render = domainRenderer(domainId);
+    const meta = DOMAIN_METADATA[domainId];
+    return [
+      { id: domainId, render },
+      ...meta.featureIds.map((featureId) => ({
+        id: featureId,
+        render,
+        subsectionId: featureId,
+      })),
+    ];
+  }),
   { id: 'architecture', render: ArchitectureSection },
   { id: 'browser-only', render: ArchitectureSection, subsectionId: 'browser-only' },
   {

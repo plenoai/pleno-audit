@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Shield, ChevronRight, X, ArrowLeft } from 'lucide-react';
+import { Shield, ChevronRight, X, ArrowLeft, Bell } from 'lucide-react';
 import { DOC_SECTIONS, DEFAULT_EXPANDED_SECTION_IDS } from './data';
 
 interface DocSidebarProps {
@@ -132,6 +132,16 @@ export default function DocSidebar({
               );
             })}
           </ul>
+
+          <div className="mt-6 pt-4 border-t border-[#eaeaea] dark:border-[#333]">
+            <Link
+              to="/alerts"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-[#666] dark:text-[#8f8f8f] hover:bg-[#f5f5f5] dark:hover:bg-[#2a2a2a] hover:text-[#171717] dark:hover:text-[#ededed] transition-colors"
+            >
+              <Bell className="h-4 w-4" />
+              <span>アラート Playbook</span>
+            </Link>
+          </div>
         </nav>
       </aside>
     </>
