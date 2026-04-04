@@ -502,3 +502,58 @@ export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecuri
     }
   }, true);
 }
+
+// ===== Open Redirect Detection =====
+
+/** Common URL parameter names used for redirects */
+const REDIRECT_PARAM_NAMES = [
+  "redirect", "redirect_url", "redirect_uri", "return", "return_url", "returnto",
+  "return_to", "next", "url", "goto", "target", "dest", "destination",
+  "continue", "forward", "callback", "cb", "rurl", "out", "link",
+];
+
+export function checkOpenRedirect(
+  emitSecurityEvent: SharedHookUtils["emitSecurityEvent"],
+): void {
+  try {
+    const url = new URL(window.location.href);
+    for (const paramName of REDIRECT_PARAM_NAMES) {
+      const value = url.searchParams.get(paramName);
+      if (!value) continue;
+
+      // Decode the value to handle URL-encoded targets
+      let decoded = value;
+      try { decoded = decodeURIComponent(value); } catch { /* use raw */ }
+
+      // Check if the parameter value looks like an external URL
+      let isExternal = false;
+      try {
+        const targetUrl = new URL(decoded, window.location.origin);
+        isExternal = targetUrl.hostname !== window.location.hostname;
+      } catch {
+        // Could be a protocol-relative URL like //evil.com
+        if (decoded.startsWith("//")) {
+          isExternal = true;
+        }
+        // Could be javascript: or data: scheme
+        if (/^(javascript|data|vbscript):/i.test(decoded)) {
+          isExternal = true;
+        }
+      }
+
+      if (isExternal) {
+        deferEmit(emitSecurityEvent, "OPEN_REDIRECT_DETECTED", {
+          pageUrl: window.location.href,
+          redirectUrl: decoded,
+          parameterName: paramName,
+          isExternal: true,
+          timestamp: Date.now(),
+        });
+        // Only emit once per page load — first match wins
+        return;
+      }
+    }
+  } catch {
+    // Silently ignore URL parsing errors in main world
+  }
+}

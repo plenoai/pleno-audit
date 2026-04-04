@@ -176,5 +176,9 @@ export function createSecurityAsyncHandlers(
       execute: (message, sender) => deps.handleSelectionSniffing(message.data, sender),
       fallback: () => ({ success: false }),
     }],
+    ["OPEN_REDIRECT_DETECTED", {
+      execute: (message, sender) => deps.handleOpenRedirect(message.data, sender),
+      fallback: () => ({ success: false }),
+    }],
   ];
 }

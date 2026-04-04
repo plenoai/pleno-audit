@@ -89,6 +89,12 @@ export interface DetectedService {
     /** 検出されたShadow AIプロバイダー */
     shadowAIProviders?: ExtendedProvider[];
   };
+  /** リダイレクトチェーン検出情報 */
+  redirectChains?: {
+    redirectedTo: string;
+    redirectType: string;
+    detectedAt: number;
+  }[];
 }
 
 /**

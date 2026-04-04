@@ -56,4 +56,5 @@ export {
   type CanvasFingerprintData,
   type WebGLFingerprintData,
   type AudioFingerprintData,
+  type OpenRedirectData,
 } from "./services/security-event-handlers.js";

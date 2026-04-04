@@ -70,6 +70,12 @@ export async function updateService(
       ];
     }
 
+    if (update.redirectChains) {
+      const existingChains = existing.redirectChains || [];
+      const maxChains = 50;
+      merged.redirectChains = [...existingChains, ...update.redirectChains].slice(-maxChains);
+    }
+
     storage.services[domain] = merged;
 
     await saveStorage({ services: storage.services });

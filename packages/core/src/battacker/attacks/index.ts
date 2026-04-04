@@ -24,6 +24,7 @@ import { protocolStandardsAttacks } from "./protocol-standards.js";
 import { renderingEngineAttacks } from "./rendering-engine.js";
 import { extensionSandboxAttacks } from "./extension-sandbox.js";
 import { cspBypassAttacks } from "./csp-bypass.js";
+import { openRedirectAttacks } from "./open-redirect.js";
 
 export const allAttacks: AttackTest[] = [
   ...networkAttacks,
@@ -51,6 +52,7 @@ export const allAttacks: AttackTest[] = [
   ...renderingEngineAttacks,
   ...extensionSandboxAttacks,
   ...cspBypassAttacks,
+  ...openRedirectAttacks,
 ];
 
 export {
@@ -79,4 +81,5 @@ export {
   renderingEngineAttacks,
   extensionSandboxAttacks,
   cspBypassAttacks,
+  openRedirectAttacks,
 };

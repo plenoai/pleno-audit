@@ -70,6 +70,7 @@ import type {
   ClipboardEventSniffingAlertParams,
   DragEventSniffingAlertParams,
   SelectionSniffingAlertParams,
+  OpenRedirectAlertParams,
 } from "./alert-builders.js";
 import {
   buildNRDAlert,
@@ -127,6 +128,7 @@ import {
   buildClipboardEventSniffingAlert,
   buildDragEventSniffingAlert,
   buildSelectionSniffingAlert,
+  buildOpenRedirectAlert,
 } from "./alert-builders.js";
 
 /**
@@ -760,6 +762,12 @@ export function createAlertManager(
     return createOptionalAlert(buildSelectionSniffingAlert(params), url);
   }
 
+  async function alertOpenRedirect(
+    params: OpenRedirectAlertParams, url?: string,
+  ): Promise<SecurityAlert | null> {
+    return createOptionalAlert(buildOpenRedirectAlert(params), url);
+  }
+
   async function updateAlertStatus(
     alertId: string,
     status: AlertStatus
@@ -857,6 +865,7 @@ export function createAlertManager(
     alertClipboardEventSniffing,
     alertDragEventSniffing,
     alertSelectionSniffing,
+    alertOpenRedirect,
     updateAlertStatus,
     getAlerts,
     getAlertCount,

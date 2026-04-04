@@ -59,10 +59,12 @@ import {
   type CanvasFingerprintData,
   type WebGLFingerprintData,
   type AudioFingerprintData,
+  type OpenRedirectData,
 } from "libztbs/background-services";
 import {
   createExtensionNetworkService,
   registerNetworkMonitorListener,
+  createRedirectMonitor,
   type ExtensionStats,
 } from "libztbs/extension-network-service";
 
@@ -95,6 +97,31 @@ const connectionTracker = createConnectionTracker({
   },
   setConnections: async (data) => {
     await chrome.storage.local.set(data);
+  },
+});
+
+// ============================================================================
+// Redirect Chain Monitoring (リダイレクトチェーン監視)
+// ============================================================================
+
+const redirectMonitor = createRedirectMonitor({
+  logger,
+  onRedirectChainDetected: (info) => {
+    // 外部ドメインへのリダイレクトチェーンを検出した場合、アラートを発火
+    if (info.sourceDomain !== info.destinationDomain) {
+      backgroundAlerts.getAlertManager().alertOpenRedirect({
+        domain: info.sourceDomain,
+        redirectUrl: info.destinationUrl,
+        parameterName: `${info.redirectType} (chain: ${info.chainLength})`,
+        isExternal: true,
+      }, info.sourceUrl);
+    }
+  },
+  onServiceRedirectUpdate: (domain, redirectInfo) => {
+    // サービスの付加情報として保存
+    backgroundStorage.updateService(domain, {
+      redirectChains: [redirectInfo],
+    }).catch((err) => logger.debug("Failed to update service redirect info:", err));
   },
 });
 
@@ -307,6 +334,7 @@ function initializeBackgroundServices(): void {
   void initExtensionMonitor()
     .then(() => logger.debug("Extension monitor initialization completed"))
     .catch((error) => logger.error("Extension monitor init failed:", error));
+  redirectMonitor.start();
 }
 
 function registerRecurringAlarms(): void {
@@ -375,6 +403,7 @@ handleNetworkInspection: (data, sender) => networkSecurityInspector.handleNetwor
     handleClipboardEventSniffing: (data, sender) => securityEventHandlers.handleClipboardEventSniffing(data as Record<string, unknown>, sender),
     handleDragEventSniffing: (data, sender) => securityEventHandlers.handleDragEventSniffing(data as Record<string, unknown>, sender),
     handleSelectionSniffing: (data, sender) => securityEventHandlers.handleSelectionSniffing(data as Record<string, unknown>, sender),
+    handleOpenRedirect: (data, sender) => securityEventHandlers.handleOpenRedirect(data as OpenRedirectData, sender),
     getAlerts: (options) => backgroundAlerts.getAlertManager().getAlerts(options),
     getCSPReports: cspReportingService.getCSPReports,
     generateCSPPolicy: cspReportingService.generateCSPPolicy,

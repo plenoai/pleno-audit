@@ -33,6 +33,8 @@ import {
   type XSSInjectionAlertParams,
   type DOMScrapingAlertParams,
   type SuspiciousDownloadAlertParams,
+  buildOpenRedirectAlert,
+  type OpenRedirectAlertParams,
 } from "./alert-builders.js";
 
 // ============================================================================
@@ -636,5 +638,58 @@ describe("buildSuspiciousDownloadAlert", () => {
     const alert = buildSuspiciousDownloadAlert(params);
 
     expect(alert.severity).toBe("high");
+  });
+});
+
+// ============================================================================
+// Open Redirect Alert Tests
+// ============================================================================
+
+describe("buildOpenRedirectAlert", () => {
+  it("builds alert with high severity for external redirect", () => {
+    const params: OpenRedirectAlertParams = {
+      domain: "example.com",
+      redirectUrl: "https://evil.com/phish",
+      parameterName: "redirect",
+      isExternal: true,
+    };
+    const alert = buildOpenRedirectAlert(params)!;
+
+    expect(alert).not.toBeNull();
+    expect(alert.category).toBe("open_redirect");
+    expect(alert.severity).toBe("high");
+    expect(alert.details).toEqual({
+      type: "open_redirect",
+      domain: "example.com",
+      redirectUrl: "https://evil.com/phish",
+      parameterName: "redirect",
+      isExternal: true,
+    });
+  });
+
+  it("builds alert with medium severity for same-origin redirect", () => {
+    const params: OpenRedirectAlertParams = {
+      domain: "example.com",
+      redirectUrl: "https://example.com/other",
+      parameterName: "next",
+      isExternal: false,
+    };
+    const alert = buildOpenRedirectAlert(params)!;
+
+    expect(alert).not.toBeNull();
+    expect(alert.severity).toBe("medium");
+  });
+
+  it("includes parameter name in description", () => {
+    const params: OpenRedirectAlertParams = {
+      domain: "example.com",
+      redirectUrl: "https://evil.com",
+      parameterName: "return_url",
+      isExternal: true,
+    };
+    const alert = buildOpenRedirectAlert(params)!;
+
+    expect(alert.title).toContain("example.com");
+    expect(alert.description).toContain("return_url");
   });
 });

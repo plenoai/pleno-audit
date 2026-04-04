@@ -8,7 +8,7 @@
 export { createSharedHookUtils, getSharedHooks, emitSecurityEvent, getBodySize, getBodySample, type SharedHookUtils } from "./shared.js";
 export { initAIHooks, isLikelyAIUrl, AI_URL_MARKERS, getBodySample as getAIBodySample } from "./ai-hooks.js";
 export {
-  initSecurityHooks, checkSupplyChainRisk, hasSensitiveFields,
+  initSecurityHooks, checkSupplyChainRisk, hasSensitiveFields, checkOpenRedirect,
   KNOWN_CDNS, SENSITIVE_TYPES, SENSITIVE_NAMES, CRYPTO_PATTERNS, SUSPICIOUS_EXTENSIONS,
 } from "./security-hooks.js";
 export { initFingerprintHooks } from "./fingerprint-hooks.js";

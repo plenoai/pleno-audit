@@ -61,6 +61,7 @@ import type {
   ClipboardEventSniffingAlertDetails,
   DragEventSniffingAlertDetails,
   SelectionSniffingAlertDetails,
+  OpenRedirectAlertDetails,
   MessageChannelAlertDetails,
   ResizeObserverAlertDetails,
   ExecCommandClipboardAlertDetails,
@@ -2120,4 +2121,46 @@ const SELECTION_SNIFFING_ALERT_DEFINITION: AlertDefinition<
 
 export const buildSelectionSniffingAlert = createAlertBuilder(
   SELECTION_SNIFFING_ALERT_DEFINITION
+);
+
+// ============================================================================
+// Open Redirect Detection
+// ============================================================================
+
+export interface OpenRedirectAlertParams {
+  domain: string;
+  redirectUrl: string;
+  parameterName: string;
+  isExternal: boolean;
+}
+
+const OPEN_REDIRECT_ALERT_DEFINITION: AlertDefinition<
+  OpenRedirectAlertParams,
+  OpenRedirectAlertDetails
+> = {
+  category: "open_redirect",
+  detailsType: "open_redirect",
+  build: (params, helpers) => {
+    const severity = helpers.resolveSeverity(
+      [[params.isExternal, "high"]],
+      "medium"
+    );
+
+    return {
+      severity,
+      title: `オープンリダイレクト検出: ${params.domain}`,
+      description: `パラメータ「${params.parameterName}」により外部URL「${params.redirectUrl}」へのリダイレクトが検出されました`,
+      domain: params.domain,
+      details: {
+        domain: params.domain,
+        redirectUrl: params.redirectUrl,
+        parameterName: params.parameterName,
+        isExternal: params.isExternal,
+      },
+    };
+  },
+};
+
+export const buildOpenRedirectAlert = createAlertBuilder(
+  OPEN_REDIRECT_ALERT_DEFINITION
 );
