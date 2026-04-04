@@ -21,6 +21,8 @@ import {
   setDetectionConfig,
   getNotificationConfig,
   setNotificationConfig,
+  getDisabledAlertCategories,
+  setDisabledAlertCategories,
 } from "./background-services/config.js";
 import { createPageAnalysisHandler } from "./background-services/analysis.js";
 import { extractDomainFromUrl } from "./background-services/utils.js";
@@ -65,6 +67,8 @@ export function createBackgroundServices(serviceLogger: Logger) {
     setDetectionConfig,
     getNotificationConfig,
     setNotificationConfig,
+    getDisabledAlertCategories,
+    setDisabledAlertCategories,
   };
 
   const utils = {

@@ -110,9 +110,28 @@ export {
   DEFAULT_DLP_SERVER_CONFIG,
   type DLPScanner,
   type DLPServerConfig,
+  type WasmTokenizerLike,
   type ScanContext,
   type DLPScanResult,
 } from "./dlp-scanner.js";
+
+// DLP Tokenizer (local NER)
+export { tokenize, murmurhash2_64a, convertWasmTokens, type WasmTokenResult } from "./dlp-tokenizer.js";
+
+// DLP Local NER
+export {
+  loadNERModel,
+  type NERModel,
+  type NEREntity,
+  type NERModelConfig,
+} from "./dlp-local-ner.js";
+
+// DLP Model Manager
+export {
+  createDLPModelManager,
+  type DLPModelManager,
+  type ModelStatus,
+} from "./dlp-model-manager.js";
 
 // AI Pattern Analyzer
 export {

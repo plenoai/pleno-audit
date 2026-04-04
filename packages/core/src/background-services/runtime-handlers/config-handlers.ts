@@ -37,5 +37,32 @@ export function createConfigurationHandlers(
       execute: () => deps.testDLPConnection(),
       fallback: () => ({ connected: false }),
     }],
+    ["DOWNLOAD_DLP_MODEL", {
+      execute: (message) => {
+        const data = message.data as { modelUrl: string; wasmUrl: string };
+        return deps.downloadDLPModel(data.modelUrl, data.wasmUrl);
+      },
+      fallback: () => ({ success: false }),
+    }],
+    ["GET_DLP_MODEL_STATUS", {
+      execute: () => deps.getDLPModelStatus(),
+      fallback: () => ({ downloaded: false, loading: false, ready: false }),
+    }],
+    ["DELETE_DLP_MODEL", {
+      execute: () => deps.deleteDLPModel(),
+      fallback: () => ({ success: false }),
+    }],
+    ["LOAD_DLP_MODEL", {
+      execute: () => deps.loadDLPModel(),
+      fallback: () => ({ success: false }),
+    }],
+    ["GET_DISABLED_ALERT_CATEGORIES", {
+      execute: () => deps.getDisabledAlertCategories(),
+      fallback: () => [],
+    }],
+    ["SET_DISABLED_ALERT_CATEGORIES", {
+      execute: (message) => deps.setDisabledAlertCategories(message.data as string[]),
+      fallback: () => ({ success: false }),
+    }],
   ];
 }

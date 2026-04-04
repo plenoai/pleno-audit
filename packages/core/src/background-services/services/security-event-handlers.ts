@@ -481,6 +481,8 @@ export function createSecurityEventHandlers(
       await deps.getAlertManager().alertWebSocketConnection({
         domain: pageDomain,
         hostname: data.hostname ?? "",
+        wsUrl: data.url,
+        protocol: data.protocol,
         isExternal: data.isExternal ?? false,
       }, pageUrl);
 
@@ -836,6 +838,7 @@ export function createSecurityEventHandlers(
       await deps.getAlertManager().alertNotificationPhishing({
         domain: pageDomain,
         title: data.title ?? "",
+        body: data.body,
       }, pageUrl);
 
       deps.logger.warn({

@@ -54,7 +54,7 @@ export default defineConfig({
         content_security_policy: isMV2
           ? "script-src 'self'; object-src 'self';"
           : {
-              extension_pages: "script-src 'self'; object-src 'self';",
+              extension_pages: "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';",
             },
       }),
       web_accessible_resources: isMV2

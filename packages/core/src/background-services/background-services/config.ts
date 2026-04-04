@@ -45,3 +45,20 @@ export async function setNotificationConfig(
     return { success: false };
   }
 }
+
+export async function getDisabledAlertCategories(): Promise<string[]> {
+  const storage = await chrome.storage.local.get(["disabledAlertCategories"]) as { disabledAlertCategories?: string[] };
+  return storage.disabledAlertCategories || [];
+}
+
+export async function setDisabledAlertCategories(
+  categories: string[]
+): Promise<{ success: boolean }> {
+  try {
+    await chrome.storage.local.set({ disabledAlertCategories: categories });
+    return { success: true };
+  } catch (error) {
+    logger.error("Error setting disabled alert categories:", error);
+    return { success: false };
+  }
+}

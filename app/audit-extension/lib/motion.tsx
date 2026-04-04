@@ -4,9 +4,13 @@
  * Provides a declarative API similar to framer-motion's <motion.div>:
  *   <Motion tag="div" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} />
  *   <Motion tag="div" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} />
+ *
+ * Respects the user's animation preference stored in chrome.storage.local.
+ * When disabled, elements render in their final state without animation.
  */
 import { animate } from "motion/mini";
-import { useEffect, useRef } from "preact/hooks";
+import { createContext } from "preact";
+import { useContext, useEffect, useRef, useState } from "preact/hooks";
 import type { JSX } from "preact";
 
 type MotionStyle = Record<string, string | number>;
@@ -32,6 +36,37 @@ type MotionProps<T extends keyof JSX.IntrinsicElements> = {
 	transition?: TransitionOptions;
 	children?: preact.ComponentChildren;
 } & Omit<JSX.IntrinsicElements[T], "ref">;
+
+// --- Animation settings context ---
+
+const AnimationContext = createContext(true);
+
+export const AnimationProvider = AnimationContext.Provider;
+
+export function useAnimationEnabled() {
+	return useContext(AnimationContext);
+}
+
+export function useAnimationSettings() {
+	const [enabled, setEnabled] = useState(true);
+
+	useEffect(() => {
+		chrome.storage.local.get(["animationEnabled"]).then((result) => {
+			if (result.animationEnabled === false) {
+				setEnabled(false);
+			}
+		});
+	}, []);
+
+	const setAnimationEnabled = (value: boolean) => {
+		setEnabled(value);
+		chrome.storage.local.set({ animationEnabled: value });
+	};
+
+	return { animationEnabled: enabled, setAnimationEnabled };
+}
+
+// --- Helpers ---
 
 /** Map shorthand properties (y, x) to CSS transforms */
 function splitTransforms(style: MotionStyle): {
@@ -91,6 +126,8 @@ function buildAnimateArgs(
 	return result;
 }
 
+// --- Motion component ---
+
 export function Motion<T extends keyof JSX.IntrinsicElements = "div">({
 	tag,
 	initial,
@@ -103,18 +140,24 @@ export function Motion<T extends keyof JSX.IntrinsicElements = "div">({
 }: MotionProps<T>) {
 	const ref = useRef<HTMLElement>(null);
 	const Tag = (tag ?? "div") as string;
+	const enabled = useAnimationEnabled();
 
-	// Apply initial styles synchronously via ref callback
+	// When animation is disabled, apply final state immediately
 	useEffect(() => {
 		const el = ref.current;
-		if (!el || !initial) return;
-		applyStyles(el, initial);
+		if (!el) return;
+		if (!enabled) {
+			const target = animateTo ?? whileInView;
+			if (target) applyStyles(el, target);
+			return;
+		}
+		if (initial) applyStyles(el, initial);
 	}, []);
 
 	// Animate on mount
 	useEffect(() => {
 		const el = ref.current;
-		if (!el || !initial || !animateTo) return;
+		if (!el || !enabled || !initial || !animateTo) return;
 
 		const keyframes = buildAnimateArgs(initial, animateTo);
 		animate(el, keyframes, {
@@ -133,6 +176,7 @@ export function Motion<T extends keyof JSX.IntrinsicElements = "div">({
 	useEffect(() => {
 		const el = ref.current;
 		if (!el || !whileInView) return;
+		if (!enabled) return;
 
 		if (initial) applyStyles(el, initial);
 

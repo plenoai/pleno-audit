@@ -218,6 +218,8 @@ export interface ExtensionAlertDetails {
   type: "extension";
   extensionId: string;
   extensionName: string;
+  riskScore: number;
+  flags: string[];
   requestCount: number;
   targetDomains: string[];
 }
@@ -345,6 +347,7 @@ export interface SendBeaconAlertDetails {
   type: "send_beacon";
   domain: string;
   url: string;
+  targetDomain: string;
   dataSize: number;
 }
 
@@ -360,6 +363,7 @@ export interface NotificationPhishingAlertDetails {
   type: "notification_phishing";
   domain: string;
   title: string;
+  body?: string;
 }
 
 export interface StorageExfiltrationAlertDetails {
@@ -415,6 +419,8 @@ export interface WebSocketConnectionAlertDetails {
   type: "websocket_connection";
   domain: string;
   hostname: string;
+  wsUrl?: string;
+  protocol?: string;
   isExternal: boolean;
 }
 
@@ -592,6 +598,8 @@ export interface DLPPIIDetectedAlertDetails {
   entityCount: number;
   /** 検出言語 */
   language: "ja" | "en";
+  /** マスク済みサンプル（誤検知判定用） */
+  maskedSample?: string;
 }
 
 /**

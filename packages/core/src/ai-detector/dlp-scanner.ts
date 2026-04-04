@@ -8,6 +8,8 @@
 
 import { createLogger } from "../extension-runtime/logger.js";
 import { createDLPClient, type DLPClient, type DLPEntity } from "./dlp-client.js";
+import type { NERModel } from "./dlp-local-ner.js";
+import { convertWasmTokens, type WasmTokenResult } from "./dlp-tokenizer.js";
 
 const logger = createLogger("dlp-scanner");
 
@@ -31,6 +33,10 @@ export interface DLPServerConfig {
   language: "ja" | "en";
   /** サーバー接続済みか（ヘルスチェック成功後にtrue） */
   serverConnected: boolean;
+  /** ローカルNERモデルを使用するか */
+  useLocalModel: boolean;
+  /** ローカルモデルのロードが完了しているか */
+  localModelReady: boolean;
 }
 
 export const DEFAULT_DLP_SERVER_CONFIG: DLPServerConfig = {
@@ -38,6 +44,8 @@ export const DEFAULT_DLP_SERVER_CONFIG: DLPServerConfig = {
   serverUrl: "http://localhost:8080",
   language: "ja",
   serverConnected: false,
+  useLocalModel: false,
+  localModelReady: false,
 };
 
 /** テキスト長の上限（パフォーマンス保護） */
@@ -68,11 +76,24 @@ export function getEntityLabel(entityType: string): string {
   return ENTITY_LABELS[entityType] ?? entityType;
 }
 
+export interface WasmTokenizerLike {
+  tokenize(text: string): WasmTokenResult[];
+}
+
 export function createDLPScanner(initialConfig?: Partial<DLPServerConfig>) {
   const config: DLPServerConfig = { ...DEFAULT_DLP_SERVER_CONFIG, ...initialConfig };
   let client: DLPClient = createDLPClient({
     serverUrl: config.serverUrl,
   });
+  let localModel: NERModel | null = null;
+  let wasmTokenizer: WasmTokenizerLike | null = null;
+
+  /** ローカルNERモデルとオプションのWASMトークナイザを設定する */
+  function setLocalModel(model: NERModel | null, wasm?: WasmTokenizerLike | null) {
+    localModel = model;
+    wasmTokenizer = wasm ?? null;
+    config.localModelReady = model !== null;
+  }
 
   async function verifyConnection(): Promise<boolean> {
     try {
@@ -97,7 +118,8 @@ export function createDLPScanner(initialConfig?: Partial<DLPServerConfig>) {
     domain: string,
     url?: string,
   ): Promise<DLPScanResult | null> {
-    if (!config.enabled || !config.serverConnected) {
+    const useLocal = config.useLocalModel && config.localModelReady && localModel !== null;
+    if (!config.enabled || (!config.serverConnected && !useLocal)) {
       return null;
     }
 
@@ -110,10 +132,27 @@ export function createDLPScanner(initialConfig?: Partial<DLPServerConfig>) {
     }
 
     try {
-      const entities = await client.analyze({
-        text: trimmed,
-        language: config.language,
-      });
+      let entities: DLPEntity[];
+
+      if (useLocal && localModel) {
+        // ローカルNERモデルで推論（WASMトークナイザ優先）
+        const nerEntities = wasmTokenizer
+          ? localModel.predictWithFeatures(convertWasmTokens(wasmTokenizer.tokenize(trimmed)))
+          : localModel.predict(trimmed);
+        entities = nerEntities.map((e) => ({
+          entity_type: e.label,
+          start: e.start,
+          end: e.end,
+          score: e.score,
+          text: e.text,
+        }));
+      } else {
+        // リモートサーバーで推論
+        entities = await client.analyze({
+          text: trimmed,
+          language: config.language,
+        });
+      }
 
       if (entities.length === 0) {
         return null;
@@ -161,6 +200,7 @@ export function createDLPScanner(initialConfig?: Partial<DLPServerConfig>) {
     verifyConnection,
     updateConfig,
     getConfig,
+    setLocalModel,
   };
 }
 

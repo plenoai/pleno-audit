@@ -157,7 +157,7 @@ export function VirtualTable<T>({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          color: "#6b7280",
+          color: "var(--muted-foreground)",
           fontSize: 14,
         }}
       >
@@ -194,7 +194,7 @@ export function VirtualTable<T>({
               alignItems: "center",
               fontSize: 12,
               fontWeight: 500,
-              color: "#6b7280",
+              color: "var(--muted-foreground)",
             }}
           >
             {col.header}
@@ -264,7 +264,7 @@ export function VirtualTable<T>({
           borderTop: "1px solid #e5e7eb",
           background: "#f9fafb",
           fontSize: 12,
-          color: "#6b7280",
+          color: "var(--muted-foreground)",
         }}
       >
         {items.length.toLocaleString()} 件

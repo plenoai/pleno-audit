@@ -133,7 +133,7 @@ export function KeyboardHelpDialog({
               border: "none",
               fontSize: 24,
               cursor: "pointer",
-              color: "#6b7280",
+              color: "var(--muted-foreground)",
             }}
           >
             ×

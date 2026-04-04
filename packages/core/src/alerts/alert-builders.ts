@@ -427,6 +427,8 @@ const EXTENSION_ALERT_DEFINITION: AlertDefinition<
       details: {
         extensionId: params.extensionId,
         extensionName: params.extensionName,
+        riskScore: params.riskScore,
+        flags: params.flags,
         requestCount: params.requestCount,
         targetDomains: params.targetDomains,
       },
@@ -1035,6 +1037,8 @@ export const buildGeolocationAccessAlert = createAlertBuilder(
 export interface WebSocketConnectionAlertParams {
   domain: string;
   hostname: string;
+  wsUrl?: string;
+  protocol?: string;
   isExternal: boolean;
 }
 
@@ -1060,6 +1064,8 @@ const WEBSOCKET_CONNECTION_ALERT_DEFINITION: AlertDefinition<
       details: {
         domain: params.domain,
         hostname: params.hostname,
+        wsUrl: params.wsUrl,
+        protocol: params.protocol,
         isExternal: params.isExternal,
       },
     };
@@ -1152,14 +1158,20 @@ const SEND_BEACON_ALERT_DEFINITION: AlertDefinition<
       "medium"
     );
 
+    let targetDomain = "";
+    try {
+      targetDomain = new URL(params.url).hostname;
+    } catch { /* invalid URL */ }
+
     return {
       severity,
-      title: `Beacon送信検出: ${params.domain}`,
-      description: `sendBeaconで${params.dataSize}バイトのデータを送信`,
+      title: `Beacon送信検出: ${targetDomain || params.domain}`,
+      description: `sendBeaconで${params.dataSize}バイトのデータを${targetDomain || "不明なホスト"}に送信`,
       domain: params.domain,
       details: {
         domain: params.domain,
         url: params.url,
+        targetDomain,
         dataSize: params.dataSize,
       },
     };
@@ -1225,6 +1237,7 @@ export const buildMediaCaptureAlert = createAlertBuilder(
 export interface NotificationPhishingAlertParams {
   domain: string;
   title: string;
+  body?: string;
 }
 
 const NOTIFICATION_PHISHING_ALERT_DEFINITION: AlertDefinition<
@@ -1241,6 +1254,7 @@ const NOTIFICATION_PHISHING_ALERT_DEFINITION: AlertDefinition<
     details: {
       domain: params.domain,
       title: params.title,
+      body: params.body,
     },
   }),
 };
@@ -2182,6 +2196,7 @@ export interface DLPPIIDetectedAlertParams {
   entityTypes: string[];
   entityCount: number;
   language: "ja" | "en";
+  maskedSample?: string;
 }
 
 const DLP_PII_DETECTED_ALERT_DEFINITION: AlertDefinition<
@@ -2212,6 +2227,7 @@ const DLP_PII_DETECTED_ALERT_DEFINITION: AlertDefinition<
         entityTypes: params.entityTypes,
         entityCount: params.entityCount,
         language: params.language,
+        maskedSample: params.maskedSample,
       },
     };
   },

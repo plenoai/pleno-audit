@@ -1,5 +1,5 @@
 import type { DetectedService } from "../../types/index.js";
-import type { AIMonitorConfig, CapturedAIPrompt, DLPServerConfig } from "../../ai-detector/index.js";
+import type { AIMonitorConfig, CapturedAIPrompt, DLPServerConfig, ModelStatus } from "../../ai-detector/index.js";
 import type { NRDConfig } from "../../nrd/index.js";
 import type { TyposquatConfig } from "../../typosquat/index.js";
 import type {
@@ -144,6 +144,9 @@ handleNetworkInspection: (data: unknown, sender: chrome.runtime.MessageSender) =
   getDetectionConfig: () => Promise<DetectionConfig>;
   setDetectionConfig: (config: Partial<DetectionConfig>) => Promise<{ success: boolean }>;
 
+  getDisabledAlertCategories: () => Promise<string[]>;
+  setDisabledAlertCategories: (categories: string[]) => Promise<{ success: boolean }>;
+
   handleAIPromptCaptured: (data: CapturedAIPrompt) => Promise<{ success: boolean }>;
   getAIMonitorConfig: () => Promise<AIMonitorConfig>;
   setAIMonitorConfig: (config: Partial<AIMonitorConfig>) => Promise<{ success: boolean }>;
@@ -176,6 +179,11 @@ handleNetworkInspection: (data: unknown, sender: chrome.runtime.MessageSender) =
   getDLPServerConfig: () => Promise<DLPServerConfig>;
   setDLPServerConfig: (config: Partial<DLPServerConfig>) => Promise<{ success: boolean }>;
   testDLPConnection: () => Promise<{ connected: boolean }>;
+
+  downloadDLPModel: (modelUrl: string, wasmUrl: string) => Promise<{ success: boolean }>;
+  getDLPModelStatus: () => Promise<ModelStatus>;
+  deleteDLPModel: () => Promise<{ success: boolean }>;
+  loadDLPModel: () => Promise<{ success: boolean }>;
 
   getServiceConnections: () => Promise<Record<string, string[]>>;
   getExtensionConnections: () => Promise<Record<string, string[]>>;

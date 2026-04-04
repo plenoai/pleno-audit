@@ -53,6 +53,7 @@ export interface StorageData {
   detectionConfig?: DetectionConfig;
   notificationConfig?: NotificationConfig;
   alertCooldown?: AlertCooldownData;
+  disabledAlertCategories?: string[];
 }
 
 export type {

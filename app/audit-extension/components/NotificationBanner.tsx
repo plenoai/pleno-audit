@@ -224,7 +224,7 @@ export function NotificationBanner({
           style={{
             textAlign: "center",
             fontSize: 12,
-            color: "#6b7280",
+            color: "var(--muted-foreground)",
             padding: 8,
           }}
         >

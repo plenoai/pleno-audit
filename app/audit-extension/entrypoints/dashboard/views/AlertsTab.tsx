@@ -255,15 +255,10 @@ function AlertDetailSidebar({
   return (
     <div
       style={{
-        position: "fixed",
-        top: 0,
-        right: 0,
-        bottom: 0,
         width: "420px",
-        maxWidth: "100vw",
+        minWidth: "420px",
         background: colors.bgPrimary,
         borderLeft: `1px solid ${colors.border}`,
-        zIndex: 100,
         display: "flex",
         flexDirection: "column",
         overflow: "hidden",
@@ -602,11 +597,20 @@ function AlertDetailSidebar({
           対応方針の詳細を見る ↗
         </a>
       </div>
-    </div>
+    </div>,
   );
 }
 
-export function AlertsTab() {
+export { AlertDetailSidebar };
+
+export interface AlertSidebarState {
+  alert: AlertItem;
+  onClose: () => void;
+  onReportFP: () => void;
+  onDismiss: () => void;
+}
+
+export function AlertsTab({ onSidebarChange }: { onSidebarChange?: (state: AlertSidebarState | null) => void }) {
   const { colors } = useTheme();
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
@@ -822,169 +826,173 @@ export function AlertsTab() {
     }
   }, [allSelected, filtered]);
 
+  const activeAlert = activeAlertId
+    ? alerts.find((a) => a.id === activeAlertId) ?? null
+    : null;
+
+  useEffect(() => {
+    if (!onSidebarChange) return;
+    if (activeAlert) {
+      onSidebarChange({
+        alert: activeAlert,
+        onClose: () => setActiveAlertId(null),
+        onReportFP: () => handleReportFP(activeAlert),
+        onDismiss: () => {
+          handleDismiss(activeAlert);
+          setActiveAlertId(null);
+        },
+      });
+    } else {
+      onSidebarChange(null);
+    }
+  }, [activeAlert, onSidebarChange, handleReportFP, handleDismiss]);
+
   if (loading) {
     return <LoadingState />;
   }
 
   return (
     <div style={{ marginBottom: "32px" }}>
-      {/* Filter bar */}
-      <div
-        style={{
-          display: "flex",
-          gap: spacing.sm,
-          alignItems: "center",
-          marginBottom: spacing.md,
-          flexWrap: "wrap",
-        }}
-      >
-        <SearchInput
-          value={searchQuery}
-          onChange={setSearchQuery}
-          placeholder="タイトル・ドメインで検索..."
-        />
-        {severityButtons.map((b) => {
-          const count = counts[b.key] ?? 0;
-          if (count === 0) return null;
-          return (
-            <Badge
-              key={b.key}
-              variant={severityVariant[b.key]}
-              active={filters[b.key]}
-              onClick={() => setFilter(b.key, !filters[b.key])}
-            >
-              {b.label} ({count})
-            </Badge>
-          );
-        })}
-      </div>
-
-      {/* Bulk action bar */}
-      {selectedIds.size > 0 && (
+        {/* Filter bar */}
         <div
           style={{
             display: "flex",
             gap: spacing.sm,
             alignItems: "center",
-            padding: `${spacing.sm} ${spacing.lg}`,
-            marginBottom: spacing.sm,
-            background: colors.bgSecondary,
-            border: `1px solid ${colors.border}`,
-            borderRadius: borderRadius.md,
-            fontSize: fontSize.md,
-            color: colors.textSecondary,
+            marginBottom: spacing.md,
+            flexWrap: "wrap",
           }}
         >
-          <span style={{ fontWeight: 500 }}>
-            {selectedIds.size}件選択中
-          </span>
-          <button
-            type="button"
-            onClick={handleBulkDismiss}
-            style={{
-              padding: `${spacing.xs} ${spacing.sm}`,
-              border: `1px solid ${colors.border}`,
-              borderRadius: borderRadius.sm,
-              background: colors.bgPrimary,
-              color: colors.textPrimary,
-              fontSize: fontSize.md,
-              cursor: "pointer",
-            }}
-          >
-            一括無視
-          </button>
-          <button
-            type="button"
-            onClick={() => setSelectedIds(new Set())}
-            style={{
-              padding: `${spacing.xs} ${spacing.sm}`,
-              border: "none",
-              background: "transparent",
-              color: colors.textMuted,
-              fontSize: fontSize.md,
-              cursor: "pointer",
-            }}
-          >
-            選択解除
-          </button>
+          <SearchInput
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="タイトル・ドメインで検索..."
+          />
+          {severityButtons.map((b) => {
+            const count = counts[b.key] ?? 0;
+            if (count === 0) return null;
+            return (
+              <Badge
+                key={b.key}
+                variant={severityVariant[b.key]}
+                active={filters[b.key]}
+                onClick={() => setFilter(b.key, !filters[b.key])}
+              >
+                {b.label} ({count})
+              </Badge>
+            );
+          })}
         </div>
-      )}
 
-      {/* Alert list */}
-      {filtered.length === 0 ? (
-        <EmptyState
-          title="検出されたアラートはありません"
-          description="セキュリティアラートが検出されると表示されます"
-        />
-      ) : (
-        <div
-          style={{
-            border: `1px solid ${colors.border}`,
-            borderRadius: borderRadius.lg,
-            overflow: "hidden",
-          }}
-        >
-          {/* List header */}
+        {/* Bulk action bar */}
+        {selectedIds.size > 0 && (
           <div
             style={{
               display: "flex",
-              alignItems: "center",
               gap: spacing.sm,
+              alignItems: "center",
               padding: `${spacing.sm} ${spacing.lg}`,
+              marginBottom: spacing.sm,
               background: colors.bgSecondary,
-              borderBottom: `1px solid ${colors.border}`,
-              fontSize: fontSize.sm,
+              border: `1px solid ${colors.border}`,
+              borderRadius: borderRadius.md,
+              fontSize: fontSize.md,
               color: colors.textSecondary,
-              fontWeight: 500,
             }}
           >
-            <input
-              type="checkbox"
-              checked={allSelected}
-              onChange={handleSelectAll}
-              style={{ cursor: "pointer", accentColor: colors.interactive }}
-            />
-            <span style={{ flex: 1 }}>
-              {filtered.length}件のアラート
+            <span style={{ fontWeight: 500 }}>
+              {selectedIds.size}件選択中
             </span>
+            <button
+              type="button"
+              onClick={handleBulkDismiss}
+              style={{
+                padding: `${spacing.xs} ${spacing.sm}`,
+                border: `1px solid ${colors.border}`,
+                borderRadius: borderRadius.sm,
+                background: colors.bgPrimary,
+                color: colors.textPrimary,
+                fontSize: fontSize.md,
+                cursor: "pointer",
+              }}
+            >
+              一括無視
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedIds(new Set())}
+              style={{
+                padding: `${spacing.xs} ${spacing.sm}`,
+                border: "none",
+                background: "transparent",
+                color: colors.textMuted,
+                fontSize: fontSize.md,
+                cursor: "pointer",
+              }}
+            >
+              選択解除
+            </button>
           </div>
+        )}
 
-          {/* Alert rows */}
-          {filtered.map((alert) => (
-            <AlertRow
-              key={alert.id}
-              alert={alert}
-              isSelected={selectedIds.has(alert.id)}
-              isActive={activeAlertId === alert.id}
-              onSelect={handleSelect}
-              onOpen={() =>
-                setActiveAlertId((prev) =>
-                  prev === alert.id ? null : alert.id,
-                )
-              }
-              onReportFP={() => handleReportFP(alert)}
-              onDismiss={() => handleDismiss(alert)}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* Detail sidebar */}
-      {activeAlertId && (() => {
-        const activeAlert = alerts.find((a) => a.id === activeAlertId);
-        if (!activeAlert) return null;
-        return (
-          <AlertDetailSidebar
-            alert={activeAlert}
-            onClose={() => setActiveAlertId(null)}
-            onReportFP={() => handleReportFP(activeAlert)}
-            onDismiss={() => {
-              handleDismiss(activeAlert);
-              setActiveAlertId(null);
-            }}
+        {/* Alert list */}
+        {filtered.length === 0 ? (
+          <EmptyState
+            title="検出されたアラートはありません"
+            description="セキュリティアラートが検出されると表示されます"
           />
-        );
-      })()}
+        ) : (
+          <div
+            style={{
+              border: `1px solid ${colors.border}`,
+              borderRadius: borderRadius.lg,
+              overflow: "hidden",
+            }}
+          >
+            {/* List header */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: spacing.sm,
+                padding: `${spacing.sm} ${spacing.lg}`,
+                background: colors.bgSecondary,
+                borderBottom: `1px solid ${colors.border}`,
+                fontSize: fontSize.sm,
+                color: colors.textSecondary,
+                fontWeight: 500,
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={allSelected}
+                onChange={handleSelectAll}
+                style={{ cursor: "pointer", accentColor: colors.interactive }}
+              />
+              <span style={{ flex: 1 }}>
+                {filtered.length}件のアラート
+              </span>
+            </div>
+
+            {/* Alert rows */}
+            {filtered.map((alert) => (
+              <AlertRow
+                key={alert.id}
+                alert={alert}
+                isSelected={selectedIds.has(alert.id)}
+                isActive={activeAlertId === alert.id}
+                onSelect={handleSelect}
+                onOpen={() =>
+                  setActiveAlertId((prev) =>
+                    prev === alert.id ? null : alert.id,
+                  )
+                }
+                onReportFP={() => handleReportFP(alert)}
+                onDismiss={() => handleDismiss(alert)}
+              />
+            ))}
+          </div>
+        )}
     </div>
   );
 }

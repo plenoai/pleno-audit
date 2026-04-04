@@ -1,6 +1,7 @@
 import type { DetectedService } from "libztbs/types";
 import type { CapturedAIPrompt } from "libztbs/ai-detector";
-import { DEFAULT_AI_MONITOR_CONFIG, createDLPScanner, DEFAULT_DLP_SERVER_CONFIG, type DLPServerConfig } from "libztbs/ai-detector";
+import { DEFAULT_AI_MONITOR_CONFIG, createDLPScanner, DEFAULT_DLP_SERVER_CONFIG, type DLPServerConfig, createDLPModelManager } from "libztbs/ai-detector";
+import { createWasmTokenizer, type WasmTokenizerInstance } from "../lib/wasm-tokenizer.js";
 import { DEFAULT_NRD_CONFIG } from "libztbs/nrd";
 import { DEFAULT_TYPOSQUAT_CONFIG } from "libztbs/typosquat";
 import type { CSPViolation } from "libztbs/csp";
@@ -81,6 +82,13 @@ const {
 let doHMonitor: DoHMonitor | null = null;
 
 backgroundAlerts.registerNotificationClickHandler();
+
+// Restore disabled alert categories from storage
+backgroundConfig.getDisabledAlertCategories().then((categories) => {
+  if (categories.length > 0) {
+    backgroundAlerts.getAlertManager().setDisabledCategories(categories);
+  }
+});
 
 // ============================================================================
 // Service Connection Tracking (通信先集約)
@@ -217,6 +225,8 @@ const aiPromptMonitorService = createAIPromptMonitorService({
 
 // DLP Scanner (pleno-anonymize DLP連携)
 const dlpScanner = createDLPScanner();
+const dlpModelManager = createDLPModelManager();
+let wasmTokenizerInstance: WasmTokenizerInstance | null = null;
 
 const domainRiskService = createDomainRiskService({
   logger,
@@ -340,10 +350,31 @@ function initializeBackgroundServices(): void {
   redirectMonitor.start();
 
   // DLP Scanner: ストレージから設定を復元
-  void getStorage("dlpServerConfig").then((data) => {
+  void getStorage("dlpServerConfig").then(async (data) => {
     if (data.dlpServerConfig) {
       dlpScanner.updateConfig(data.dlpServerConfig);
-      if (data.dlpServerConfig.enabled) {
+      if (data.dlpServerConfig.enabled && data.dlpServerConfig.useLocalModel) {
+        // ローカルモデルが有効な場合、自動ロード
+        try {
+          const downloaded = await dlpModelManager.isDownloaded();
+          if (downloaded) {
+            const model = await dlpModelManager.load();
+            try {
+              const wasmBytes = await dlpModelManager.loadWasm();
+              wasmTokenizerInstance = createWasmTokenizer(wasmBytes);
+              dlpScanner.setLocalModel(model, wasmTokenizerInstance);
+              logger.info("DLP local model + WASM tokenizer auto-loaded");
+            } catch {
+              // WASM not available (legacy download without WASM) — fallback to JS tokenizer
+              dlpScanner.setLocalModel(model);
+              logger.info("DLP local model auto-loaded (JS tokenizer fallback)");
+            }
+          }
+        } catch (err) {
+          logger.debug("DLP local model auto-load skipped:", err);
+        }
+      }
+      if (data.dlpServerConfig.enabled && !data.dlpServerConfig.useLocalModel) {
         void dlpScanner.verifyConnection();
       }
     }
@@ -428,6 +459,12 @@ handleNetworkInspection: (data, sender) => networkSecurityInspector.handleNetwor
     getEnterpriseManager,
     getDetectionConfig: backgroundConfig.getDetectionConfig,
     setDetectionConfig: backgroundConfig.setDetectionConfig,
+    getDisabledAlertCategories: backgroundConfig.getDisabledAlertCategories,
+    setDisabledAlertCategories: async (categories: string[]) => {
+      const result = await backgroundConfig.setDisabledAlertCategories(categories);
+      backgroundAlerts.getAlertManager().setDisabledCategories(categories);
+      return result;
+    },
     handleAIPromptCaptured: (payload) => aiPromptMonitorService.handleAIPromptCaptured(payload as CapturedAIPrompt),
     getAIMonitorConfig: aiPromptMonitorService.getAIMonitorConfig,
     setAIMonitorConfig: aiPromptMonitorService.setAIMonitorConfig,
@@ -461,6 +498,54 @@ handleNetworkInspection: (data, sender) => networkSecurityInspector.handleNetwor
     testDLPConnection: async () => {
       const connected = await dlpScanner.verifyConnection();
       return { connected };
+    },
+    downloadDLPModel: async (modelUrl: string, wasmUrl: string) => {
+      try {
+        await dlpModelManager.download(modelUrl, wasmUrl);
+        const model = await dlpModelManager.load();
+        const wasmBytes = await dlpModelManager.loadWasm();
+        wasmTokenizerInstance = createWasmTokenizer(wasmBytes);
+        dlpScanner.setLocalModel(model, wasmTokenizerInstance);
+        return { success: true };
+      } catch (error) {
+        logger.error("DLP model download failed", error);
+        return { success: false };
+      }
+    },
+    getDLPModelStatus: async () => {
+      await dlpModelManager.isDownloaded();
+      return dlpModelManager.getStatus();
+    },
+    deleteDLPModel: async () => {
+      try {
+        if (wasmTokenizerInstance) {
+          wasmTokenizerInstance.dispose();
+          wasmTokenizerInstance = null;
+        }
+        dlpScanner.setLocalModel(null);
+        await dlpModelManager.delete();
+        return { success: true };
+      } catch (error) {
+        logger.error("DLP model delete failed", error);
+        return { success: false };
+      }
+    },
+    loadDLPModel: async () => {
+      try {
+        const model = await dlpModelManager.load();
+        try {
+          const wasmBytes = await dlpModelManager.loadWasm();
+          wasmTokenizerInstance = createWasmTokenizer(wasmBytes);
+          dlpScanner.setLocalModel(model, wasmTokenizerInstance);
+        } catch {
+          // WASM not available — fallback to JS tokenizer
+          dlpScanner.setLocalModel(model);
+        }
+        return { success: true };
+      } catch (error) {
+        logger.error("DLP model load failed", error);
+        return { success: false };
+      }
     },
   };
 }
@@ -544,12 +629,23 @@ export default defineBackground(() => {
         dlpScanner.scan(data.text, context, data.domain, data.pageUrl).then(async (result) => {
           if (result) {
             const entityTypes = [...new Set(result.entities.map(e => e.entity_type))];
+            // エンティティ部分をマスクしたサンプルを生成（誤検知判定用）
+            let maskedSample: string | undefined;
+            if (result.entities.length > 0) {
+              const sorted = [...result.entities].sort((a, b) => b.start - a.start);
+              let masked = data.text!;
+              for (const ent of sorted) {
+                masked = masked.slice(0, ent.start) + `[${ent.entity_type}]` + masked.slice(ent.end);
+              }
+              maskedSample = masked.length > 200 ? masked.slice(0, 200) + "…" : masked;
+            }
             await backgroundAlerts.getAlertManager().alertDLPPIIDetected({
               domain: result.domain,
               scanContext: result.context,
               entityTypes,
               entityCount: result.entities.length,
               language: result.language,
+              maskedSample,
             }, result.url);
           }
           sendResponse({ success: true });

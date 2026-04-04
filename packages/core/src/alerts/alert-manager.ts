@@ -350,6 +350,7 @@ export function createAlertManager(
   // Dedup: track (category, domain) → alertId for merging duplicate alerts
   const DEDUP_WINDOW_MS = 60_000; // 1 minute window
   const dedupMap = new Map<string, { alertId: string; timestamp: number }>();
+  const disabledCategories = new Set<string>();
 
   for (const rule of [...DEFAULT_RULES, ...config.rules]) {
     rules.set(rule.id, rule);
@@ -368,8 +369,10 @@ export function createAlertManager(
     );
   }
 
-  function shouldCreateAlert(_severity: AlertSeverity): boolean {
-    return config.enabled;
+  function shouldCreateAlert(category: string, _severity: AlertSeverity): boolean {
+    if (!config.enabled) return false;
+    if (disabledCategories.has(category)) return false;
+    return true;
   }
 
   function notifyListeners(alert: SecurityAlert): void {
@@ -383,7 +386,7 @@ export function createAlertManager(
   }
 
   async function createAlert(params: CreateAlertInput): Promise<SecurityAlert | null> {
-    if (!shouldCreateAlert(params.severity)) {
+    if (!shouldCreateAlert(params.category, params.severity)) {
       return null;
     }
 
@@ -881,7 +884,20 @@ export function createAlertManager(
     subscribe,
     acknowledgeAll,
     clearResolved,
+    setDisabledCategories,
+    getDisabledCategories,
   };
+
+  function setDisabledCategories(categories: string[]): void {
+    disabledCategories.clear();
+    for (const cat of categories) {
+      disabledCategories.add(cat);
+    }
+  }
+
+  function getDisabledCategories(): string[] {
+    return Array.from(disabledCategories);
+  }
 }
 
 export type AlertManager = ReturnType<typeof createAlertManager>;

@@ -12,10 +12,11 @@ import { createDashboardStyles } from "./styles";
 import type { TabType } from "./types";
 import { getInitialTab } from "./utils";
 import { ExtensionsTab } from "./views/ExtensionsTab";
-import { AlertsTab } from "./views/AlertsTab";
+import { AlertsTab, AlertDetailSidebar, type AlertSidebarState } from "./views/AlertsTab";
 import { SettingsTab } from "./views/SettingsTab";
 import { ServicesTab } from "./views";
 import { sendMessage } from "../../lib/messaging";
+import { AnimationProvider, Motion, useAnimationSettings } from "../../lib/motion";
 
 const SEVERITY_RANK: Record<string, number> = {
   critical: 0,
@@ -32,7 +33,7 @@ interface DomainAlertSummary {
   categories: string[];
 }
 
-function DashboardContent() {
+function DashboardContent({ animationEnabled, setAnimationEnabled }: { animationEnabled: boolean; setAnimationEnabled: (v: boolean) => void }) {
   const styles = createDashboardStyles();
 
   const [activeTab, setActiveTab] = useState<TabType>(getInitialTab);
@@ -43,6 +44,8 @@ function DashboardContent() {
     addNotification,
     setActiveTab,
   });
+
+  const [alertSidebar, setAlertSidebar] = useState<AlertSidebarState | null>(null);
 
   const [alertEvents, setAlertEvents] = useState<{ domain: string; severity: AlertSeverity; category: string }[]>([]);
 
@@ -99,6 +102,11 @@ function DashboardContent() {
     loadData: dashboard.loadData,
   });
 
+  // Clear sidebar when navigating away from alerts tab
+  useEffect(() => {
+    if (activeTab !== "alerts") setAlertSidebar(null);
+  }, [activeTab]);
+
   if (dashboard.loading) {
     return (
       <div style={styles.wrapper}>
@@ -127,27 +135,43 @@ function DashboardContent() {
       <div style={styles.body}>
         <Sidebar tabs={tabs} activeTab={activeTab} onChange={(id) => setActiveTab(id as TabType)} />
         <div style={styles.container}>
-          {activeTab === "services" && (
-            <ServicesTab
-              services={dashboard.services}
-              serviceConnections={dashboard.serviceConnections}
-              alertsByDomain={alertsByDomain}
-              onNavigateToAlerts={navigateToAlerts}
-            />
-          )}
+          <Motion
+            key={activeTab}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, ease: "ease-out" }}
+            style={{ flex: 1 }}
+          >
+            {activeTab === "services" && (
+              <ServicesTab
+                services={dashboard.services}
+                serviceConnections={dashboard.serviceConnections}
+                alertsByDomain={alertsByDomain}
+                onNavigateToAlerts={navigateToAlerts}
+              />
+            )}
 
-          {activeTab === "extensions" && (
-            <ExtensionsTab />
-          )}
+            {activeTab === "extensions" && (
+              <ExtensionsTab />
+            )}
 
-          {activeTab === "alerts" && (
-            <AlertsTab />
-          )}
+            {activeTab === "alerts" && (
+              <AlertsTab onSidebarChange={setAlertSidebar} />
+            )}
 
-          {activeTab === "settings" && (
-            <SettingsTab />
-          )}
+            {activeTab === "settings" && (
+              <SettingsTab animationEnabled={animationEnabled} onAnimationToggle={setAnimationEnabled} />
+            )}
+          </Motion>
         </div>
+        {activeTab === "alerts" && alertSidebar && (
+          <AlertDetailSidebar
+            alert={alertSidebar.alert}
+            onClose={alertSidebar.onClose}
+            onReportFP={alertSidebar.onReportFP}
+            onDismiss={alertSidebar.onDismiss}
+          />
+        )}
       </div>
     </div>
   );
@@ -155,12 +179,15 @@ function DashboardContent() {
 
 export function DashboardApp() {
   const themeState = useThemeState();
+  const { animationEnabled, setAnimationEnabled } = useAnimationSettings();
 
   return (
     <ThemeContext.Provider value={themeState}>
-      <ErrorBoundary>
-        <DashboardContent />
-      </ErrorBoundary>
+      <AnimationProvider value={animationEnabled}>
+        <ErrorBoundary>
+          <DashboardContent setAnimationEnabled={setAnimationEnabled} animationEnabled={animationEnabled} />
+        </ErrorBoundary>
+      </AnimationProvider>
     </ThemeContext.Provider>
   );
 }
