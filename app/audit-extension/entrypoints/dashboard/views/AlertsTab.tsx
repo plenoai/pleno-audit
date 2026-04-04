@@ -3,6 +3,7 @@ import { ALL_PLAYBOOKS, type AlertSeverity, type AlertCategory, type PlaybookDat
 import {
   AlertRowMenu,
   Badge,
+  DismissDialog,
   SearchInput,
   EmptyState,
   LoadingState,
@@ -620,6 +621,120 @@ function AlertDetailSidebar({
 
 export { AlertDetailSidebar };
 
+const REASON_LABELS: Record<string, { label: string; description: string }> = {
+  false_positive: { label: "誤検知", description: "実際のセキュリティリスクではない" },
+  wont_fix: { label: "リスク受容", description: "リスクを認識した上で対応しない" },
+  used_in_tests: { label: "テスト環境", description: "テストまたは開発環境でのみ使用" },
+};
+
+function DismissedView({
+  records,
+  onReopen,
+}: {
+  records: Array<{
+    pattern: string;
+    reason: string;
+    comment?: string;
+    dismissedAt: number;
+    alertSnapshot: { category: string; domain: string; severity: string; title: string };
+  }>;
+  onReopen: (pattern: string) => void;
+}) {
+  const { colors } = useTheme();
+
+  if (records.length === 0) {
+    return (
+      <EmptyState
+        title="無視されたアラートはありません"
+        description="アラートを無視すると、ここに表示されます"
+      />
+    );
+  }
+
+  return (
+    <div
+      style={{
+        border: `1px solid ${colors.border}`,
+        borderRadius: borderRadius.lg,
+        overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
+        flex: 1,
+        minHeight: 0,
+      }}
+    >
+      <div
+        style={{
+          padding: `${spacing.sm} ${spacing.lg}`,
+          background: colors.bgSecondary,
+          borderBottom: `1px solid ${colors.border}`,
+          fontSize: fontSize.sm,
+          color: colors.textSecondary,
+          fontWeight: 500,
+          flexShrink: 0,
+        }}
+      >
+        {records.length}件の無視されたアラート
+      </div>
+      <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
+        {records.map((record) => {
+          const reasonInfo = REASON_LABELS[record.reason] ?? { label: record.reason, description: "" };
+          return (
+            <div
+              key={record.pattern}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: spacing.md,
+                padding: `${spacing.md} ${spacing.lg}`,
+                borderBottom: `1px solid ${colors.border}`,
+              }}
+            >
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: spacing.sm, marginBottom: "2px" }}>
+                  <Badge variant={severityVariant[record.alertSnapshot.severity as AlertSeverity] ?? "info"} size="sm">
+                    {record.alertSnapshot.severity}
+                  </Badge>
+                  <Badge variant="info" size="sm">
+                    {categoryLabels[record.alertSnapshot.category] ?? record.alertSnapshot.category}
+                  </Badge>
+                  <Badge variant="info" size="sm">
+                    {reasonInfo.label}
+                  </Badge>
+                </div>
+                <div style={{ fontSize: fontSize.md, color: colors.textPrimary, fontWeight: 500 }}>
+                  {record.alertSnapshot.title}
+                </div>
+                <div style={{ fontSize: fontSize.sm, color: colors.textMuted }}>
+                  {record.alertSnapshot.domain} · {new Date(record.dismissedAt).toLocaleDateString()}
+                  {record.comment && ` · ${record.comment}`}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => onReopen(record.pattern)}
+                style={{
+                  padding: `${spacing.xs} ${spacing.sm}`,
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: borderRadius.sm,
+                  background: colors.bgPrimary,
+                  color: colors.textPrimary,
+                  fontSize: fontSize.sm,
+                  cursor: "pointer",
+                  whiteSpace: "nowrap",
+                  flexShrink: 0,
+                }}
+              >
+                Reopen
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export interface AlertSidebarState {
   alert: AlertItem;
   onClose: () => void;
@@ -689,9 +804,34 @@ export function AlertsTab({ onSidebarChange }: { onSidebarChange?: (state: Alert
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    sendMessage<Array<{
+      pattern: string;
+      reason: string;
+      comment?: string;
+      dismissedAt: number;
+      reopenedAt?: number;
+      alertSnapshot: { category: string; domain: string; severity: string; title: string };
+    }>>({ type: "GET_DISMISS_RECORDS" })
+      .then(setDismissRecords)
+      .catch(() => {});
+  }, []);
+
   const [dismissedPatterns, setDismissedPatterns] = useState<Set<string>>(
     new Set(),
   );
+  const [dismissDialog, setDismissDialog] = useState<{
+    alerts: AlertItem[];
+  } | null>(null);
+  const [showDismissed, setShowDismissed] = useState(false);
+  const [dismissRecords, setDismissRecords] = useState<Array<{
+    pattern: string;
+    reason: string;
+    comment?: string;
+    dismissedAt: number;
+    reopenedAt?: number;
+    alertSnapshot: { category: string; domain: string; severity: string; title: string };
+  }>>([]);
 
   const buildIssueUrl = useCallback((alert: AlertItem) => {
     const label = categoryLabels[alert.category] ?? alert.category;
@@ -759,34 +899,96 @@ export function AlertsTab({ onSidebarChange }: { onSidebarChange?: (state: Alert
   );
 
   const handleDismiss = useCallback((alert: AlertItem) => {
-    const pattern = `${alert.category}::${alert.domain}`;
-    sendMessage({
-      type: "DISMISS_ALERT_PATTERN",
-      data: { category: alert.category, domain: alert.domain },
-    }).catch(() => {});
-    setDismissedPatterns((prev) => new Set(prev).add(pattern));
+    setDismissDialog({ alerts: [alert] });
   }, []);
 
   const handleBulkDismiss = useCallback(() => {
     const toDismiss = alerts.filter((a) => selectedIds.has(a.id));
-    const patternObjects = toDismiss.map((a) => ({
-      category: a.category,
-      domain: a.domain,
-    }));
-    const patternStrings = patternObjects.map(
-      (p) => `${p.category}::${p.domain}`,
-    );
+    if (toDismiss.length > 0) {
+      setDismissDialog({ alerts: toDismiss });
+    }
+  }, [alerts, selectedIds]);
+
+  const handleDismissConfirm = useCallback(
+    (reason: string, comment?: string) => {
+      if (!dismissDialog) return;
+      const { alerts: targetAlerts } = dismissDialog;
+
+      if (targetAlerts.length === 1) {
+        const a = targetAlerts[0];
+        const pattern = `${a.category}::${a.domain}`;
+        sendMessage({
+          type: "DISMISS_ALERT_PATTERN",
+          data: {
+            category: a.category,
+            domain: a.domain,
+            severity: a.severity,
+            title: a.title,
+            reason,
+            comment,
+          },
+        }).catch(() => {});
+        setDismissedPatterns((prev) => new Set(prev).add(pattern));
+      } else {
+        const patternObjects = targetAlerts.map((a) => ({
+          category: a.category,
+          domain: a.domain,
+          severity: a.severity,
+          title: a.title,
+        }));
+        const patternStrings = patternObjects.map(
+          (p) => `${p.category}::${p.domain}`,
+        );
+        sendMessage({
+          type: "DISMISS_ALERT_PATTERN",
+          data: { patterns: patternObjects, reason, comment },
+        }).catch(() => {});
+        setDismissedPatterns((prev) => {
+          const next = new Set(prev);
+          for (const p of patternStrings) next.add(p);
+          return next;
+        });
+        setSelectedIds(new Set());
+      }
+
+      // Refresh dismiss records
+      sendMessage<Array<{
+        pattern: string;
+        reason: string;
+        comment?: string;
+        dismissedAt: number;
+        reopenedAt?: number;
+        alertSnapshot: { category: string; domain: string; severity: string; title: string };
+      }>>({ type: "GET_DISMISS_RECORDS" })
+        .then(setDismissRecords)
+        .catch(() => {});
+      setDismissDialog(null);
+    },
+    [dismissDialog],
+  );
+
+  const handleReopen = useCallback((pattern: string) => {
     sendMessage({
-      type: "DISMISS_ALERT_PATTERN",
-      data: { patterns: patternObjects },
+      type: "REOPEN_DISMISSED_PATTERN",
+      data: { pattern },
     }).catch(() => {});
     setDismissedPatterns((prev) => {
       const next = new Set(prev);
-      for (const p of patternStrings) next.add(p);
+      next.delete(pattern);
       return next;
     });
-    setSelectedIds(new Set());
-  }, [alerts, selectedIds]);
+    // Refresh dismiss records
+    sendMessage<Array<{
+      pattern: string;
+      reason: string;
+      comment?: string;
+      dismissedAt: number;
+      reopenedAt?: number;
+      alertSnapshot: { category: string; domain: string; severity: string; title: string };
+    }>>({ type: "GET_DISMISS_RECORDS" })
+      .then(setDismissRecords)
+      .catch(() => {});
+  }, []);
 
   const handleSelect = useCallback((id: string, selected: boolean) => {
     setSelectedIds((prev) => {
@@ -913,6 +1115,15 @@ export function AlertsTab({ onSidebarChange }: { onSidebarChange?: (state: Alert
               </Badge>
             );
           })}
+          {dismissRecords.filter((r) => r.reopenedAt == null).length > 0 && (
+            <Badge
+              variant="info"
+              active={showDismissed}
+              onClick={() => setShowDismissed((v) => !v)}
+            >
+              Dismissed ({dismissRecords.filter((r) => r.reopenedAt == null).length})
+            </Badge>
+          )}
         </div>
 
         {/* Bulk action bar */}
@@ -967,7 +1178,12 @@ export function AlertsTab({ onSidebarChange }: { onSidebarChange?: (state: Alert
         )}
 
         {/* Alert list */}
-        {filtered.length === 0 ? (
+        {showDismissed ? (
+          <DismissedView
+            records={dismissRecords.filter((r) => r.reopenedAt == null)}
+            onReopen={handleReopen}
+          />
+        ) : filtered.length === 0 ? (
           <EmptyState
             title="検出されたアラートはありません"
             description="セキュリティアラートが検出されると表示されます"
@@ -1091,6 +1307,12 @@ export function AlertsTab({ onSidebarChange }: { onSidebarChange?: (state: Alert
               </div>
             )}
           </div>
+        )}
+        {dismissDialog && (
+          <DismissDialog
+            onConfirm={handleDismissConfirm}
+            onCancel={() => setDismissDialog(null)}
+          />
         )}
     </div>
   );

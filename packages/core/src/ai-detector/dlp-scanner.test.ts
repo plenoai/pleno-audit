@@ -5,6 +5,7 @@ const mockPipeline = vi.fn().mockResolvedValue([]);
 
 vi.mock("@huggingface/transformers", () => ({
   pipeline: vi.fn().mockResolvedValue(mockPipeline),
+  env: { backends: { onnx: { wasm: {} } } },
 }));
 
 describe("createDLPScanner", () => {
