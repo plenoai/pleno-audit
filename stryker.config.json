@@ -30,6 +30,7 @@
     "low": 60,
     "break": 50
   },
+  "ignorePatterns": [".claude"],
   "concurrency": 4,
   "timeoutMS": 30000
 }
