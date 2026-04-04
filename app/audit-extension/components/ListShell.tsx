@@ -311,7 +311,7 @@ export function ListRow({
         style={{
           display: "flex",
           alignItems: "center",
-          gap: spacing.md,
+          gap: spacing.sm,
           padding: `${spacing.md} ${spacing.lg}`,
           cursor: onClick ? "pointer" : undefined,
         }}
@@ -355,7 +355,7 @@ export function ListRow({
         </div>
         {actions && (
           <div
-            style={{ display: "flex", alignItems: "center", gap: spacing.xs, flexShrink: 0 }}
+            style={{ display: "flex", alignItems: "center", gap: spacing.sm, flexShrink: 0 }}
             onClick={(e) => e.stopPropagation()}
           >
             {actions}
@@ -494,7 +494,7 @@ export function PaginationFooter({
         {currentPage * pageSize + 1}–
         {Math.min((currentPage + 1) * pageSize, totalItems)} / {totalItems}件
       </span>
-      <div style={{ display: "flex", gap: spacing.xs }}>
+      <div style={{ display: "flex", gap: spacing.sm }}>
         <button
           type="button"
           disabled={isFirst}

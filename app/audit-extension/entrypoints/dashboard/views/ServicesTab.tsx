@@ -191,10 +191,10 @@ function ServiceRow({
               <img
                 src={service.faviconUrl}
                 alt=""
-                style={{ width: "16px", height: "16px", flexShrink: 0 }}
+                style={{ width: "14px", height: "14px", flexShrink: 0 }}
               />
             ) : (
-              <Globe size={16} style={{ flexShrink: 0, color: colors.textMuted }} />
+              <Globe size={14} style={{ flexShrink: 0, color: colors.textMuted }} />
             )}
             <span>{service.domain}</span>
           </>

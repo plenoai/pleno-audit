@@ -97,7 +97,7 @@ function ExtensionRow({
       title={
         <>
           {ext.icons?.[0]?.url && (
-            <img src={ext.icons[0].url} alt="" style={{ width: "16px", height: "16px", flexShrink: 0 }} />
+            <img src={ext.icons[0].url} alt="" style={{ width: "14px", height: "14px", flexShrink: 0 }} />
           )}
           <span>{ext.name}</span>
         </>
