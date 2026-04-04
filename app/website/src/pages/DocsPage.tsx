@@ -11,7 +11,6 @@ import PrivacySection from './docs/sections/PrivacySection';
 import {
   MAIN_SECTION_BY_SUBSECTION,
   SUBSECTION_IDS,
-  DOMAIN_METADATA,
 } from './docs/data';
 
 type SectionRenderer = () => JSX.Element;
@@ -22,32 +21,18 @@ type SectionDefinition = {
   subsectionId?: string;
 };
 
-const domainRenderer = (domainId: string) => () => <DomainSection domainId={domainId} />;
-
-const DOMAIN_IDS = Object.keys(DOMAIN_METADATA);
-
 const SECTION_DEFINITIONS: SectionDefinition[] = [
   { id: 'overview', render: OverviewSection },
   { id: 'getting-started', render: GettingStartedSection },
-  ...DOMAIN_IDS.flatMap((domainId) => {
-    const render = domainRenderer(domainId);
-    const meta = DOMAIN_METADATA[domainId];
-    return [
-      { id: domainId, render },
-      ...meta.featureIds.map((featureId) => ({
-        id: featureId,
-        render,
-        subsectionId: featureId,
-      })),
-    ];
-  }),
+  { id: 'features', render: DomainSection },
+  { id: 'casb', render: DomainSection, subsectionId: 'casb' },
+  { id: 'threat-protection', render: DomainSection, subsectionId: 'threat-protection' },
+  { id: 'dlp-domain', render: DomainSection, subsectionId: 'dlp-domain' },
+  { id: 'device-posture', render: DomainSection, subsectionId: 'device-posture' },
+  { id: 'visibility', render: DomainSection, subsectionId: 'visibility' },
   { id: 'architecture', render: ArchitectureSection },
   { id: 'browser-only', render: ArchitectureSection, subsectionId: 'browser-only' },
-  {
-    id: 'detection-only',
-    render: ArchitectureSection,
-    subsectionId: 'detection-only',
-  },
+  { id: 'detection-only', render: ArchitectureSection, subsectionId: 'detection-only' },
   { id: 'tech-stack', render: ArchitectureSection, subsectionId: 'tech-stack' },
   { id: 'privacy', render: PrivacySection },
 ];

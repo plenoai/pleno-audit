@@ -41,50 +41,15 @@ export const DOC_SECTIONS: DocSection[] = [
     icon: Download,
   },
   {
-    id: 'casb',
-    title: 'CASB',
-    icon: Eye,
+    id: 'features',
+    title: '機能',
+    icon: Zap,
     subsections: [
-      { id: 'shadow-it', title: 'Shadow IT検出' },
-      { id: 'auth', title: '認証フロー検出' },
-    ],
-  },
-  {
-    id: 'threat-protection',
-    title: 'Threat Protection',
-    icon: Shield,
-    subsections: [
-      { id: 'phishing', title: 'フィッシング検出' },
-      { id: 'csp', title: 'CSP監視' },
-      { id: 'security-hooks', title: 'セキュリティフック' },
-    ],
-  },
-  {
-    id: 'dlp-domain',
-    title: 'DLP',
-    icon: Scan,
-    subsections: [
-      { id: 'dlp', title: 'PII・機密データ検出' },
-      { id: 'ai-prompt', title: 'AIプロンプト監視' },
-      { id: 'network-monitoring', title: 'ネットワーク監視' },
-    ],
-  },
-  {
-    id: 'device-posture',
-    title: 'Device Posture',
-    icon: Activity,
-    subsections: [
-      { id: 'battacker', title: 'ブラウザ防御テスト' },
-      { id: 'extension-analysis', title: '拡張機能分析' },
-    ],
-  },
-  {
-    id: 'visibility',
-    title: 'Visibility',
-    icon: LayoutDashboard,
-    subsections: [
-      { id: 'dashboard', title: 'ダッシュボード' },
-      { id: 'data-export', title: 'データエクスポート' },
+      { id: 'casb', title: 'CASB' },
+      { id: 'threat-protection', title: 'Threat Protection' },
+      { id: 'dlp-domain', title: 'DLP' },
+      { id: 'device-posture', title: 'Device Posture' },
+      { id: 'visibility', title: 'Visibility' },
     ],
   },
   {
@@ -104,14 +69,7 @@ export const DOC_SECTIONS: DocSection[] = [
   },
 ];
 
-export const DEFAULT_EXPANDED_SECTION_IDS = new Set([
-  'casb',
-  'threat-protection',
-  'dlp-domain',
-  'device-posture',
-  'visibility',
-  'architecture',
-]);
+export const DEFAULT_EXPANDED_SECTION_IDS = new Set(['features', 'architecture']);
 
 export const SUBSECTION_IDS = new Set(
   DOC_SECTIONS.flatMap((section) => section.subsections?.map((sub) => sub.id) ?? [])
@@ -428,67 +386,67 @@ export const TECH_STACK_ROWS: TechStackRow[] = [
 export const PACKAGE_ITEMS: PackageItem[] = [
   {
     icon: Database,
-    title: '@libztbs/types',
+    title: 'libztbs/types',
     description: 'コア型定義',
   },
   {
     icon: Database,
-    title: '@libztbs/detectors',
+    title: 'libztbs/detectors',
     description: 'CASBドメイン（サービス検出、認証検出）',
   },
   {
     icon: Shield,
-    title: '@libztbs/csp',
+    title: 'libztbs/csp',
     description: 'CSP監査（違反検出、ポリシー生成）',
   },
   {
     icon: AlertTriangle,
-    title: '@libztbs/nrd, @libztbs/typosquat',
+    title: 'libztbs/nrd, libztbs/typosquat',
     description: 'NRD・Typosquatting検出アルゴリズム',
   },
   {
     icon: Zap,
-    title: '@libztbs/ai-detector',
+    title: 'libztbs/ai-detector',
     description: 'AI検出・DLPアルゴリズム',
   },
   {
     icon: Shield,
-    title: '@libztbs/alerts',
+    title: 'libztbs/alerts',
     description: 'Posture/Policy/Alertセキュリティ基盤（75+カテゴリ）',
   },
   {
     icon: Activity,
-    title: '@libztbs/battacker',
+    title: 'libztbs/battacker',
     description: 'ブラウザ防御耐性テスト（100+攻撃シミュレーション）',
   },
   {
     icon: FileOutput,
-    title: '@libztbs/data-export',
+    title: 'libztbs/data-export',
     description: 'セキュリティデータエクスポート（JSON/CSV/Markdown/HTML）',
   },
   {
     icon: Puzzle,
-    title: '@libztbs/extension-analyzers',
+    title: 'libztbs/extension-analyzers',
     description: '拡張機能分析（リスク評価・統計分析・DoH監視）',
   },
   {
     icon: Fingerprint,
-    title: '@libztbs/main-world-hooks',
+    title: 'libztbs/main-world-hooks',
     description: 'メインワールドセキュリティフック（API監視・フィンガープリント検出）',
   },
   {
     icon: Network,
-    title: '@libztbs/extension-network-service',
+    title: 'libztbs/extension-network-service',
     description: 'ネットワーク監視・DNRルール管理',
   },
   {
     icon: Server,
-    title: '@libztbs/extension-runtime',
+    title: 'libztbs/extension-runtime',
     description: '拡張機能ランタイム（ロガー・メッセージング・ストレージ）',
   },
   {
     icon: Lock,
-    title: '@libztbs/extension-enterprise',
+    title: 'libztbs/extension-enterprise',
     description: 'エンタープライズ機能（OIDC・SAML SSO、管理構成）',
   },
   {

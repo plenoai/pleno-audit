@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Search, Shield } from 'lucide-react';
-import Footer from '../../components/Footer';
+import AlertsLayout from './AlertsLayout';
 import { ALL_PLAYBOOKS, ALERT_GROUPS } from './data';
 import type { PlaybookSeverity } from './types';
 
@@ -42,8 +42,7 @@ export default function AlertsIndexPage() {
   }, [query, activeGroup, activeSeverity]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-white dark:bg-[#0a0a0a]">
-      <main className="flex-1 w-full px-6 py-12">
+    <AlertsLayout activeAlertId={null}>
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -153,8 +152,6 @@ export default function AlertsIndexPage() {
           ))}
         </div>
         </motion.div>
-      </main>
-      <Footer />
-    </div>
+    </AlertsLayout>
   );
 }

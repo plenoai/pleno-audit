@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Shield, ChevronRight, X, ArrowLeft } from 'lucide-react';
+import { Shield, ChevronRight, X, ArrowLeft, FileText } from 'lucide-react';
 import { ALERT_GROUPS, ALL_PLAYBOOKS } from './data';
 import type { PlaybookSeverity } from './types';
 
@@ -73,13 +73,22 @@ export default function AlertSidebar({
         </div>
 
         <div className="p-4 border-b border-[#eaeaea] dark:border-[#333]">
-          <Link
-            to="/"
-            className="flex items-center gap-2 text-sm text-[#666] dark:text-[#8f8f8f] hover:text-[#171717] dark:hover:text-[#ededed] transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            <span>ホームに戻る</span>
-          </Link>
+          <div className="flex flex-col gap-2">
+            <Link
+              to="/"
+              className="flex items-center gap-2 text-sm text-[#666] dark:text-[#8f8f8f] hover:text-[#171717] dark:hover:text-[#ededed] transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span>ホームに戻る</span>
+            </Link>
+            <Link
+              to="/docs"
+              className="flex items-center gap-2 text-sm text-[#666] dark:text-[#8f8f8f] hover:text-[#171717] dark:hover:text-[#ededed] transition-colors"
+            >
+              <FileText className="h-4 w-4" />
+              <span>ドキュメント</span>
+            </Link>
+          </div>
         </div>
 
         <nav className="p-4 overflow-y-auto h-[calc(100%-120px)]">
