@@ -242,6 +242,7 @@ export interface DataExfiltrationAlertDetails {
   type: "data_exfiltration";
   sourceDomain: string;
   targetDomain: string;
+  url: string;
   bodySize: number;
   sizeKB: number;
   method: string;

@@ -441,6 +441,7 @@ export const buildExtensionAlert = createAlertBuilder(EXTENSION_ALERT_DEFINITION
 export interface DataExfiltrationAlertParams {
   sourceDomain: string;
   targetDomain: string;
+  url: string;
   bodySize: number;
   method: string;
   initiator: string;
@@ -482,6 +483,7 @@ const DATA_EXFILTRATION_ALERT_DEFINITION: AlertDefinition<
       details: {
         sourceDomain: params.sourceDomain,
         targetDomain: params.targetDomain,
+        url: params.url,
         bodySize: params.bodySize,
         sizeKB,
         method: params.method,

@@ -240,6 +240,7 @@ export function createSecurityEventHandlers(
       await deps.getAlertManager().alertDataExfiltration({
         sourceDomain: pageDomain,
         targetDomain: data.targetDomain,
+        url: data.targetUrl ?? data.url ?? data.targetDomain,
         bodySize: data.bodySize,
         method: data.method,
         initiator: data.initiator,
