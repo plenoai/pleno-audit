@@ -13,9 +13,6 @@
  * - Service Workerの再起動時にリスナーが維持されるように設計
  */
 
-import type {
-  NetworkRequestRecord,
-} from "../../extension-runtime/index.js";
 import {
   createLogger,
 } from "../../extension-runtime/index.js";

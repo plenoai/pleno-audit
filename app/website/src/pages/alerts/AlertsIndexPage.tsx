@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Search, Shield, ArrowRight } from 'lucide-react';
+import { Search, Shield } from 'lucide-react';
 import Footer from '../../components/Footer';
 import { ALL_PLAYBOOKS, ALERT_GROUPS } from './data';
 import type { PlaybookSeverity } from './types';

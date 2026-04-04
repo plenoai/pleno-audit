@@ -132,8 +132,8 @@ test.describe("declarativeNetRequest Extension Monitor", () => {
     console.log(`Found ${eventCount} extension_request events`);
 
     // Check storage directly via service worker
-    const auditSWContext = auditSW as any;
-    const storageResult = await context.pages()[0].evaluate(async () => {
+    const _auditSWContext = auditSW as any;
+    const _storageResult = await context.pages()[0].evaluate(async () => {
       // This runs in page context, not service worker
       // We can't directly access chrome.storage from here
       return null;

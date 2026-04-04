@@ -8,8 +8,8 @@ async function simulateWindowOpenPostMessage(): Promise<AttackResult> {
     // window.open() + postMessage を利用したクロスオリジン通信
     // SOP を回避して情報流出
 
-    let messageReceived = false;
-    let dataExfiltrated = false;
+    let _messageReceived = false;
+    let _dataExfiltrated = false;
 
     // ポップアップウィンドウを開く
     const popup = window.open("about:blank", "exfil-context");
@@ -34,7 +34,7 @@ async function simulateWindowOpenPostMessage(): Promise<AttackResult> {
 
       const messageHandler = (event: MessageEvent) => {
         if (event.source === popup) {
-          messageReceived = true;
+          _messageReceived = true;
           clearTimeout(timeout);
           window.removeEventListener("message", messageHandler);
           popup.close();
@@ -77,7 +77,7 @@ async function simulateWindowOpenPostMessage(): Promise<AttackResult> {
             });
           </script>
         `);
-      } catch (e) {
+      } catch {
         // ポップアップ内への直接書き込み失敗（通常はクロスオリジン）
       }
     });
@@ -216,7 +216,7 @@ async function simulateCacheSideChannelAttack(): Promise<AttackResult> {
         if (t2 - t1 < 10) {
           cachedUrls.push(existingResource);
         }
-      } catch (e) {
+      } catch {
         // ネットワークエラー
       }
 
@@ -228,7 +228,7 @@ async function simulateCacheSideChannelAttack(): Promise<AttackResult> {
         if (t4 - t3 > 50) {
           uncachedUrls.push(nonExistingResource);
         }
-      } catch (e) {
+      } catch {
         // ネットワークエラー
       }
     }
@@ -305,7 +305,7 @@ async function simulateWasmIndirectCallAttack(): Promise<AttackResult> {
         if (funcRef) {
           tableAccessible = true;
         }
-      } catch (e) {
+      } catch {
         // Table access denied
       }
     }
@@ -367,7 +367,7 @@ async function simulateRedirectChainAttack(): Promise<AttackResult> {
             dataLeaked = true;
           }
         }
-      } catch (e) {
+      } catch {
         // Redirect blocked
       }
     }

@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { buildServiceIndex, queryServiceIndex } from "./service-explorer.js";
 import type { FilterCategory, ServiceQuery } from "./service-explorer.js";
-import type { UnifiedService, SortType } from "../types/index.js";
+import type { UnifiedService } from "../types/index.js";
 
 function makeDomainService(
   domain: string,

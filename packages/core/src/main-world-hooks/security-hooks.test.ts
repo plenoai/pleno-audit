@@ -3,7 +3,7 @@
  *
  * export化された定数と検出ロジックの直接テスト。
  */
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import {
   KNOWN_CDNS,
   SENSITIVE_TYPES,

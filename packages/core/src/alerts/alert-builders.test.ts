@@ -4,7 +4,6 @@ import {
   severityFromConfidence,
   buildRiskDescription,
   translateViolations,
-  VIOLATION_DESCRIPTIONS,
   buildNRDAlert,
   buildTyposquatAlert,
   buildAISensitiveAlert,

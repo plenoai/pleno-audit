@@ -13,7 +13,7 @@ export interface PageAnalysisDependencies {
 
 export function createPageAnalysisHandler(deps: PageAnalysisDependencies) {
   return async (analysis: PageAnalysis) => {
-  const { domain, login, privacy, tos, cookiePolicy, cookieBanner, faviconUrl } = analysis;
+  const { domain, login, privacy, tos, cookiePolicy: _cookiePolicy, cookieBanner: _cookieBanner, faviconUrl } = analysis;
   const storage = await deps.initStorage();
   const isNewDomain = !storage.services[domain];
 

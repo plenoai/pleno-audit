@@ -4,7 +4,7 @@
  * classifyInitiator関数およびヘルパー関数のユニットテスト
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect } from "vitest";
 
 // classifyInitiatorは内部関数なので、モジュールをインポートしてテストする
 // モジュールの内部関数をテストするため、同じロジックを再実装してテスト

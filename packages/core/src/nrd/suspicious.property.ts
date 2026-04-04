@@ -26,7 +26,7 @@ const tldArb = fc.constantFrom("com", "net", "org", "io", "dev", "xyz", "tk", "m
 // カスタムArbitrary: 様々な文字種
 // fast-check v4では fullUnicodeString が廃止されたため、unit: 'grapheme' を使用
 const unicodeStringArb = fc.string({ minLength: 0, maxLength: 100, unit: "grapheme" });
-const asciiStringArb = fc.stringMatching(/^[\x20-\x7e]{0,100}$/);
+const _asciiStringArb = fc.stringMatching(/^[\x20-\x7e]{0,100}$/);
 const largeStringArb = fc.string({ minLength: 1000, maxLength: 5000 });
 
 describe("suspicious domain detection - property tests", () => {

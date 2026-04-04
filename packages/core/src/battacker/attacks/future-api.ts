@@ -202,10 +202,10 @@ async function simulateWebCodecsExfiltration(): Promise<AttackResult> {
         output: (chunk: unknown) => void;
         error: (error: unknown) => void;
       }) => unknown)({
-        output: (chunk: unknown) => {
+        output: (_chunk: unknown) => {
           codecsAccessible = true;
         },
-        error: (error: unknown) => {
+        error: (_error: unknown) => {
           // エラーハンドル
         },
       });
@@ -233,11 +233,11 @@ async function simulateWebCodecsExfiltration(): Promise<AttackResult> {
             timestamp: 0,
           });
           (encoder as unknown as { encode: (frame: unknown) => void }).encode(frame);
-        } catch (e) {
+        } catch {
           // Frame creation failed
         }
       }
-    } catch (e) {
+    } catch {
       // Codecs access blocked
     }
 
@@ -318,7 +318,7 @@ async function simulateWebTransportP2P(): Promise<AttackResult> {
           )
         );
       }
-    } catch (e) {
+    } catch {
       // WebTransport connection failed (expected)
     }
 
@@ -388,7 +388,7 @@ async function simulateWebAuthnBypass(): Promise<AttackResult> {
       if (credential) {
         authBypassAttempted = true;
       }
-    } catch (e) {
+    } catch {
       // WebAuthn blocked or not available
     }
 

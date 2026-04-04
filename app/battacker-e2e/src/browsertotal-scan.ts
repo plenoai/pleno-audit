@@ -89,7 +89,7 @@ async function getStatistics(page: Page): Promise<ScanStatistics | null> {
   }
 }
 
-async function collectConsoleLogs(page: Page): Promise<string[]> {
+async function _collectConsoleLogs(page: Page): Promise<string[]> {
   const logs: string[] = [];
 
   page.on("console", (msg) => {
@@ -110,7 +110,7 @@ async function collectConsoleLogs(page: Page): Promise<string[]> {
 
 async function waitForScanCompletion(
   page: Page,
-  logs: string[]
+  _logs: string[]
 ): Promise<ScanStatistics> {
   const startTime = Date.now();
   let bestStats: ScanStatistics = { total: 131, passed: 0, failed: 0, running: 0, queued: 0, progress: 0 };

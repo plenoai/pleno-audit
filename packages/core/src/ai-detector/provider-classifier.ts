@@ -5,7 +5,7 @@
  * Shadow AI検出強化の一環として、より多くのプロバイダーをサポート。
  */
 
-import type { InferredProvider, ExtendedProvider } from "../types/index.js";
+import type { ExtendedProvider } from "../types/index.js";
 export type { ExtendedProvider } from "../types/index.js";
 
 /**
@@ -161,12 +161,12 @@ const KNOWN_AI_DOMAINS: Array<{
 
   // Azure OpenAI
   {
-    pattern: /(?:^|:\/\/|@)[^\/]*\.openai\.azure\.com(?:\/|$)/i,
+    pattern: /(?:^|:\/\/|@)[^/]*\.openai\.azure\.com(?:\/|$)/i,
     provider: "azure",
     confidence: "high",
   },
   {
-    pattern: /(?:^|:\/\/|@)[^\/]*\.cognitiveservices\.azure\.com\/.*openai/i,
+    pattern: /(?:^|:\/\/|@)[^/]*\.cognitiveservices\.azure\.com\/.*openai/i,
     provider: "azure",
     confidence: "high",
   },
@@ -281,7 +281,7 @@ export function classifyByResponseStructure(
     }
 
     const obj = JSON.parse(
-      text.startsWith("data: ") ? text.split("\n")[0].slice(6) : text
+      text.startsWith("data: ") ? text.split("\n")[0]!.slice(6) : text
     );
 
     // Anthropic: content配列 + type: "text"

@@ -21,7 +21,7 @@ async function simulateFormSubmissionHijack(): Promise<AttackResult> {
 
     // フォーム送信をハイジャック
     let formSubmitted = false;
-    const originalSubmit = form.submit;
+    const _originalSubmit = form.submit;
 
     form.submit = function () {
       formSubmitted = true;
@@ -31,7 +31,7 @@ async function simulateFormSubmissionHijack(): Promise<AttackResult> {
       ) as HTMLInputElement;
       if (passwordField) {
         // 攻撃者がデータを傍受
-        const interceededPassword = passwordField.value;
+        const _interceededPassword = passwordField.value;
       }
 
       // 元のsubmit呼び出しをスキップ（実際には送信しない）
@@ -87,7 +87,7 @@ async function simulatePrototypePollution(): Promise<AttackResult> {
       const malicious = JSON.parse(userInput);
 
       // オブジェクトのマージ（Prototype pollutionの典型的なシナリオ）
-      const result = { ...victim, ...malicious };
+      const _result = { ...victim, ...malicious };
 
       // 汚染チェック
       const checkObj = {};
@@ -118,7 +118,7 @@ async function simulatePrototypePollution(): Promise<AttackResult> {
           details: `Direct prototype pollution successful - Object.defineProperty hijacking`,
         };
       }
-    } catch (error) {
+    } catch {
       // Cleanup attempt failed or blocked
     }
 
@@ -271,7 +271,7 @@ async function simulateCORSPreflightLeak(): Promise<AttackResult> {
     const preflightStart = performance.now();
 
     try {
-      const response = await fetch(targetUrl, {
+      const _response = await fetch(targetUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

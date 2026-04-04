@@ -33,7 +33,9 @@ describe("canvas fingerprint detection logic", () => {
   });
 
   it("boundary: exactly 256x64 is flagged", () => {
-    expect(256 <= 256 && 64 <= 64).toBe(true);
+    const width = 256;
+    const height = 64;
+    expect(width <= 256 && height <= 64).toBe(true);
   });
 });
 

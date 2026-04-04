@@ -5,7 +5,6 @@ import {
   classifyProvider,
   getProviderInfo,
   isShadowAI,
-  type ExtendedProvider,
 } from "./provider-classifier.js";
 
 describe("classifyByModelName", () => {

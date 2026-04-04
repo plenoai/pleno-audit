@@ -30,7 +30,7 @@ export function FilteredTab<T>({
   expandRow,
   onRowClick,
 }: FilteredTabProps<T>) {
-  const { colors } = useTheme();
+  const { colors: _colors } = useTheme();
 
   return (
     <div style={{ marginBottom: "32px" }}>

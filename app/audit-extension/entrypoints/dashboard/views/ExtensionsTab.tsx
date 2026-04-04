@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo } from "preact/hooks";
-import { Badge, SearchInput, LoadingState, getTableCellStyles, expandArrowStyle } from "../../../components";
+import { Badge, SearchInput, LoadingState, getTableCellStyles } from "../../../components";
 import { FilteredTab } from "../components/FilteredTab";
 import { useTabFilter } from "../hooks/useTabFilter";
-import { useTheme, spacing, fontSize, borderRadius } from "../../../lib/theme";
+import { useTheme, spacing, fontSize } from "../../../lib/theme";
 import { truncate } from "../utils";
 import { createLogger } from "libztbs/extension-runtime";
 import { getPermissionRiskLevel, DANGEROUS_PERMISSIONS, type PermissionRiskLevel } from "libztbs/extension-analyzers";

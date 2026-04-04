@@ -206,9 +206,10 @@ async function simulateDynamicScriptExecution(): Promise<AttackResult> {
           details: `Function constructor execution successful - arbitrary code execution possible`,
         };
       }
-    } catch (funcError) {
+    } catch {
       // Function constructor blocked, try eval
       try {
+        // eslint-disable-next-line no-eval -- intentional: testing browser's eval() blocking capability
         eval("var testEval = 'eval works'");
         if (typeof (window as any).testEval !== "undefined") {
           return {

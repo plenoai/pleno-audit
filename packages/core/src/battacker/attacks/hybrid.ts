@@ -111,7 +111,7 @@ async function simulatePolicyCrossOriginMutation(): Promise<AttackResult> {
           sharedWorkerBackchannel = true;
         }
       });
-    } catch (e) {
+    } catch {
       // SharedWorker利用不可
     }
 
@@ -125,7 +125,7 @@ async function simulatePolicyCrossOriginMutation(): Promise<AttackResult> {
           }
         });
       }
-    } catch (e) {
+    } catch {
       // Service Worker access denied
     }
 
@@ -139,7 +139,7 @@ async function simulatePolicyCrossOriginMutation(): Promise<AttackResult> {
     containers.forEach((el) => {
       try {
         document.body.removeChild(el);
-      } catch (e) {
+      } catch {
         // 既に削除されている可能性
       }
     });
@@ -301,7 +301,7 @@ async function simulateStorageQuotaExhaustion(): Promise<AttackResult> {
           }
         }
       }
-    } catch (e) {
+    } catch {
       quotaExhausted = true;
     }
 
@@ -331,7 +331,7 @@ async function simulateStorageQuotaExhaustion(): Promise<AttackResult> {
                   data: Array(50000).fill("IDB_QUOTA_FILL").join(""),
                 });
               }
-            } catch (e) {
+            } catch {
               quotaExhausted = true;
             }
 
@@ -347,7 +347,7 @@ async function simulateStorageQuotaExhaustion(): Promise<AttackResult> {
         });
 
         await indexedDBTest;
-      } catch (e) {
+      } catch {
         quotaExhausted = true;
       }
     }
@@ -356,7 +356,7 @@ async function simulateStorageQuotaExhaustion(): Promise<AttackResult> {
     for (let i = 0; i < 100; i++) {
       try {
         localStorage.removeItem(`${testKey}-ls-${i}`);
-      } catch (e) {
+      } catch {
         // 既に削除
       }
     }
@@ -490,7 +490,7 @@ async function simulateMemoryAccessPatternDetection(): Promise<AttackResult> {
 
         // キャッシュフラッシュ
         for (let j = 0; j < 256; j++) {
-          const dummy = secretData[(randomOffset + j) % 256];
+          const _dummy = secretData[(randomOffset + j) % 256];
         }
 
         const t2 = performance.now();

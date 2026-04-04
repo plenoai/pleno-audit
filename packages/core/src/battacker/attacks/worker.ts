@@ -19,7 +19,7 @@ async function simulateSharedWorker(): Promise<AttackResult> {
         });
       }, 2000);
 
-      worker.port.onmessage = (e) => {
+      worker.port.onmessage = (_e) => {
         clearTimeout(timeout);
         resolve({
           blocked: false,

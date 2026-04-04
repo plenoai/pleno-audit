@@ -30,14 +30,6 @@ interface UnifiedService {
   faviconUrl?: string;
 }
 
-function extractDomain(url: string): string | null {
-  try {
-    return new URL(url).hostname;
-  } catch {
-    return null;
-  }
-}
-
 /** Postureからリスク検出をAlert形式で抽出 */
 function extractPostureAlerts(
   services: DetectedService[],

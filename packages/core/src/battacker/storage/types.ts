@@ -1,4 +1,4 @@
-import type { DefenseScore, StoredTestHistory } from "../types.js";
+import type { DefenseScore } from "../types.js";
 
 export interface BattackerStorage {
   getLastResult(): Promise<DefenseScore | null>;

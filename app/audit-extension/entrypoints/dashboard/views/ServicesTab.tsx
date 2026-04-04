@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from "preact/hooks";
 import { Globe } from "lucide-preact";
 import type { AlertSeverity } from "libztbs/alerts";
 import type { DetectedService } from "libztbs/types";
-import { Badge, SearchInput, getTableCellStyles, expandArrowStyle } from "../../../components";
+import { Badge, SearchInput, getTableCellStyles } from "../../../components";
 import { ServiceRowMenu } from "../../../components/ServiceRowMenu";
 import { sendMessage } from "../../../lib/messaging";
 import { FilteredTab } from "../components/FilteredTab";
@@ -98,7 +98,7 @@ function getServiceRiskScore(
   return Math.min(100, score);
 }
 
-function getServiceRiskLevel(
+function _getServiceRiskLevel(
   s: DetectedService,
   connectionCount: number,
   alertSummary?: DomainAlertSummary,

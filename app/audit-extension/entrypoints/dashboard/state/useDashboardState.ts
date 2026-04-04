@@ -21,8 +21,8 @@ interface UseDashboardStateOptions {
 }
 
 export function useDashboardState({
-  addNotification,
-  setActiveTab,
+  addNotification: _addNotification,
+  setActiveTab: _setActiveTab,
 }: UseDashboardStateOptions) {
   const [reports, setReports] = useState<CSPReport[]>([]);
   const [totalCounts, setTotalCounts] = useState<TotalCounts>({

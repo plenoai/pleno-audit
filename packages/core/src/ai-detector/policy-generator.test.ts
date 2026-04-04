@@ -2,10 +2,6 @@ import { describe, it, expect } from "vitest";
 import {
   createPolicyGenerator,
   type PolicyGenerationInput,
-  type AIUsageData,
-  type DLPDetectionData,
-  type ExtensionRiskData,
-  type DomainVisitData,
 } from "./policy-generator.js";
 
 describe("createPolicyGenerator", () => {

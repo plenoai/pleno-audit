@@ -101,7 +101,7 @@ function SkeletonCategoryBar({ index }: { index: number }) {
   );
 }
 
-function DecodingCategoryBar({ category, index }: { category: CategoryScore; index: number }) {
+function DecodingCategoryBar({ category, index: _index }: { category: CategoryScore; index: number }) {
   const chars = "01アイウエオカキクケコ░▒▓█";
   const label = CATEGORY_LABELS[category.category];
 

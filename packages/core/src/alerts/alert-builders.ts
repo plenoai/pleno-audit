@@ -620,7 +620,7 @@ const POLICY_VIOLATION_ALERT_DEFINITION: AlertDefinition<
 > = {
   category: "policy_violation",
   detailsType: "policy_violation",
-  build: (params, helpers) => {
+  build: (params, _helpers) => {
     if (params.action === "allow") {
       return null;
     }

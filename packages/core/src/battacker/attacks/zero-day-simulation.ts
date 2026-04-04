@@ -20,7 +20,7 @@ async function simulatePromiseChainResolutionExploit(): Promise<AttackResult> {
     ]);
 
     const timings: number[] = [];
-    let dataLeaked = false;
+    let _dataLeaked = false;
 
     // Promise チェーンを大規模に構築
     const promises: Promise<void>[] = [];
@@ -31,7 +31,7 @@ async function simulatePromiseChainResolutionExploit(): Promise<AttackResult> {
           const t1 = performance.now();
 
           // マイクロタスクキューのメモリ配置を測定
-          const dummy = secretData[i % secretData.length];
+          const _dummy = secretData[i % secretData.length];
 
           // 次のマイクロタスクへの時間を測定
           return new Promise<void>((resolve) => {
@@ -58,7 +58,7 @@ async function simulatePromiseChainResolutionExploit(): Promise<AttackResult> {
 
     // キューの内部状態が推測可能な場合
     if (variance > 0.02) {
-      dataLeaked = true;
+      _dataLeaked = true;
     }
 
     const executionTime = performance.now() - startTime;
@@ -109,7 +109,7 @@ async function simulateWeakMapKeyLeakageExploit(): Promise<AttackResult> {
         const t1 = performance.now();
 
         // WeakMap ルックアップのタイミングを測定
-        const exists = weakMap.has(obj);
+        const _exists = weakMap.has(obj);
 
         const t2 = performance.now();
         const lookupTime = t2 - t1;

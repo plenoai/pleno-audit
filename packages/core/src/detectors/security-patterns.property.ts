@@ -5,7 +5,7 @@
  * - 通常テキストでの false positive 検出
  * - 代数的プロパティ（冪等性）
  */
-import { describe, it, expect } from "vitest";
+import { describe, it } from "vitest";
 import * as fc from "fast-check";
 import {
   containsXSSPattern,

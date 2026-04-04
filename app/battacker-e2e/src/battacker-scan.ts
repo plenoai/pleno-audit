@@ -115,7 +115,7 @@ async function isScanInProgress(page: Page): Promise<boolean> {
 
 async function waitForScanCompletion(
   page: Page,
-  logs: string[]
+  _logs: string[]
 ): Promise<BattackerStatistics> {
   const startTime = Date.now();
   let lastStats: BattackerStatistics | null = null;

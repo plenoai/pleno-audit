@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { createPrivacyFinder } from "./privacy-finder.js";
 import type { DOMAdapter } from "./types.js";
 

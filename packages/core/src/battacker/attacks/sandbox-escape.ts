@@ -117,7 +117,7 @@ async function simulatePrototypePollutionChain(): Promise<AttackResult> {
 
     // ステップ1: Object.prototype の基本的な改変
     try {
-      const obj: Record<string, unknown> = {};
+      const _obj: Record<string, unknown> = {};
 
       // プロトタイプ改変（通常はできない）
       Object.defineProperty(Object.prototype, "polluted", {
@@ -135,7 +135,7 @@ async function simulatePrototypePollutionChain(): Promise<AttackResult> {
 
       // クリーンアップ
       delete (Object.prototype as Record<string, unknown>).polluted;
-    } catch (e) {
+    } catch {
       // Prototype改変ブロック
     }
 
@@ -170,7 +170,7 @@ async function simulatePrototypePollutionChain(): Promise<AttackResult> {
         pollutionSuccess = true;
         pollutedProperties.push("constructor");
       }
-    } catch (e) {
+    } catch {
       // Merge ブロック
     }
 
@@ -190,7 +190,7 @@ async function simulatePrototypePollutionChain(): Promise<AttackResult> {
 
       // クリーンアップ
       delete (Object.prototype as Record<string, unknown>).isAdmin;
-    } catch (e) {
+    } catch {
       // __proto__ アクセスブロック
     }
 
@@ -266,7 +266,7 @@ async function simulateServiceWorkerCacheBypass(): Promise<AttackResult> {
             ],
           });
         }
-      } catch (e) {
+      } catch {
         // SW 通信ブロック
       }
     }

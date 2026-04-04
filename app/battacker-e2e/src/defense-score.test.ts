@@ -10,7 +10,7 @@
  * where the Audit extension's hooks are active.
  */
 
-import { test, expect } from "@playwright/test";
+import { test } from "@playwright/test";
 import { chromium, type BrowserContext, type Page } from "playwright";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -1116,7 +1116,7 @@ const attacks: AttackDef[] = [
           const container = document.createElement("div");
           container.style.display = "none";
           document.body.appendChild(container);
-          container.innerHTML = '<img src=x onerror="alert(\'XSS\')" /> <script>console.log("injected")<\/script>';
+          container.innerHTML = '<img src=x onerror="alert(\'XSS\')" /> <script>console.log("injected")</script>';
           const hasScript = container.querySelector("script");
           const hasImg = container.querySelector("img[onerror]");
           document.body.removeChild(container);
@@ -1141,6 +1141,7 @@ const attacks: AttackDef[] = [
             if (fn() === "Function constructor works") return { blocked: false, executionTime: performance.now() - startTime, details: "Function constructor execution successful" };
           } catch { /* */ }
           try {
+            // eslint-disable-next-line no-eval -- intentional: testing browser's eval() blocking capability
             eval("var testEval = 'eval works'");
             if (typeof (window as any).testEval !== "undefined") return { blocked: false, executionTime: performance.now() - startTime, details: "eval() execution successful" };
           } catch { /* */ }
@@ -1365,7 +1366,7 @@ const attacks: AttackDef[] = [
         const startTime = performance.now();
         try {
           const preflightStart = performance.now();
-          const response = await fetch("https://httpbin.org/post", { method: "POST", headers: { "Content-Type": "application/json", "X-Custom": "value" }, body: JSON.stringify({ test: "data" }) });
+          const _response = await fetch("https://httpbin.org/post", { method: "POST", headers: { "Content-Type": "application/json", "X-Custom": "value" }, body: JSON.stringify({ test: "data" }) });
           const timing = performance.now() - preflightStart;
           return { blocked: false, executionTime: performance.now() - startTime, details: `CORS preflight timing: ${timing.toFixed(0)}ms` };
         } catch {
@@ -1392,7 +1393,7 @@ const attacks: AttackDef[] = [
           // origin data URL so no network request is actually made, but we verify
           // that the injection itself is unchallenged.
           const style = document.createElement("style");
-          const leakedChars: string[] = [];
+          const _leakedChars: string[] = [];
           const alphabet = "abcdefghijklmnopqrstuvwxyz0123456789";
           const rules = alphabet
             .split("")
@@ -1614,7 +1615,7 @@ const attacks: AttackDef[] = [
               window.addEventListener('message', function(e) {
                 e.source.postMessage({echo: e.data, origin: location.origin}, e.origin || '*');
               });
-            <\/script>
+            </script>
           `;
           const iframe = document.createElement("iframe");
           iframe.setAttribute("sandbox", "allow-scripts allow-same-origin");
@@ -1860,7 +1861,7 @@ const attacks: AttackDef[] = [
           // Compute simple entropy of the first 256 bytes to demonstrate
           // that raw memory contents are readable from JS without interception.
           const sample = view.slice(0, 256);
-          const freq = new Array(256).fill(0);
+          const freq = Array.from({ length: 256 }, () => 0);
           for (const byte of sample) freq[byte]++;
           let entropy = 0;
           for (const f of freq) {
@@ -2456,7 +2457,7 @@ const attacks: AttackDef[] = [
           ];
 
           const detected: string[] = [];
-          const fallbackFont = "monospace";
+          const _fallbackFont = "monospace";
 
           for (const font of candidates) {
             // FontFaceSet.check() returns true when the font is available.
@@ -2534,7 +2535,7 @@ const attacks: AttackDef[] = [
 
           // In a real attack the iframe would postMessage the content to an external origin.
           // Here we just confirm the blob URL was set unobstructed.
-          const iframeSrc = iframe.src;
+          const _iframeSrc = iframe.src;
           document.body.removeChild(iframe);
           URL.revokeObjectURL(blobUrl);
 
@@ -2810,7 +2811,7 @@ const attacks: AttackDef[] = [
             Object.keys(screenEntropy).length +
             Object.keys(miscEntropy).length;
 
-          const fingerprint = {
+          const _fingerprint = {
             navigator: navEntropy,
             screen: screenEntropy,
             misc: miscEntropy,

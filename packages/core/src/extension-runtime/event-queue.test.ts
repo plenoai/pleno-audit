@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createEventQueue } from "./event-queue.js";
-import type { EventQueueDeps, EventQueueConfig } from "./event-queue.js";
+import type { EventQueueDeps } from "./event-queue.js";
 
 function createMockDeps(overrides: Partial<EventQueueDeps> = {}): EventQueueDeps {
   return {
