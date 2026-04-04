@@ -258,7 +258,6 @@ function AlertDetailSidebar({
         maxWidth: "100vw",
         background: colors.bgPrimary,
         borderLeft: `1px solid ${colors.border}`,
-        boxShadow: "-4px 0 24px rgba(0,0,0,0.12)",
         zIndex: 100,
         display: "flex",
         flexDirection: "column",
@@ -324,26 +323,60 @@ function AlertDetailSidebar({
           {alert.title}
         </code>
 
-        {/* Badges */}
+        {/* Badges + actions row */}
         <div
           style={{
             display: "flex",
-            gap: spacing.sm,
-            flexWrap: "wrap",
+            alignItems: "center",
+            justifyContent: "space-between",
             marginBottom: spacing.md,
           }}
         >
-          <Badge variant={severityVariant[alert.severity]} size="sm">
-            {alert.severity}
-          </Badge>
-          <Badge variant="info" size="sm">
-            {categoryLabels[alert.category] ?? alert.category}
-          </Badge>
-          {(alert.count ?? 1) > 1 && (
-            <Badge variant="info" size="sm">
-              x{alert.count}
+          <div style={{ display: "flex", gap: spacing.sm, flexWrap: "wrap" }}>
+            <Badge variant={severityVariant[alert.severity]} size="sm">
+              {alert.severity}
             </Badge>
-          )}
+            <Badge variant="info" size="sm">
+              {categoryLabels[alert.category] ?? alert.category}
+            </Badge>
+            {(alert.count ?? 1) > 1 && (
+              <Badge variant="info" size="sm">
+                x{alert.count}
+              </Badge>
+            )}
+          </div>
+          <div style={{ display: "flex", gap: spacing.xs, flexShrink: 0 }}>
+            <button
+              type="button"
+              onClick={onReportFP}
+              style={{
+                padding: `${spacing.xs} ${spacing.sm}`,
+                border: `1px solid ${colors.border}`,
+                borderRadius: borderRadius.sm,
+                background: colors.bgPrimary,
+                color: colors.textSecondary,
+                fontSize: fontSize.sm,
+                cursor: "pointer",
+              }}
+            >
+              誤検知を報告
+            </button>
+            <button
+              type="button"
+              onClick={onDismiss}
+              style={{
+                padding: `${spacing.xs} ${spacing.sm}`,
+                border: `1px solid ${colors.border}`,
+                borderRadius: borderRadius.sm,
+                background: colors.bgPrimary,
+                color: colors.textMuted,
+                fontSize: fontSize.sm,
+                cursor: "pointer",
+              }}
+            >
+              無視
+            </button>
+          </div>
         </div>
 
         {/* Description */}
@@ -443,65 +476,126 @@ function AlertDetailSidebar({
           </div>
         )}
 
-        {/* Playbook link */}
+        {/* Playbook: response steps */}
+        {PLAYBOOK_DATA[alert.category] && (
+          <div style={{ marginBottom: spacing.md }}>
+            <span
+              style={{
+                fontSize: fontSize.sm,
+                fontWeight: 600,
+                color: colors.textSecondary,
+                display: "block",
+                marginBottom: spacing.sm,
+              }}
+            >
+              対応方針
+            </span>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: spacing.sm,
+              }}
+            >
+              {PLAYBOOK_DATA[alert.category].response.map((step, i) => (
+                <div
+                  key={i}
+                  style={{
+                    display: "flex",
+                    gap: spacing.sm,
+                    padding: spacing.sm,
+                    background: colors.bgSecondary,
+                    borderRadius: borderRadius.md,
+                    border: `1px solid ${colors.border}`,
+                  }}
+                >
+                  <span
+                    style={{
+                      flexShrink: 0,
+                      width: "20px",
+                      height: "20px",
+                      borderRadius: "50%",
+                      background: colors.textMuted,
+                      color: colors.bgPrimary,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: fontSize.xs,
+                      fontWeight: 700,
+                    }}
+                  >
+                    {i + 1}
+                  </span>
+                  <div style={{ minWidth: 0 }}>
+                    <span
+                      style={{
+                        fontSize: fontSize.sm,
+                        fontWeight: 600,
+                        color: colors.textPrimary,
+                        display: "block",
+                      }}
+                    >
+                      {step.title}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: fontSize.xs,
+                        color: colors.textMuted,
+                        lineHeight: 1.4,
+                      }}
+                    >
+                      {step.description}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Playbook: prevention */}
+        {PLAYBOOK_DATA[alert.category] && (
+          <div style={{ marginBottom: spacing.md }}>
+            <span
+              style={{
+                fontSize: fontSize.sm,
+                fontWeight: 600,
+                color: colors.textSecondary,
+                display: "block",
+                marginBottom: spacing.sm,
+              }}
+            >
+              予防策
+            </span>
+            <ul
+              style={{
+                margin: 0,
+                paddingLeft: "20px",
+                fontSize: fontSize.sm,
+                color: colors.textSecondary,
+                lineHeight: 1.6,
+              }}
+            >
+              {PLAYBOOK_DATA[alert.category].prevention.map((item, i) => (
+                <li key={i}>{item}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* External link */}
         <a
           href={`https://plenoai.github.io/pleno-audit/alerts/${alert.category}`}
           target="_blank"
           rel="noopener noreferrer"
           style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "6px",
-            width: "100%",
-            padding: `${spacing.sm} ${spacing.md}`,
-            background: colors.interactive,
-            color: "#fff",
-            borderRadius: borderRadius.md,
+            fontSize: fontSize.sm,
+            color: colors.textMuted,
             textDecoration: "none",
-            fontSize: fontSize.md,
-            fontWeight: 500,
-            marginBottom: spacing.md,
           }}
         >
-          対応方針を確認 ↗
+          対応方針の詳細を見る ↗
         </a>
-
-        {/* Action buttons */}
-        <div style={{ display: "flex", gap: spacing.sm }}>
-          <button
-            type="button"
-            onClick={onReportFP}
-            style={{
-              flex: 1,
-              padding: `${spacing.sm} ${spacing.md}`,
-              border: `1px solid ${colors.border}`,
-              borderRadius: borderRadius.md,
-              background: colors.bgPrimary,
-              color: colors.textPrimary,
-              fontSize: fontSize.md,
-              cursor: "pointer",
-            }}
-          >
-            誤検知を報告
-          </button>
-          <button
-            type="button"
-            onClick={onDismiss}
-            style={{
-              flex: 1,
-              padding: `${spacing.sm} ${spacing.md}`,
-              border: `1px solid ${colors.border}`,
-              borderRadius: borderRadius.md,
-              background: colors.bgPrimary,
-              color: colors.textMuted,
-              fontSize: fontSize.md,
-              cursor: "pointer",
-            }}
-          >
-            無視
-          </button>
-        </div>
       </div>
     </div>
   );
