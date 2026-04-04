@@ -1,9 +1,8 @@
 import { useState, useEffect, useMemo } from "preact/hooks";
-import { Badge, SearchInput, LoadingState, getTableCellStyles } from "../../../components";
-import { FilteredTab } from "../components/FilteredTab";
+import { Badge, LoadingState, ListRow, PagedList, ExpandedPanel, DetailRow, TabRoot, TagFilterBar, useExpandable, DetailLink, DetailOverflow, usePagination } from "../../../components";
 import { useTabFilter } from "../hooks/useTabFilter";
-import { useTheme, spacing, fontSize } from "../../../lib/theme";
-import { truncate } from "../utils";
+import { useTagFilter } from "../hooks/useTagFilter";
+import { useTheme, fontSize } from "../../../lib/theme";
 import { createLogger } from "libztbs/extension-runtime";
 import { getPermissionRiskLevel, DANGEROUS_PERMISSIONS, type PermissionRiskLevel } from "libztbs/extension-analyzers";
 
@@ -68,13 +67,89 @@ function getExtensionTags(ext: ExtensionInfo): ExtTag[] {
   return tags;
 }
 
-export function ExtensionsTab() {
+function ExtensionRow({
+  ext,
+  isExpanded,
+  onToggle,
+}: {
+  ext: ExtensionInfo;
+  isExpanded: boolean;
+  onToggle: () => void;
+}) {
   const { colors } = useTheme();
-  const cellStyles = getTableCellStyles(colors);
+  const level = getPermissionRiskLevel(ext.permissions, ext.hostPermissions);
+  const risk = getRiskLabel(level);
+  const tags = getExtensionTags(ext);
+  const allPerms = [...ext.permissions, ...ext.hostPermissions];
+
+  return (
+    <ListRow
+      isHighlighted={isExpanded}
+      onClick={onToggle}
+      badges={
+        <>
+          <Badge variant={risk.variant} size="sm">{risk.text}</Badge>
+          {tags.map((tag) => (
+            <Badge key={tag.label} variant={tag.variant} size="sm">{tag.label}</Badge>
+          ))}
+        </>
+      }
+      title={
+        <>
+          {ext.icons?.[0]?.url && (
+            <img src={ext.icons[0].url} alt="" style={{ width: "16px", height: "16px", flexShrink: 0 }} />
+          )}
+          <span>{ext.name}</span>
+        </>
+      }
+      meta={<>v{ext.version} · {allPerms.length}個の権限</>}
+      actions={
+        <span
+          style={{
+            fontSize: fontSize.xs,
+            color: colors.textMuted,
+            transition: "transform 0.15s ease",
+            transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)",
+          }}
+        >
+          ▶
+        </span>
+      }
+    />
+  );
+}
+
+function ExpandedDetails({ ext }: { ext: ExtensionInfo }) {
+  const allPerms = [...ext.permissions, ...ext.hostPermissions];
+  const hasPerms = allPerms.length > 0;
+  const hasHomepage = !!ext.homepageUrl;
+
+  if (!hasPerms && !hasHomepage) return null;
+
+  const shown = allPerms.slice(0, 10);
+  const remaining = allPerms.length - shown.length;
+
+  return (
+    <ExpandedPanel>
+      {hasHomepage && <DetailLink label="HP" href={ext.homepageUrl!} />}
+      {shown.map((perm) => {
+        const isAllUrls = perm === "<all_urls>" || perm === "*://*/*";
+        const isDangerous = DANGEROUS_PERMISSIONS.some((d) => d.permission === perm && d.severity === "critical");
+        return (
+          <DetailRow key={perm} highlighted={isAllUrls || isDangerous}>
+            └ {perm}
+          </DetailRow>
+        );
+      })}
+      <DetailOverflow remaining={remaining} />
+    </ExpandedPanel>
+  );
+}
+
+export function ExtensionsTab() {
   const [extensions, setExtensions] = useState<ExtensionInfo[]>([]);
   const [loading, setLoading] = useState(true);
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
-  const [activeTagFilters, setActiveTagFilters] = useState<Set<string>>(new Set());
+  const { toggle: toggleExpand, isExpanded } = useExpandable();
   const { searchQuery, setSearchQuery } = useTabFilter({});
 
   useEffect(() => {
@@ -108,40 +183,11 @@ export function ExtensionsTab() {
     })();
   }, []);
 
-  const tagSummary = useMemo(() => {
-    const map = new Map<string, { variant: TagVariant; count: number }>();
-    for (const ext of extensions) {
-      for (const tag of getExtensionTags(ext)) {
-        const existing = map.get(tag.label);
-        if (existing) {
-          existing.count++;
-        } else {
-          map.set(tag.label, { variant: tag.variant, count: 1 });
-        }
-      }
-    }
-    return [...map.entries()]
-      .map(([label, { variant, count }]) => ({ label, variant, count }))
-      .sort((a, b) => b.count - a.count);
-  }, [extensions]);
-
-  const toggleTagFilter = (label: string) => {
-    setActiveTagFilters((prev) => {
-      const next = new Set(prev);
-      if (next.has(label)) next.delete(label);
-      else next.add(label);
-      return next;
-    });
-  };
+  const { tagSummary, activeTagFilters, toggleTagFilter, filterByTags: tagFiltered } =
+    useTagFilter(extensions, getExtensionTags);
 
   const filtered = useMemo(() => {
-    let result = extensions;
-    if (activeTagFilters.size > 0) {
-      result = result.filter((ext) => {
-        const tags = getExtensionTags(ext);
-        return tags.some((t) => activeTagFilters.has(t.label));
-      });
-    }
+    let result = tagFiltered;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       result = result.filter(
@@ -159,172 +205,49 @@ export function ExtensionsTab() {
       return levelA - levelB;
     });
     return result;
-  }, [extensions, searchQuery, activeTagFilters]);
+  }, [tagFiltered, searchQuery]);
 
-  const toggleExpand = (id: string) => {
-    setExpandedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
+  const { currentPage, setCurrentPage, totalPages, paged, pageSize } =
+    usePagination(filtered, [searchQuery, activeTagFilters]);
 
   if (loading) {
     return <LoadingState />;
   }
 
   return (
-    <FilteredTab
-      data={filtered}
-      rowKey={(ext) => ext.id}
-      rowHighlight={() => false}
-      onRowClick={(ext) => toggleExpand(ext.id)}
-      expandRow={(ext) => {
-        if (!expandedIds.has(ext.id)) return null;
-        const allPerms = [...ext.permissions, ...ext.hostPermissions];
-        const hasPerms = allPerms.length > 0;
-        const hasHomepage = !!ext.homepageUrl;
+    <TabRoot>
+      <TagFilterBar
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        placeholder="拡張機能名、権限で検索..."
+        tagSummary={tagSummary}
+        activeTagFilters={activeTagFilters}
+        onToggleTag={toggleTagFilter}
+      />
 
-        if (!hasPerms && !hasHomepage) return null;
-
-        const shown = allPerms.slice(0, 10);
-        const remaining = allPerms.length - shown.length;
-
-        return (
-          <div style={cellStyles.expandContainer}>
-            {/* Homepage link */}
-            {hasHomepage && (
-              <div
-                style={{
-                  ...cellStyles.expandRow,
-                  display: "flex",
-                  gap: spacing.sm,
-                  fontSize: fontSize.sm,
-                }}
-              >
-                <span style={{ color: colors.textMuted }}>HP:</span>
-                <a
-                  href={ext.homepageUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={cellStyles.link}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {truncate(ext.homepageUrl!, 60)}
-                </a>
-              </div>
-            )}
-            {/* Permissions */}
-            {shown.map((perm) => {
-              const isAllUrls = perm === "<all_urls>" || perm === "*://*/*";
-              const isDangerous = DANGEROUS_PERMISSIONS.some((d) => d.permission === perm && d.severity === "critical");
-              return (
-                <div
-                  key={perm}
-                  style={{
-                    ...cellStyles.expandRow,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: spacing.sm,
-                  }}
-                >
-                  <code
-                    style={{
-                      ...cellStyles.mono,
-                      color: isAllUrls || isDangerous ? colors.status.danger.text : colors.textSecondary,
-                    }}
-                  >
-                    └ {perm}
-                  </code>
-                </div>
-              );
-            })}
-            {remaining > 0 && (
-              <div style={cellStyles.expandRemaining}>
-                他 {remaining} 件
-              </div>
-            )}
+      <PagedList
+        allCount={extensions.length}
+        filteredCount={filtered.length}
+        countLabel="拡張機能"
+        emptyTitle="拡張機能が見つかりません"
+        emptyDescription="インストールされた拡張機能が検出されると表示されます"
+        noMatchTitle="一致する拡張機能がありません"
+        currentPage={currentPage}
+        totalPages={totalPages}
+        pageSize={pageSize}
+        onPageChange={setCurrentPage}
+      >
+        {paged.map((ext) => (
+          <div key={ext.id}>
+            <ExtensionRow
+              ext={ext}
+              isExpanded={isExpanded(ext.id)}
+              onToggle={() => toggleExpand(ext.id)}
+            />
+            {isExpanded(ext.id) && <ExpandedDetails ext={ext} />}
           </div>
-        );
-      }}
-      emptyMessage="拡張機能が見つかりません"
-      filterBar={
-        <>
-          <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="拡張機能名、権限で検索..." />
-          {tagSummary.map((tag) => (
-            <Badge
-              key={tag.label}
-              variant={tag.variant}
-              active={activeTagFilters.has(tag.label)}
-              onClick={() => toggleTagFilter(tag.label)}
-            >
-              {tag.label} ({tag.count})
-            </Badge>
-          ))}
-        </>
-      }
-      columns={[
-        {
-          key: "risk",
-          header: "リスク",
-          width: "70px",
-          render: (ext) => {
-            const level = getPermissionRiskLevel(ext.permissions, ext.hostPermissions);
-            const risk = getRiskLabel(level);
-            return <Badge variant={risk.variant} size="sm">{risk.text}</Badge>;
-          },
-        },
-        {
-          key: "name",
-          header: "拡張機能名",
-          render: (ext) => {
-            const allPerms = [...ext.permissions, ...ext.hostPermissions];
-            const isExpanded = expandedIds.has(ext.id);
-            return (
-              <div style={{ display: "flex", alignItems: "center", gap: spacing.sm }}>
-                <span
-                  style={{
-                    ...cellStyles.expandArrowBase,
-                    transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)",
-                  }}
-                >
-                  ▶
-                </span>
-                {ext.icons?.[0]?.url && (
-                  <img src={ext.icons[0].url} alt="" style={{ width: "16px", height: "16px" }} />
-                )}
-                <span>{ext.name}</span>
-                {allPerms.length > 0 && (
-                  <Badge variant={allPerms.length > 10 ? "warning" : "info"} size="sm">{allPerms.length}</Badge>
-                )}
-              </div>
-            );
-          },
-        },
-        {
-          key: "tags",
-          header: "タグ",
-          width: "220px",
-          render: (ext) => {
-            const tags = getExtensionTags(ext);
-            if (tags.length === 0) return <span style={cellStyles.muted}>-</span>;
-            return (
-              <div style={cellStyles.tags}>
-                {tags.map((tag) => (
-                  <Badge key={tag.label} variant={tag.variant} size="sm">{tag.label}</Badge>
-                ))}
-              </div>
-            );
-          },
-        },
-        {
-          key: "version",
-          header: "バージョン",
-          width: "100px",
-          render: (ext) => <code style={{ fontSize: fontSize.sm }}>{ext.version}</code>,
-        },
-      ]}
-    />
+        ))}
+      </PagedList>
+    </TabRoot>
   );
 }

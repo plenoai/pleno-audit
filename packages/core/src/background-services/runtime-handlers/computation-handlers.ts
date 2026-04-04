@@ -1,5 +1,5 @@
 import type { DetectedService } from "../../types/index.js";
-import type { AlertSeverity, AlertCategory } from "../../alerts/index.js";
+import type { AlertSeverity, AlertCategory, DismissReason } from "../../alerts/index.js";
 import type { AsyncHandlerEntry, RuntimeHandlerDependencies } from "./types.js";
 
 interface EventItem {
@@ -73,7 +73,7 @@ const OLD_DISMISSED_PATTERNS_KEY = "pleno_dismissed_alert_patterns";
 
 interface DismissRecordStorage {
   pattern: string;
-  reason: string;
+  reason: DismissReason;
   comment?: string;
   dismissedAt: number;
   reopenedAt?: number;
@@ -180,8 +180,8 @@ export function createComputationHandlers(
       {
         execute: async (message) => {
           const data = message.data as
-            | { category: string; domain: string; severity?: string; title?: string; reason?: string; comment?: string }
-            | { patterns: { category: string; domain: string; severity?: string; title?: string }[]; reason?: string; comment?: string };
+            | { category: string; domain: string; severity?: string; title?: string; reason?: DismissReason; comment?: string }
+            | { patterns: { category: string; domain: string; severity?: string; title?: string }[]; reason?: DismissReason; comment?: string };
 
           const records = await getDismissRecords();
           const existingSet = new Set(records.map((r) => r.pattern));

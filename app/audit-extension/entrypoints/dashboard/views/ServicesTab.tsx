@@ -2,13 +2,13 @@ import { useCallback, useMemo, useState } from "preact/hooks";
 import { Globe } from "lucide-preact";
 import type { AlertSeverity } from "libztbs/alerts";
 import type { DetectedService } from "libztbs/types";
-import { Badge, SearchInput, getTableCellStyles } from "../../../components";
+import { Badge, ListRow, PagedList, ExpandedPanel, DetailRow, DetailLink, DetailOverflow, TabRoot, TagFilterBar, useExpandable, usePagination } from "../../../components";
 import { ServiceRowMenu } from "../../../components/ServiceRowMenu";
 import { sendMessage } from "../../../lib/messaging";
-import { FilteredTab } from "../components/FilteredTab";
 import { useTabFilter } from "../hooks/useTabFilter";
-import { truncate } from "../utils";
+import { useTagFilter } from "../hooks/useTagFilter";
 import { useTheme, spacing, fontSize, borderRadius } from "../../../lib/theme";
+import { CATEGORY_LABELS } from "../constants";
 
 interface DomainAlertSummary {
   total: number;
@@ -47,25 +47,6 @@ const SEVERITY_WEIGHT: Record<string, number> = {
 
 const SEVERITY_ORDER: AlertSeverity[] = ["critical", "high", "medium", "low", "info"];
 
-const categoryLabels: Record<string, string> = {
-  nrd: "NRD",
-  typosquat: "Typosquat",
-  ai_sensitive: "AI",
-  csp_violation: "CSP",
-  shadow_ai: "DoH",
-  data_exfiltration: "Exfil",
-  credential_theft: "Cred",
-  xss_injection: "XSS",
-  dom_scraping: "DOM",
-  clipboard_hijack: "Clip",
-  canvas_fingerprint: "Canvas",
-  webgl_fingerprint: "WebGL",
-  audio_fingerprint: "Audio",
-  tracking_beacon: "Beacon",
-  supply_chain: "Supply",
-  dynamic_code_execution: "Eval",
-  fullscreen_phishing: "Phish",
-};
 
 function getServiceRiskScore(
   s: DetectedService,
@@ -159,6 +140,141 @@ function SeverityDots({ summary }: { summary: DomainAlertSummary }) {
   );
 }
 
+function ServiceRow({
+  service,
+  serviceConnections,
+  alertsByDomain,
+  isExpanded,
+  onToggleExpand,
+  onDelete,
+  onNavigateToAlerts,
+}: {
+  service: DetectedService;
+  serviceConnections: Record<string, string[]>;
+  alertsByDomain?: Record<string, DomainAlertSummary>;
+  isExpanded: boolean;
+  onToggleExpand: () => void;
+  onDelete: () => void;
+  onNavigateToAlerts?: (domain: string) => void;
+}) {
+  const { colors } = useTheme();
+  const connCount = serviceConnections[service.domain]?.length ?? 0;
+  const alertSummary = alertsByDomain?.[service.domain];
+  const score = getServiceRiskScore(service, connCount, alertSummary);
+  const risk = getRiskLabel(score);
+  const tags = getServiceTags(service);
+
+  const destinations = serviceConnections[service.domain];
+  const hasDestinations = destinations && destinations.length > 0;
+  const hasAlerts = alertSummary && alertSummary.total > 0;
+  const hasLinks = service.privacyPolicyUrl || service.termsOfServiceUrl;
+  const showExpanded = isExpanded && (hasDestinations || hasAlerts || hasLinks);
+
+  return (
+    <div>
+      <ListRow
+        isHighlighted={isExpanded}
+        onClick={onToggleExpand}
+        badges={
+          <>
+            <Badge variant={risk.variant} size="sm">{risk.text}</Badge>
+            {tags.map((tag) => (
+              <Badge key={tag.label} variant={tag.variant} size="sm">
+                {tag.label}
+              </Badge>
+            ))}
+          </>
+        }
+        title={
+          <>
+            {service.faviconUrl ? (
+              <img
+                src={service.faviconUrl}
+                alt=""
+                style={{ width: "16px", height: "16px", flexShrink: 0 }}
+              />
+            ) : (
+              <Globe size={16} style={{ flexShrink: 0, color: colors.textMuted }} />
+            )}
+            <span>{service.domain}</span>
+          </>
+        }
+        meta={
+          <>
+            {new Date(service.detectedAt).toLocaleDateString("ja-JP")}
+            {connCount > 0 && ` · ${connCount}通信先`}
+            {hasAlerts && (
+              <>
+                {" · "}
+                <SeverityDots summary={alertSummary} />
+              </>
+            )}
+          </>
+        }
+        actions={<ServiceRowMenu onDelete={onDelete} />}
+      />
+
+      {/* Expanded detail */}
+      {showExpanded && (
+        <ExpandedPanel>
+          {hasAlerts && (
+            <DetailRow>
+              <span style={{ color: colors.textSecondary }}>アラート:</span>
+              <SeverityDots summary={alertSummary} />
+              {alertSummary.categories.slice(0, 4).map((cat) => (
+                <Badge key={cat} variant="info" size="sm">
+                  {CATEGORY_LABELS[cat] ?? cat}
+                </Badge>
+              ))}
+              {alertSummary.categories.length > 4 && (
+                <span style={{ fontSize: fontSize.xs, color: colors.textMuted }}>
+                  +{alertSummary.categories.length - 4}
+                </span>
+              )}
+              {onNavigateToAlerts && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onNavigateToAlerts(service.domain);
+                  }}
+                  style={{
+                    marginLeft: "auto",
+                    padding: `2px ${spacing.sm}`,
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: borderRadius.sm,
+                    background: colors.bgPrimary,
+                    color: colors.link,
+                    fontSize: fontSize.sm,
+                    cursor: "pointer",
+                  }}
+                >
+                  トリアージ →
+                </button>
+              )}
+            </DetailRow>
+          )}
+          {service.privacyPolicyUrl && <DetailLink label="PP" href={service.privacyPolicyUrl} />}
+          {service.termsOfServiceUrl && <DetailLink label="ToS" href={service.termsOfServiceUrl} />}
+          {hasDestinations && (() => {
+            const sorted = [...destinations].sort();
+            const shown = sorted.slice(0, 10);
+            const remaining = sorted.length - shown.length;
+            return (
+              <>
+                {shown.map((domain) => (
+                  <DetailRow key={domain}>└ {domain}</DetailRow>
+                ))}
+                <DetailOverflow remaining={remaining} />
+              </>
+            );
+          })()}
+        </ExpandedPanel>
+      )}
+    </div>
+  );
+}
+
 export function ServicesTab({
   services,
   serviceConnections,
@@ -166,11 +282,8 @@ export function ServicesTab({
   onNavigateToAlerts,
   onServiceDeleted,
 }: ServicesTabProps) {
-  const { colors } = useTheme();
-  const cellStyles = getTableCellStyles(colors);
   const { searchQuery, setSearchQuery } = useTabFilter({});
-  const [expandedDomains, setExpandedDomains] = useState<Set<string>>(new Set());
-  const [activeTagFilters, setActiveTagFilters] = useState<Set<string>>(new Set());
+  const { toggle: toggleExpand, isExpanded } = useExpandable();
   const [deletedDomains, setDeletedDomains] = useState<Set<string>>(new Set());
 
   const handleDeleteService = useCallback(
@@ -182,37 +295,11 @@ export function ServicesTab({
     [onServiceDeleted],
   );
 
-  const tagSummary = useMemo(() => {
-    const map = new Map<string, { variant: "danger" | "warning" | "info" | "success"; count: number }>();
-    for (const s of services) {
-      for (const tag of getServiceTags(s)) {
-        const existing = map.get(tag.label);
-        if (existing) existing.count++;
-        else map.set(tag.label, { variant: tag.variant, count: 1 });
-      }
-    }
-    return [...map.entries()]
-      .map(([label, { variant, count }]) => ({ label, variant, count }))
-      .sort((a, b) => b.count - a.count);
-  }, [services]);
-
-  const toggleTagFilter = (label: string) => {
-    setActiveTagFilters((prev) => {
-      const next = new Set(prev);
-      if (next.has(label)) next.delete(label);
-      else next.add(label);
-      return next;
-    });
-  };
+  const { tagSummary, activeTagFilters, toggleTagFilter, filterByTags: tagFiltered } =
+    useTagFilter(services, getServiceTags);
 
   const filtered = useMemo(() => {
-    let result = services.filter((s) => !deletedDomains.has(s.domain));
-    if (activeTagFilters.size > 0) {
-      result = result.filter((s) => {
-        const tags = getServiceTags(s);
-        return tags.some((t) => activeTagFilters.has(t.label));
-      });
-    }
+    let result = tagFiltered.filter((s) => !deletedDomains.has(s.domain));
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       result = result.filter((s) => s.domain.toLowerCase().includes(q));
@@ -224,258 +311,47 @@ export function ServicesTab({
       return scoreB - scoreA;
     });
     return result;
-  }, [services, searchQuery, activeTagFilters, deletedDomains, serviceConnections, alertsByDomain]);
+  }, [tagFiltered, searchQuery, deletedDomains, serviceConnections, alertsByDomain]);
 
-  const toggleExpand = (domain: string) => {
-    setExpandedDomains((prev) => {
-      const next = new Set(prev);
-      if (next.has(domain)) next.delete(domain);
-      else next.add(domain);
-      return next;
-    });
-  };
+  const { currentPage, setCurrentPage, totalPages, paged, pageSize } =
+    usePagination(filtered, [searchQuery, activeTagFilters, deletedDomains]);
 
   return (
-    <FilteredTab
-      data={filtered}
-      rowKey={(s) => s.domain}
-      rowHighlight={() => false}
-      onRowClick={(s) => toggleExpand(s.domain)}
-      expandRow={(s) => {
-        if (!expandedDomains.has(s.domain)) return null;
-        const destinations = serviceConnections[s.domain];
-        const alertSummary = alertsByDomain?.[s.domain];
-        const hasDestinations = destinations && destinations.length > 0;
-        const hasAlerts = alertSummary && alertSummary.total > 0;
-        const hasLinks = s.privacyPolicyUrl || s.termsOfServiceUrl;
+    <TabRoot>
+      <TagFilterBar
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        placeholder="ドメインで検索..."
+        tagSummary={tagSummary}
+        activeTagFilters={activeTagFilters}
+        onToggleTag={toggleTagFilter}
+      />
 
-        if (!hasDestinations && !hasAlerts && !hasLinks) return null;
-
-        return (
-          <div style={cellStyles.expandContainer}>
-            {/* Alert summary with navigate link */}
-            {hasAlerts && (
-              <div
-                style={{
-                  ...cellStyles.expandRow,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: spacing.sm,
-                }}
-              >
-                <span style={{ fontSize: fontSize.sm, color: colors.textSecondary }}>
-                  アラート:
-                </span>
-                <SeverityDots summary={alertSummary} />
-                {alertSummary.categories.slice(0, 4).map((cat) => (
-                  <Badge key={cat} variant="info" size="sm">
-                    {categoryLabels[cat] ?? cat}
-                  </Badge>
-                ))}
-                {alertSummary.categories.length > 4 && (
-                  <span style={{ fontSize: fontSize.xs, color: colors.textMuted }}>
-                    +{alertSummary.categories.length - 4}
-                  </span>
-                )}
-                {onNavigateToAlerts && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onNavigateToAlerts(s.domain);
-                    }}
-                    style={{
-                      marginLeft: "auto",
-                      padding: `2px ${spacing.sm}`,
-                      border: `1px solid ${colors.border}`,
-                      borderRadius: borderRadius.sm,
-                      background: colors.bgPrimary,
-                      color: colors.link,
-                      fontSize: fontSize.sm,
-                      cursor: "pointer",
-                    }}
-                  >
-                    トリアージ →
-                  </button>
-                )}
-              </div>
-            )}
-            {/* Links */}
-            {hasLinks && (
-              <div
-                style={{
-                  ...cellStyles.expandRow,
-                  display: "flex",
-                  gap: spacing.lg,
-                  fontSize: fontSize.sm,
-                }}
-              >
-                {s.privacyPolicyUrl && (
-                  <span>
-                    <span style={{ color: colors.textMuted }}>PP: </span>
-                    <a
-                      href={s.privacyPolicyUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={cellStyles.link}
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {truncate(s.privacyPolicyUrl, 40)}
-                    </a>
-                  </span>
-                )}
-                {s.termsOfServiceUrl && (
-                  <span>
-                    <span style={{ color: colors.textMuted }}>ToS: </span>
-                    <a
-                      href={s.termsOfServiceUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={cellStyles.link}
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {truncate(s.termsOfServiceUrl, 40)}
-                    </a>
-                  </span>
-                )}
-              </div>
-            )}
-            {/* Connections */}
-            {hasDestinations && (() => {
-              const sorted = [...destinations].sort();
-              const shown = sorted.slice(0, 10);
-              const remaining = sorted.length - shown.length;
-              return (
-                <>
-                  {shown.map((domain) => (
-                    <div key={domain} style={cellStyles.expandRow}>
-                      <code style={cellStyles.mono} title={domain}>
-                        └ {domain}
-                      </code>
-                    </div>
-                  ))}
-                  {remaining > 0 && (
-                    <div style={cellStyles.expandRemaining}>
-                      他 {remaining} 件
-                    </div>
-                  )}
-                </>
-              );
-            })()}
-          </div>
-        );
-      }}
-      emptyMessage="検出されたサービスはありません"
-      filterBar={
-        <>
-          <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="ドメインで検索..." />
-          {tagSummary.map((tag) => (
-            <Badge
-              key={tag.label}
-              variant={tag.variant}
-              active={activeTagFilters.has(tag.label)}
-              onClick={() => toggleTagFilter(tag.label)}
-            >
-              {tag.label} ({tag.count})
-            </Badge>
-          ))}
-        </>
-      }
-      columns={[
-        {
-          key: "risk",
-          header: "リスク",
-          width: "70px",
-          render: (s) => {
-            const score = getServiceRiskScore(
-              s,
-              serviceConnections[s.domain]?.length ?? 0,
-              alertsByDomain?.[s.domain],
-            );
-            const risk = getRiskLabel(score);
-            return <Badge variant={risk.variant} size="sm">{risk.text}</Badge>;
-          },
-        },
-        {
-          key: "domain",
-          header: "ドメイン",
-          render: (s) => {
-            const isExpanded = expandedDomains.has(s.domain);
-            return (
-              <div style={{ display: "flex", alignItems: "center", gap: spacing.xs }}>
-                <span
-                  style={{
-                    ...cellStyles.expandArrowBase,
-                    transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)",
-                  }}
-                >
-                  ▶
-                </span>
-                {s.faviconUrl ? (
-                  <img
-                    src={s.faviconUrl}
-                    alt=""
-                    style={{ width: "16px", height: "16px", borderRadius: "2px", flexShrink: 0 }}
-                  />
-                ) : (
-                  <Globe size={12} style={{ flexShrink: 0, color: colors.textMuted }} />
-                )}
-                <code style={{ fontSize: fontSize.md }}>{s.domain}</code>
-              </div>
-            );
-          },
-        },
-        {
-          key: "alerts",
-          header: "アラート",
-          width: "140px",
-          render: (s) => {
-            const summary = alertsByDomain?.[s.domain];
-            if (!summary || summary.total === 0) {
-              return <span style={cellStyles.muted}>-</span>;
-            }
-            return <SeverityDots summary={summary} />;
-          },
-        },
-        {
-          key: "tags",
-          header: "タグ",
-          width: "200px",
-          render: (s) => {
-            const tags = getServiceTags(s);
-            const connCount = serviceConnections[s.domain]?.length ?? 0;
-            if (tags.length === 0 && connCount === 0) return <span style={cellStyles.muted}>-</span>;
-            return (
-              <div style={cellStyles.tags}>
-                {connCount > 0 && (
-                  <Badge variant="info" size="sm">{connCount} 通信先</Badge>
-                )}
-                {tags.map((tag) => (
-                  <Badge key={tag.label} variant={tag.variant} size="sm">
-                    {tag.label}
-                  </Badge>
-                ))}
-              </div>
-            );
-          },
-        },
-        {
-          key: "detected",
-          header: "検出日時",
-          width: "100px",
-          render: (s) => new Date(s.detectedAt).toLocaleDateString("ja-JP"),
-        },
-        {
-          key: "actions",
-          header: "",
-          width: "36px",
-          render: (s) => (
-            <div style={cellStyles.actionsCell}>
-              <ServiceRowMenu onDelete={() => handleDeleteService(s.domain)} />
-            </div>
-          ),
-        },
-      ]}
-    />
+      <PagedList
+        allCount={services.length}
+        filteredCount={filtered.length}
+        countLabel="サービス"
+        emptyTitle="検出されたサービスはありません"
+        emptyDescription="Webサービスが検出されると表示されます"
+        noMatchTitle="条件に一致するサービスはありません"
+        currentPage={currentPage}
+        totalPages={totalPages}
+        pageSize={pageSize}
+        onPageChange={setCurrentPage}
+      >
+        {paged.map((service) => (
+          <ServiceRow
+            key={service.domain}
+            service={service}
+            serviceConnections={serviceConnections}
+            alertsByDomain={alertsByDomain}
+            isExpanded={isExpanded(service.domain)}
+            onToggleExpand={() => toggleExpand(service.domain)}
+            onDelete={() => handleDeleteService(service.domain)}
+            onNavigateToAlerts={onNavigateToAlerts}
+          />
+        ))}
+      </PagedList>
+    </TabRoot>
   );
 }

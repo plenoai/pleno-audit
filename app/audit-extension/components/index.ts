@@ -2,8 +2,7 @@ export { AlertRowMenu } from "./AlertRowMenu";
 export { Badge } from "./Badge";
 export { Button } from "./Button";
 export { Card } from "./Card";
-export { DataTable, getTableCellStyles, expandArrowStyle } from "./DataTable";
-export { DismissDialog } from "./DismissDialog";
+export { DismissComposer, type DismissTargetPreview } from "./DismissComposer";
 export { SearchInput } from "./SearchInput";
 export { Select } from "./Select";
 export { Tabs } from "./Tabs";
@@ -31,3 +30,20 @@ export {
   type Notification,
   type NotificationSeverity,
 } from "./NotificationBanner";
+export {
+  DetailLink,
+  DetailOverflow,
+  DetailRow,
+  ExpandedPanel,
+  FilterBar,
+  ListContainer,
+  ListHeader,
+  ListRow,
+  PagedList,
+  PaginationFooter,
+  ScrollArea,
+  TabRoot,
+  TagFilterBar,
+  useExpandable,
+  usePagination,
+} from "./ListShell";

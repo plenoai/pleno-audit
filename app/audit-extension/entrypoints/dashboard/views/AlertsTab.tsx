@@ -1,18 +1,28 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
-import { ALL_PLAYBOOKS, type AlertSeverity, type AlertCategory, type PlaybookData } from "libztbs/alerts";
+import { ALL_PLAYBOOKS, type AlertSeverity, type AlertCategory, type DismissReason, type DismissRecord, type PlaybookData } from "libztbs/alerts";
 import {
   AlertRowMenu,
   Badge,
-  DismissDialog,
+  DismissComposer,
   SearchInput,
   EmptyState,
   LoadingState,
+  FilterBar,
+  ListContainer,
+  ListHeader,
+  ListRow,
+  PagedList,
+  ScrollArea,
+  TabRoot,
+  usePagination,
 } from "../../../components";
 import { useTabFilter } from "../hooks/useTabFilter";
 import { truncate } from "../utils";
 import { useTheme, spacing, fontSize, borderRadius } from "../../../lib/theme";
 import { sendMessage } from "../../../lib/messaging";
 import { useAnimationEnabled } from "../../../lib/motion";
+import { DISMISS_REASON_LABELS } from "../../../lib/dismiss-reasons";
+import { CATEGORY_LABELS } from "../constants";
 
 interface AlertItem {
   id: string;
@@ -46,61 +56,6 @@ const severityVariant: Record<
   info: "info",
 };
 
-const categoryLabels: Record<string, string> = {
-  nrd: "NRD",
-  typosquat: "Typosquat",
-  ai_sensitive: "AI",
-  csp_violation: "CSP",
-  shadow_ai: "DoH",
-  network: "Net",
-  data_exfiltration: "Exfil",
-  credential_theft: "Cred",
-  xss_injection: "XSS",
-  dom_scraping: "DOM",
-  clipboard_hijack: "Clip",
-  suspicious_download: "DL",
-  canvas_fingerprint: "Canvas",
-  webgl_fingerprint: "WebGL",
-  audio_fingerprint: "Audio",
-  tracking_beacon: "Beacon",
-  supply_chain: "Supply",
-  dynamic_code_execution: "Eval",
-  fullscreen_phishing: "Phish",
-  clipboard_read: "Clip",
-  geolocation_access: "Geo",
-  websocket_connection: "WS",
-  webrtc_connection: "RTC",
-  broadcast_channel: "BC",
-  send_beacon: "Beacon",
-  media_capture: "Media",
-  notification_phishing: "Notify",
-  credential_api: "Cred API",
-  device_sensor: "Sensor",
-  device_enumeration: "DevEnum",
-  storage_exfiltration: "Storage",
-  prototype_pollution: "Proto",
-  dns_prefetch_leak: "DNS",
-  form_hijack: "FormHijack",
-  css_keylogging: "CSSKey",
-  performance_observer: "PerfObs",
-  postmessage_exfil: "PostMsg",
-  dom_clobbering: "DOMClob",
-  cache_api_abuse: "Cache",
-  fetch_exfiltration: "FetchExfil",
-  wasm_execution: "WASM",
-  intersection_observer: "IO",
-  indexeddb_abuse: "IDB",
-  history_manipulation: "History",
-  message_channel: "MsgCh",
-  resize_observer: "ResizeObs",
-  execcommand_clipboard: "ExecCmd",
-  eventsource_channel: "SSE",
-  font_fingerprint: "Font",
-  idle_callback_timing: "Idle",
-  clipboard_event_sniffing: "ClipSniff",
-  drag_event_sniffing: "DragSniff",
-  selection_sniffing: "SelSniff",
-};
 
 const PLAYBOOK_DATA: Record<string, PlaybookData> = Object.fromEntries(
   ALL_PLAYBOOKS.map((p) => [p.id, p]),
@@ -120,39 +75,25 @@ function AlertRow({
   isActive,
   onSelect,
   onOpen,
-  onReportFP,
-  onDismiss,
+  onReportBug,
+  onDismissConfirm,
 }: {
   alert: AlertItem;
   isSelected: boolean;
   isActive: boolean;
   onSelect: (id: string, selected: boolean) => void;
   onOpen: () => void;
-  onReportFP: () => void;
-  onDismiss: () => void;
+  onReportBug: () => void;
+  onDismissConfirm: (reason: DismissReason, comment: string) => void;
 }) {
   const { colors } = useTheme();
 
   return (
-    <div
-      style={{
-        background: isActive ? colors.bgSecondary : colors.bgPrimary,
-        borderBottom: `1px solid ${colors.borderLight}`,
-        borderLeft: isActive ? `3px solid ${colors.interactive}` : "3px solid transparent",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: spacing.sm,
-          padding: `${spacing.sm} ${spacing.lg}`,
-          cursor: "pointer",
-          transition: "background 0.1s",
-        }}
-        onClick={onOpen}
-      >
-        {/* Checkbox */}
+    <ListRow
+      isHighlighted={isActive}
+      activeIndicator={isActive}
+      onClick={onOpen}
+      leading={
         <input
           type="checkbox"
           checked={isSelected}
@@ -162,96 +103,66 @@ function AlertRow({
           }
           style={{ flexShrink: 0, cursor: "pointer", accentColor: colors.interactive }}
         />
-
-        {/* Severity badge */}
-        <Badge variant={severityVariant[alert.severity]} size="sm">
-          {alert.severity}
-        </Badge>
-
-        {/* Category */}
-        <Badge variant="info" size="sm">
-          {categoryLabels[alert.category] ?? alert.category}
-        </Badge>
-
-        {/* Count */}
-        {(alert.count ?? 1) > 1 && (
-          <span
-            style={{
-              fontSize: fontSize.xs,
-              color: colors.textMuted,
-              fontWeight: 600,
-            }}
-          >
-            x{alert.count}
-          </span>
-        )}
-
-        {/* Title + description */}
-        <div style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>
-          <code
-            style={{
-              fontSize: fontSize.md,
-              fontFamily: "monospace",
-              color: colors.textPrimary,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-              display: "block",
-            }}
-            title={alert.title}
-          >
-            {truncate(alert.title, 50)}
-          </code>
-          <span
-            style={{
-              fontSize: fontSize.sm,
-              color: colors.textMuted,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-              display: "block",
-            }}
-          >
-            {alert.domain}
-            {alert.description && ` — ${truncate(alert.description, 60)}`}
-          </span>
-        </div>
-
-        {/* Timestamp */}
-        <span
-          style={{
-            fontSize: fontSize.sm,
-            color: colors.textMuted,
-            flexShrink: 0,
-          }}
-        >
+      }
+      badges={
+        <>
+          <Badge variant={severityVariant[alert.severity]} size="sm">
+            {alert.severity}
+          </Badge>
+          <Badge variant="info" size="sm">
+            {CATEGORY_LABELS[alert.category] ?? alert.category}
+          </Badge>
+          {(alert.count ?? 1) > 1 && (
+            <Badge variant="info" size="sm">
+              x{alert.count}
+            </Badge>
+          )}
+        </>
+      }
+      title={alert.title}
+      meta={
+        <>
+          {alert.domain}
+          {alert.description && ` · ${truncate(alert.description, 60)}`}
+          {" · "}
           {new Date(alert.timestamp).toLocaleTimeString("ja-JP", {
             hour: "2-digit",
             minute: "2-digit",
           })}
-        </span>
-
-        {/* Actions */}
-        <AlertRowMenu onReportFP={onReportFP} onDismiss={onDismiss} />
-      </div>
-    </div>
+        </>
+      }
+      actions={
+        <AlertRowMenu
+          onReportBug={onReportBug}
+          dismissTarget={{
+            id: alert.id,
+            title: alert.title,
+            domain: alert.domain,
+            severity: alert.severity,
+          }}
+          onDismissConfirm={onDismissConfirm}
+        />
+      }
+    />
   );
 }
 
 function AlertDetailSidebar({
   alert,
   onClose,
-  onReportFP,
-  onDismiss,
+  onReportBug,
+  onDismissConfirm,
 }: {
   alert: AlertItem;
   onClose: () => void;
-  onReportFP: () => void;
-  onDismiss: () => void;
+  onReportBug: () => void;
+  onDismissConfirm: (reason: DismissReason, comment: string) => void;
 }) {
   const { colors } = useTheme();
   const animationEnabled = useAnimationEnabled();
   const sidebarRef = useRef<HTMLDivElement>(null);
+  const dismissPopoverRef = useRef<HTMLDivElement>(null);
+  const [showDismissComposer, setShowDismissComposer] = useState(false);
   const detailEntries = Object.entries(alert.details ?? {}).filter(
     ([k]) => k !== "type",
   );
@@ -267,6 +178,24 @@ function AlertDetailSidebar({
       el.style.opacity = "1";
     });
   }, [alert, animationEnabled]);
+
+  useEffect(() => {
+    setShowDismissComposer(false);
+  }, [alert.id]);
+
+  useEffect(() => {
+    if (!showDismissComposer) return;
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        dismissPopoverRef.current &&
+        !dismissPopoverRef.current.contains(event.target as Node)
+      ) {
+        setShowDismissComposer(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showDismissComposer]);
 
   return (
     <div
@@ -355,7 +284,7 @@ function AlertDetailSidebar({
               {alert.severity}
             </Badge>
             <Badge variant="info" size="sm">
-              {categoryLabels[alert.category] ?? alert.category}
+              {CATEGORY_LABELS[alert.category] ?? alert.category}
             </Badge>
             {(alert.count ?? 1) > 1 && (
               <Badge variant="info" size="sm">
@@ -366,7 +295,7 @@ function AlertDetailSidebar({
           <div style={{ display: "flex", gap: spacing.xs, flexShrink: 0 }}>
             <button
               type="button"
-              onClick={onReportFP}
+              onClick={onReportBug}
               style={{
                 padding: `${spacing.xs} ${spacing.sm}`,
                 border: `1px solid ${colors.border}`,
@@ -377,23 +306,54 @@ function AlertDetailSidebar({
                 cursor: "pointer",
               }}
             >
-              誤検知を報告
+              バグを報告
             </button>
-            <button
-              type="button"
-              onClick={onDismiss}
-              style={{
-                padding: `${spacing.xs} ${spacing.sm}`,
-                border: `1px solid ${colors.border}`,
-                borderRadius: borderRadius.sm,
-                background: colors.bgPrimary,
-                color: colors.textMuted,
-                fontSize: fontSize.sm,
-                cursor: "pointer",
-              }}
-            >
-              無視
-            </button>
+            <div ref={dismissPopoverRef} style={{ position: "relative" }}>
+              <button
+                type="button"
+                onClick={() => setShowDismissComposer((prev) => !prev)}
+                style={{
+                  padding: `${spacing.xs} ${spacing.sm}`,
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: borderRadius.sm,
+                  background: colors.bgPrimary,
+                  color: colors.textMuted,
+                  fontSize: fontSize.sm,
+                  cursor: "pointer",
+                }}
+              >
+                Dismiss
+              </button>
+              {showDismissComposer && (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "calc(100% + 8px)",
+                    right: 0,
+                    width: "340px",
+                    maxWidth: "calc(100vw - 64px)",
+                    zIndex: 10,
+                  }}
+                >
+                  <DismissComposer
+                    alerts={[
+                      {
+                        id: alert.id,
+                        title: alert.title,
+                        domain: alert.domain,
+                        severity: alert.severity,
+                      },
+                    ]}
+                    onConfirm={(reason, comment) => {
+                      onDismissConfirm(reason, comment);
+                      setShowDismissComposer(false);
+                      onClose();
+                    }}
+                    onCancel={() => setShowDismissComposer(false)}
+                  />
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -621,23 +581,11 @@ function AlertDetailSidebar({
 
 export { AlertDetailSidebar };
 
-const REASON_LABELS: Record<string, { label: string; description: string }> = {
-  false_positive: { label: "誤検知", description: "実際のセキュリティリスクではない" },
-  wont_fix: { label: "リスク受容", description: "リスクを認識した上で対応しない" },
-  used_in_tests: { label: "テスト環境", description: "テストまたは開発環境でのみ使用" },
-};
-
 function DismissedView({
   records,
   onReopen,
 }: {
-  records: Array<{
-    pattern: string;
-    reason: string;
-    comment?: string;
-    dismissedAt: number;
-    alertSnapshot: { category: string; domain: string; severity: string; title: string };
-  }>;
+  records: DismissRecord[];
   onReopen: (pattern: string) => void;
 }) {
   const { colors } = useTheme();
@@ -645,104 +593,75 @@ function DismissedView({
   if (records.length === 0) {
     return (
       <EmptyState
-        title="無視されたアラートはありません"
-        description="アラートを無視すると、ここに表示されます"
+        title="Dismiss 済みアラートはありません"
+        description="アラートを Dismiss すると、ここに表示されます"
       />
     );
   }
 
   return (
-    <div
-      style={{
-        border: `1px solid ${colors.border}`,
-        borderRadius: borderRadius.lg,
-        overflow: "hidden",
-        display: "flex",
-        flexDirection: "column",
-        flex: 1,
-        minHeight: 0,
-      }}
-    >
-      <div
-        style={{
-          padding: `${spacing.sm} ${spacing.lg}`,
-          background: colors.bgSecondary,
-          borderBottom: `1px solid ${colors.border}`,
-          fontSize: fontSize.sm,
-          color: colors.textSecondary,
-          fontWeight: 500,
-          flexShrink: 0,
-        }}
-      >
-        {records.length}件の無視されたアラート
-      </div>
-      <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
+    <ListContainer>
+      <ListHeader>
+        {records.length}件の Dismiss 済みアラート
+      </ListHeader>
+      <ScrollArea>
         {records.map((record) => {
-          const reasonInfo = REASON_LABELS[record.reason] ?? { label: record.reason, description: "" };
+          const reasonInfo = DISMISS_REASON_LABELS[record.reason] ?? { label: record.reason, description: "" };
           return (
-            <div
+            <ListRow
               key={record.pattern}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: spacing.md,
-                padding: `${spacing.md} ${spacing.lg}`,
-                borderBottom: `1px solid ${colors.border}`,
-              }}
-            >
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: spacing.sm, marginBottom: "2px" }}>
+              badges={
+                <>
                   <Badge variant={severityVariant[record.alertSnapshot.severity as AlertSeverity] ?? "info"} size="sm">
                     {record.alertSnapshot.severity}
                   </Badge>
                   <Badge variant="info" size="sm">
-                    {categoryLabels[record.alertSnapshot.category] ?? record.alertSnapshot.category}
+                    {CATEGORY_LABELS[record.alertSnapshot.category] ?? record.alertSnapshot.category}
                   </Badge>
                   <Badge variant="info" size="sm">
                     {reasonInfo.label}
                   </Badge>
-                </div>
-                <div style={{ fontSize: fontSize.md, color: colors.textPrimary, fontWeight: 500 }}>
-                  {record.alertSnapshot.title}
-                </div>
-                <div style={{ fontSize: fontSize.sm, color: colors.textMuted }}>
+                </>
+              }
+              title={record.alertSnapshot.title}
+              meta={
+                <>
                   {record.alertSnapshot.domain} · {new Date(record.dismissedAt).toLocaleDateString()}
                   {record.comment && ` · ${record.comment}`}
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => onReopen(record.pattern)}
-                style={{
-                  padding: `${spacing.xs} ${spacing.sm}`,
-                  border: `1px solid ${colors.border}`,
-                  borderRadius: borderRadius.sm,
-                  background: colors.bgPrimary,
-                  color: colors.textPrimary,
-                  fontSize: fontSize.sm,
-                  cursor: "pointer",
-                  whiteSpace: "nowrap",
-                  flexShrink: 0,
-                }}
-              >
-                Reopen
-              </button>
-            </div>
+                </>
+              }
+              actions={
+                <button
+                  type="button"
+                  onClick={() => onReopen(record.pattern)}
+                  style={{
+                    padding: `${spacing.xs} ${spacing.sm}`,
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: borderRadius.sm,
+                    background: colors.bgPrimary,
+                    color: colors.textPrimary,
+                    fontSize: fontSize.sm,
+                    cursor: "pointer",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  Reopen
+                </button>
+              }
+            />
           );
         })}
-      </div>
-    </div>
+      </ScrollArea>
+    </ListContainer>
   );
 }
 
 export interface AlertSidebarState {
   alert: AlertItem;
   onClose: () => void;
-  onReportFP: () => void;
-  onDismiss: () => void;
+  onReportBug: () => void;
+  onDismissConfirm: (reason: DismissReason, comment: string) => void;
 }
-
-const PAGE_SIZE = 50;
 
 export function AlertsTab({ onSidebarChange }: { onSidebarChange?: (state: AlertSidebarState | null) => void }) {
   const { colors } = useTheme();
@@ -751,7 +670,8 @@ export function AlertsTab({ onSidebarChange }: { onSidebarChange?: (state: Alert
   const [loading, setLoading] = useState(true);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [activeAlertId, setActiveAlertId] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(0);
+  const [showBulkDismissComposer, setShowBulkDismissComposer] = useState(false);
+  const bulkDismissRef = useRef<HTMLDivElement>(null);
 
   // Initial search query from Services tab navigation
   const initialQuery = useMemo(() => {
@@ -805,14 +725,7 @@ export function AlertsTab({ onSidebarChange }: { onSidebarChange?: (state: Alert
   }, []);
 
   useEffect(() => {
-    sendMessage<Array<{
-      pattern: string;
-      reason: string;
-      comment?: string;
-      dismissedAt: number;
-      reopenedAt?: number;
-      alertSnapshot: { category: string; domain: string; severity: string; title: string };
-    }>>({ type: "GET_DISMISS_RECORDS" })
+    sendMessage<DismissRecord[]>({ type: "GET_DISMISS_RECORDS" })
       .then(setDismissRecords)
       .catch(() => {});
   }, []);
@@ -820,22 +733,12 @@ export function AlertsTab({ onSidebarChange }: { onSidebarChange?: (state: Alert
   const [dismissedPatterns, setDismissedPatterns] = useState<Set<string>>(
     new Set(),
   );
-  const [dismissDialog, setDismissDialog] = useState<{
-    alerts: AlertItem[];
-  } | null>(null);
   const [showDismissed, setShowDismissed] = useState(false);
-  const [dismissRecords, setDismissRecords] = useState<Array<{
-    pattern: string;
-    reason: string;
-    comment?: string;
-    dismissedAt: number;
-    reopenedAt?: number;
-    alertSnapshot: { category: string; domain: string; severity: string; title: string };
-  }>>([]);
+  const [dismissRecords, setDismissRecords] = useState<DismissRecord[]>([]);
 
   const buildIssueUrl = useCallback((alert: AlertItem) => {
-    const label = categoryLabels[alert.category] ?? alert.category;
-    const title = `[FP] ${label}: ${alert.title}`;
+    const label = CATEGORY_LABELS[alert.category] ?? alert.category;
+    const title = `[Bug] ${label}: ${alert.title}`;
     const details = alert.details ?? {};
     const detailLines = Object.entries(details)
       .filter(([k]) => k !== "type")
@@ -850,7 +753,7 @@ export function AlertsTab({ onSidebarChange }: { onSidebarChange?: (state: Alert
     const occurrences = alert.count ?? 1;
 
     const body = [
-      "## False Positive Report",
+      "## Bug Report",
       "",
       "| Field | Value |",
       "| --- | --- |",
@@ -870,9 +773,9 @@ export function AlertsTab({ onSidebarChange }: { onSidebarChange?: (state: Alert
       `- Extension Version: ${version}`,
       `- User-Agent: \`${navigator.userAgent}\``,
       "",
-      "## Why is this a false positive?",
+      "## What is the issue?",
       "",
-      "<!-- Please describe why this alert is incorrect -->",
+      "<!-- Please describe what looks incorrect -->",
       "",
       "## Steps to Reproduce",
       "",
@@ -890,7 +793,7 @@ export function AlertsTab({ onSidebarChange }: { onSidebarChange?: (state: Alert
     return `https://github.com/plenoai/pleno-audit/issues/new?${params.toString()}`;
   }, []);
 
-  const handleReportFP = useCallback(
+  const handleReportBug = useCallback(
     (alert: AlertItem) => {
       const url = buildIssueUrl(alert);
       chrome.tabs.create({ url });
@@ -898,22 +801,8 @@ export function AlertsTab({ onSidebarChange }: { onSidebarChange?: (state: Alert
     [buildIssueUrl],
   );
 
-  const handleDismiss = useCallback((alert: AlertItem) => {
-    setDismissDialog({ alerts: [alert] });
-  }, []);
-
-  const handleBulkDismiss = useCallback(() => {
-    const toDismiss = alerts.filter((a) => selectedIds.has(a.id));
-    if (toDismiss.length > 0) {
-      setDismissDialog({ alerts: toDismiss });
-    }
-  }, [alerts, selectedIds]);
-
-  const handleDismissConfirm = useCallback(
-    (reason: string, comment?: string) => {
-      if (!dismissDialog) return;
-      const { alerts: targetAlerts } = dismissDialog;
-
+  const applyDismiss = useCallback(
+    (targetAlerts: AlertItem[], reason: DismissReason, comment: string) => {
       if (targetAlerts.length === 1) {
         const a = targetAlerts[0];
         const pattern = `${a.category}::${a.domain}`;
@@ -952,20 +841,37 @@ export function AlertsTab({ onSidebarChange }: { onSidebarChange?: (state: Alert
       }
 
       // Refresh dismiss records
-      sendMessage<Array<{
-        pattern: string;
-        reason: string;
-        comment?: string;
-        dismissedAt: number;
-        reopenedAt?: number;
-        alertSnapshot: { category: string; domain: string; severity: string; title: string };
-      }>>({ type: "GET_DISMISS_RECORDS" })
+      sendMessage<DismissRecord[]>({ type: "GET_DISMISS_RECORDS" })
         .then(setDismissRecords)
         .catch(() => {});
-      setDismissDialog(null);
     },
-    [dismissDialog],
+    [],
   );
+
+  const bulkDismissAlerts = useMemo(
+    () => alerts.filter((alert) => selectedIds.has(alert.id)),
+    [alerts, selectedIds],
+  );
+
+  useEffect(() => {
+    if (selectedIds.size === 0) {
+      setShowBulkDismissComposer(false);
+    }
+  }, [selectedIds.size]);
+
+  useEffect(() => {
+    if (!showBulkDismissComposer) return;
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        bulkDismissRef.current &&
+        !bulkDismissRef.current.contains(event.target as Node)
+      ) {
+        setShowBulkDismissComposer(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showBulkDismissComposer]);
 
   const handleReopen = useCallback((pattern: string) => {
     sendMessage({
@@ -980,7 +886,7 @@ export function AlertsTab({ onSidebarChange }: { onSidebarChange?: (state: Alert
     // Refresh dismiss records
     sendMessage<Array<{
       pattern: string;
-      reason: string;
+      reason: DismissReason;
       comment?: string;
       dismissedAt: number;
       reopenedAt?: number;
@@ -1037,16 +943,8 @@ export function AlertsTab({ onSidebarChange }: { onSidebarChange?: (state: Alert
     return result;
   }, [alerts, activeSeverities, searchQuery, dismissedPatterns]);
 
-  // Reset page when filters change
-  useEffect(() => {
-    setCurrentPage(0);
-  }, [activeSeverities, searchQuery, dismissedPatterns]);
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const paged = useMemo(
-    () => filtered.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE),
-    [filtered, currentPage],
-  );
+  const { currentPage, setCurrentPage, totalPages, paged, pageSize } =
+    usePagination(filtered, [activeSeverities, searchQuery, dismissedPatterns]);
 
   const allSelected =
     paged.length > 0 && paged.every((a) => selectedIds.has(a.id));
@@ -1069,33 +967,25 @@ export function AlertsTab({ onSidebarChange }: { onSidebarChange?: (state: Alert
       onSidebarChange({
         alert: activeAlert,
         onClose: () => setActiveAlertId(null),
-        onReportFP: () => handleReportFP(activeAlert),
-        onDismiss: () => {
-          handleDismiss(activeAlert);
+        onReportBug: () => handleReportBug(activeAlert),
+        onDismissConfirm: (reason, comment) => {
+          applyDismiss([activeAlert], reason, comment);
           setActiveAlertId(null);
         },
       });
     } else {
       onSidebarChange(null);
     }
-  }, [activeAlert, onSidebarChange, handleReportFP, handleDismiss]);
+  }, [activeAlert, onSidebarChange, handleReportBug, applyDismiss]);
 
   if (loading) {
     return <LoadingState />;
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
+    <TabRoot>
         {/* Filter bar */}
-        <div
-          style={{
-            display: "flex",
-            gap: spacing.sm,
-            alignItems: "center",
-            marginBottom: spacing.md,
-            flexWrap: "wrap",
-          }}
-        >
+        <FilterBar>
           <SearchInput
             value={searchQuery}
             onChange={setSearchQuery}
@@ -1124,7 +1014,7 @@ export function AlertsTab({ onSidebarChange }: { onSidebarChange?: (state: Alert
               Dismissed ({dismissRecords.filter((r) => r.reopenedAt == null).length})
             </Badge>
           )}
-        </div>
+        </FilterBar>
 
         {/* Bulk action bar */}
         {selectedIds.size > 0 && (
@@ -1145,21 +1035,51 @@ export function AlertsTab({ onSidebarChange }: { onSidebarChange?: (state: Alert
             <span style={{ fontWeight: 500 }}>
               {selectedIds.size}件選択中
             </span>
-            <button
-              type="button"
-              onClick={handleBulkDismiss}
-              style={{
-                padding: `${spacing.xs} ${spacing.sm}`,
-                border: `1px solid ${colors.border}`,
-                borderRadius: borderRadius.sm,
-                background: colors.bgPrimary,
-                color: colors.textPrimary,
-                fontSize: fontSize.md,
-                cursor: "pointer",
-              }}
-            >
-              一括無視
-            </button>
+            <div ref={bulkDismissRef} style={{ position: "relative" }}>
+              <button
+                type="button"
+                onClick={() =>
+                  setShowBulkDismissComposer((prev) => !prev)
+                }
+                style={{
+                  padding: `${spacing.xs} ${spacing.sm}`,
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: borderRadius.sm,
+                  background: colors.bgPrimary,
+                  color: colors.textPrimary,
+                  fontSize: fontSize.md,
+                  cursor: "pointer",
+                }}
+              >
+                一括 Dismiss
+              </button>
+              {showBulkDismissComposer && bulkDismissAlerts.length > 0 && (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "calc(100% + 8px)",
+                    left: 0,
+                    width: "340px",
+                    maxWidth: "calc(100vw - 32px)",
+                    zIndex: 10,
+                  }}
+                >
+                  <DismissComposer
+                    alerts={bulkDismissAlerts.map((alert) => ({
+                      id: alert.id,
+                      title: alert.title,
+                      domain: alert.domain,
+                      severity: alert.severity,
+                    }))}
+                    onConfirm={(reason, comment) => {
+                      applyDismiss(bulkDismissAlerts, reason, comment);
+                      setShowBulkDismissComposer(false);
+                    }}
+                    onCancel={() => setShowBulkDismissComposer(false)}
+                  />
+                </div>
+              )}
+            </div>
             <button
               type="button"
               onClick={() => setSelectedIds(new Set())}
@@ -1183,137 +1103,46 @@ export function AlertsTab({ onSidebarChange }: { onSidebarChange?: (state: Alert
             records={dismissRecords.filter((r) => r.reopenedAt == null)}
             onReopen={handleReopen}
           />
-        ) : filtered.length === 0 ? (
-          <EmptyState
-            title="検出されたアラートはありません"
-            description="セキュリティアラートが検出されると表示されます"
-          />
         ) : (
-          <div
-            style={{
-              border: `1px solid ${colors.border}`,
-              borderRadius: borderRadius.lg,
-              overflow: "hidden",
-              display: "flex",
-              flexDirection: "column",
-              flex: 1,
-              minHeight: 0,
-            }}
-          >
-            {/* List header */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: spacing.sm,
-                padding: `${spacing.sm} ${spacing.lg}`,
-                background: colors.bgSecondary,
-                borderBottom: `1px solid ${colors.border}`,
-                fontSize: fontSize.sm,
-                color: colors.textSecondary,
-                fontWeight: 500,
-                flexShrink: 0,
-              }}
-            >
+          <PagedList
+            allCount={alerts.length}
+            filteredCount={filtered.length}
+            countLabel="アラート"
+            emptyTitle="検出されたアラートはありません"
+            emptyDescription="セキュリティアラートが検出されると表示されます"
+            headerLeading={
               <input
                 type="checkbox"
                 checked={allSelected}
                 onChange={handleSelectAll}
                 style={{ cursor: "pointer", accentColor: colors.interactive }}
               />
-              <span style={{ flex: 1 }}>
-                {filtered.length}件のアラート
-              </span>
-            </div>
-
-            {/* Scrollable alert rows */}
-            <div
-              style={{
-                flex: 1,
-                overflowY: "auto",
-                minHeight: 0,
-              }}
-            >
-              {paged.map((alert) => (
-                <AlertRow
-                  key={alert.id}
-                  alert={alert}
-                  isSelected={selectedIds.has(alert.id)}
-                  isActive={activeAlertId === alert.id}
-                  onSelect={handleSelect}
-                  onOpen={() =>
-                    setActiveAlertId((prev) =>
-                      prev === alert.id ? null : alert.id,
-                    )
-                  }
-                  onReportFP={() => handleReportFP(alert)}
-                  onDismiss={() => handleDismiss(alert)}
-                />
-              ))}
-            </div>
-
-            {/* Pagination footer */}
-            {totalPages > 1 && (
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: `${spacing.sm} ${spacing.lg}`,
-                  background: colors.bgSecondary,
-                  borderTop: `1px solid ${colors.border}`,
-                  fontSize: fontSize.sm,
-                  color: colors.textSecondary,
-                  flexShrink: 0,
-                }}
-              >
-                <span>
-                  {currentPage * PAGE_SIZE + 1}–{Math.min((currentPage + 1) * PAGE_SIZE, filtered.length)} / {filtered.length}件
-                </span>
-                <div style={{ display: "flex", gap: spacing.xs }}>
-                  <button
-                    type="button"
-                    disabled={currentPage === 0}
-                    onClick={() => setCurrentPage((p) => p - 1)}
-                    style={{
-                      padding: `${spacing.xs} ${spacing.sm}`,
-                      border: `1px solid ${colors.border}`,
-                      borderRadius: borderRadius.sm,
-                      background: currentPage === 0 ? colors.bgSecondary : colors.bgPrimary,
-                      color: currentPage === 0 ? colors.textMuted : colors.textPrimary,
-                      fontSize: fontSize.sm,
-                      cursor: currentPage === 0 ? "default" : "pointer",
-                    }}
-                  >
-                    ← 前
-                  </button>
-                  <button
-                    type="button"
-                    disabled={currentPage >= totalPages - 1}
-                    onClick={() => setCurrentPage((p) => p + 1)}
-                    style={{
-                      padding: `${spacing.xs} ${spacing.sm}`,
-                      border: `1px solid ${colors.border}`,
-                      borderRadius: borderRadius.sm,
-                      background: currentPage >= totalPages - 1 ? colors.bgSecondary : colors.bgPrimary,
-                      color: currentPage >= totalPages - 1 ? colors.textMuted : colors.textPrimary,
-                      fontSize: fontSize.sm,
-                      cursor: currentPage >= totalPages - 1 ? "default" : "pointer",
-                    }}
-                  >
-                    次 →
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+            }
+            currentPage={currentPage}
+            totalPages={totalPages}
+            pageSize={pageSize}
+            onPageChange={setCurrentPage}
+          >
+            {paged.map((alert) => (
+              <AlertRow
+                key={alert.id}
+                alert={alert}
+                isSelected={selectedIds.has(alert.id)}
+                isActive={activeAlertId === alert.id}
+                onSelect={handleSelect}
+                onOpen={() =>
+                  setActiveAlertId((prev) =>
+                    prev === alert.id ? null : alert.id,
+                  )
+                }
+                onReportBug={() => handleReportBug(alert)}
+                onDismissConfirm={(reason, comment) =>
+                  applyDismiss([alert], reason, comment)
+                }
+              />
+            ))}
+          </PagedList>
         )}
-        {dismissDialog && (
-          <DismissDialog
-            onConfirm={handleDismissConfirm}
-            onCancel={() => setDismissDialog(null)}
-          />
-        )}
-    </div>
+    </TabRoot>
   );
 }

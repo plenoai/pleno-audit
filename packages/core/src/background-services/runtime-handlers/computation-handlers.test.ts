@@ -636,14 +636,32 @@ describe("DISMISS_ALERT_PATTERN", () => {
           { category: "nrd", domain: "a.com" },
           { category: "typosquat", domain: "b.com" },
         ],
-        reason: "used_in_tests",
+        reason: "investigating",
       },
     });
 
     const records = storageData["pleno_dismiss_records"] as Array<Record<string, unknown>>;
     expect(records).toHaveLength(2);
-    expect(records[0]).toMatchObject({ pattern: "nrd::a.com", reason: "used_in_tests" });
-    expect(records[1]).toMatchObject({ pattern: "typosquat::b.com", reason: "used_in_tests" });
+    expect(records[0]).toMatchObject({ pattern: "nrd::a.com", reason: "investigating" });
+    expect(records[1]).toMatchObject({ pattern: "typosquat::b.com", reason: "investigating" });
+  });
+
+  it("investigating理由を保存する", async () => {
+    await execute({
+      data: {
+        category: "nrd",
+        domain: "suspicious.com",
+        reason: "investigating",
+        comment: "調査中",
+      },
+    });
+
+    const records = storageData["pleno_dismiss_records"] as Array<Record<string, unknown>>;
+    expect(records[0]).toMatchObject({
+      pattern: "nrd::suspicious.com",
+      reason: "investigating",
+      comment: "調査中",
+    });
   });
 });
 

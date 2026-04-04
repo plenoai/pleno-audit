@@ -724,12 +724,12 @@ export const DEFAULT_ALERT_RULES: AlertRule[] = [
 ];
 
 /**
- * Dismiss reason categories (GitHub Code Scanning compatible)
+ * Dismiss reason categories (GitHub Code Scanning model).
  */
 export type DismissReason =
   | "false_positive"  // 誤検知
-  | "wont_fix"        // リスク受容
-  | "used_in_tests";  // テスト環境
+  | "investigating"   // 対応中
+  | "wont_fix";       // リスク受容
 
 /**
  * Structured dismiss record

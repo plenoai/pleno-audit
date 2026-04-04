@@ -168,13 +168,13 @@ export const spacing = {
 
 /** フォントサイズスケール */
 export const fontSize = {
-  xs: "10px",
-  sm: "11px",
-  md: "12px",
-  base: "13px",
-  lg: "14px",
-  xl: "16px",
-  xxl: "20px",
+  xs: "11px",
+  sm: "12px",
+  md: "13px",
+  base: "14px",
+  lg: "15px",
+  xl: "17px",
+  xxl: "21px",
   display: "32px",
 } as const;
 

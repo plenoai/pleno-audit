@@ -177,8 +177,8 @@ function DashboardContent({ animationEnabled, setAnimationEnabled }: { animation
           <AlertDetailSidebar
             alert={alertSidebar.alert}
             onClose={alertSidebar.onClose}
-            onReportFP={alertSidebar.onReportFP}
-            onDismiss={alertSidebar.onDismiss}
+            onReportBug={alertSidebar.onReportBug}
+            onDismissConfirm={alertSidebar.onDismissConfirm}
           />
         )}
       </div>
