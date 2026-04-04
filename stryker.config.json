@@ -26,9 +26,9 @@
     "fileName": "reports/mutation/index.html"
   },
   "thresholds": {
-    "high": 80,
-    "low": 60,
-    "break": 45
+    "high": 95,
+    "low": 85,
+    "break": 80
   },
   "ignorePatterns": [".claude"],
   "concurrency": 4,

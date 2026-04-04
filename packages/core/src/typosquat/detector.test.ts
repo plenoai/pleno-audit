@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createTyposquatDetector, type TyposquatCache } from "./detector.js";
-import type { TyposquatConfig, TyposquatResult } from "./types.js";
+import type { TyposquatConfig, TyposquatResult, TyposquatScores } from "./types.js";
+import * as heuristicsModule from "./heuristics.js";
 
 function createMockCache(): TyposquatCache & { store: Map<string, TyposquatResult> } {
   const store = new Map<string, TyposquatResult>();
@@ -429,10 +430,9 @@ describe("createTyposquatDetector", () => {
       // Single Cyrillic in otherwise Latin domain: 25 (cyrillic) + 40 (mixed) = 65 pts
       const result = detector.checkDomain("exampl\u0435.com"); // Cyrillic е
 
-      const score = result.heuristics.totalScore;
-      if (score >= 40 && score < 70) {
-        expect(result.confidence).toBe("medium");
-      }
+      expect(result.heuristics.totalScore).toBeGreaterThanOrEqual(40);
+      expect(result.heuristics.totalScore).toBeLessThan(70);
+      expect(result.confidence).toBe("medium");
     });
 
     it("returns 'low' confidence for score 20-39", () => {
@@ -447,6 +447,7 @@ describe("createTyposquatDetector", () => {
       const detector = createTyposquatDetector(defaultConfig, cache);
       const result = detector.checkDomain("example.com");
 
+      expect(result.heuristics.totalScore).toBeLessThan(20);
       expect(result.confidence).toBe("none");
     });
 
@@ -572,6 +573,61 @@ describe("createTyposquatDetector", () => {
 
       expect(result.domain).toBe("a");
     });
+  });
+});
+
+describe("determineConfidence boundary values (via mocked heuristics)", () => {
+  function makeFakeScores(totalScore: number): TyposquatScores {
+    return {
+      homoglyphs: [],
+      hasMixedScript: false,
+      detectedScripts: ["latin"],
+      isPunycode: false,
+      totalScore,
+      breakdown: {
+        latinHomoglyphs: 0,
+        cyrillicHomoglyphs: 0,
+        greekHomoglyphs: 0,
+        japaneseHomoglyphs: 0,
+        mixedScript: 0,
+        punycode: 0,
+      },
+    };
+  }
+
+  function testConfidenceAtScore(score: number, expectedConfidence: string) {
+    const spy = vi.spyOn(heuristicsModule, "calculateTyposquatHeuristics").mockReturnValue(makeFakeScores(score));
+    const cache = createMockCache();
+    const detector = createTyposquatDetector(defaultConfig, cache);
+    const result = detector.checkDomain("test-boundary.com");
+
+    expect(result.heuristics.totalScore).toBe(score);
+    expect(result.confidence).toBe(expectedConfidence);
+    spy.mockRestore();
+  }
+
+  it("score exactly 70 returns 'high'", () => {
+    testConfidenceAtScore(70, "high");
+  });
+
+  it("score exactly 69 returns 'medium' (not 'high')", () => {
+    testConfidenceAtScore(69, "medium");
+  });
+
+  it("score exactly 40 returns 'medium'", () => {
+    testConfidenceAtScore(40, "medium");
+  });
+
+  it("score exactly 39 returns 'low' (not 'medium')", () => {
+    testConfidenceAtScore(39, "low");
+  });
+
+  it("score exactly 20 returns 'low'", () => {
+    testConfidenceAtScore(20, "low");
+  });
+
+  it("score exactly 19 returns 'none' (not 'low')", () => {
+    testConfidenceAtScore(19, "none");
   });
 });
 

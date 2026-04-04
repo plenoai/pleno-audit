@@ -70,9 +70,9 @@ pnpm test:mutation
 ```
 
 閾値:
-- **break**: 50% — これを下回るとCIが失敗
-- **low**: 60% — 警告レベル
-- **high**: 80% — 目標レベル
+- **break**: 80% — これを下回るとCIが失敗
+- **low**: 85% — 警告レベル
+- **high**: 95% — 目標レベル
 
 レポートは `reports/mutation/index.html` に生成される。
 

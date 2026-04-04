@@ -16,8 +16,32 @@ describe("calculateEntropy", () => {
     expect(calculateEntropy("")).toBe(0);
   });
 
-  it("returns 0 for single character", () => {
+  it("returns 0 for single character (maxEntropy is 0, guard branch)", () => {
+    // Math.log2(1) === 0, so maxEntropy > 0 is false, returns 0
     expect(calculateEntropy("a")).toBe(0);
+  });
+
+  it("returns 0 for uniform string (all same chars)", () => {
+    // All identical chars -> Shannon entropy is 0, 0/maxEntropy = 0
+    expect(calculateEntropy("aaaaaaa")).toBe(0);
+  });
+
+  it("returns exactly 1 for maximally varied string", () => {
+    // "abcd" has 4 unique chars out of 4 = max entropy, normalized = 1
+    expect(calculateEntropy("abcd")).toBe(1);
+  });
+
+  it("returns exactly 1 for two distinct chars", () => {
+    // "ab": entropy = 1 bit, maxEntropy = log2(2) = 1 bit, ratio = 1
+    expect(calculateEntropy("ab")).toBe(1);
+  });
+
+  it("uses Math.min to cap at 1 (floating point guard)", () => {
+    // Various strings should never exceed 1
+    const values = ["ab", "abc", "abcdef", "abcdefghij"];
+    for (const v of values) {
+      expect(calculateEntropy(v)).toBeLessThanOrEqual(1);
+    }
   });
 
   it("returns higher entropy for random-looking strings", () => {
@@ -26,28 +50,40 @@ describe("calculateEntropy", () => {
     expect(highEntropy).toBeGreaterThan(lowEntropy);
   });
 
-  it("returns value between 0 and 1", () => {
-    const entropy = calculateEntropy("xyzabc123");
-    expect(entropy).toBeGreaterThanOrEqual(0);
-    expect(entropy).toBeLessThanOrEqual(1);
+  it("computes correct normalized entropy for 'google'", () => {
+    // 'google' has chars: g(2), o(2), l(1), e(1) in 6 chars
+    // p(g)=2/6, p(o)=2/6, p(l)=1/6, p(e)=1/6
+    // entropy = -2*(2/6*log2(2/6)) - 2*(1/6*log2(1/6))
+    // maxEntropy = log2(6)
+    const result = calculateEntropy("google");
+    expect(result).toBeCloseTo(0.7420981285103055, 10);
   });
 
-  it("returns 0 for uniform string (all same chars)", () => {
-    expect(calculateEntropy("aaaaaaa")).toBe(0);
+  it("computes correct normalized entropy for 'example'", () => {
+    const result = calculateEntropy("example");
+    expect(result).toBeCloseTo(0.8982265179691366, 10);
   });
 
-  it("returns maximum entropy for fully varied string", () => {
-    // "abcd" has 4 unique chars out of 4 = max entropy
-    const entropy = calculateEntropy("abcd");
-    expect(entropy).toBe(1);
+  it("handles unicode characters", () => {
+    expect(calculateEntropy("日本語テスト")).toBeGreaterThan(0);
   });
 
-  it("never exceeds 1 (floating point guard)", () => {
-    // Strings where floating point arithmetic might produce > 1
-    const values = ["ab", "abc", "abcdef", "abcdefghij"];
-    for (const v of values) {
-      expect(calculateEntropy(v)).toBeLessThanOrEqual(1);
-    }
+  it("handles very long strings", () => {
+    const longStr = "a".repeat(10000) + "b".repeat(10000);
+    const result = calculateEntropy(longStr);
+    expect(result).toBeGreaterThanOrEqual(0);
+    expect(result).toBeLessThanOrEqual(1);
+  });
+
+  it("accumulates frequency correctly via (freq[char] || 0) + 1", () => {
+    // "aab": a=2, b=1. Verify by computing exact entropy.
+    // p(a)=2/3, p(b)=1/3
+    // entropy = -(2/3*log2(2/3) + 1/3*log2(1/3))
+    // maxEntropy = log2(3)
+    const expected =
+      -(2 / 3) * Math.log2(2 / 3) - (1 / 3) * Math.log2(1 / 3);
+    const maxEntropy = Math.log2(3);
+    expect(calculateEntropy("aab")).toBeCloseTo(expected / maxEntropy, 10);
   });
 });
 
@@ -60,13 +96,9 @@ describe("extractSLD", () => {
     expect(extractSLD("www.example.com")).toBe("example");
   });
 
-  it("handles country-code SLDs", () => {
+  it("handles country-code SLDs (co.jp, co.uk)", () => {
     expect(extractSLD("example.co.jp")).toBe("example");
     expect(extractSLD("sub.example.co.uk")).toBe("example");
-  });
-
-  it("handles single part domains", () => {
-    expect(extractSLD("localhost")).toBe("localhost");
   });
 
   it("handles .com.au style SLDs", () => {
@@ -75,6 +107,58 @@ describe("extractSLD", () => {
 
   it("handles .net.jp style SLDs", () => {
     expect(extractSLD("example.net.jp")).toBe("example");
+  });
+
+  it("handles single part domains", () => {
+    expect(extractSLD("localhost")).toBe("localhost");
+  });
+
+  it("handles domain with many subdomains", () => {
+    expect(extractSLD("a.b.c.d.e.example.com")).toBe("example");
+  });
+
+  it("ccSLD length boundary: length 3 is treated as ccSLD candidate", () => {
+    // 'com' has length 3 <= 3 AND is in ccSLDs -> treated as ccSLD
+    expect(extractSLD("example.com.au")).toBe("example");
+    // 'net' has length 3 <= 3 AND is in ccSLDs -> treated as ccSLD
+    expect(extractSLD("example.net.jp")).toBe("example");
+    // 'org' has length 3 <= 3 AND is in ccSLDs -> treated as ccSLD
+    expect(extractSLD("example.org.uk")).toBe("example");
+  });
+
+  it("ccSLD length boundary: length 4 is NOT treated as ccSLD", () => {
+    // 'info' has length 4 > 3 -> NOT treated as ccSLD
+    // So extractSLD('example.info.jp') returns 'info' (parts[-2])
+    expect(extractSLD("example.info.jp")).toBe("info");
+  });
+
+  it("length <= 3 but NOT in ccSLDs list is not treated as ccSLD", () => {
+    // 'foo' has length 3 <= 3 but 'foo' is NOT in ccSLDs
+    // So it falls through to else: returns parts[-2] = 'foo'
+    expect(extractSLD("example.foo.jp")).toBe("foo");
+  });
+
+  it("ccSLD with only 2 parts returns parts[0]", () => {
+    // 'co.jp' has parts ['co', 'jp'], lastTwo=['co','jp']
+    // 'co' length 2 <= 3 AND in ccSLDs -> parts.length (2) < 3 -> return parts[0] = 'co'
+    expect(extractSLD("co.jp")).toBe("co");
+  });
+
+  it("handles domain with only dots", () => {
+    const result = extractSLD("...");
+    expect(typeof result).toBe("string");
+  });
+
+  it("handles empty string", () => {
+    const result = extractSLD("");
+    expect(typeof result).toBe("string");
+  });
+
+  it("handles each recognized ccSLD", () => {
+    // All ccSLDs in the list: co, com, net, org, gov, edu, ac, go
+    for (const ccSLD of ["co", "com", "net", "org", "gov", "edu", "ac", "go"]) {
+      expect(extractSLD(`example.${ccSLD}.jp`)).toBe("example");
+    }
   });
 });
 
@@ -87,12 +171,16 @@ describe("extractTLD", () => {
 
   it("returns lowercase TLD", () => {
     expect(extractTLD("example.COM")).toBe("com");
+    expect(extractTLD("example.XyZ")).toBe("xyz");
   });
 
-  it("handles suspicious TLDs correctly", () => {
-    expect(extractTLD("phishing.xyz")).toBe("xyz");
-    expect(extractTLD("malware.tk")).toBe("tk");
-    expect(extractTLD("spam.top")).toBe("top");
+  it("handles domain with no dots", () => {
+    expect(extractTLD("localhost")).toBe("localhost");
+  });
+
+  it("handles empty string", () => {
+    const result = extractTLD("");
+    expect(typeof result).toBe("string");
   });
 });
 
@@ -105,37 +193,67 @@ describe("hasExcessiveHyphens", () => {
     expect(hasExcessiveHyphens("example-")).toBe(true);
   });
 
-  it("returns true for consecutive hyphens", () => {
+  it("returns true for consecutive hyphens (--)", () => {
     expect(hasExcessiveHyphens("ex--ample")).toBe(true);
   });
 
-  it("returns true for 3+ hyphens", () => {
-    expect(hasExcessiveHyphens("ex-am-pl-e")).toBe(true);
+  it("returns true for exactly 3 hyphens (boundary: >= 3)", () => {
+    // 3 hyphens, none leading/trailing, no consecutive
+    expect(hasExcessiveHyphens("a-b-c-d")).toBe(true);
   });
 
-  it("returns false for normal hyphen usage", () => {
+  it("returns false for exactly 2 hyphens (boundary: < 3)", () => {
+    // 2 hyphens, none leading/trailing, no consecutive
+    expect(hasExcessiveHyphens("a-b-c")).toBe(false);
+  });
+
+  it("returns false for exactly 1 hyphen", () => {
     expect(hasExcessiveHyphens("my-example")).toBe(false);
-    expect(hasExcessiveHyphens("my-cool-site")).toBe(false);
   });
 
   it("returns false for no hyphens", () => {
     expect(hasExcessiveHyphens("example")).toBe(false);
   });
 
-  it("returns false for exactly 2 hyphens (not consecutive)", () => {
-    expect(hasExcessiveHyphens("my-cool-site")).toBe(false);
+  it("returns false for empty string", () => {
+    expect(hasExcessiveHyphens("")).toBe(false);
+  });
+
+  it("returns true for string of only hyphens", () => {
+    expect(hasExcessiveHyphens("---")).toBe(true);
+  });
+
+  it("returns true for single hyphen (both leading and trailing)", () => {
+    expect(hasExcessiveHyphens("-")).toBe(true);
+  });
+
+  it("returns true for 4+ hyphens", () => {
+    expect(hasExcessiveHyphens("a-b-c-d-e")).toBe(true);
   });
 });
 
 describe("hasExcessiveNumbers", () => {
-  it("returns true for 4+ consecutive digits", () => {
-    expect(hasExcessiveNumbers("example1234")).toBe(true);
-    expect(hasExcessiveNumbers("12345example")).toBe(true);
+  it("returns true for exactly 4 consecutive digits (boundary: \\d{4,})", () => {
+    expect(hasExcessiveNumbers("abcdefg1234")).toBe(true);
   });
 
-  it("returns true for 30%+ number ratio", () => {
-    expect(hasExcessiveNumbers("ex123")).toBe(true); // 60%
-    expect(hasExcessiveNumbers("abc12")).toBe(true); // 40%
+  it("returns false for exactly 3 consecutive digits with ratio < 0.3", () => {
+    // 'abcdefghij123' = 3 consecutive digits, ratio 3/13 ≈ 0.23 < 0.3
+    expect(hasExcessiveNumbers("abcdefghij123")).toBe(false);
+  });
+
+  it("returns true for ratio exactly at 0.3 (boundary: >= 0.3)", () => {
+    // 'abcdefg123' = 3 digits in 10 chars = 0.3 exactly, >= 0.3 -> true
+    expect(hasExcessiveNumbers("abcdefg123")).toBe(true);
+  });
+
+  it("returns false for ratio just below 0.3", () => {
+    // 'abcdefgh12' = 2 digits in 10 chars = 0.2 < 0.3
+    expect(hasExcessiveNumbers("abcdefgh12")).toBe(false);
+  });
+
+  it("returns true for 5+ consecutive digits", () => {
+    expect(hasExcessiveNumbers("12345example")).toBe(true);
   });
 
   it("returns false for normal number usage", () => {
@@ -147,25 +265,81 @@ describe("hasExcessiveNumbers", () => {
     expect(hasExcessiveNumbers("example")).toBe(false);
   });
 
-  it("returns true for 3 digits in short string (high ratio)", () => {
-    // "abc123" = 50% digits (3/6), exceeds 30% threshold
-    expect(hasExcessiveNumbers("abc123")).toBe(true);
-  });
-
   it("returns true for all-digit string", () => {
     expect(hasExcessiveNumbers("12345")).toBe(true);
+  });
+
+  it("returns true for single digit (ratio 1.0 >= 0.3)", () => {
+    expect(hasExcessiveNumbers("1")).toBe(true);
+  });
+
+  it("handles empty string", () => {
+    const result = hasExcessiveNumbers("");
+    expect(typeof result).toBe("boolean");
+  });
+
+  it("uses (match || []).length pattern for null-safe counting", () => {
+    // A string with no digits returns null from match, fallback to []
+    expect(hasExcessiveNumbers("abcdefghij")).toBe(false);
   });
 });
 
 describe("isRandomLooking", () => {
-  it("returns true for 5+ consecutive consonants", () => {
-    expect(isRandomLooking("xyzqwrt")).toBe(true);
-    expect(isRandomLooking("abcdfghj")).toBe(true);
+  it("returns true for exactly 5 consecutive consonants (boundary: {5,})", () => {
+    // 'bcdfga' has 'bcdfg' = 5 consecutive consonants
+    expect(isRandomLooking("bcdfga")).toBe(true);
   });
 
-  it("returns true for no vowels in 3+ char domain", () => {
+  it("returns false for exactly 4 consecutive consonants (below 5 threshold)", () => {
+    // 'bcdfa' has 'bcdf' = 4 consecutive consonants, 1 vowel 'a'
+    // length 5 >= 3, vowelCount 1 > 0, ratio 1/5=0.2 but length < 6
+    expect(isRandomLooking("bcdfa")).toBe(false);
+  });
+
+  it("returns true for no vowels in 3+ char domain (vowelCount === 0)", () => {
     expect(isRandomLooking("xyz")).toBe(true);
-    expect(isRandomLooking("bcdfg")).toBe(true);
+    expect(isRandomLooking("bcd")).toBe(true);
+  });
+
+  it("returns false for 2-char domain with no vowels (length < 3)", () => {
+    // 'bc' length 2 < 3, skip the >= 3 block entirely
+    expect(isRandomLooking("bc")).toBe(false);
+  });
+
+  it("returns false for 1-char domain", () => {
+    expect(isRandomLooking("b")).toBe(false);
+  });
+
+  it("boundary: length exactly 3 triggers zero-vowel check", () => {
+    // length 3 >= 3, zero vowels -> true
+    expect(isRandomLooking("bcd")).toBe(true);
+    // length 3, has vowel -> false (no 5-consecutive, ratio check needs length >= 6)
+    expect(isRandomLooking("abc")).toBe(false);
+  });
+
+  it("boundary: length exactly 6 triggers vowel ratio check", () => {
+    // 'b1c1da' = 6 chars, 1 vowel, ratio 1/6=0.1666 >= 0.15 -> false
+    expect(isRandomLooking("b1c1da")).toBe(false);
+    // 'b1c1d1' = 6 chars, 0 vowels -> true (via zero-vowel check, not ratio)
+    expect(isRandomLooking("b1c1d1")).toBe(true);
+  });
+
+  it("boundary: length 5 does NOT trigger vowel ratio check even with low ratio", () => {
+    // 'bcdfa' = 5 chars, 1 vowel, ratio 0.2. Length 5 < 6, ratio check NOT applied.
+    // No 5-consecutive consonants (bcdf=4). vowelCount=1>0. -> false
+    expect(isRandomLooking("bcdfa")).toBe(false);
+  });
+
+  it("vowel ratio boundary: 1/7 < 0.15 -> random (length >= 6)", () => {
+    // 'b1c1d1a' = 7 chars, 1 vowel 'a', ratio 1/7 ≈ 0.143 < 0.15
+    // No 5-consecutive consonants (digits break chain). length >= 6 -> true
+    expect(isRandomLooking("b1c1d1a")).toBe(true);
+  });
+
+  it("vowel ratio boundary: 1/6 >= 0.15 -> NOT random (length >= 6)", () => {
+    // 'b1c1da' = 6 chars, 1 vowel 'a', ratio 1/6 ≈ 0.167 >= 0.15
+    // No 5-consecutive consonants. vowelCount>0. -> false
+    expect(isRandomLooking("b1c1da")).toBe(false);
   });
 
   it("returns false for normal domains", () => {
@@ -174,78 +348,135 @@ describe("isRandomLooking", () => {
     expect(isRandomLooking("amazon")).toBe(false);
   });
 
-  it("returns false for short domains (1-2 chars)", () => {
-    // Short domains with no vowels are not flagged (length < 3 check)
-    expect(isRandomLooking("a")).toBe(false);
-    expect(isRandomLooking("ab")).toBe(false);
+  it("returns false for all vowels", () => {
+    expect(isRandomLooking("aeiouaeiou")).toBe(false);
   });
 
-  it("returns true for very low vowel ratio in 6+ char domains", () => {
-    // "bcdfgh" = 6 chars, 0 vowels → flagged
-    expect(isRandomLooking("bcdfgh")).toBe(true);
-  });
-
-  it("does not flag domain with reasonable vowel ratio", () => {
-    // "twitter" has 2 vowels out of 7 = ~28%, above 15% threshold
-    expect(isRandomLooking("twitter")).toBe(false);
+  it("handles empty string", () => {
+    expect(isRandomLooking("")).toBe(false);
   });
 });
 
 describe("calculateSuspiciousScore", () => {
-  it("returns low score for legitimate domains", () => {
+  it("entropy contribution is exactly Math.min(entropy * 40, 30)", () => {
+    // 'google.com' - only entropy contributes (no other factors)
+    // google entropy = 0.7420981285103055, * 40 = 29.683..., min(29.683, 30) = 29.683
+    // SLD 'google' length 6 > 2, no hyphens, no numbers, not random
     const score = calculateSuspiciousScore("google.com");
-    expect(score.totalScore).toBeLessThan(30);
+    const expectedEntropy = calculateEntropy("google");
+    const expectedContrib = Math.min(expectedEntropy * 40, 30);
+    expect(score.totalScore).toBeCloseTo(expectedContrib, 10);
     expect(score.suspiciousTLD).toBe(false);
+    expect(score.hasExcessiveHyphens).toBe(false);
+    expect(score.hasExcessiveNumbers).toBe(false);
+    expect(score.isRandomLooking).toBe(false);
   });
 
-  it("returns high score for suspicious TLD", () => {
-    const score = calculateSuspiciousScore("example.xyz");
-    expect(score.suspiciousTLD).toBe(true);
-    expect(score.totalScore).toBeGreaterThanOrEqual(25);
+  it("entropy cap at 30: high entropy * 40 > 30 is capped", () => {
+    // 'abcdefghij' has entropy 1.0, * 40 = 40, capped at 30
+    // No other factors (normal chars, .com TLD, length > 2)
+    const score = calculateSuspiciousScore("abcdefghij.com");
+    expect(score.entropy).toBe(1);
+    // Score should be exactly 30 (capped), not 40
+    expect(score.totalScore).toBe(30);
   });
 
-  it("returns high score for random-looking domain", () => {
-    const score = calculateSuspiciousScore("xyzqwrt123.xyz");
-    expect(score.totalScore).toBeGreaterThan(50);
+  it("entropy below cap: entropy * 40 < 30 is not capped", () => {
+    // 'aaa' has entropy 0, * 40 = 0
+    const score = calculateSuspiciousScore("aaa.com");
+    expect(score.entropy).toBe(0);
+    // Only factor: no others triggered. Total should be 0.
+    expect(score.totalScore).toBe(0);
   });
 
-  it("caps total score at 100", () => {
-    const score = calculateSuspiciousScore("x--y--z1234567.xyz");
+  it("suspiciousTLD adds exactly 25 points", () => {
+    // Compare same SLD with suspicious vs non-suspicious TLD
+    const withSuspicious = calculateSuspiciousScore("google.xyz");
+    const withoutSuspicious = calculateSuspiciousScore("google.com");
+    expect(withSuspicious.suspiciousTLD).toBe(true);
+    expect(withoutSuspicious.suspiciousTLD).toBe(false);
+    expect(withSuspicious.totalScore - withoutSuspicious.totalScore).toBe(25);
+  });
+
+  it("excessive hyphens adds exactly 15 points", () => {
+    // 'one-two-thr-ee' has 3 hyphens, vowels present, not random
+    // Compare with 'one-two-three' which has 2 hyphens
+    const with3 = calculateSuspiciousScore("one-two-thr-ee.com");
+    const with2 = calculateSuspiciousScore("one-two-three.com");
+    expect(with3.hasExcessiveHyphens).toBe(true);
+    expect(with2.hasExcessiveHyphens).toBe(false);
+    // Difference should be exactly 15 (plus any entropy difference)
+    const entropyDiff =
+      Math.min(calculateEntropy("one-two-thr-ee") * 40, 30) -
+      Math.min(calculateEntropy("one-two-three") * 40, 30);
+    expect(with3.totalScore - with2.totalScore).toBeCloseTo(15 + entropyDiff, 10);
+  });
+
+  it("excessive numbers adds exactly 15 points", () => {
+    // Use domains where only numbers factor differs
+    // 'abcdefg1234.com' has excessive numbers (4 consecutive digits)
+    // 'abcdefg1.com' does not
+    const withNumbers = calculateSuspiciousScore("abcdefg1234.com");
+    const withoutNumbers = calculateSuspiciousScore("abcdefghij1.com");
+    expect(withNumbers.hasExcessiveNumbers).toBe(true);
+    expect(withoutNumbers.hasExcessiveNumbers).toBe(false);
+    // Account for entropy difference
+    const entropyDiff =
+      Math.min(calculateEntropy("abcdefg1234") * 40, 30) -
+      Math.min(calculateEntropy("abcdefghij1") * 40, 30);
+    expect(withNumbers.totalScore - withoutNumbers.totalScore).toBeCloseTo(
+      15 + entropyDiff,
+      10
+    );
+  });
+
+  it("random looking adds exactly 20 points", () => {
+    // 'xyzqwrt.com' is random-looking (5+ consecutive consonants)
+    const score = calculateSuspiciousScore("xyzqwrt.com");
+    expect(score.isRandomLooking).toBe(true);
+    const entropyContrib = Math.min(calculateEntropy("xyzqwrt") * 40, 30);
+    expect(score.totalScore).toBeCloseTo(entropyContrib + 20, 10);
+  });
+
+  it("short SLD (length <= 2) adds exactly 10 points", () => {
+    // 'aa.com' has entropy 0, SLD length 2 -> only short SLD factor
+    const score = calculateSuspiciousScore("aa.com");
+    expect(score.entropy).toBe(0);
+    expect(score.totalScore).toBe(10);
+  });
+
+  it("short SLD boundary: length 2 gets 10 pts, length 3 does not", () => {
+    // 'aa.com': SLD 'aa', length 2, entropy 0 -> score 10
+    const short = calculateSuspiciousScore("aa.com");
+    expect(short.totalScore).toBe(10);
+
+    // 'aaa.com': SLD 'aaa', length 3, entropy 0 -> score 0
+    const notShort = calculateSuspiciousScore("aaa.com");
+    expect(notShort.totalScore).toBe(0);
+  });
+
+  it("short SLD with high entropy: ab.com", () => {
+    // 'ab' has entropy 1.0, contrib = min(40, 30) = 30. Short SLD = 10. Total = 40.
+    const score = calculateSuspiciousScore("ab.com");
+    expect(score.totalScore).toBe(40);
+  });
+
+  it("caps total score at 100 via Math.min(score, 100)", () => {
+    // Domain with ALL risk factors to exceed 100 raw
+    // entropy max 30 + suspiciousTLD 25 + hyphens 15 + numbers 15 + random 20 + short 10 = 115
+    // Should be capped at 100
+    const score = calculateSuspiciousScore("x--12345.xyz");
     expect(score.totalScore).toBeLessThanOrEqual(100);
   });
 
-  it("scores very short SLD (2 chars) with 10 extra points", () => {
-    // "ab.xyz" - short SLD + suspicious TLD
-    const shortSLD = calculateSuspiciousScore("ab.xyz");
-    const normalSLD = calculateSuspiciousScore("example.xyz");
-
-    // Short SLD should score higher (extra 10 pts)
-    expect(shortSLD.totalScore).toBeGreaterThan(normalSLD.totalScore);
-  });
-
-  it("includes entropy in score breakdown", () => {
-    const score = calculateSuspiciousScore("example.com");
-    expect(score.entropy).toBeGreaterThanOrEqual(0);
-    expect(score.entropy).toBeLessThanOrEqual(1);
-  });
-
-  it("detects excessive hyphens", () => {
-    // Note: extractSLD removes TLD, so hyphens must be in SLD part
-    const score = calculateSuspiciousScore("ex-am-pl-es.xyz");
+  it("score does not exceed 100 even when all factors fire", () => {
+    // Construct domain: short SLD, suspicious TLD, hyphens, numbers, random
+    // '-1.xyz' -> SLD is '-1', leading hyphen, has digit, short, suspicious TLD
+    const score = calculateSuspiciousScore("-1.xyz");
+    expect(score.totalScore).toBeLessThanOrEqual(100);
+    // Verify multiple factors triggered
+    expect(score.suspiciousTLD).toBe(true);
     expect(score.hasExcessiveHyphens).toBe(true);
-    expect(score.totalScore).toBeGreaterThan(25);
-  });
-
-  it("detects excessive numbers", () => {
-    const score = calculateSuspiciousScore("abc12345.com");
-    expect(score.hasExcessiveNumbers).toBe(true);
-    expect(score.totalScore).toBeGreaterThanOrEqual(15);
-  });
-
-  it("detects random-looking domain name", () => {
-    const score = calculateSuspiciousScore("xyzqwrt.com");
-    expect(score.isRandomLooking).toBe(true);
-    expect(score.totalScore).toBeGreaterThanOrEqual(20);
   });
 
   it("returns all required fields in result", () => {
@@ -258,23 +489,36 @@ describe("calculateSuspiciousScore", () => {
     expect(typeof score.totalScore).toBe("number");
   });
 
-  it("compound risk factors accumulate score", () => {
-    // Random-looking domain + suspicious TLD
+  it("compound risk factors accumulate additively", () => {
+    // 'xyzqwrt.xyz' = entropy + suspiciousTLD + randomLooking
     const compound = calculateSuspiciousScore("xyzqwrt.xyz");
-    const singleFactor = calculateSuspiciousScore("xyzqwrt.com");
-
-    expect(compound.totalScore).toBeGreaterThan(singleFactor.totalScore);
+    const entropyContrib = Math.min(calculateEntropy("xyzqwrt") * 40, 30);
+    expect(compound.totalScore).toBeCloseTo(entropyContrib + 25 + 20, 10);
   });
 
-  it("entropy contribution is bounded at 30 pts max", () => {
-    // Even fully random SLD should not contribute more than 30 pts from entropy alone
-    const score = calculateSuspiciousScore("abcdefghij.com");
-    expect(score.totalScore).toBeLessThanOrEqual(100);
+  it("single-char domain scores correctly", () => {
+    // 'a.com' -> SLD 'a', length 1, entropy 0 (single char)
+    // Short SLD (1 <= 2) = 10. Total = 10.
+    const score = calculateSuspiciousScore("a.com");
+    expect(score.entropy).toBe(0);
+    expect(score.totalScore).toBe(10);
+  });
+
+  it("uses extractSLD correctly for ccSLD domains", () => {
+    const score = calculateSuspiciousScore("example.co.jp");
+    // SLD should be 'example', not 'co'
+    expect(score.entropy).toBe(calculateEntropy("example"));
+  });
+
+  it("uses extractTLD correctly (last part)", () => {
+    // 'example.co.jp' -> TLD is 'jp', not suspicious
+    const score = calculateSuspiciousScore("example.co.jp");
+    expect(score.suspiciousTLD).toBe(false);
   });
 });
 
 describe("isHighRiskDomain", () => {
-  it("returns true when score exceeds threshold", () => {
+  it("returns true when score exceeds threshold (>)", () => {
     const scores = calculateSuspiciousScore("xyzqwrt.xyz");
     expect(isHighRiskDomain(scores, 30)).toBe(true);
   });
@@ -286,191 +530,55 @@ describe("isHighRiskDomain", () => {
 
   it("returns true when score equals threshold (>= is inclusive)", () => {
     const scores = calculateSuspiciousScore("xyzqwrt.xyz");
-    // Get the actual score and check equality
+    // Use exact score as threshold - must return true (>=), not false (>)
     expect(isHighRiskDomain(scores, scores.totalScore)).toBe(true);
   });
 
-  it("returns false when threshold is 0 only for zero-score domains", () => {
-    // Any domain with some entropy will have score > 0
+  it("returns false when threshold is score + 1", () => {
     const scores = calculateSuspiciousScore("google.com");
-    // google.com has non-zero entropy, so score > 0
-    // Use a threshold slightly above the score to verify false
-    if (scores.totalScore < 100) {
-      expect(isHighRiskDomain(scores, scores.totalScore + 1)).toBe(false);
-    }
+    expect(isHighRiskDomain(scores, scores.totalScore + 1)).toBe(false);
+  });
+
+  it("returns true when threshold is 0 and score > 0", () => {
+    const scores = calculateSuspiciousScore("google.com");
+    // google.com has non-zero entropy contribution
+    expect(scores.totalScore).toBeGreaterThan(0);
+    expect(isHighRiskDomain(scores, 0)).toBe(true);
+  });
+
+  it("returns true when threshold equals totalScore exactly", () => {
+    // Construct a known score: 'aa.com' = 10 points
+    const scores = calculateSuspiciousScore("aa.com");
+    expect(scores.totalScore).toBe(10);
+    expect(isHighRiskDomain(scores, 10)).toBe(true);
+    expect(isHighRiskDomain(scores, 11)).toBe(false);
   });
 });
 
 describe("SUSPICIOUS_TLDS", () => {
-  it("contains known suspicious TLDs", () => {
-    expect(SUSPICIOUS_TLDS.has("xyz")).toBe(true);
-    expect(SUSPICIOUS_TLDS.has("tk")).toBe(true);
-    expect(SUSPICIOUS_TLDS.has("top")).toBe(true);
+  it("contains all expected suspicious TLDs", () => {
+    const expected = [
+      "xyz", "top", "tk", "ml", "ga", "cf", "gq", "buzz", "cam", "icu",
+      "club", "online", "work", "click", "link", "site", "website", "space",
+      "fun", "monster", "rest", "surf", "hair", "quest", "bond", "cyou", "cfd",
+    ];
+    for (const tld of expected) {
+      expect(SUSPICIOUS_TLDS.has(tld)).toBe(true);
+    }
+    expect(SUSPICIOUS_TLDS.size).toBe(expected.length);
   });
 
   it("does not contain common legitimate TLDs", () => {
     expect(SUSPICIOUS_TLDS.has("com")).toBe(false);
     expect(SUSPICIOUS_TLDS.has("org")).toBe(false);
     expect(SUSPICIOUS_TLDS.has("net")).toBe(false);
+    expect(SUSPICIOUS_TLDS.has("io")).toBe(false);
+    expect(SUSPICIOUS_TLDS.has("dev")).toBe(false);
   });
 
-  it("contains free abuse-prone TLDs (.tk, .ml, .ga, .cf, .gq)", () => {
-    expect(SUSPICIOUS_TLDS.has("tk")).toBe(true);
-    expect(SUSPICIOUS_TLDS.has("ml")).toBe(true);
-    expect(SUSPICIOUS_TLDS.has("ga")).toBe(true);
-    expect(SUSPICIOUS_TLDS.has("cf")).toBe(true);
-    expect(SUSPICIOUS_TLDS.has("gq")).toBe(true);
-  });
-
-  it("contains high-abuse generic TLDs (.buzz, .click, .link)", () => {
-    expect(SUSPICIOUS_TLDS.has("buzz")).toBe(true);
-    expect(SUSPICIOUS_TLDS.has("click")).toBe(true);
-    expect(SUSPICIOUS_TLDS.has("link")).toBe(true);
-  });
-
-  it("contains recent high-abuse TLDs (.icu, .cyou, .cfd)", () => {
-    expect(SUSPICIOUS_TLDS.has("icu")).toBe(true);
-    expect(SUSPICIOUS_TLDS.has("cyou")).toBe(true);
-    expect(SUSPICIOUS_TLDS.has("cfd")).toBe(true);
-  });
-
-  it("does not contain country TLDs like .jp, .uk, .de", () => {
+  it("does not contain country TLDs", () => {
     expect(SUSPICIOUS_TLDS.has("jp")).toBe(false);
     expect(SUSPICIOUS_TLDS.has("uk")).toBe(false);
     expect(SUSPICIOUS_TLDS.has("de")).toBe(false);
-  });
-});
-
-describe("edge cases: malformed input", () => {
-  describe("calculateEntropy", () => {
-    it("handles very long strings without error", () => {
-      const longStr = "a".repeat(10000) + "b".repeat(10000);
-      const result = calculateEntropy(longStr);
-      expect(result).toBeGreaterThanOrEqual(0);
-      expect(result).toBeLessThanOrEqual(1);
-    });
-
-    it("handles unicode characters", () => {
-      expect(calculateEntropy("日本語テスト")).toBeGreaterThan(0);
-    });
-
-    it("handles emoji", () => {
-      expect(calculateEntropy("🎉🎊🎈")).toBeGreaterThan(0);
-    });
-
-    it("handles mixed unicode and ascii", () => {
-      const result = calculateEntropy("abc日本語xyz");
-      expect(result).toBeGreaterThan(0);
-      expect(result).toBeLessThanOrEqual(1);
-    });
-  });
-
-  describe("extractSLD", () => {
-    it("handles domain with only dots", () => {
-      const result = extractSLD("...");
-      expect(typeof result).toBe("string");
-    });
-
-    it("handles empty string", () => {
-      const result = extractSLD("");
-      expect(typeof result).toBe("string");
-    });
-
-    it("handles domain with many subdomains", () => {
-      expect(extractSLD("a.b.c.d.e.example.com")).toBe("example");
-    });
-
-    it("handles domain with trailing dot (FQDN)", () => {
-      // FQDN format: "example.com."
-      const result = extractSLD("example.com.");
-      expect(typeof result).toBe("string");
-    });
-  });
-
-  describe("extractTLD", () => {
-    it("handles empty string", () => {
-      const result = extractTLD("");
-      expect(typeof result).toBe("string");
-    });
-
-    it("handles domain with no dots", () => {
-      expect(extractTLD("localhost")).toBe("localhost");
-    });
-  });
-
-  describe("hasExcessiveHyphens", () => {
-    it("handles empty string", () => {
-      expect(hasExcessiveHyphens("")).toBe(false);
-    });
-
-    it("handles string of only hyphens", () => {
-      expect(hasExcessiveHyphens("---")).toBe(true);
-    });
-
-    it("handles single hyphen", () => {
-      expect(hasExcessiveHyphens("-")).toBe(true); // leading and trailing
-    });
-  });
-
-  describe("hasExcessiveNumbers", () => {
-    it("handles empty string", () => {
-      // empty string: ratio = 0/0, which is NaN
-      const result = hasExcessiveNumbers("");
-      expect(typeof result).toBe("boolean");
-    });
-
-    it("handles single digit", () => {
-      // "1" has ratio 1/1 = 100%, exceeds 30%
-      expect(hasExcessiveNumbers("1")).toBe(true);
-    });
-
-    it("handles boundary: exactly 3 consecutive digits", () => {
-      // "abc123def" = 3 consecutive, below 4+ threshold
-      // ratio = 3/9 = 33%, exceeds 30%
-      expect(hasExcessiveNumbers("abc123def")).toBe(true);
-    });
-  });
-
-  describe("isRandomLooking", () => {
-    it("handles empty string", () => {
-      const result = isRandomLooking("");
-      expect(typeof result).toBe("boolean");
-    });
-
-    it("handles string with only vowels", () => {
-      expect(isRandomLooking("aeiouaeiou")).toBe(false);
-    });
-
-    it("handles exactly 4 consecutive consonants (below threshold)", () => {
-      // "bcdf" = 4 consonants, threshold is 5+
-      // but 4 chars with 0 vowels triggers the no-vowel check (length >= 3)
-      expect(isRandomLooking("bcdf")).toBe(true);
-    });
-  });
-
-  describe("calculateSuspiciousScore", () => {
-    it("handles single-char domain", () => {
-      const result = calculateSuspiciousScore("a.com");
-      expect(result.totalScore).toBeGreaterThanOrEqual(0);
-      expect(result.totalScore).toBeLessThanOrEqual(100);
-    });
-
-    it("handles unicode domain", () => {
-      const result = calculateSuspiciousScore("日本語.com");
-      expect(result.totalScore).toBeGreaterThanOrEqual(0);
-    });
-
-    it("handles domain with only numbers in SLD", () => {
-      const result = calculateSuspiciousScore("123456.xyz");
-      expect(result.hasExcessiveNumbers).toBe(true);
-      expect(result.suspiciousTLD).toBe(true);
-    });
-
-    it("accumulates maximum possible score without exceeding 100", () => {
-      // Domain with all risk factors: random + hyphens + numbers + suspicious TLD + short
-      const result = calculateSuspiciousScore("x--12345.xyz");
-      expect(result.totalScore).toBeLessThanOrEqual(100);
-      expect(result.totalScore).toBeGreaterThan(50);
-    });
   });
 });

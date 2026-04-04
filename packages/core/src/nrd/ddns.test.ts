@@ -7,39 +7,168 @@ import {
 } from "./ddns.js";
 
 describe("DDNS_PROVIDERS", () => {
-  it("contains known DDNS providers", () => {
-    expect(DDNS_PROVIDERS.size).toBeGreaterThan(50);
+  it("has exactly the expected number of entries", () => {
+    expect(DDNS_PROVIDERS.size).toBe(119);
   });
 
-  it("includes No-IP domains", () => {
-    expect(DDNS_PROVIDERS.get("no-ip.com")).toBe("No-IP");
-    expect(DDNS_PROVIDERS.get("ddns.net")).toBe("No-IP");
-    expect(DDNS_PROVIDERS.get("sytes.net")).toBe("No-IP");
-  });
+  // Verify EVERY entry in the Map to kill string mutations on both keys and values
+  const allEntries: [string, string][] = [
+    // No-IP
+    ["no-ip.com", "No-IP"],
+    ["no-ip.org", "No-IP"],
+    ["no-ip.biz", "No-IP"],
+    ["noip.com", "No-IP"],
+    ["ddns.net", "No-IP"],
+    ["serveftp.com", "No-IP"],
+    ["servequake.com", "No-IP"],
+    ["sytes.net", "No-IP"],
+    ["zapto.org", "No-IP"],
+    ["hopto.org", "No-IP"],
+    ["redirectme.net", "No-IP"],
+    ["bounceme.net", "No-IP"],
+    ["myftp.biz", "No-IP"],
+    ["myftp.org", "No-IP"],
+    ["myvnc.com", "No-IP"],
+    ["serveblog.net", "No-IP"],
+    ["servebeer.com", "No-IP"],
+    ["servegame.com", "No-IP"],
+    ["servehalflife.com", "No-IP"],
+    ["servehttp.com", "No-IP"],
+    ["serveirc.com", "No-IP"],
+    ["servemp3.com", "No-IP"],
+    ["servepics.com", "No-IP"],
 
-  it("includes DuckDNS", () => {
-    expect(DDNS_PROVIDERS.get("duckdns.org")).toBe("DuckDNS");
-  });
+    // DuckDNS
+    ["duckdns.org", "DuckDNS"],
 
-  it("includes DynDNS domains", () => {
-    expect(DDNS_PROVIDERS.get("dyndns.org")).toBe("DynDNS");
-    expect(DDNS_PROVIDERS.get("homelinux.com")).toBe("DynDNS");
-  });
+    // DynDNS
+    ["dyndns.org", "DynDNS"],
+    ["dyndns.biz", "DynDNS"],
+    ["dyndns.info", "DynDNS"],
+    ["dyndns.tv", "DynDNS"],
+    ["dyndns.ws", "DynDNS"],
+    ["dynalias.com", "DynDNS"],
+    ["dynalias.net", "DynDNS"],
+    ["dynalias.org", "DynDNS"],
+    ["homeip.net", "DynDNS"],
+    ["homelinux.com", "DynDNS"],
+    ["homelinux.net", "DynDNS"],
+    ["homelinux.org", "DynDNS"],
+    ["homeunix.com", "DynDNS"],
+    ["homeunix.net", "DynDNS"],
+    ["homeunix.org", "DynDNS"],
+    ["dnsalias.com", "DynDNS"],
+    ["dnsalias.net", "DynDNS"],
+    ["dnsalias.org", "DynDNS"],
+    ["dnsdojo.com", "DynDNS"],
+    ["dnsdojo.net", "DynDNS"],
+    ["dnsdojo.org", "DynDNS"],
+    ["is-a-geek.com", "DynDNS"],
+    ["is-a-geek.net", "DynDNS"],
+    ["is-a-geek.org", "DynDNS"],
 
-  it("includes FreeDNS domains", () => {
-    expect(DDNS_PROVIDERS.get("afraid.org")).toBe("FreeDNS");
-    expect(DDNS_PROVIDERS.get("mooo.com")).toBe("FreeDNS");
-  });
+    // Dynu
+    ["dynu.com", "Dynu"],
+    ["dynu.net", "Dynu"],
+    ["accesscam.org", "Dynu"],
+    ["camdvr.org", "Dynu"],
+    ["freeddns.org", "Dynu"],
+    ["mywire.org", "Dynu"],
+    ["webredirect.org", "Dynu"],
+    ["myddns.rocks", "Dynu"],
+    ["blogsite.xyz", "Dynu"],
 
-  it("includes Synology domains", () => {
-    expect(DDNS_PROVIDERS.get("synology.me")).toBe("Synology");
-    expect(DDNS_PROVIDERS.get("myds.me")).toBe("Synology");
-  });
+    // FreeDNS
+    ["afraid.org", "FreeDNS"],
+    ["chickenkiller.com", "FreeDNS"],
+    ["crabdance.com", "FreeDNS"],
+    ["ignorelist.com", "FreeDNS"],
+    ["jumpingcrab.com", "FreeDNS"],
+    ["mooo.com", "FreeDNS"],
+    ["strangled.net", "FreeDNS"],
+    ["twilightparadox.com", "FreeDNS"],
+    ["us.to", "FreeDNS"],
 
-  it("includes ngrok domains", () => {
-    expect(DDNS_PROVIDERS.get("ngrok.io")).toBe("ngrok");
-    expect(DDNS_PROVIDERS.get("ngrok.app")).toBe("ngrok");
-  });
+    // ChangeIP
+    ["changeip.com", "ChangeIP"],
+    ["changeip.net", "ChangeIP"],
+    ["changeip.org", "ChangeIP"],
+    ["dns-dns.com", "ChangeIP"],
+    ["dns04.com", "ChangeIP"],
+    ["dns05.com", "ChangeIP"],
+    ["dnsrd.com", "ChangeIP"],
+    ["got-game.org", "ChangeIP"],
+    ["onmypc.biz", "ChangeIP"],
+    ["onmypc.info", "ChangeIP"],
+    ["onmypc.net", "ChangeIP"],
+    ["onmypc.org", "ChangeIP"],
+    ["onmypc.us", "ChangeIP"],
+    ["ygto.com", "ChangeIP"],
+
+    // DNS Exit
+    ["dnsexit.com", "DNS Exit"],
+    ["dnsexit.net", "DNS Exit"],
+    ["linkpc.net", "DNS Exit"],
+    ["publicvm.com", "DNS Exit"],
+    ["online.tm", "DNS Exit"],
+
+    // YDNS
+    ["ydns.eu", "YDNS"],
+
+    // nsupdate.info
+    ["nsupdate.info", "nsupdate.info"],
+
+    // Securepoint
+    ["spdns.de", "Securepoint"],
+    ["spdns.eu", "Securepoint"],
+    ["spdns.org", "Securepoint"],
+
+    // Other
+    ["3utilities.com", "Other"],
+    ["ddnsking.com", "Other"],
+    ["gotdns.ch", "Other"],
+    ["kozow.com", "Other"],
+    ["loseyourip.com", "Other"],
+    ["ooguy.com", "Other"],
+    ["theworkpc.com", "Other"],
+    ["casacam.net", "Other"],
+    ["mynetav.net", "Other"],
+    ["mynetav.org", "Other"],
+    ["my-vigor.de", "Other"],
+    ["syn-alias.com", "Other"],
+    ["synology-ds.de", "Other"],
+    ["synology-diskstation.de", "Other"],
+
+    // Synology
+    ["synology.me", "Synology"],
+    ["diskstation.me", "Synology"],
+    ["dscloud.biz", "Synology"],
+    ["dscloud.me", "Synology"],
+    ["dscloud.mobi", "Synology"],
+    ["i234.me", "Synology"],
+    ["myds.me", "Synology"],
+    ["quickconnect.cn", "Synology"],
+    ["quickconnect.to", "Synology"],
+
+    // QNAP
+    ["myqnapcloud.com", "QNAP"],
+    ["qnapcloud.com", "QNAP"],
+
+    // Cloudflare
+    ["trycloudflare.com", "Cloudflare"],
+
+    // ngrok
+    ["ngrok.io", "ngrok"],
+    ["ngrok-free.app", "ngrok"],
+    ["ngrok.app", "ngrok"],
+  ];
+
+  it.each(allEntries)(
+    "maps '%s' to provider '%s'",
+    (domain, provider) => {
+      expect(DDNS_PROVIDERS.get(domain)).toBe(provider);
+    },
+  );
 });
 
 describe("checkDDNS", () => {
@@ -59,6 +188,12 @@ describe("checkDDNS", () => {
 
     it("handles case insensitivity", () => {
       const result = checkDDNS("DUCKDNS.ORG");
+      expect(result.isDDNS).toBe(true);
+      expect(result.provider).toBe("DuckDNS");
+    });
+
+    it("handles mixed case", () => {
+      const result = checkDDNS("DuckDNS.Org");
       expect(result.isDDNS).toBe(true);
       expect(result.provider).toBe("DuckDNS");
     });
@@ -113,31 +248,177 @@ describe("checkDDNS", () => {
       const result = checkDDNS("myduckdnsclone.com");
       expect(result.isDDNS).toBe(false);
     });
+
+    it("returns false for empty string", () => {
+      const result = checkDDNS("");
+      expect(result.isDDNS).toBe(false);
+      expect(result.provider).toBeNull();
+      expect(result.matchedDomain).toBeNull();
+    });
   });
 
-  describe("various DDNS providers", () => {
-    const testCases = [
-      { domain: "host.sytes.net", provider: "No-IP" },
-      { domain: "host.hopto.org", provider: "No-IP" },
-      { domain: "host.zapto.org", provider: "No-IP" },
-      { domain: "host.dyndns.org", provider: "DynDNS" },
-      { domain: "host.homelinux.org", provider: "DynDNS" },
-      { domain: "host.dynu.com", provider: "Dynu" },
-      { domain: "host.afraid.org", provider: "FreeDNS" },
-      { domain: "host.changeip.com", provider: "ChangeIP" },
-      { domain: "host.ydns.eu", provider: "YDNS" },
-      { domain: "host.synology.me", provider: "Synology" },
-      { domain: "host.myqnapcloud.com", provider: "QNAP" },
-      { domain: "host.trycloudflare.com", provider: "Cloudflare" },
+  // Test checkDDNS with a subdomain for EVERY provider domain to kill key string mutations
+  describe("subdomain detection for every DDNS provider domain", () => {
+    const allDomains: [string, string][] = [
+      // No-IP
+      ["no-ip.com", "No-IP"],
+      ["no-ip.org", "No-IP"],
+      ["no-ip.biz", "No-IP"],
+      ["noip.com", "No-IP"],
+      ["ddns.net", "No-IP"],
+      ["serveftp.com", "No-IP"],
+      ["servequake.com", "No-IP"],
+      ["sytes.net", "No-IP"],
+      ["zapto.org", "No-IP"],
+      ["hopto.org", "No-IP"],
+      ["redirectme.net", "No-IP"],
+      ["bounceme.net", "No-IP"],
+      ["myftp.biz", "No-IP"],
+      ["myftp.org", "No-IP"],
+      ["myvnc.com", "No-IP"],
+      ["serveblog.net", "No-IP"],
+      ["servebeer.com", "No-IP"],
+      ["servegame.com", "No-IP"],
+      ["servehalflife.com", "No-IP"],
+      ["servehttp.com", "No-IP"],
+      ["serveirc.com", "No-IP"],
+      ["servemp3.com", "No-IP"],
+      ["servepics.com", "No-IP"],
+
+      // DuckDNS
+      ["duckdns.org", "DuckDNS"],
+
+      // DynDNS
+      ["dyndns.org", "DynDNS"],
+      ["dyndns.biz", "DynDNS"],
+      ["dyndns.info", "DynDNS"],
+      ["dyndns.tv", "DynDNS"],
+      ["dyndns.ws", "DynDNS"],
+      ["dynalias.com", "DynDNS"],
+      ["dynalias.net", "DynDNS"],
+      ["dynalias.org", "DynDNS"],
+      ["homeip.net", "DynDNS"],
+      ["homelinux.com", "DynDNS"],
+      ["homelinux.net", "DynDNS"],
+      ["homelinux.org", "DynDNS"],
+      ["homeunix.com", "DynDNS"],
+      ["homeunix.net", "DynDNS"],
+      ["homeunix.org", "DynDNS"],
+      ["dnsalias.com", "DynDNS"],
+      ["dnsalias.net", "DynDNS"],
+      ["dnsalias.org", "DynDNS"],
+      ["dnsdojo.com", "DynDNS"],
+      ["dnsdojo.net", "DynDNS"],
+      ["dnsdojo.org", "DynDNS"],
+      ["is-a-geek.com", "DynDNS"],
+      ["is-a-geek.net", "DynDNS"],
+      ["is-a-geek.org", "DynDNS"],
+
+      // Dynu
+      ["dynu.com", "Dynu"],
+      ["dynu.net", "Dynu"],
+      ["accesscam.org", "Dynu"],
+      ["camdvr.org", "Dynu"],
+      ["freeddns.org", "Dynu"],
+      ["mywire.org", "Dynu"],
+      ["webredirect.org", "Dynu"],
+      ["myddns.rocks", "Dynu"],
+      ["blogsite.xyz", "Dynu"],
+
+      // FreeDNS
+      ["afraid.org", "FreeDNS"],
+      ["chickenkiller.com", "FreeDNS"],
+      ["crabdance.com", "FreeDNS"],
+      ["ignorelist.com", "FreeDNS"],
+      ["jumpingcrab.com", "FreeDNS"],
+      ["mooo.com", "FreeDNS"],
+      ["strangled.net", "FreeDNS"],
+      ["twilightparadox.com", "FreeDNS"],
+      ["us.to", "FreeDNS"],
+
+      // ChangeIP
+      ["changeip.com", "ChangeIP"],
+      ["changeip.net", "ChangeIP"],
+      ["changeip.org", "ChangeIP"],
+      ["dns-dns.com", "ChangeIP"],
+      ["dns04.com", "ChangeIP"],
+      ["dns05.com", "ChangeIP"],
+      ["dnsrd.com", "ChangeIP"],
+      ["got-game.org", "ChangeIP"],
+      ["onmypc.biz", "ChangeIP"],
+      ["onmypc.info", "ChangeIP"],
+      ["onmypc.net", "ChangeIP"],
+      ["onmypc.org", "ChangeIP"],
+      ["onmypc.us", "ChangeIP"],
+      ["ygto.com", "ChangeIP"],
+
+      // DNS Exit
+      ["dnsexit.com", "DNS Exit"],
+      ["dnsexit.net", "DNS Exit"],
+      ["linkpc.net", "DNS Exit"],
+      ["publicvm.com", "DNS Exit"],
+      ["online.tm", "DNS Exit"],
+
+      // YDNS
+      ["ydns.eu", "YDNS"],
+
+      // nsupdate.info
+      ["nsupdate.info", "nsupdate.info"],
+
+      // Securepoint
+      ["spdns.de", "Securepoint"],
+      ["spdns.eu", "Securepoint"],
+      ["spdns.org", "Securepoint"],
+
+      // Other
+      ["3utilities.com", "Other"],
+      ["ddnsking.com", "Other"],
+      ["gotdns.ch", "Other"],
+      ["kozow.com", "Other"],
+      ["loseyourip.com", "Other"],
+      ["ooguy.com", "Other"],
+      ["theworkpc.com", "Other"],
+      ["casacam.net", "Other"],
+      ["mynetav.net", "Other"],
+      ["mynetav.org", "Other"],
+      ["my-vigor.de", "Other"],
+      ["syn-alias.com", "Other"],
+      ["synology-ds.de", "Other"],
+      ["synology-diskstation.de", "Other"],
+
+      // Synology
+      ["synology.me", "Synology"],
+      ["diskstation.me", "Synology"],
+      ["dscloud.biz", "Synology"],
+      ["dscloud.me", "Synology"],
+      ["dscloud.mobi", "Synology"],
+      ["i234.me", "Synology"],
+      ["myds.me", "Synology"],
+      ["quickconnect.cn", "Synology"],
+      ["quickconnect.to", "Synology"],
+
+      // QNAP
+      ["myqnapcloud.com", "QNAP"],
+      ["qnapcloud.com", "QNAP"],
+
+      // Cloudflare
+      ["trycloudflare.com", "Cloudflare"],
+
+      // ngrok
+      ["ngrok.io", "ngrok"],
+      ["ngrok-free.app", "ngrok"],
+      ["ngrok.app", "ngrok"],
     ];
 
-    testCases.forEach(({ domain, provider }) => {
-      it(`detects ${provider} domain: ${domain}`, () => {
-        const result = checkDDNS(domain);
+    it.each(allDomains)(
+      "detects subdomain of %s as %s",
+      (ddnsDomain, provider) => {
+        const result = checkDDNS(`test.${ddnsDomain}`);
         expect(result.isDDNS).toBe(true);
         expect(result.provider).toBe(provider);
-      });
-    });
+        expect(result.matchedDomain).toBe(ddnsDomain);
+      },
+    );
   });
 });
 
@@ -145,41 +426,79 @@ describe("getDDNSProviderDomains", () => {
   it("returns array of DDNS domains", () => {
     const domains = getDDNSProviderDomains();
     expect(Array.isArray(domains)).toBe(true);
-    expect(domains.length).toBeGreaterThan(0);
-  });
-
-  it("includes known domains", () => {
-    const domains = getDDNSProviderDomains();
-    expect(domains).toContain("duckdns.org");
-    expect(domains).toContain("no-ip.com");
-    expect(domains).toContain("ngrok.io");
+    expect(domains.length).toBe(119);
   });
 
   it("returns same count as DDNS_PROVIDERS", () => {
     const domains = getDDNSProviderDomains();
     expect(domains.length).toBe(DDNS_PROVIDERS.size);
   });
+
+  it("contains every known DDNS domain", () => {
+    const domains = getDDNSProviderDomains();
+    // Spot-check domains from each provider group
+    expect(domains).toContain("no-ip.com");
+    expect(domains).toContain("noip.com");
+    expect(domains).toContain("serveftp.com");
+    expect(domains).toContain("sytes.net");
+    expect(domains).toContain("duckdns.org");
+    expect(domains).toContain("dyndns.org");
+    expect(domains).toContain("homelinux.com");
+    expect(domains).toContain("is-a-geek.com");
+    expect(domains).toContain("dynu.com");
+    expect(domains).toContain("blogsite.xyz");
+    expect(domains).toContain("afraid.org");
+    expect(domains).toContain("mooo.com");
+    expect(domains).toContain("us.to");
+    expect(domains).toContain("changeip.com");
+    expect(domains).toContain("ygto.com");
+    expect(domains).toContain("dnsexit.com");
+    expect(domains).toContain("linkpc.net");
+    expect(domains).toContain("online.tm");
+    expect(domains).toContain("ydns.eu");
+    expect(domains).toContain("nsupdate.info");
+    expect(domains).toContain("spdns.de");
+    expect(domains).toContain("3utilities.com");
+    expect(domains).toContain("synology-diskstation.de");
+    expect(domains).toContain("synology.me");
+    expect(domains).toContain("quickconnect.to");
+    expect(domains).toContain("myqnapcloud.com");
+    expect(domains).toContain("trycloudflare.com");
+    expect(domains).toContain("ngrok.io");
+    expect(domains).toContain("ngrok-free.app");
+    expect(domains).toContain("ngrok.app");
+  });
 });
 
 describe("getDDNSProviderNames", () => {
-  it("returns array of provider names", () => {
+  it("returns array of unique provider names", () => {
     const names = getDDNSProviderNames();
     expect(Array.isArray(names)).toBe(true);
-    expect(names.length).toBeGreaterThan(0);
-  });
-
-  it("contains unique names", () => {
-    const names = getDDNSProviderNames();
     const uniqueNames = [...new Set(names)];
     expect(names.length).toBe(uniqueNames.length);
   });
 
-  it("includes major providers", () => {
+  it("returns exactly the expected number of unique providers", () => {
+    const names = getDDNSProviderNames();
+    expect(names.length).toBe(15);
+  });
+
+  it("includes all provider names", () => {
     const names = getDDNSProviderNames();
     expect(names).toContain("No-IP");
     expect(names).toContain("DuckDNS");
     expect(names).toContain("DynDNS");
-    expect(names).toContain("ngrok");
+    expect(names).toContain("Dynu");
+    expect(names).toContain("FreeDNS");
+    expect(names).toContain("ChangeIP");
+    expect(names).toContain("DNS Exit");
+    expect(names).toContain("YDNS");
+    expect(names).toContain("nsupdate.info");
+    expect(names).toContain("Securepoint");
+    expect(names).toContain("Other");
     expect(names).toContain("Synology");
+    expect(names).toContain("QNAP");
+    expect(names).toContain("Cloudflare");
+    expect(names).toContain("ngrok");
   });
 });
