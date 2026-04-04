@@ -235,16 +235,26 @@ async function ensureDLPOffscreen(): Promise<void> {
       reasons: ["WORKERS" as chrome.offscreen.Reason],
       justification: "DLP NER inference via ONNX Runtime WASM",
     });
-    logger.debug("DLP offscreen document created");
-  } catch {
-    // Already exists — ok
+    logger.info("DLP offscreen document created");
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes("Only a single offscreen") || msg.includes("already exists")) {
+      logger.debug("DLP offscreen document already exists");
+    } else {
+      logger.error("DLP offscreen document creation failed", err);
+      throw err;
+    }
   }
   offscreenReady = true;
 }
 
 async function sendToDLPOffscreen<T>(action: string, data?: unknown): Promise<T> {
   await ensureDLPOffscreen();
-  return chrome.runtime.sendMessage({ target: "dlp-offscreen", action, data }) as Promise<T>;
+  const response = await chrome.runtime.sendMessage({ target: "dlp-offscreen", action, data });
+  if (response === undefined) {
+    throw new Error(`No response from DLP offscreen for action: ${action}`);
+  }
+  return response as T;
 }
 
 const domainRiskService = createDomainRiskService({
@@ -506,18 +516,22 @@ handleNetworkInspection: (data, sender) => networkSecurityInspector.handleNetwor
     },
     downloadDLPModel: async () => {
       try {
+        logger.info("DLP model download: starting");
         dlpModelManager.setLoading();
         const res = await sendToDLPOffscreen<{ success: boolean; error?: string }>("init-pipeline");
+        logger.info("DLP model download: offscreen response", res);
         if (res?.success) {
           dlpModelManager.setReady();
           return { success: true };
         }
-        dlpModelManager.setError(res?.error ?? "init failed");
+        const err = res?.error ?? "init failed (no error detail)";
+        dlpModelManager.setError(err);
+        logger.error("DLP model download: offscreen returned failure", err);
         return { success: false };
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         dlpModelManager.setError(message);
-        logger.error("DLP model download failed", error);
+        logger.error("DLP model download: exception", error);
         return { success: false };
       }
     },

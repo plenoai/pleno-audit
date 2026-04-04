@@ -188,13 +188,17 @@ export function SettingsTab({ animationEnabled, onAnimationToggle }: { animation
   const loadModelFromCache = useCallback(async () => {
     setModelDownloading(true);
     try {
+      logger.info("DLP model load: sending DOWNLOAD_DLP_MODEL");
       const result = await sendMessage<{ success: boolean }>({ type: "DOWNLOAD_DLP_MODEL" });
+      logger.info("DLP model load: response", result);
       if (result?.success) {
         const s = await sendMessage<ModelStatus>({ type: "GET_DLP_MODEL_STATUS" });
         if (s) setModelStatus(s);
+      } else {
+        logger.error("DLP model load: failed", result);
       }
     } catch (err) {
-      logger.error("Model load from cache failed", err);
+      logger.error("DLP model load: exception", err);
     } finally {
       setModelDownloading(false);
     }
