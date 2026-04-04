@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { loadNERModel } from "./dlp-local-ner.js";
 import { convertWasmTokens, type WasmTokenResult } from "./dlp-tokenizer.js";
@@ -16,6 +16,8 @@ const WASM_PKG_PATH = resolve(
   "pleno-anonymize/packages/wasm-tokenizer/pkg",
 );
 
+const HAS_MODEL = existsSync(MODEL_PATH) && existsSync(resolve(WASM_PKG_PATH, "pleno_tokenizer_wasm_bg.wasm"));
+
 function loadModel() {
   const buffer = readFileSync(MODEL_PATH);
   return loadNERModel(buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength));
@@ -30,7 +32,7 @@ function createWasmTokenizer() {
   return (text: string): WasmTokenResult[] => inner.tokenize(text) as WasmTokenResult[];
 }
 
-describe("loadNERModel", () => {
+describe.skipIf(!HAS_MODEL)("loadNERModel", () => {
   it("parses model binary and returns config", () => {
     const model = loadModel();
     expect(model.config.labels).toEqual([
