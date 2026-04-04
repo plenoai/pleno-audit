@@ -1,4 +1,4 @@
-import type { PlaybookData } from '../types';
+import type { PlaybookData } from '../playbook-types.js';
 
 export const storageMediaPlaybooks: PlaybookData[] = [
   // =========================================================================

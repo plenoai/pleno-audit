@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
-import type { AlertSeverity, AlertCategory } from "libztbs/alerts";
+import { ALL_PLAYBOOKS, type AlertSeverity, type AlertCategory, type PlaybookData } from "libztbs/alerts";
 import {
   AlertRowMenu,
   Badge,
@@ -99,6 +99,11 @@ const categoryLabels: Record<string, string> = {
   drag_event_sniffing: "DragSniff",
   selection_sniffing: "SelSniff",
 };
+
+const PLAYBOOK_DATA: Record<string, PlaybookData> = Object.fromEntries(
+  ALL_PLAYBOOKS.map((p) => [p.id, p]),
+);
+
 
 const severityButtons: { key: AlertSeverity; label: string }[] = [
   { key: "critical", label: "Critical" },
