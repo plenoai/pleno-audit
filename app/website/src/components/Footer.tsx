@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Shield, Github } from 'lucide-react';
+import { Shield, ExternalLink } from 'lucide-react';
 
 const GITHUB_URL = 'https://github.com/plenoai/pleno-audit';
 
@@ -20,7 +20,7 @@ export default function Footer() {
               className="p-2 rounded-lg hover:bg-[#f5f5f5] dark:hover:bg-[#2a2a2a] transition-colors"
               aria-label="GitHub"
             >
-              <Github className="h-5 w-5 text-[#666] dark:text-[#8f8f8f] hover:text-[#171717] dark:hover:text-[#ededed]" />
+              <ExternalLink className="h-5 w-5 text-[#666] dark:text-[#8f8f8f] hover:text-[#171717] dark:hover:text-[#ededed]" />
             </a>
           </div>
           <div className="flex items-center gap-6 text-sm text-[#666] dark:text-[#8f8f8f]">

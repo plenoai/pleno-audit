@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Shield, Lock, ArrowRight, Eye, AlertTriangle, Zap, Chrome, Github } from 'lucide-react';
+import { Shield, Lock, ArrowRight, Eye, AlertTriangle, Zap, Globe, ExternalLink } from 'lucide-react';
 import Footer from '../components/Footer';
 import { Link } from 'react-router-dom';
 
@@ -86,7 +86,7 @@ const Header = () => (
           rel="noopener noreferrer"
           className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[#eaeaea] dark:border-[#333] bg-white dark:bg-[#171717] hover:bg-[#f5f5f5] dark:hover:bg-[#2a2a2a] transition-colors"
         >
-          <Github className="h-4 w-4 text-[#171717] dark:text-[#ededed]" />
+          <ExternalLink className="h-4 w-4 text-[#171717] dark:text-[#ededed]" />
           <span className="text-sm font-medium text-[#171717] dark:text-[#ededed]">GitHub</span>
         </a>
       </div>
@@ -128,7 +128,7 @@ const HeroSection = () => (
         </p>
 
         <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <Button variant="primary" size="large" suffix={<Chrome className="h-4 w-4" />} to="https://github.com/plenoai/pleno-audit/releases">
+          <Button variant="primary" size="large" suffix={<Globe className="h-4 w-4" />} to="https://github.com/plenoai/pleno-audit/releases">
             Chrome拡張をインストール
           </Button>
           <Button variant="secondary" size="large" suffix={<ArrowRight className="h-4 w-4" />} to="/docs">
