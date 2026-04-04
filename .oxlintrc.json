@@ -89,6 +89,11 @@
       "files": ["app/audit-extension/lib/pleno-tokenizer-wasm/**/*"],
       "rules": { "no-console": "off", "no-restricted-globals": "off" }
     },
+    // ONNX Runtime JSEP bundles - vendored generated runtime assets
+    {
+      "files": ["app/audit-extension/public/ort-wasm-*.jsep.mjs"],
+      "rules": { "no-console": "off", "no-restricted-globals": "off" }
+    },
     // DLP Client - communicates with local pleno-anonymize server (default: OFF, user opt-in)
     {
       "files": ["packages/core/src/ai-detector/dlp-client.ts"],
