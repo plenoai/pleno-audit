@@ -50,16 +50,11 @@ export default function AlertsIndexPage() {
           transition={{ duration: 0.3 }}
         >
         {/* Header */}
-        <div className="mb-10">
-          <div className="flex items-center gap-3 mb-3">
-            <Shield className="h-8 w-8 text-[#171717] dark:text-[#ededed]" />
-            <h1 className="text-3xl font-bold text-[#171717] dark:text-[#ededed]">
-              セキュリティアラート プレイブック
-            </h1>
-          </div>
-          <p className="text-[#666] dark:text-[#8f8f8f] text-lg">
-            {ALL_PLAYBOOKS.length}種類のセキュリティアラートの検知ロジックと対応手順
-          </p>
+        <div className="flex items-center gap-3 mb-10">
+          <Shield className="h-8 w-8 text-[#171717] dark:text-[#ededed]" />
+          <h1 className="text-3xl font-bold text-[#171717] dark:text-[#ededed]">
+            ブラウザセキュリティアラート プレイブック by pleno
+          </h1>
         </div>
 
           {/* Filters */}
