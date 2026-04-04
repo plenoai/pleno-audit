@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Shield, ChevronRight, X, ArrowLeft, Bell } from 'lucide-react';
+import { Shield, ChevronRight, X, Home, Bell } from 'lucide-react';
 import { DOC_SECTIONS, DEFAULT_EXPANDED_SECTION_IDS } from './data';
 
 interface DocSidebarProps {
@@ -66,7 +66,7 @@ export default function DocSidebar({
             to="/"
             className="flex items-center gap-2 text-sm text-[#666] dark:text-[#8f8f8f] hover:text-[#171717] dark:hover:text-[#ededed] transition-colors"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <Home className="h-4 w-4" />
             <span>ホームに戻る</span>
           </Link>
         </div>

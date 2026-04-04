@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Shield, ChevronRight, X, ArrowLeft, FileText } from 'lucide-react';
+import { Shield, ChevronRight, X, Home, FileText } from 'lucide-react';
 import { ALERT_GROUPS, ALL_PLAYBOOKS } from './data';
 import type { PlaybookSeverity } from './types';
 
@@ -78,7 +78,7 @@ export default function AlertSidebar({
               to="/"
               className="flex items-center gap-2 text-sm text-[#666] dark:text-[#8f8f8f] hover:text-[#171717] dark:hover:text-[#ededed] transition-colors"
             >
-              <ArrowLeft className="h-4 w-4" />
+              <Home className="h-4 w-4" />
               <span>ホームに戻る</span>
             </Link>
             <Link
