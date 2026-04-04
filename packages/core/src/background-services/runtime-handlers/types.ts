@@ -111,6 +111,7 @@ handleNetworkInspection: (data: unknown, sender: chrome.runtime.MessageSender) =
   handleClipboardEventSniffing: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
   handleDragEventSniffing: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
   handleSelectionSniffing: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
+  handleOpenRedirect: (data: unknown, sender: chrome.runtime.MessageSender) => Promise<unknown>;
 
   getAlerts: (options?: { limit?: number; status?: AlertStatus[] }) => Promise<SecurityAlert[]>;
 

@@ -59,6 +59,7 @@ import {
   type CanvasFingerprintData,
   type WebGLFingerprintData,
   type AudioFingerprintData,
+  type OpenRedirectData,
 } from "libztbs/background-services";
 import {
   createExtensionNetworkService,
@@ -375,6 +376,7 @@ handleNetworkInspection: (data, sender) => networkSecurityInspector.handleNetwor
     handleClipboardEventSniffing: (data, sender) => securityEventHandlers.handleClipboardEventSniffing(data as Record<string, unknown>, sender),
     handleDragEventSniffing: (data, sender) => securityEventHandlers.handleDragEventSniffing(data as Record<string, unknown>, sender),
     handleSelectionSniffing: (data, sender) => securityEventHandlers.handleSelectionSniffing(data as Record<string, unknown>, sender),
+    handleOpenRedirect: (data, sender) => securityEventHandlers.handleOpenRedirect(data as OpenRedirectData, sender),
     getAlerts: (options) => backgroundAlerts.getAlertManager().getAlerts(options),
     getCSPReports: cspReportingService.getCSPReports,
     generateCSPPolicy: cspReportingService.generateCSPPolicy,

@@ -180,6 +180,15 @@ export interface AudioFingerprintData {
   pageUrl?: string;
 }
 
+export interface OpenRedirectData {
+  source?: string;
+  timestamp: number | string;
+  pageUrl: string;
+  redirectUrl: string;
+  parameterName: string;
+  isExternal: boolean;
+}
+
 interface SecurityEventHandlerDependencies {
   getAlertManager: () => AlertManager;
   extractDomainFromUrl: (url: string) => string;
@@ -1485,6 +1494,34 @@ export function createSecurityEventHandlers(
           source: sourceLabel(data.source),
           domain: pageDomain,
           eventType: data.eventType,
+        },
+      });
+
+      return { success: true };
+    },
+
+    async handleOpenRedirect(
+      data: OpenRedirectData,
+      sender: chrome.runtime.MessageSender,
+    ): Promise<{ success: boolean }> {
+      const pageDomain = resolvePageDomain(sender, data.pageUrl, deps.extractDomainFromUrl);
+      const pageUrl = resolvePageUrl(sender, data.pageUrl);
+
+      await deps.getAlertManager().alertOpenRedirect({
+        domain: pageDomain,
+        redirectUrl: data.redirectUrl,
+        parameterName: data.parameterName,
+        isExternal: data.isExternal,
+      }, pageUrl);
+
+      deps.logger.warn({
+        event: "SECURITY_OPEN_REDIRECT_DETECTED",
+        data: {
+          source: sourceLabel(data.source),
+          from: pageDomain,
+          redirectUrl: data.redirectUrl,
+          parameterName: data.parameterName,
+          isExternal: data.isExternal,
         },
       });
 

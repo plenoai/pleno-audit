@@ -70,7 +70,8 @@ export type AlertCategory =
   | "idle_callback_timing" // requestIdleCallback timing side channel (kept for pipeline compat)
   | "clipboard_event_sniffing" // Clipboard event listener sniffing (copy/cut/paste) — burst >10 in 5s
   | "drag_event_sniffing" // Drag-and-drop event listener data theft (dragstart/drop) — burst >10 in 5s
-  | "selection_sniffing"; // Selection API keylogging (selectionchange) — burst >10 in 5s
+  | "selection_sniffing" // Selection API keylogging (selectionchange) — burst >10 in 5s
+  | "open_redirect"; // Open redirect via URL parameter to external domain
 
 /**
  * Alert status
@@ -163,7 +164,8 @@ export type AlertDetails =
   | IdleCallbackTimingAlertDetails
   | ClipboardEventSniffingAlertDetails
   | DragEventSniffingAlertDetails
-  | SelectionSniffingAlertDetails;
+  | SelectionSniffingAlertDetails
+  | OpenRedirectAlertDetails;
 
 export interface NRDAlertDetails {
   type: "nrd";
@@ -568,6 +570,14 @@ export interface SelectionSniffingAlertDetails {
   type: "selection_sniffing";
   domain: string;
   eventType: string;
+}
+
+export interface OpenRedirectAlertDetails {
+  type: "open_redirect";
+  domain: string;
+  redirectUrl: string;
+  parameterName: string;
+  isExternal: boolean;
 }
 
 /**

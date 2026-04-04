@@ -40,6 +40,7 @@ export type {
   DeviceSensorAlertDetails,
   DeviceEnumerationAlertDetails,
   StorageExfiltrationAlertDetails,
+  OpenRedirectAlertDetails,
   AlertAction,
   AlertRule,
   AlertCondition,
