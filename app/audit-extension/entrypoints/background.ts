@@ -1,6 +1,6 @@
 import type { DetectedService } from "libztbs/types";
 import type { CapturedAIPrompt } from "libztbs/ai-detector";
-import { DEFAULT_AI_MONITOR_CONFIG, createAnonymizeScanner, DEFAULT_DLP_ANONYMIZE_CONFIG, type DLPAnonymizeConfig } from "libztbs/ai-detector";
+import { DEFAULT_AI_MONITOR_CONFIG, createDLPScanner, DEFAULT_DLP_SERVER_CONFIG, type DLPServerConfig } from "libztbs/ai-detector";
 import { DEFAULT_NRD_CONFIG } from "libztbs/nrd";
 import { DEFAULT_TYPOSQUAT_CONFIG } from "libztbs/typosquat";
 import type { CSPViolation } from "libztbs/csp";
@@ -215,8 +215,8 @@ const aiPromptMonitorService = createAIPromptMonitorService({
   getAlertManager: backgroundAlerts.getAlertManager,
 });
 
-// DLP Anonymize Scanner (pleno-anonymize連携)
-const anonymizeScanner = createAnonymizeScanner();
+// DLP Scanner (pleno-anonymize DLP連携)
+const dlpScanner = createDLPScanner();
 
 const domainRiskService = createDomainRiskService({
   logger,
@@ -339,12 +339,12 @@ function initializeBackgroundServices(): void {
     .catch((error) => logger.error("Extension monitor init failed:", error));
   redirectMonitor.start();
 
-  // DLP Anonymize Scanner: ストレージから設定を復元
-  void getStorage("dlpAnonymizeConfig").then((data) => {
-    if (data.dlpAnonymizeConfig) {
-      anonymizeScanner.updateConfig(data.dlpAnonymizeConfig);
-      if (data.dlpAnonymizeConfig.enabled) {
-        void anonymizeScanner.verifyConnection();
+  // DLP Scanner: ストレージから設定を復元
+  void getStorage("dlpServerConfig").then((data) => {
+    if (data.dlpServerConfig) {
+      dlpScanner.updateConfig(data.dlpServerConfig);
+      if (data.dlpServerConfig.enabled) {
+        void dlpScanner.verifyConnection();
       }
     }
   }).catch((err) => logger.debug("DLP config load skipped:", err));
@@ -447,19 +447,19 @@ handleNetworkInspection: (data, sender) => networkSecurityInspector.handleNetwor
     getExtensionConnections: connectionTracker.getExtensionConnections,
     getNotificationConfig: backgroundConfig.getNotificationConfig,
     setNotificationConfig: backgroundConfig.setNotificationConfig,
-    getDLPAnonymizeConfig: async () => {
-      const data = await getStorage("dlpAnonymizeConfig");
-      return data.dlpAnonymizeConfig ?? DEFAULT_DLP_ANONYMIZE_CONFIG;
+    getDLPServerConfig: async () => {
+      const data = await getStorage("dlpServerConfig");
+      return data.dlpServerConfig ?? DEFAULT_DLP_SERVER_CONFIG;
     },
-    setDLPAnonymizeConfig: async (config: Partial<DLPAnonymizeConfig>) => {
-      const current = (await getStorage("dlpAnonymizeConfig")).dlpAnonymizeConfig ?? DEFAULT_DLP_ANONYMIZE_CONFIG;
+    setDLPServerConfig: async (config: Partial<DLPServerConfig>) => {
+      const current = (await getStorage("dlpServerConfig")).dlpServerConfig ?? DEFAULT_DLP_SERVER_CONFIG;
       const merged = { ...current, ...config };
-      await setStorage({ dlpAnonymizeConfig: merged });
-      anonymizeScanner.updateConfig(merged);
+      await setStorage({ dlpServerConfig: merged });
+      dlpScanner.updateConfig(merged);
       return { success: true };
     },
     testDLPConnection: async () => {
-      const connected = await anonymizeScanner.verifyConnection();
+      const connected = await dlpScanner.verifyConnection();
       return { connected };
     },
   };
@@ -541,7 +541,7 @@ export default defineBackground(() => {
       const data = message.data as { text?: string; domain?: string; pageUrl?: string } | undefined;
       if (data?.text && data.domain) {
         const context = type === "DLP_CLIPBOARD_COPY" ? "clipboard" as const : "form" as const;
-        anonymizeScanner.scan(data.text, context, data.domain, data.pageUrl).then(async (result) => {
+        dlpScanner.scan(data.text, context, data.domain, data.pageUrl).then(async (result) => {
           if (result) {
             const entityTypes = [...new Set(result.entities.map(e => e.entity_type))];
             await backgroundAlerts.getAlertManager().alertDLPPIIDetected({

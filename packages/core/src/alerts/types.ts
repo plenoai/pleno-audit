@@ -72,7 +72,7 @@ export type AlertCategory =
   | "drag_event_sniffing" // Drag-and-drop event listener data theft (dragstart/drop) — burst >10 in 5s
   | "selection_sniffing" // Selection API keylogging (selectionchange) — burst >10 in 5s
   | "open_redirect" // Open redirect via URL parameter to external domain
-  | "dlp_pii_detected"; // PII detected by pleno-anonymize DLP
+  | "dlp_pii_detected"; // PII detected by pleno-anonymize DLP server
 
 /**
  * Alert status

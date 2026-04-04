@@ -8,7 +8,7 @@ import {
   DEFAULT_NOTIFICATION_CONFIG,
   type NotificationConfig,
 } from "libztbs/extension-runtime";
-import { DEFAULT_DLP_ANONYMIZE_CONFIG, type DLPAnonymizeConfig } from "libztbs/ai-detector";
+import { DEFAULT_DLP_SERVER_CONFIG, type DLPServerConfig } from "libztbs/ai-detector";
 import type { CSSProperties } from "preact/compat";
 
 const logger = createLogger("dashboard-settings");
@@ -58,7 +58,7 @@ export function SettingsTab() {
 
   const [detectionConfig, setDetectionConfig] = useState<DetectionConfig>(DEFAULT_DETECTION_CONFIG);
   const [notificationConfig, setNotificationConfig] = useState<NotificationConfig>(DEFAULT_NOTIFICATION_CONFIG);
-  const [dlpConfig, setDlpConfig] = useState<DLPAnonymizeConfig>(DEFAULT_DLP_ANONYMIZE_CONFIG);
+  const [dlpConfig, setDlpConfig] = useState<DLPServerConfig>(DEFAULT_DLP_SERVER_CONFIG);
   const [dlpStatus, setDlpStatus] = useState<"disconnected" | "connecting" | "connected">("disconnected");
 
   useEffect(() => {
@@ -67,7 +67,7 @@ export function SettingsTab() {
         const [detection, notification, dlp] = await Promise.all([
           sendMessage<DetectionConfig>({ type: "GET_DETECTION_CONFIG" }),
           sendMessage<NotificationConfig>({ type: "GET_NOTIFICATION_CONFIG" }),
-          sendMessage<DLPAnonymizeConfig>({ type: "GET_DLP_ANONYMIZE_CONFIG" }),
+          sendMessage<DLPServerConfig>({ type: "GET_DLP_SERVER_CONFIG" }),
         ]);
         setDetectionConfig(detection);
         setNotificationConfig(notification);
@@ -93,9 +93,9 @@ export function SettingsTab() {
     catch (error) { logger.error("Failed to save notification config", error); }
   }, []);
 
-  const saveDlpConfig = useCallback(async (config: DLPAnonymizeConfig) => {
+  const saveDlpConfig = useCallback(async (config: DLPServerConfig) => {
     setDlpConfig(config);
-    try { await sendMessage({ type: "SET_DLP_ANONYMIZE_CONFIG", data: config }); }
+    try { await sendMessage({ type: "SET_DLP_SERVER_CONFIG", data: config }); }
     catch (error) { logger.error("Failed to save DLP config", error); }
   }, []);
 
@@ -143,7 +143,7 @@ export function SettingsTab() {
         onChange={() => {
           const next = { ...dlpConfig, enabled: !dlpConfig.enabled };
           saveDlpConfig(next);
-          saveDetection({ ...detectionConfig, enableDLPAnonymize: next.enabled });
+          saveDetection({ ...detectionConfig, enableDLPServer: next.enabled });
         }}
         colors={colors}
       />

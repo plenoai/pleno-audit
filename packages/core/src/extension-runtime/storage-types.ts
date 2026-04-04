@@ -11,7 +11,7 @@ import type {
   AlertCooldownData,
 } from "../types/index.js";
 import type { AIMonitorConfig } from "../ai-detector/index.js";
-import type { DLPAnonymizeConfig } from "../ai-detector/index.js";
+import type { DLPServerConfig } from "../ai-detector/index.js";
 import type { NRDConfig } from "../nrd/index.js";
 import type { CSPReport, GeneratedCSPByDomain } from "../csp/index.js";
 import type { PolicyConfig, SecurityAlert } from "../alerts/index.js";
@@ -48,7 +48,7 @@ export interface StorageData {
 
   generatedCSPPolicy?: GeneratedCSPByDomain;
   aiMonitorConfig?: AIMonitorConfig;
-  dlpAnonymizeConfig?: DLPAnonymizeConfig;
+  dlpServerConfig?: DLPServerConfig;
   nrdConfig?: NRDConfig;
   detectionConfig?: DetectionConfig;
   notificationConfig?: NotificationConfig;
@@ -60,7 +60,7 @@ export type {
   CSPReport,
   GeneratedCSPByDomain,
   AIMonitorConfig,
-  DLPAnonymizeConfig,
+  DLPServerConfig,
   NRDConfig,
   SecurityAlert,
 };

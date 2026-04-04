@@ -290,14 +290,14 @@ export interface DetectionConfig {
   enableNRD: boolean;
   enableTyposquat: boolean;
   enableAI: boolean;
-  enableDLPAnonymize: boolean;
+  enableDLPServer: boolean;
 }
 
 export const DEFAULT_DETECTION_CONFIG: DetectionConfig = {
   enableNRD: false,
   enableTyposquat: true,
   enableAI: true,
-  enableDLPAnonymize: false,
+  enableDLPServer: false,
 };
 
 /**
@@ -355,7 +355,7 @@ export interface EnterpriseManagedConfig {
     enableNRD?: boolean;
     enableTyposquat?: boolean;
     enableAI?: boolean;
-    enableDLPAnonymize?: boolean;
+    enableDLPServer?: boolean;
     enableNotifications?: boolean;
   };
   reporting?: EnterpriseReportingConfig;

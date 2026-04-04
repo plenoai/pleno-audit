@@ -94,25 +94,25 @@ export {
   type DomainVisitData,
 } from "./policy-generator.js";
 
-// Anonymize Client (pleno-anonymize DLP — detect only)
+// DLP Client (pleno-anonymize DLP — detect only)
 export {
-  createAnonymizeClient,
-  type AnonymizeClient,
-  type AnonymizeClientConfig,
-  type AnonymizeEntity,
-  type AnalyzeRequest,
-} from "./anonymize-client.js";
+  createDLPClient,
+  type DLPClient,
+  type DLPClientConfig,
+  type DLPEntity,
+  type DLPAnalyzeRequest,
+} from "./dlp-client.js";
 
-// Anonymize Scanner
+// DLP Scanner
 export {
-  createAnonymizeScanner,
+  createDLPScanner,
   getEntityLabel,
-  DEFAULT_DLP_ANONYMIZE_CONFIG,
-  type AnonymizeScanner,
-  type DLPAnonymizeConfig,
+  DEFAULT_DLP_SERVER_CONFIG,
+  type DLPScanner,
+  type DLPServerConfig,
   type ScanContext,
-  type AnonymizeScanResult,
-} from "./anonymize-scanner.js";
+  type DLPScanResult,
+} from "./dlp-scanner.js";
 
 // AI Pattern Analyzer
 export {

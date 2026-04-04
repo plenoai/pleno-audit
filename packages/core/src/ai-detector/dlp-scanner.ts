@@ -1,5 +1,5 @@
 /**
- * Anonymize Scanner
+ * DLP Scanner
  *
  * pleno-anonymizeを利用したDLPスキャナー。
  * クリップボードコピーやフォーム送信時のテキストをスキャンし、
@@ -7,25 +7,25 @@
  */
 
 import { createLogger } from "../extension-runtime/logger.js";
-import { createAnonymizeClient, type AnonymizeClient, type AnonymizeEntity } from "./anonymize-client.js";
+import { createDLPClient, type DLPClient, type DLPEntity } from "./dlp-client.js";
 
-const logger = createLogger("anonymize-scanner");
+const logger = createLogger("dlp-scanner");
 
 /** スキャン対象のコンテキスト */
 export type ScanContext = "clipboard" | "form" | "ai_prompt";
 
 /** スキャン結果 */
-export interface AnonymizeScanResult {
+export interface DLPScanResult {
   context: ScanContext;
   domain: string;
   url?: string;
-  entities: AnonymizeEntity[];
+  entities: DLPEntity[];
   language: "ja" | "en";
   scannedAt: number;
 }
 
-/** DLP Anonymize設定（StorageDataに保存） */
-export interface DLPAnonymizeConfig {
+/** DLP Server設定（StorageDataに保存） */
+export interface DLPServerConfig {
   enabled: boolean;
   serverUrl: string;
   language: "ja" | "en";
@@ -33,7 +33,7 @@ export interface DLPAnonymizeConfig {
   serverConnected: boolean;
 }
 
-export const DEFAULT_DLP_ANONYMIZE_CONFIG: DLPAnonymizeConfig = {
+export const DEFAULT_DLP_SERVER_CONFIG: DLPServerConfig = {
   enabled: false,
   serverUrl: "http://localhost:8080",
   language: "ja",
@@ -68,9 +68,9 @@ export function getEntityLabel(entityType: string): string {
   return ENTITY_LABELS[entityType] ?? entityType;
 }
 
-export function createAnonymizeScanner(initialConfig?: Partial<DLPAnonymizeConfig>) {
-  const config: DLPAnonymizeConfig = { ...DEFAULT_DLP_ANONYMIZE_CONFIG, ...initialConfig };
-  let client: AnonymizeClient = createAnonymizeClient({
+export function createDLPScanner(initialConfig?: Partial<DLPServerConfig>) {
+  const config: DLPServerConfig = { ...DEFAULT_DLP_SERVER_CONFIG, ...initialConfig };
+  let client: DLPClient = createDLPClient({
     serverUrl: config.serverUrl,
   });
 
@@ -85,7 +85,7 @@ export function createAnonymizeScanner(initialConfig?: Partial<DLPAnonymizeConfi
       config.serverConnected = ready;
       return ready;
     } catch (error) {
-      logger.warn("anonymize server connection failed", error);
+      logger.warn("DLP server connection failed", error);
       config.serverConnected = false;
       return false;
     }
@@ -96,7 +96,7 @@ export function createAnonymizeScanner(initialConfig?: Partial<DLPAnonymizeConfi
     context: ScanContext,
     domain: string,
     url?: string,
-  ): Promise<AnonymizeScanResult | null> {
+  ): Promise<DLPScanResult | null> {
     if (!config.enabled || !config.serverConnected) {
       return null;
     }
@@ -143,16 +143,16 @@ export function createAnonymizeScanner(initialConfig?: Partial<DLPAnonymizeConfi
     }
   }
 
-  function updateConfig(newConfig: Partial<DLPAnonymizeConfig>) {
+  function updateConfig(newConfig: Partial<DLPServerConfig>) {
     const serverChanged = newConfig.serverUrl && newConfig.serverUrl !== config.serverUrl;
     Object.assign(config, newConfig);
     if (serverChanged) {
-      client = createAnonymizeClient({ serverUrl: config.serverUrl });
+      client = createDLPClient({ serverUrl: config.serverUrl });
       config.serverConnected = false;
     }
   }
 
-  function getConfig(): DLPAnonymizeConfig {
+  function getConfig(): DLPServerConfig {
     return { ...config };
   }
 
@@ -164,4 +164,4 @@ export function createAnonymizeScanner(initialConfig?: Partial<DLPAnonymizeConfi
   };
 }
 
-export type AnonymizeScanner = ReturnType<typeof createAnonymizeScanner>;
+export type DLPScanner = ReturnType<typeof createDLPScanner>;

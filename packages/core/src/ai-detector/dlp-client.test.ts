@@ -1,26 +1,26 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createAnonymizeClient } from "./anonymize-client.js";
+import { createDLPClient } from "./dlp-client.js";
 
-describe("createAnonymizeClient", () => {
+describe("createDLPClient", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
   });
 
   it("checkHealth returns false on network error", async () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("Connection refused")));
-    const client = createAnonymizeClient({ serverUrl: "http://localhost:9999" });
+    const client = createDLPClient({ serverUrl: "http://localhost:9999" });
     expect(await client.checkHealth()).toBe(false);
   });
 
   it("checkHealth returns true on 200", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true }));
-    const client = createAnonymizeClient();
+    const client = createDLPClient();
     expect(await client.checkHealth()).toBe(true);
   });
 
   it("checkReady returns false on non-ok response", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 503 }));
-    const client = createAnonymizeClient();
+    const client = createDLPClient();
     expect(await client.checkReady()).toBe(false);
   });
 
@@ -32,7 +32,7 @@ describe("createAnonymizeClient", () => {
     });
     vi.stubGlobal("fetch", mockFetch);
 
-    const client = createAnonymizeClient({ serverUrl: "http://localhost:8080" });
+    const client = createDLPClient({ serverUrl: "http://localhost:8080" });
     const result = await client.analyze({ text: "田中太郎です", language: "ja" });
 
     expect(result).toEqual(mockEntities);
@@ -47,15 +47,15 @@ describe("createAnonymizeClient", () => {
 
   it("analyze throws on non-ok response", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 500 }));
-    const client = createAnonymizeClient();
-    await expect(client.analyze({ text: "test", language: "en" })).rejects.toThrow("anonymize analyze failed: 500");
+    const client = createDLPClient();
+    await expect(client.analyze({ text: "test", language: "en" })).rejects.toThrow("DLP analyze failed: 500");
   });
 
   it("updateConfig changes server URL", async () => {
     const mockFetch = vi.fn().mockResolvedValue({ ok: true });
     vi.stubGlobal("fetch", mockFetch);
 
-    const client = createAnonymizeClient({ serverUrl: "http://localhost:8080" });
+    const client = createDLPClient({ serverUrl: "http://localhost:8080" });
     client.updateConfig({ serverUrl: "http://localhost:9090" });
     await client.checkHealth();
 

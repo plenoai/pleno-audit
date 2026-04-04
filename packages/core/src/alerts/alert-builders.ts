@@ -2167,7 +2167,7 @@ export const buildOpenRedirectAlert = createAlertBuilder(
 );
 
 // ============================================================================
-// DLP PII Detected Alert (pleno-anonymize)
+// DLP PII Detected Alert (pleno-anonymize DLP)
 // ============================================================================
 
 const SCAN_CONTEXT_LABELS: Record<string, string> = {

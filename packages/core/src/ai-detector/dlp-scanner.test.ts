@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createAnonymizeScanner, DEFAULT_DLP_ANONYMIZE_CONFIG, getEntityLabel } from "./anonymize-scanner.js";
+import { createDLPScanner, DEFAULT_DLP_SERVER_CONFIG, getEntityLabel } from "./dlp-scanner.js";
 
-// Mock the anonymize-client module
-vi.mock("./anonymize-client.js", () => ({
-  createAnonymizeClient: vi.fn(() => ({
+// Mock the dlp-client module
+vi.mock("./dlp-client.js", () => ({
+  createDLPClient: vi.fn(() => ({
     checkHealth: vi.fn().mockResolvedValue(true),
     checkReady: vi.fn().mockResolvedValue(true),
     analyze: vi.fn().mockResolvedValue([]),
@@ -11,7 +11,7 @@ vi.mock("./anonymize-client.js", () => ({
   })),
 }));
 
-import { createAnonymizeClient } from "./anonymize-client.js";
+import { createDLPClient } from "./dlp-client.js";
 
 const mockClient = () => {
   const client = {
@@ -20,17 +20,17 @@ const mockClient = () => {
     analyze: vi.fn().mockResolvedValue([]),
     updateConfig: vi.fn(),
   };
-  vi.mocked(createAnonymizeClient).mockReturnValue(client);
+  vi.mocked(createDLPClient).mockReturnValue(client);
   return client;
 };
 
-describe("createAnonymizeScanner", () => {
+describe("createDLPScanner", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it("default config is disabled", () => {
-    const scanner = createAnonymizeScanner();
+    const scanner = createDLPScanner();
     const config = scanner.getConfig();
     expect(config.enabled).toBe(false);
     expect(config.serverUrl).toBe("http://localhost:8080");
@@ -38,20 +38,20 @@ describe("createAnonymizeScanner", () => {
   });
 
   it("scan returns null when disabled", async () => {
-    const scanner = createAnonymizeScanner();
+    const scanner = createDLPScanner();
     const result = await scanner.scan("田中太郎", "clipboard", "example.com");
     expect(result).toBeNull();
   });
 
   it("scan returns null when not connected", async () => {
-    const scanner = createAnonymizeScanner({ enabled: true, serverConnected: false });
+    const scanner = createDLPScanner({ enabled: true, serverConnected: false });
     const result = await scanner.scan("田中太郎", "clipboard", "example.com");
     expect(result).toBeNull();
   });
 
   it("scan returns null for empty text", async () => {
     const client = mockClient();
-    const scanner = createAnonymizeScanner({ enabled: true, serverConnected: true });
+    const scanner = createDLPScanner({ enabled: true, serverConnected: true });
     const result = await scanner.scan("   ", "clipboard", "example.com");
     expect(result).toBeNull();
     expect(client.analyze).not.toHaveBeenCalled();
@@ -60,7 +60,7 @@ describe("createAnonymizeScanner", () => {
   it("scan returns null when no entities detected", async () => {
     const client = mockClient();
     client.analyze.mockResolvedValue([]);
-    const scanner = createAnonymizeScanner({ enabled: true, serverConnected: true });
+    const scanner = createDLPScanner({ enabled: true, serverConnected: true });
     const result = await scanner.scan("hello world", "clipboard", "example.com");
     expect(result).toBeNull();
   });
@@ -73,7 +73,7 @@ describe("createAnonymizeScanner", () => {
     ];
     client.analyze.mockResolvedValue(entities);
 
-    const scanner = createAnonymizeScanner({ enabled: true, serverConnected: true });
+    const scanner = createDLPScanner({ enabled: true, serverConnected: true });
     const result = await scanner.scan("田中太郎 tanaka@example.com", "clipboard", "example.com", "https://example.com/page");
 
     expect(result).not.toBeNull();
@@ -88,7 +88,7 @@ describe("createAnonymizeScanner", () => {
     const client = mockClient();
     client.analyze.mockResolvedValue([]);
 
-    const scanner = createAnonymizeScanner({ enabled: true, serverConnected: true });
+    const scanner = createDLPScanner({ enabled: true, serverConnected: true });
     const longText = "a".repeat(20000);
     await scanner.scan(longText, "form", "example.com");
 
@@ -103,7 +103,7 @@ describe("createAnonymizeScanner", () => {
 
   it("verifyConnection checks health and ready", async () => {
     const client = mockClient();
-    const scanner = createAnonymizeScanner();
+    const scanner = createDLPScanner();
 
     const connected = await scanner.verifyConnection();
     expect(connected).toBe(true);
@@ -115,7 +115,7 @@ describe("createAnonymizeScanner", () => {
   it("verifyConnection returns false on health failure", async () => {
     const client = mockClient();
     client.checkHealth.mockResolvedValue(false);
-    const scanner = createAnonymizeScanner();
+    const scanner = createDLPScanner();
 
     const connected = await scanner.verifyConnection();
     expect(connected).toBe(false);
@@ -124,21 +124,21 @@ describe("createAnonymizeScanner", () => {
 
   it("updateConfig recreates client on server URL change", () => {
     mockClient();
-    const scanner = createAnonymizeScanner({ serverUrl: "http://localhost:8080" });
+    const scanner = createDLPScanner({ serverUrl: "http://localhost:8080" });
     scanner.updateConfig({ serverUrl: "http://localhost:9090" });
 
-    expect(createAnonymizeClient).toHaveBeenCalledTimes(2);
+    expect(createDLPClient).toHaveBeenCalledTimes(2);
     expect(scanner.getConfig().serverUrl).toBe("http://localhost:9090");
     expect(scanner.getConfig().serverConnected).toBe(false);
   });
 
   it("updateConfig does not recreate client on non-URL change", () => {
     mockClient();
-    const scanner = createAnonymizeScanner();
+    const scanner = createDLPScanner();
     scanner.updateConfig({ language: "en" });
 
     // Initial creation + no recreation = 1 call
-    expect(createAnonymizeClient).toHaveBeenCalledTimes(1);
+    expect(createDLPClient).toHaveBeenCalledTimes(1);
     expect(scanner.getConfig().language).toBe("en");
   });
 });
@@ -156,11 +156,11 @@ describe("getEntityLabel", () => {
   });
 });
 
-describe("DEFAULT_DLP_ANONYMIZE_CONFIG", () => {
+describe("DEFAULT_DLP_SERVER_CONFIG", () => {
   it("has expected defaults", () => {
-    expect(DEFAULT_DLP_ANONYMIZE_CONFIG.enabled).toBe(false);
-    expect(DEFAULT_DLP_ANONYMIZE_CONFIG.serverUrl).toBe("http://localhost:8080");
-    expect(DEFAULT_DLP_ANONYMIZE_CONFIG.language).toBe("ja");
-    expect(DEFAULT_DLP_ANONYMIZE_CONFIG.serverConnected).toBe(false);
+    expect(DEFAULT_DLP_SERVER_CONFIG.enabled).toBe(false);
+    expect(DEFAULT_DLP_SERVER_CONFIG.serverUrl).toBe("http://localhost:8080");
+    expect(DEFAULT_DLP_SERVER_CONFIG.language).toBe("ja");
+    expect(DEFAULT_DLP_SERVER_CONFIG.serverConnected).toBe(false);
   });
 });

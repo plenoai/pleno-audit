@@ -1,5 +1,5 @@
 /**
- * pleno-anonymize API Client
+ * pleno-anonymize DLP Client
  *
  * ローカルで稼働するpleno-anonymizeサーバーと通信し、
  * PII検出を行うクライアント。検出のみ、匿名化は行わない。
@@ -9,10 +9,10 @@
 
 import { createLogger } from "../extension-runtime/logger.js";
 
-const logger = createLogger("anonymize-client");
+const logger = createLogger("dlp-client");
 
 /** pleno-anonymize /api/analyze レスポンスのエンティティ */
-export interface AnonymizeEntity {
+export interface DLPEntity {
   entity_type: string;
   start: number;
   end: number;
@@ -21,24 +21,24 @@ export interface AnonymizeEntity {
 }
 
 /** /api/analyze リクエスト */
-export interface AnalyzeRequest {
+export interface DLPAnalyzeRequest {
   text: string;
   language: "ja" | "en";
   entities?: string[];
 }
 
-export interface AnonymizeClientConfig {
+export interface DLPClientConfig {
   serverUrl: string;
   timeoutMs: number;
 }
 
-const DEFAULT_CLIENT_CONFIG: AnonymizeClientConfig = {
+const DEFAULT_CLIENT_CONFIG: DLPClientConfig = {
   serverUrl: "http://localhost:8080",
   timeoutMs: 5000,
 };
 
-export function createAnonymizeClient(config: Partial<AnonymizeClientConfig> = {}) {
-  const cfg: AnonymizeClientConfig = { ...DEFAULT_CLIENT_CONFIG, ...config };
+export function createDLPClient(config: Partial<DLPClientConfig> = {}) {
+  const cfg: DLPClientConfig = { ...DEFAULT_CLIENT_CONFIG, ...config };
 
   async function checkHealth(): Promise<boolean> {
     try {
@@ -62,7 +62,7 @@ export function createAnonymizeClient(config: Partial<AnonymizeClientConfig> = {
     }
   }
 
-  async function analyze(request: AnalyzeRequest): Promise<AnonymizeEntity[]> {
+  async function analyze(request: DLPAnalyzeRequest): Promise<DLPEntity[]> {
     const res = await fetch(`${cfg.serverUrl}/api/analyze`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -70,12 +70,12 @@ export function createAnonymizeClient(config: Partial<AnonymizeClientConfig> = {
       signal: AbortSignal.timeout(cfg.timeoutMs),
     });
     if (!res.ok) {
-      throw new Error(`anonymize analyze failed: ${res.status}`);
+      throw new Error(`DLP analyze failed: ${res.status}`);
     }
     return res.json();
   }
 
-  function updateConfig(newConfig: Partial<AnonymizeClientConfig>) {
+  function updateConfig(newConfig: Partial<DLPClientConfig>) {
     Object.assign(cfg, newConfig);
     logger.debug("client config updated", cfg);
   }
@@ -88,4 +88,4 @@ export function createAnonymizeClient(config: Partial<AnonymizeClientConfig> = {
   };
 }
 
-export type AnonymizeClient = ReturnType<typeof createAnonymizeClient>;
+export type DLPClient = ReturnType<typeof createDLPClient>;

@@ -2,7 +2,7 @@ import type {
   DetectionConfig,
   NotificationConfig,
 } from "../../extension-runtime/index.js";
-import type { DLPAnonymizeConfig } from "../../ai-detector/index.js";
+import type { DLPServerConfig } from "../../ai-detector/index.js";
 import type { AsyncHandlerEntry, RuntimeHandlerDependencies } from "./types.js";
 
 export function createConfigurationHandlers(
@@ -25,12 +25,12 @@ export function createConfigurationHandlers(
       execute: (message) => deps.setNotificationConfig(message.data as Partial<NotificationConfig>),
       fallback: () => ({ success: false }),
     }],
-    ["GET_DLP_ANONYMIZE_CONFIG", {
-      execute: () => deps.getDLPAnonymizeConfig(),
+    ["GET_DLP_SERVER_CONFIG", {
+      execute: () => deps.getDLPServerConfig(),
       fallback: () => null,
     }],
-    ["SET_DLP_ANONYMIZE_CONFIG", {
-      execute: (message) => deps.setDLPAnonymizeConfig(message.data as Partial<DLPAnonymizeConfig>),
+    ["SET_DLP_SERVER_CONFIG", {
+      execute: (message) => deps.setDLPServerConfig(message.data as Partial<DLPServerConfig>),
       fallback: () => ({ success: false }),
     }],
     ["TEST_DLP_CONNECTION", {
