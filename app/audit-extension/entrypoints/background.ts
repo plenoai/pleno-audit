@@ -1,6 +1,6 @@
 import type { DetectedService } from "libztbs/types";
 import type { CapturedAIPrompt } from "libztbs/ai-detector";
-import { DEFAULT_AI_MONITOR_CONFIG, createDLPScanner, DEFAULT_DLP_SERVER_CONFIG, type DLPServerConfig, createDLPModelManager } from "libztbs/ai-detector";
+import { DEFAULT_AI_MONITOR_CONFIG, DEFAULT_DLP_SERVER_CONFIG, type DLPServerConfig, createDLPModelManager } from "libztbs/ai-detector";
 import { DEFAULT_NRD_CONFIG } from "libztbs/nrd";
 import { DEFAULT_TYPOSQUAT_CONFIG } from "libztbs/typosquat";
 import type { CSPViolation } from "libztbs/csp";
@@ -222,9 +222,25 @@ const aiPromptMonitorService = createAIPromptMonitorService({
   getAlertManager: backgroundAlerts.getAlertManager,
 });
 
-// DLP Scanner (Transformers.js pipeline)
-const dlpScanner = createDLPScanner();
+// DLP: Offscreen Document 経由で推論（Service WorkerにXHR/WASMがないため）
 const dlpModelManager = createDLPModelManager();
+
+async function ensureDLPOffscreen(): Promise<void> {
+  const contexts = await chrome.offscreen.getContexts({
+    contextTypes: [chrome.offscreen.ContextType.WORKERS as chrome.offscreen.ContextType],
+  });
+  if (contexts.length > 0) return;
+  await chrome.offscreen.createDocument({
+    url: "dlp-offscreen.html",
+    reasons: [chrome.offscreen.Reason.WORKERS as chrome.offscreen.Reason],
+    justification: "DLP NER inference requires XMLHttpRequest and WASM (unavailable in Service Worker)",
+  });
+}
+
+async function sendToDLPOffscreen<T>(action: string, data?: unknown): Promise<T> {
+  await ensureDLPOffscreen();
+  return chrome.runtime.sendMessage({ target: "dlp-offscreen", action, data }) as Promise<T>;
+}
 
 const domainRiskService = createDomainRiskService({
   logger,
@@ -347,22 +363,23 @@ function initializeBackgroundServices(): void {
     .catch((error) => logger.error("Extension monitor init failed:", error));
   redirectMonitor.start();
 
-  // DLP Scanner: ストレージから設定を復元し、キャッシュ済みモデルがあればpipeline初期化
-  void getStorage("dlpServerConfig").then(async (data) => {
-    if (data.dlpServerConfig) {
-      dlpScanner.updateConfig(data.dlpServerConfig);
-      if (data.dlpServerConfig.enabled) {
-        try {
-          const cached = await dlpModelManager.isDownloaded();
-          if (cached) {
-            dlpModelManager.setLoading();
-            await dlpScanner.initPipeline();
+  // DLP: ストレージから設定を復元し、キャッシュ済みモデルがあればoffscreen経由でpipeline初期化
+  void getStorage().then(async (data) => {
+    if (data.dlpServerConfig?.enabled) {
+      try {
+        const cached = await dlpModelManager.isDownloaded();
+        if (cached) {
+          dlpModelManager.setLoading();
+          const res = await sendToDLPOffscreen<{ success: boolean }>("init-pipeline");
+          if (res?.success) {
             dlpModelManager.setReady();
-            logger.info("DLP Transformers.js pipeline auto-loaded from cache");
+            logger.info("DLP pipeline auto-loaded via offscreen document");
+          } else {
+            dlpModelManager.setError("Pipeline init failed");
           }
-        } catch (err) {
-          logger.debug("DLP pipeline auto-load skipped:", err);
         }
+      } catch (err) {
+        logger.debug("DLP pipeline auto-load skipped:", err);
       }
     }
   }).catch((err) => logger.debug("DLP config load skipped:", err));
@@ -472,24 +489,26 @@ handleNetworkInspection: (data, sender) => networkSecurityInspector.handleNetwor
     getNotificationConfig: backgroundConfig.getNotificationConfig,
     setNotificationConfig: backgroundConfig.setNotificationConfig,
     getDLPServerConfig: async () => {
-      const data = await getStorage("dlpServerConfig");
+      const data = await getStorage();
       return data.dlpServerConfig ?? DEFAULT_DLP_SERVER_CONFIG;
     },
     setDLPServerConfig: async (config: Partial<DLPServerConfig>) => {
-      const current = (await getStorage("dlpServerConfig")).dlpServerConfig ?? DEFAULT_DLP_SERVER_CONFIG;
+      const data = await getStorage();
+      const current = data.dlpServerConfig ?? DEFAULT_DLP_SERVER_CONFIG;
       const merged = { ...current, ...config };
       await setStorage({ dlpServerConfig: merged });
-      dlpScanner.updateConfig(merged);
       return { success: true };
     },
     downloadDLPModel: async () => {
       try {
         dlpModelManager.setLoading();
-        await dlpScanner.initPipeline((progress) => {
-          logger.debug("DLP model download progress", progress);
-        });
-        dlpModelManager.setReady();
-        return { success: true };
+        const res = await sendToDLPOffscreen<{ success: boolean; error?: string }>("init-pipeline");
+        if (res?.success) {
+          dlpModelManager.setReady();
+          return { success: true };
+        }
+        dlpModelManager.setError(res?.error ?? "init failed");
+        return { success: false };
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         dlpModelManager.setError(message);
@@ -503,7 +522,7 @@ handleNetworkInspection: (data, sender) => networkSecurityInspector.handleNetwor
     },
     deleteDLPModel: async () => {
       try {
-        await dlpScanner.disposePipeline();
+        await sendToDLPOffscreen("dispose");
         await dlpModelManager.delete();
         return { success: true };
       } catch (error) {
@@ -585,15 +604,17 @@ export default defineBackground(() => {
       return runAsyncMessageHandlerModule(logger, asyncHandler, message, sender, sendResponse);
     }
 
-    // DLP scanning events (handled inline because scanner lives in background.ts)
+    // DLP scanning events — offscreen document 経由で推論
     if (type === "DLP_CLIPBOARD_COPY" || type === "DLP_FORM_SUBMIT") {
       const data = message.data as { text?: string; domain?: string; pageUrl?: string } | undefined;
       if (data?.text && data.domain) {
         const context = type === "DLP_CLIPBOARD_COPY" ? "clipboard" as const : "form" as const;
-        dlpScanner.scan(data.text, context, data.domain, data.pageUrl).then(async (result) => {
+        sendToDLPOffscreen<{ result: import("libztbs/ai-detector").DLPScanResult | null }>("scan", {
+          text: data.text, context, domain: data.domain, url: data.pageUrl,
+        }).then(async (res) => {
+          const result = res?.result;
           if (result) {
             const entityTypes = [...new Set(result.entities.map(e => e.entity_type))];
-            // エンティティ部分をマスクしたサンプルを生成（誤検知判定用）
             let maskedSample: string | undefined;
             if (result.entities.length > 0) {
               const sorted = [...result.entities].sort((a, b) => b.start - a.start);
@@ -617,7 +638,7 @@ export default defineBackground(() => {
           logger.error("DLP scan failed", err);
           sendResponse({ success: false });
         });
-        return true; // async response
+        return true;
       }
       return false;
     }
