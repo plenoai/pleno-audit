@@ -43,7 +43,7 @@ export default function AlertsIndexPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-white dark:bg-[#0a0a0a]">
-      <main className="flex-1 max-w-6xl mx-auto w-full px-6 py-12">
+      <main className="flex-1 w-full px-6 py-12">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
