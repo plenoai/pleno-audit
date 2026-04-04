@@ -17,6 +17,16 @@ import { getExtensionStats } from "./stats.js";
 export type { ExtensionStats } from "./helpers.js";
 export type { ExtensionNetworkService, ExtensionNetworkServiceDeps } from "./types.js";
 
+// Redirect Monitor
+export {
+  createRedirectMonitor,
+  type RedirectMonitor,
+  type RedirectMonitorDeps,
+  type RedirectAlertInfo,
+  type RedirectChain,
+  type RedirectEntry,
+} from "./redirect-monitor.js";
+
 // Network Monitor public API
 export {
   createNetworkMonitor,

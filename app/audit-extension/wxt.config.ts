@@ -23,7 +23,7 @@ export default defineConfig({
 
     // Base permissions (cross-browser)
     // unlimitedStorage: ZTA監査証跡の完全保持のため
-    const basePermissions = ["cookies", "storage", "unlimitedStorage", "activeTab", "alarms", "webRequest", "management", "notifications"];
+    const basePermissions = ["cookies", "storage", "unlimitedStorage", "activeTab", "alarms", "webRequest", "webNavigation", "management", "notifications"];
 
     // Chrome/Edge MV3 permissions
     const mv3Permissions = [...basePermissions, "scripting", "declarativeNetRequest", "declarativeNetRequestWithHostAccess", "declarativeNetRequestFeedback", "identity"];
