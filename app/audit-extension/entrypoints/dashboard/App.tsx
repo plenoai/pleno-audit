@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
+import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
 import type { AlertSeverity } from "libztbs/alerts";
 import { ThemeContext, useThemeState } from "../../lib/theme";
 import { ErrorBoundary, NotificationBanner, Sidebar, useNotifications } from "../../components";
@@ -36,7 +36,16 @@ interface DomainAlertSummary {
 function DashboardContent({ animationEnabled, setAnimationEnabled }: { animationEnabled: boolean; setAnimationEnabled: (v: boolean) => void }) {
   const styles = createDashboardStyles();
 
-  const [activeTab, setActiveTab] = useState<TabType>(getInitialTab);
+  const [activeTab, setActiveTabRaw] = useState<TabType>(getInitialTab);
+  const prevTabIndex = useRef(tabs.findIndex((t) => t.id === getInitialTab()));
+  const slideDirection = useRef<1 | -1>(1);
+
+  const setActiveTab = useCallback((tab: TabType) => {
+    const newIndex = tabs.findIndex((t) => t.id === tab);
+    slideDirection.current = newIndex >= prevTabIndex.current ? 1 : -1;
+    prevTabIndex.current = newIndex;
+    setActiveTabRaw(tab);
+  }, []);
 
   const { notifications, addNotification, dismissNotification } = useNotifications();
 
@@ -137,9 +146,9 @@ function DashboardContent({ animationEnabled, setAnimationEnabled }: { animation
         <div style={styles.container}>
           <Motion
             key={activeTab}
-            initial={{ opacity: 0, y: 8 }}
+            initial={{ opacity: 0, y: 12 * slideDirection.current }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.25, ease: "ease-out" }}
+            transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
             style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}
           >
             {activeTab === "services" && (

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
+import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { ALL_PLAYBOOKS, type AlertSeverity, type AlertCategory, type PlaybookData } from "libztbs/alerts";
 import {
   AlertRowMenu,
@@ -11,6 +11,7 @@ import { useTabFilter } from "../hooks/useTabFilter";
 import { truncate } from "../utils";
 import { useTheme, spacing, fontSize, borderRadius } from "../../../lib/theme";
 import { sendMessage } from "../../../lib/messaging";
+import { useAnimationEnabled } from "../../../lib/motion";
 
 interface AlertItem {
   id: string;
@@ -248,12 +249,27 @@ function AlertDetailSidebar({
   onDismiss: () => void;
 }) {
   const { colors } = useTheme();
+  const animationEnabled = useAnimationEnabled();
+  const sidebarRef = useRef<HTMLDivElement>(null);
   const detailEntries = Object.entries(alert.details ?? {}).filter(
     ([k]) => k !== "type",
   );
 
+  useEffect(() => {
+    const el = sidebarRef.current;
+    if (!el || !animationEnabled) return;
+    el.style.transform = "translateX(100%)";
+    el.style.opacity = "0";
+    requestAnimationFrame(() => {
+      el.style.transition = "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1)";
+      el.style.transform = "translateX(0)";
+      el.style.opacity = "1";
+    });
+  }, [alert, animationEnabled]);
+
   return (
     <div
+      ref={sidebarRef}
       style={{
         width: "420px",
         minWidth: "420px",
