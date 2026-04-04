@@ -9,15 +9,15 @@
     "configFile": "vitest.config.ts"
   },
   "mutate": [
-    "packages/nrd/src/**/*.ts",
-    "!packages/nrd/src/**/*.test.ts",
-    "!packages/nrd/src/**/*.property.ts",
-    "!packages/nrd/src/index.ts",
-    "packages/typosquat/src/**/*.ts",
-    "!packages/typosquat/src/**/*.test.ts",
-    "!packages/typosquat/src/**/*.property.ts",
-    "!packages/typosquat/src/index.ts",
-    "!packages/typosquat/src/types.ts"
+    "packages/core/src/nrd/**/*.ts",
+    "!packages/core/src/nrd/**/*.test.ts",
+    "!packages/core/src/nrd/**/*.property.ts",
+    "!packages/core/src/nrd/index.ts",
+    "packages/core/src/typosquat/**/*.ts",
+    "!packages/core/src/typosquat/**/*.test.ts",
+    "!packages/core/src/typosquat/**/*.property.ts",
+    "!packages/core/src/typosquat/index.ts",
+    "!packages/core/src/typosquat/types.ts"
   ],
   "checkers": ["typescript"],
   "tsconfigFile": "tsconfig.packages.json",
