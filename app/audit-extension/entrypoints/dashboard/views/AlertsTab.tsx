@@ -110,30 +110,28 @@ const severityButtons: { key: AlertSeverity; label: string }[] = [
 function AlertRow({
   alert,
   isSelected,
+  isActive,
   onSelect,
-  isExpanded,
-  onToggleExpand,
+  onOpen,
   onReportFP,
   onDismiss,
 }: {
   alert: AlertItem;
   isSelected: boolean;
+  isActive: boolean;
   onSelect: (id: string, selected: boolean) => void;
-  isExpanded: boolean;
-  onToggleExpand: () => void;
+  onOpen: () => void;
   onReportFP: () => void;
   onDismiss: () => void;
 }) {
   const { colors } = useTheme();
-  const detailEntries = Object.entries(alert.details ?? {}).filter(
-    ([k]) => k !== "type",
-  );
 
   return (
     <div
       style={{
-        background: colors.bgPrimary,
+        background: isActive ? colors.bgSecondary : colors.bgPrimary,
         borderBottom: `1px solid ${colors.borderLight}`,
+        borderLeft: isActive ? `3px solid ${colors.interactive}` : "3px solid transparent",
       }}
     >
       <div
@@ -145,7 +143,7 @@ function AlertRow({
           cursor: "pointer",
           transition: "background 0.1s",
         }}
-        onClick={onToggleExpand}
+        onClick={onOpen}
       >
         {/* Checkbox */}
         <input
@@ -229,24 +227,197 @@ function AlertRow({
         {/* Actions */}
         <AlertRowMenu onReportFP={onReportFP} onDismiss={onDismiss} />
       </div>
+    </div>
+  );
+}
 
-      {/* Expanded details */}
-      {isExpanded && (
-        <div
+function AlertDetailSidebar({
+  alert,
+  onClose,
+  onReportFP,
+  onDismiss,
+}: {
+  alert: AlertItem;
+  onClose: () => void;
+  onReportFP: () => void;
+  onDismiss: () => void;
+}) {
+  const { colors } = useTheme();
+  const detailEntries = Object.entries(alert.details ?? {}).filter(
+    ([k]) => k !== "type",
+  );
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        top: 0,
+        right: 0,
+        bottom: 0,
+        width: "420px",
+        maxWidth: "100vw",
+        background: colors.bgPrimary,
+        borderLeft: `1px solid ${colors.border}`,
+        boxShadow: "-4px 0 24px rgba(0,0,0,0.12)",
+        zIndex: 100,
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+      }}
+    >
+      {/* Header */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: `${spacing.md} ${spacing.lg}`,
+          borderBottom: `1px solid ${colors.border}`,
+          flexShrink: 0,
+        }}
+      >
+        <span
           style={{
-            padding: `0 ${spacing.lg} ${spacing.sm} 48px`,
-            background: colors.bgSecondary,
+            fontSize: fontSize.lg,
+            fontWeight: 600,
+            color: colors.textPrimary,
           }}
         >
-          {detailEntries.length > 0 && (
+          アラート詳細
+        </span>
+        <button
+          type="button"
+          onClick={onClose}
+          style={{
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            fontSize: "20px",
+            color: colors.textMuted,
+            padding: spacing.xs,
+            lineHeight: 1,
+          }}
+        >
+          ✕
+        </button>
+      </div>
+
+      {/* Content */}
+      <div
+        style={{
+          flex: 1,
+          overflowY: "auto",
+          padding: spacing.lg,
+        }}
+      >
+        {/* Title */}
+        <code
+          style={{
+            fontSize: fontSize.lg,
+            fontFamily: "monospace",
+            color: colors.textPrimary,
+            display: "block",
+            wordBreak: "break-all",
+            marginBottom: spacing.sm,
+          }}
+        >
+          {alert.title}
+        </code>
+
+        {/* Badges */}
+        <div
+          style={{
+            display: "flex",
+            gap: spacing.sm,
+            flexWrap: "wrap",
+            marginBottom: spacing.md,
+          }}
+        >
+          <Badge variant={severityVariant[alert.severity]} size="sm">
+            {alert.severity}
+          </Badge>
+          <Badge variant="info" size="sm">
+            {categoryLabels[alert.category] ?? alert.category}
+          </Badge>
+          {(alert.count ?? 1) > 1 && (
+            <Badge variant="info" size="sm">
+              x{alert.count}
+            </Badge>
+          )}
+        </div>
+
+        {/* Description */}
+        {alert.description && (
+          <p
+            style={{
+              fontSize: fontSize.md,
+              color: colors.textSecondary,
+              marginBottom: spacing.md,
+              lineHeight: 1.5,
+            }}
+          >
+            {alert.description}
+          </p>
+        )}
+
+        {/* Meta */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "auto 1fr",
+            gap: "6px 12px",
+            fontSize: fontSize.sm,
+            fontFamily: "monospace",
+            padding: spacing.md,
+            background: colors.bgSecondary,
+            borderRadius: borderRadius.md,
+            border: `1px solid ${colors.border}`,
+            marginBottom: spacing.md,
+          }}
+        >
+          <span style={{ color: colors.textMuted }}>domain:</span>
+          <span style={{ color: colors.textPrimary, wordBreak: "break-all" }}>
+            {alert.domain}
+          </span>
+          {alert.url && (
+            <>
+              <span style={{ color: colors.textMuted }}>url:</span>
+              <span style={{ color: colors.textPrimary, wordBreak: "break-all" }}>
+                {alert.url}
+              </span>
+            </>
+          )}
+          <span style={{ color: colors.textMuted }}>timestamp:</span>
+          <span style={{ color: colors.textPrimary }}>
+            {new Date(alert.timestamp).toLocaleString("ja-JP")}
+          </span>
+        </div>
+
+        {/* Alert-specific details */}
+        {detailEntries.length > 0 && (
+          <div style={{ marginBottom: spacing.md }}>
+            <span
+              style={{
+                fontSize: fontSize.sm,
+                fontWeight: 600,
+                color: colors.textSecondary,
+                display: "block",
+                marginBottom: spacing.sm,
+              }}
+            >
+              検出パラメータ
+            </span>
             <div
               style={{
                 display: "grid",
                 gridTemplateColumns: "auto 1fr",
-                gap: "2px 12px",
+                gap: "4px 12px",
                 fontSize: fontSize.sm,
                 fontFamily: "monospace",
-                marginBottom: spacing.sm,
+                padding: spacing.md,
+                background: colors.bgSecondary,
+                borderRadius: borderRadius.md,
+                border: `1px solid ${colors.border}`,
               }}
             >
               {detailEntries.map(([key, value]) => (
@@ -258,9 +429,7 @@ function AlertRow({
                     key={`${key}-value`}
                     style={{
                       color: colors.textPrimary,
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
+                      wordBreak: "break-all",
                     }}
                     title={String(value)}
                   >
@@ -271,25 +440,69 @@ function AlertRow({
                 </>
               ))}
             </div>
-          )}
-          <a
-            href={`https://plenoai.github.io/pleno-audit/alerts/${alert.category}`}
-            target="_blank"
-            rel="noopener noreferrer"
+          </div>
+        )}
+
+        {/* Playbook link */}
+        <a
+          href={`https://plenoai.github.io/pleno-audit/alerts/${alert.category}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "6px",
+            width: "100%",
+            padding: `${spacing.sm} ${spacing.md}`,
+            background: colors.interactive,
+            color: "#fff",
+            borderRadius: borderRadius.md,
+            textDecoration: "none",
+            fontSize: fontSize.md,
+            fontWeight: 500,
+            marginBottom: spacing.md,
+          }}
+        >
+          対応方針を確認 ↗
+        </a>
+
+        {/* Action buttons */}
+        <div style={{ display: "flex", gap: spacing.sm }}>
+          <button
+            type="button"
+            onClick={onReportFP}
             style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "4px",
-              fontSize: fontSize.sm,
-              color: colors.interactive,
-              textDecoration: "none",
-              padding: `${spacing.xs} 0`,
+              flex: 1,
+              padding: `${spacing.sm} ${spacing.md}`,
+              border: `1px solid ${colors.border}`,
+              borderRadius: borderRadius.md,
+              background: colors.bgPrimary,
+              color: colors.textPrimary,
+              fontSize: fontSize.md,
+              cursor: "pointer",
             }}
           >
-            プレイブックを見る ↗
-          </a>
+            誤検知を報告
+          </button>
+          <button
+            type="button"
+            onClick={onDismiss}
+            style={{
+              flex: 1,
+              padding: `${spacing.sm} ${spacing.md}`,
+              border: `1px solid ${colors.border}`,
+              borderRadius: borderRadius.md,
+              background: colors.bgPrimary,
+              color: colors.textMuted,
+              fontSize: fontSize.md,
+              cursor: "pointer",
+            }}
+          >
+            無視
+          </button>
         </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -300,7 +513,7 @@ export function AlertsTab() {
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [activeAlertId, setActiveAlertId] = useState<string | null>(null);
 
   // Initial search query from Services tab navigation
   const initialQuery = useMemo(() => {
@@ -643,22 +856,36 @@ export function AlertsTab() {
               key={alert.id}
               alert={alert}
               isSelected={selectedIds.has(alert.id)}
+              isActive={activeAlertId === alert.id}
               onSelect={handleSelect}
-              isExpanded={expandedIds.has(alert.id)}
-              onToggleExpand={() => {
-                setExpandedIds((prev) => {
-                  const next = new Set(prev);
-                  if (next.has(alert.id)) next.delete(alert.id);
-                  else next.add(alert.id);
-                  return next;
-                });
-              }}
+              onOpen={() =>
+                setActiveAlertId((prev) =>
+                  prev === alert.id ? null : alert.id,
+                )
+              }
               onReportFP={() => handleReportFP(alert)}
               onDismiss={() => handleDismiss(alert)}
             />
           ))}
         </div>
       )}
+
+      {/* Detail sidebar */}
+      {activeAlertId && (() => {
+        const activeAlert = alerts.find((a) => a.id === activeAlertId);
+        if (!activeAlert) return null;
+        return (
+          <AlertDetailSidebar
+            alert={activeAlert}
+            onClose={() => setActiveAlertId(null)}
+            onReportFP={() => handleReportFP(activeAlert)}
+            onDismiss={() => {
+              handleDismiss(activeAlert);
+              setActiveAlertId(null);
+            }}
+          />
+        );
+      })()}
     </div>
   );
 }

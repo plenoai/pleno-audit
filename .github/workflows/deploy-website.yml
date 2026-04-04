@@ -6,7 +6,7 @@ on:
     paths:
       - 'app/website/**'
       - 'app/battacker-web/**'
-      - 'lib/battacker/**'
+      - 'packages/core/src/battacker/**'
       - '.github/workflows/deploy-website.yml'
   workflow_dispatch:
 
@@ -39,8 +39,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build battacker package
-        run: pnpm --filter @libztbs/battacker build
+      - name: Build core package
+        run: pnpm --filter libztbs build
 
       - name: Build battacker-web
         run: pnpm --filter @libztbs/battacker-web build
