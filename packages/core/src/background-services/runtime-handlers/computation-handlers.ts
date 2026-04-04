@@ -140,14 +140,21 @@ export function createComputationHandlers(
       "DISMISS_ALERT_PATTERN",
       {
         execute: async (message) => {
-          const data = message.data as { category: string; domain: string };
-          const pattern = `${data.category}::${data.domain}`;
+          const data = message.data as
+            | { category: string; domain: string }
+            | { patterns: { category: string; domain: string }[] };
           const existing = await getDismissedPatterns();
-          existing.add(pattern);
+          if ("patterns" in data) {
+            for (const p of data.patterns) {
+              existing.add(`${p.category}::${p.domain}`);
+            }
+          } else {
+            existing.add(`${data.category}::${data.domain}`);
+          }
           await chrome.storage.local.set({
             [DISMISSED_PATTERNS_KEY]: [...existing],
           });
-          return { ok: true, pattern };
+          return { ok: true };
         },
         fallback: () => ({ ok: false }),
       },

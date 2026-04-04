@@ -414,18 +414,20 @@ export function AlertsTab() {
 
   const handleBulkDismiss = useCallback(() => {
     const toDismiss = alerts.filter((a) => selectedIds.has(a.id));
-    const patterns = new Set<string>();
-    for (const a of toDismiss) {
-      const pattern = `${a.category}::${a.domain}`;
-      patterns.add(pattern);
-      sendMessage({
-        type: "DISMISS_ALERT_PATTERN",
-        data: { category: a.category, domain: a.domain },
-      }).catch(() => {});
-    }
+    const patternObjects = toDismiss.map((a) => ({
+      category: a.category,
+      domain: a.domain,
+    }));
+    const patternStrings = patternObjects.map(
+      (p) => `${p.category}::${p.domain}`,
+    );
+    sendMessage({
+      type: "DISMISS_ALERT_PATTERN",
+      data: { patterns: patternObjects },
+    }).catch(() => {});
     setDismissedPatterns((prev) => {
       const next = new Set(prev);
-      for (const p of patterns) next.add(p);
+      for (const p of patternStrings) next.add(p);
       return next;
     });
     setSelectedIds(new Set());
