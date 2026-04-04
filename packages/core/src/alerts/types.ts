@@ -320,6 +320,8 @@ export interface SuspiciousDownloadAlertDetails {
   extension: string;
   size: number;
   mimeType: string;
+  /** ダウンロード元URL */
+  downloadUrl?: string;
 }
 
 export interface CanvasFingerprintAlertDetails {
@@ -377,6 +379,10 @@ export interface CredentialAPIAlertDetails {
   type: "credential_api";
   domain: string;
   method: string;
+  /** パスワード認証情報の取得を要求しているか */
+  hasPassword?: boolean;
+  /** フェデレーション認証（WebAuthn等）を要求しているか */
+  hasFederated?: boolean;
 }
 
 export interface DeviceSensorAlertDetails {
@@ -395,12 +401,16 @@ export interface DynamicCodeExecutionAlertDetails {
   domain: string;
   method: string;
   codeLength: number;
+  /** 実行コードの先頭プレビュー（最大200文字） */
+  codePreview?: string;
 }
 
 export interface FullscreenPhishingAlertDetails {
   type: "fullscreen_phishing";
   domain: string;
   element: string;
+  elementId?: string;
+  className?: string;
 }
 
 export interface ClipboardReadAlertDetails {
@@ -448,6 +458,8 @@ export interface DNSPrefetchLeakAlertDetails {
   domain: string;
   rel: string;
   href: string;
+  /** 漏洩先ドメイン（hrefから導出） */
+  targetDomain: string;
 }
 
 export interface FormHijackAlertDetails {
@@ -495,6 +507,7 @@ export interface FetchExfiltrationAlertDetails {
   type: "fetch_exfiltration";
   domain: string;
   url: string;
+  targetDomain: string;
   mode: string;
   reason: string;
   bodySize?: number;
@@ -548,6 +561,8 @@ export interface EventSourceChannelAlertDetails {
   type: "eventsource_channel";
   domain: string;
   url: string;
+  /** 接続先が外部ドメインかどうか */
+  isExternal: boolean;
 }
 
 export interface FontFingerprintAlertDetails {

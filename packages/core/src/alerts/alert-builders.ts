@@ -773,6 +773,7 @@ export interface SuspiciousDownloadAlertParams {
   extension: string;
   size: number;
   mimeType: string;
+  downloadUrl?: string;
 }
 
 /** 実行可能ファイルの拡張子リスト */
@@ -801,6 +802,7 @@ const SUSPICIOUS_DOWNLOAD_ALERT_DEFINITION: AlertDefinition<
         extension: params.extension,
         size: params.size,
         mimeType: params.mimeType,
+        downloadUrl: params.downloadUrl,
       },
     };
   },
@@ -905,6 +907,7 @@ export interface DynamicCodeExecutionAlertParams {
   domain: string;
   method: string;
   codeLength: number;
+  codePreview?: string;
 }
 
 const DYNAMIC_CODE_EXECUTION_ALERT_DEFINITION: AlertDefinition<
@@ -922,6 +925,7 @@ const DYNAMIC_CODE_EXECUTION_ALERT_DEFINITION: AlertDefinition<
       domain: params.domain,
       method: params.method,
       codeLength: params.codeLength,
+      codePreview: params.codePreview,
     },
   }),
 };
@@ -937,6 +941,8 @@ export const buildDynamicCodeExecutionAlert = createAlertBuilder(
 export interface FullscreenPhishingAlertParams {
   domain: string;
   element: string;
+  elementId?: string;
+  className?: string;
 }
 
 const FULLSCREEN_PHISHING_ALERT_DEFINITION: AlertDefinition<
@@ -953,6 +959,8 @@ const FULLSCREEN_PHISHING_ALERT_DEFINITION: AlertDefinition<
     details: {
       domain: params.domain,
       element: params.element,
+      elementId: params.elementId ?? undefined,
+      className: params.className ?? undefined,
     },
   }),
 };
@@ -1270,6 +1278,8 @@ export const buildNotificationPhishingAlert = createAlertBuilder(
 export interface CredentialAPIAlertParams {
   domain: string;
   method: string;
+  hasPassword?: boolean;
+  hasFederated?: boolean;
 }
 
 const CREDENTIAL_API_ALERT_DEFINITION: AlertDefinition<
@@ -1286,6 +1296,8 @@ const CREDENTIAL_API_ALERT_DEFINITION: AlertDefinition<
     details: {
       domain: params.domain,
       method: params.method,
+      hasPassword: params.hasPassword,
+      hasFederated: params.hasFederated,
     },
   }),
 };
@@ -1438,17 +1450,28 @@ const DNS_PREFETCH_LEAK_ALERT_DEFINITION: AlertDefinition<
 > = {
   category: "dns_prefetch_leak",
   detailsType: "dns_prefetch_leak",
-  build: (params) => ({
-    severity: "medium",
-    title: `DNSプリフェッチリーク検出: ${params.domain}`,
-    description: `動的に追加された<link rel="${params.rel}">が外部ドメインへの情報漏洩経路になる可能性があります`,
-    domain: params.domain,
-    details: {
+  build: (params) => {
+    let targetDomain = "";
+    try {
+      targetDomain = new URL(params.href).hostname;
+    } catch {
+      // href may be just a hostname without protocol
+      targetDomain = params.href.replace(/^\/\//, "").split("/")[0] || "";
+    }
+
+    return {
+      severity: "medium",
+      title: `DNSプリフェッチリーク検出: ${params.domain}`,
+      description: `動的に追加された<link rel="${params.rel}">が${targetDomain || "外部ドメイン"}への情報漏洩経路になる可能性があります`,
       domain: params.domain,
-      rel: params.rel,
-      href: params.href,
-    },
-  }),
+      details: {
+        domain: params.domain,
+        rel: params.rel,
+        href: params.href,
+        targetDomain,
+      },
+    };
+  },
 };
 
 export const buildDNSPrefetchLeakAlert = createAlertBuilder(
@@ -1680,18 +1703,25 @@ const FETCH_EXFILTRATION_ALERT_DEFINITION: AlertDefinition<
   build: (params, helpers) => {
     const isNoCors = params.reason === "cross_origin_no_cors";
     const severity = helpers.resolveSeverity([[isNoCors, "high"]], "medium");
+
+    let targetDomain = "";
+    try {
+      targetDomain = new URL(params.url).hostname;
+    } catch { /* invalid URL */ }
+
     const description = isNoCors
-      ? `no-corsモードでクロスオリジンfetch: ${params.url}`
-      : `クロスオリジンfetchで${params.bodySize ?? 0}バイトのデータを送信: ${params.url}`;
+      ? `no-corsモードでクロスオリジンfetch: ${targetDomain || params.url}`
+      : `クロスオリジンfetchで${params.bodySize ?? 0}バイトのデータを${targetDomain || "不明なホスト"}に送信`;
 
     return {
       severity,
-      title: `fetchによるデータ流出を検出: ${params.domain}`,
+      title: `fetchによるデータ流出を検出: ${targetDomain || params.domain}`,
       description,
       domain: params.domain,
       details: {
         domain: params.domain,
         url: params.url,
+        targetDomain,
         mode: params.mode,
         reason: params.reason,
         bodySize: params.bodySize,
@@ -1967,16 +1997,28 @@ const EVENTSOURCE_CHANNEL_ALERT_DEFINITION: AlertDefinition<
 > = {
   category: "eventsource_channel",
   detailsType: "eventsource_channel",
-  build: (params) => ({
-    severity: "high",
-    title: `EventSource隠密C2チャネル検出: ${params.domain}`,
-    description: `EventSourceが「${params.url}」に接続しました（隠密C2通信チャネルの可能性）`,
-    domain: params.domain,
-    details: {
+  build: (params, helpers) => {
+    let targetHostname = "";
+    try {
+      targetHostname = new URL(params.url).hostname;
+    } catch { /* invalid URL */ }
+    const isExternal = targetHostname !== "" && targetHostname !== new URL(`https://${params.domain}`).hostname;
+    const severity = helpers.resolveSeverity([[isExternal, "high"]], "medium");
+
+    return {
+      severity,
+      title: `EventSource隠密C2チャネル検出: ${params.domain}`,
+      description: isExternal
+        ? `EventSourceが外部ホスト「${targetHostname}」に接続しました（隠密C2通信チャネルの可能性）`
+        : `EventSourceが「${params.url}」に接続しました`,
       domain: params.domain,
-      url: params.url,
-    },
-  }),
+      details: {
+        domain: params.domain,
+        url: params.url,
+        isExternal,
+      },
+    };
+  },
 };
 
 export const buildEventSourceChannelAlert = createAlertBuilder(

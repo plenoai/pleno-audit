@@ -257,6 +257,7 @@ function AlertDetailSidebar({
       style={{
         width: "420px",
         minWidth: "420px",
+        marginLeft: "auto",
         background: colors.bgPrimary,
         borderLeft: `1px solid ${colors.border}`,
         display: "flex",
@@ -610,6 +611,8 @@ export interface AlertSidebarState {
   onDismiss: () => void;
 }
 
+const PAGE_SIZE = 50;
+
 export function AlertsTab({ onSidebarChange }: { onSidebarChange?: (state: AlertSidebarState | null) => void }) {
   const { colors } = useTheme();
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
@@ -617,6 +620,7 @@ export function AlertsTab({ onSidebarChange }: { onSidebarChange?: (state: Alert
   const [loading, setLoading] = useState(true);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [activeAlertId, setActiveAlertId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(0);
 
   // Initial search query from Services tab navigation
   const initialQuery = useMemo(() => {
@@ -815,16 +819,27 @@ export function AlertsTab({ onSidebarChange }: { onSidebarChange?: (state: Alert
     return result;
   }, [alerts, activeSeverities, searchQuery, dismissedPatterns]);
 
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [activeSeverities, searchQuery, dismissedPatterns]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paged = useMemo(
+    () => filtered.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE),
+    [filtered, currentPage],
+  );
+
   const allSelected =
-    filtered.length > 0 && filtered.every((a) => selectedIds.has(a.id));
+    paged.length > 0 && paged.every((a) => selectedIds.has(a.id));
 
   const handleSelectAll = useCallback(() => {
     if (allSelected) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(filtered.map((a) => a.id)));
+      setSelectedIds(new Set(paged.map((a) => a.id)));
     }
-  }, [allSelected, filtered]);
+  }, [allSelected, paged]);
 
   const activeAlert = activeAlertId
     ? alerts.find((a) => a.id === activeAlertId) ?? null
@@ -852,7 +867,7 @@ export function AlertsTab({ onSidebarChange }: { onSidebarChange?: (state: Alert
   }
 
   return (
-    <div style={{ marginBottom: "32px" }}>
+    <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
         {/* Filter bar */}
         <div
           style={{
@@ -947,6 +962,10 @@ export function AlertsTab({ onSidebarChange }: { onSidebarChange?: (state: Alert
               border: `1px solid ${colors.border}`,
               borderRadius: borderRadius.lg,
               overflow: "hidden",
+              display: "flex",
+              flexDirection: "column",
+              flex: 1,
+              minHeight: 0,
             }}
           >
             {/* List header */}
@@ -961,6 +980,7 @@ export function AlertsTab({ onSidebarChange }: { onSidebarChange?: (state: Alert
                 fontSize: fontSize.sm,
                 color: colors.textSecondary,
                 fontWeight: 500,
+                flexShrink: 0,
               }}
             >
               <input
@@ -974,23 +994,86 @@ export function AlertsTab({ onSidebarChange }: { onSidebarChange?: (state: Alert
               </span>
             </div>
 
-            {/* Alert rows */}
-            {filtered.map((alert) => (
-              <AlertRow
-                key={alert.id}
-                alert={alert}
-                isSelected={selectedIds.has(alert.id)}
-                isActive={activeAlertId === alert.id}
-                onSelect={handleSelect}
-                onOpen={() =>
-                  setActiveAlertId((prev) =>
-                    prev === alert.id ? null : alert.id,
-                  )
-                }
-                onReportFP={() => handleReportFP(alert)}
-                onDismiss={() => handleDismiss(alert)}
-              />
-            ))}
+            {/* Scrollable alert rows */}
+            <div
+              style={{
+                flex: 1,
+                overflowY: "auto",
+                minHeight: 0,
+              }}
+            >
+              {paged.map((alert) => (
+                <AlertRow
+                  key={alert.id}
+                  alert={alert}
+                  isSelected={selectedIds.has(alert.id)}
+                  isActive={activeAlertId === alert.id}
+                  onSelect={handleSelect}
+                  onOpen={() =>
+                    setActiveAlertId((prev) =>
+                      prev === alert.id ? null : alert.id,
+                    )
+                  }
+                  onReportFP={() => handleReportFP(alert)}
+                  onDismiss={() => handleDismiss(alert)}
+                />
+              ))}
+            </div>
+
+            {/* Pagination footer */}
+            {totalPages > 1 && (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: `${spacing.sm} ${spacing.lg}`,
+                  background: colors.bgSecondary,
+                  borderTop: `1px solid ${colors.border}`,
+                  fontSize: fontSize.sm,
+                  color: colors.textSecondary,
+                  flexShrink: 0,
+                }}
+              >
+                <span>
+                  {currentPage * PAGE_SIZE + 1}–{Math.min((currentPage + 1) * PAGE_SIZE, filtered.length)} / {filtered.length}件
+                </span>
+                <div style={{ display: "flex", gap: spacing.xs }}>
+                  <button
+                    type="button"
+                    disabled={currentPage === 0}
+                    onClick={() => setCurrentPage((p) => p - 1)}
+                    style={{
+                      padding: `${spacing.xs} ${spacing.sm}`,
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: borderRadius.sm,
+                      background: currentPage === 0 ? colors.bgSecondary : colors.bgPrimary,
+                      color: currentPage === 0 ? colors.textMuted : colors.textPrimary,
+                      fontSize: fontSize.sm,
+                      cursor: currentPage === 0 ? "default" : "pointer",
+                    }}
+                  >
+                    ← 前
+                  </button>
+                  <button
+                    type="button"
+                    disabled={currentPage >= totalPages - 1}
+                    onClick={() => setCurrentPage((p) => p + 1)}
+                    style={{
+                      padding: `${spacing.xs} ${spacing.sm}`,
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: borderRadius.sm,
+                      background: currentPage >= totalPages - 1 ? colors.bgSecondary : colors.bgPrimary,
+                      color: currentPage >= totalPages - 1 ? colors.textMuted : colors.textPrimary,
+                      fontSize: fontSize.sm,
+                      cursor: currentPage >= totalPages - 1 ? "default" : "pointer",
+                    }}
+                  >
+                    次 →
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
     </div>

@@ -113,6 +113,90 @@ export interface TokenFeatures {
   hashes: BigUint64Array;
 }
 
+// --- MurmurHash3 x64 128-bit (for HashEmbed 4-hash sum) ---
+
+const C1 = 0x87c37b91114253d5n;
+const C2 = 0x4cf5ad432745937fn;
+
+function rotl64(x: bigint, r: bigint): bigint {
+  return ((x << r) | (x >> (64n - r))) & MASK64;
+}
+
+function fmix64(h: bigint): bigint {
+  h ^= h >> 33n;
+  h = (h * 0xff51afd7ed558ccdn) & MASK64;
+  h ^= h >> 33n;
+  h = (h * 0xc4ceb9fe1a85ec53n) & MASK64;
+  h ^= h >> 33n;
+  return h;
+}
+
+/**
+ * MurmurHash3_x64_128 — uint64キーから4つのuint32を生成する。
+ * spaCy/ThincのHashEmbed層で使用される4-hash sum方式の基盤。
+ *
+ * 入力は8バイト(uint64 LE)なので16バイトブロックはなく、
+ * 全データがtail処理を通る。
+ */
+export function murmurhash3_x64_128_uint64(
+  key: bigint,
+  seed: number,
+): [number, number, number, number] {
+  const seedBig = BigInt(seed) & MASK64;
+  let h1 = seedBig;
+  let h2 = seedBig;
+
+  const len = 8n;
+
+  // No 16-byte blocks for 8-byte input.
+
+  // Tail processing: len & 15 == 8, so k1 = the full 8 bytes, k2 = 0
+  // The key is already the uint64 LE value.
+  let k1 = key & MASK64;
+  // k2 remains 0 — no bytes go into k2 for 8-byte input.
+
+  k1 = (k1 * C1) & MASK64;
+  k1 = rotl64(k1, 31n);
+  k1 = (k1 * C2) & MASK64;
+  h1 ^= k1;
+
+  // Finalization
+  h1 ^= len;
+  h2 ^= len;
+  h1 = (h1 + h2) & MASK64;
+  h2 = (h2 + h1) & MASK64;
+  h1 = fmix64(h1);
+  h2 = fmix64(h2);
+  h1 = (h1 + h2) & MASK64;
+  h2 = (h2 + h1) & MASK64;
+
+  // Split into 4 uint32 values: [h1_lo, h1_hi, h2_lo, h2_hi]
+  const h1Lo = Number(h1 & 0xffffffffn);
+  const h1Hi = Number((h1 >> 32n) & 0xffffffffn);
+  const h2Lo = Number(h2 & 0xffffffffn);
+  const h2Hi = Number((h2 >> 32n) & 0xffffffffn);
+
+  return [h1Lo, h1Hi, h2Lo, h2Hi];
+}
+
+/** HashEmbed seeds — spaCy/Thincの [NORM, PREFIX, SUFFIX, SHAPE] 用 */
+export const HASH_EMBED_SEEDS = [8, 9, 10, 11] as const;
+
+/** Hash入力をHashEmbed用の4インデックスに変換する */
+export function hashEmbedIndices(
+  hash: bigint,
+  seed: number,
+  tableSize: number,
+): [number, number, number, number] {
+  const [h1, h2, h3, h4] = murmurhash3_x64_128_uint64(hash, seed);
+  return [
+    h1 % tableSize,
+    h2 % tableSize,
+    h3 % tableSize,
+    h4 % tableSize,
+  ];
+}
+
 const textEncoder = new TextEncoder();
 
 function hashString(s: string): bigint {

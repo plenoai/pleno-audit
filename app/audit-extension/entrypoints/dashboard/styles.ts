@@ -23,6 +23,8 @@ export function createDashboardStyles() {
       maxWidth: "1200px",
       padding: "24px",
       overflowY: "auto" as const,
+      display: "flex",
+      flexDirection: "column" as const,
     },
     header: {
       position: "sticky" as const,

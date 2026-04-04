@@ -456,6 +456,7 @@ export function createSecurityEventHandlers(
         extension: data.extension,
         size: data.size,
         mimeType: data.mimeType,
+        downloadUrl: data.url,
       }, pageUrl);
 
       deps.logger.warn({
@@ -567,6 +568,7 @@ export function createSecurityEventHandlers(
         domain: pageDomain,
         method: data.method ?? "unknown",
         codeLength: data.codeLength ?? 0,
+        codePreview: data.codeSample ? data.codeSample.slice(0, 200) : undefined,
       }, pageUrl);
 
       deps.logger.warn({
@@ -591,6 +593,8 @@ export function createSecurityEventHandlers(
       await deps.getAlertManager().alertFullscreenPhishing({
         domain: pageDomain,
         element: data.element ?? "unknown",
+        elementId: data.elementId ?? undefined,
+        className: data.className ?? undefined,
       }, pageUrl);
 
       deps.logger.warn({
@@ -863,6 +867,8 @@ export function createSecurityEventHandlers(
       await deps.getAlertManager().alertCredentialAPI({
         domain: pageDomain,
         method: data.method ?? "get",
+        hasPassword: data.hasPassword,
+        hasFederated: data.hasFederated,
       }, pageUrl);
 
       deps.logger.warn({

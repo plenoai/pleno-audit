@@ -140,7 +140,7 @@ function DashboardContent({ animationEnabled, setAnimationEnabled }: { animation
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.25, ease: "ease-out" }}
-            style={{ flex: 1 }}
+            style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}
           >
             {activeTab === "services" && (
               <ServicesTab

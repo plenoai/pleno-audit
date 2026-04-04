@@ -116,7 +116,15 @@ export {
 } from "./dlp-scanner.js";
 
 // DLP Tokenizer (local NER)
-export { tokenize, murmurhash2_64a, convertWasmTokens, type WasmTokenResult } from "./dlp-tokenizer.js";
+export {
+  tokenize,
+  murmurhash2_64a,
+  murmurhash3_x64_128_uint64,
+  hashEmbedIndices,
+  HASH_EMBED_SEEDS,
+  convertWasmTokens,
+  type WasmTokenResult,
+} from "./dlp-tokenizer.js";
 
 // DLP Local NER
 export {

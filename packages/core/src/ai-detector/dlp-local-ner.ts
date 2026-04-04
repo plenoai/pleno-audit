@@ -6,7 +6,7 @@
  * Pure TypeScriptで実装。
  */
 
-import { tokenize, type TokenFeatures } from "./dlp-tokenizer.js";
+import { tokenize, hashEmbedIndices, HASH_EMBED_SEEDS, type TokenFeatures } from "./dlp-tokenizer.js";
 
 // --- Types ---
 
@@ -270,16 +270,39 @@ function runTok2Vec(
     const hashSuffix = features.hashes[n * 4 + 2]!;
     const hashShape = features.hashes[n * 4 + 3]!;
 
-    const idxNorm = Number(hashNorm % BigInt(embedSizes[0]!));
-    const idxPrefix = Number(hashPrefix % BigInt(embedSizes[1]!));
-    const idxSuffix = Number(hashSuffix % BigInt(embedSizes[2]!));
-    const idxShape = Number(hashShape % BigInt(embedSizes[3]!));
-
     const outOff = n * concatWidth;
-    concat.set(embedNorm.data.subarray(idxNorm * width, idxNorm * width + width), outOff);
-    concat.set(embedPrefix.data.subarray(idxPrefix * width, idxPrefix * width + width), outOff + width);
-    concat.set(embedSuffix.data.subarray(idxSuffix * width, idxSuffix * width + width), outOff + width * 2);
-    concat.set(embedShape.data.subarray(idxShape * width, idxShape * width + width), outOff + width * 3);
+
+    // NORM: 4-hash sum lookup (HashEmbed)
+    const normIndices = hashEmbedIndices(hashNorm, HASH_EMBED_SEEDS[0], embedSizes[0]!);
+    const normEmbed = new Float32Array(width);
+    for (const idx of normIndices) {
+      for (let w = 0; w < width; w++) normEmbed[w] += embedNorm.data[idx * width + w]!;
+    }
+    concat.set(normEmbed, outOff);
+
+    // PREFIX: 4-hash sum lookup (HashEmbed)
+    const prefixIndices = hashEmbedIndices(hashPrefix, HASH_EMBED_SEEDS[1], embedSizes[1]!);
+    const prefixEmbed = new Float32Array(width);
+    for (const idx of prefixIndices) {
+      for (let w = 0; w < width; w++) prefixEmbed[w] += embedPrefix.data[idx * width + w]!;
+    }
+    concat.set(prefixEmbed, outOff + width);
+
+    // SUFFIX: 4-hash sum lookup (HashEmbed)
+    const suffixIndices = hashEmbedIndices(hashSuffix, HASH_EMBED_SEEDS[2], embedSizes[2]!);
+    const suffixEmbed = new Float32Array(width);
+    for (const idx of suffixIndices) {
+      for (let w = 0; w < width; w++) suffixEmbed[w] += embedSuffix.data[idx * width + w]!;
+    }
+    concat.set(suffixEmbed, outOff + width * 2);
+
+    // SHAPE: 4-hash sum lookup (HashEmbed)
+    const shapeIndices = hashEmbedIndices(hashShape, HASH_EMBED_SEEDS[3], embedSizes[3]!);
+    const shapeEmbed = new Float32Array(width);
+    for (const idx of shapeIndices) {
+      for (let w = 0; w < width; w++) shapeEmbed[w] += embedShape.data[idx * width + w]!;
+    }
+    concat.set(shapeEmbed, outOff + width * 3);
   }
 
   // 2. Mixing layer: maxout + layernorm
