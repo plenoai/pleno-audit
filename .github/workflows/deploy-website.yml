@@ -54,8 +54,14 @@ jobs:
           cp -r app/battacker-web/dist/* app/website/dist/battacker/
           cp app/battacker-web/dist/index.html app/website/dist/battacker/404.html
 
-      - name: Copy 404.html for SPA routing
-        run: cp app/website/dist/index.html app/website/dist/404.html
+      - name: Generate SPA route files
+        run: |
+          cd app/website/dist
+          cp index.html 404.html
+          for route in docs privacy terms faq alerts; do
+            mkdir -p "$route"
+            cp index.html "$route/index.html"
+          done
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4.0.0
