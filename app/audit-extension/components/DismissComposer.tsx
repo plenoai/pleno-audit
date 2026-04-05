@@ -47,7 +47,7 @@ export function DismissComposer({ alerts, onConfirm, onCancel }: Props) {
           fontWeight: 600,
         }}
       >
-        Dismiss
+        解決
       </div>
       <div
         style={{
@@ -223,7 +223,7 @@ export function DismissComposer({ alerts, onConfirm, onCancel }: Props) {
             opacity: 1,
           }}
         >
-          Dismiss
+          解決
         </button>
       </div>
     </div>

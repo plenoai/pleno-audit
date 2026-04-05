@@ -152,7 +152,7 @@ export function AlertRowMenu({
                 fontWeight: 600,
               }}
             >
-              Dismiss
+              解決
             </div>
 
             <div
@@ -310,7 +310,7 @@ export function AlertRowMenu({
                   opacity: 1,
                 }}
               >
-                Dismiss
+                解決
               </button>
             </div>
           </div>

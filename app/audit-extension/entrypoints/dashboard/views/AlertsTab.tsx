@@ -3,6 +3,7 @@ import { ALL_PLAYBOOKS, type AlertSeverity, type AlertCategory, type DismissReas
 import {
   AlertRowMenu,
   Badge,
+  Button,
   DismissComposer,
   SearchInput,
   EmptyState,
@@ -463,21 +464,13 @@ function AlertDetailSidebar({
             バグを報告
           </button>
           <div ref={dismissPopoverRef} style={{ position: "relative" }}>
-            <button
-              type="button"
+            <Button
+              variant="primary"
+              size="sm"
               onClick={() => setShowDismissComposer((prev) => !prev)}
-              style={{
-                padding: `${spacing.xs} ${spacing.sm}`,
-                border: `1px solid ${colors.border}`,
-                borderRadius: borderRadius.sm,
-                background: colors.bgPrimary,
-                color: colors.textMuted,
-                fontSize: fontSize.sm,
-                cursor: "pointer",
-              }}
             >
-              Dismiss
-            </button>
+              解決
+            </Button>
             {showDismissComposer && (
               <div
                 style={{
@@ -641,8 +634,8 @@ function DismissedView({
   if (records.length === 0) {
     return (
       <EmptyState
-        title="Dismiss 済みアラートはありません"
-        description="アラートを Dismiss すると、ここに表示されます"
+        title="解決済みアラートはありません"
+        description="アラートを解決すると、ここに表示されます"
       />
     );
   }
@@ -650,7 +643,7 @@ function DismissedView({
   return (
     <ListContainer>
       <ListHeader>
-        {records.length}件の Dismiss 済みアラート
+        {records.length}件の解決済みアラート
       </ListHeader>
       <ScrollArea>
         {records.map((record) => {
@@ -1083,7 +1076,7 @@ export function AlertsTab({ onSidebarChange }: { onSidebarChange?: (state: Alert
                   onChange={() => setShowDismissed((v) => !v)}
                   style={{ accentColor: colors.interactive, cursor: "pointer" }}
                 />
-                Dismissed ({dismissRecords.filter((r) => r.reopenedAt == null).length})
+                解決済み ({dismissRecords.filter((r) => r.reopenedAt == null).length})
               </label>
             </>
           )}
@@ -1124,7 +1117,7 @@ export function AlertsTab({ onSidebarChange }: { onSidebarChange?: (state: Alert
                   cursor: "pointer",
                 }}
               >
-                一括 Dismiss
+                一括解決
               </button>
               {showBulkDismissComposer && bulkDismissAlerts.length > 0 && (
                 <div
