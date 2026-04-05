@@ -179,7 +179,7 @@ function ExpandedDetails({ ext }: { ext: ExtensionInfo }) {
         const description = getPermissionDescription(perm);
         return (
           <DetailRow key={perm} highlighted={isAllUrls || isDangerous}>
-            {perm}
+            └ {perm}
             {description && (
               <span style={{ color: colors.textMuted, fontSize: fontSize.xs }}>
                 — {description}
