@@ -7,7 +7,7 @@ interface SearchInputProps {
   placeholder?: string;
 }
 
-export function SearchInput({ value, onChange, placeholder = "検索..." }: SearchInputProps) {
+export function SearchInput({ value, onChange, placeholder = "検索... (/)" }: SearchInputProps) {
   const { colors } = useTheme();
 
   const style: CSSProperties = {

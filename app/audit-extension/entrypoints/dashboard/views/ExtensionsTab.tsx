@@ -266,7 +266,7 @@ export function ExtensionsTab() {
       <TagFilterBar
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        placeholder="拡張機能名、権限で検索..."
+        placeholder="拡張機能名、権限で検索... (/)"
         tagSummary={tagSummary}
         activeTagFilters={activeTagFilters}
         onToggleTag={toggleTagFilter}

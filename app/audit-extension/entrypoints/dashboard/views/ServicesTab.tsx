@@ -324,7 +324,7 @@ export function ServicesTab({
       <TagFilterBar
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        placeholder="ドメインで検索..."
+        placeholder="ドメインで検索... (/)"
         tagSummary={tagSummary}
         activeTagFilters={activeTagFilters}
         onToggleTag={toggleTagFilter}

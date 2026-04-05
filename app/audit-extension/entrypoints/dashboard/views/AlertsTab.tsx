@@ -990,7 +990,7 @@ export function AlertsTab({ onSidebarChange }: { onSidebarChange?: (state: Alert
           <SearchInput
             value={searchQuery}
             onChange={setSearchQuery}
-            placeholder="タイトル・ドメインで検索..."
+            placeholder="タイトル・ドメインで検索... (/)"
           />
           {severityButtons.map((b) => {
             const count = counts[b.key] ?? 0;
