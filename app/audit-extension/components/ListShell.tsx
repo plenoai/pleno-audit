@@ -401,6 +401,8 @@ interface PagedListProps {
   /** Empty state when filteredCount === 0 (default messages if omitted) */
   noMatchTitle?: string;
   noMatchDescription?: string;
+  /** Callback to reset filters when no matches found */
+  onResetFilter?: () => void;
   /** Extra elements at start of header (e.g. checkbox) */
   headerLeading?: ComponentChildren;
   /** Pagination state from usePagination */
@@ -420,6 +422,7 @@ export function PagedList({
   emptyDescription,
   noMatchTitle = "一致する項目がありません",
   noMatchDescription = "検索条件やフィルタを変更してください",
+  onResetFilter,
   headerLeading,
   currentPage,
   totalPages,
@@ -431,7 +434,13 @@ export function PagedList({
     return <EmptyState title={emptyTitle} description={emptyDescription} />;
   }
   if (filteredCount === 0) {
-    return <EmptyState title={noMatchTitle} description={noMatchDescription} />;
+    return (
+      <EmptyState
+        title={noMatchTitle}
+        description={noMatchDescription}
+        action={onResetFilter ? { label: "フィルタをリセット", onClick: onResetFilter } : undefined}
+      />
+    );
   }
   return (
     <ListContainer>

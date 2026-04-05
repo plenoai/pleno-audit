@@ -47,6 +47,25 @@ describe("EmptyState", () => {
     expect(innerDivs?.length).toBe(1); // Just the title div
   });
 
+  it("renders action button when provided", () => {
+    const onClick = () => {};
+    renderWithTheme(
+      h(EmptyState, {
+        title: "No results",
+        action: { label: "Reset filters", onClick },
+      })
+    );
+
+    const button = screen.getByText("Reset filters");
+    expect(button).toBeTruthy();
+    expect(button.tagName).toBe("BUTTON");
+  });
+
+  it("does not render action button when not provided", () => {
+    renderWithTheme(h(EmptyState, { title: "No items" }));
+    expect(screen.queryByRole("button")).toBeNull();
+  });
+
   it("renders icon when provided", () => {
     renderWithTheme(
       h(EmptyState, {

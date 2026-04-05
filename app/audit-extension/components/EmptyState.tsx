@@ -1,13 +1,20 @@
 import type { ComponentType } from "preact";
 import { useTheme, spacing, fontSize } from "../lib/theme";
+import { Button } from "./Button";
+
+interface EmptyStateAction {
+  label: string;
+  onClick: () => void;
+}
 
 interface EmptyStateProps {
   icon?: ComponentType<{ size: number; style?: object }>;
   title: string;
   description?: string;
+  action?: EmptyStateAction;
 }
 
-export function EmptyState({ icon: Icon, title, description }: EmptyStateProps) {
+export function EmptyState({ icon: Icon, title, description, action }: EmptyStateProps) {
   const { colors } = useTheme();
 
   return (
@@ -36,7 +43,7 @@ export function EmptyState({ icon: Icon, title, description }: EmptyStateProps) 
           fontSize: fontSize.lg,
           fontWeight: 500,
           color: colors.textSecondary,
-          marginBottom: description ? spacing.sm : 0,
+          marginBottom: description || action ? spacing.sm : 0,
         }}
       >
         {title}
@@ -46,10 +53,16 @@ export function EmptyState({ icon: Icon, title, description }: EmptyStateProps) 
           style={{
             fontSize: fontSize.md,
             color: colors.textMuted,
+            marginBottom: action ? spacing.md : 0,
           }}
         >
           {description}
         </div>
+      )}
+      {action && (
+        <Button variant="secondary" size="sm" onClick={action.onClick}>
+          {action.label}
+        </Button>
       )}
     </div>
   );
