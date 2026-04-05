@@ -50,7 +50,7 @@ export function OverviewTab({
               animate={{ opacity: [0.5, 1, 0.5] }}
               transition={{ duration: 1.5, repeat: Infinity }}
             >
-              {"// Analyzing Defense Vectors..."}
+              Category Analysis
             </motion.span>
           ) : (
             "Category Analysis"
