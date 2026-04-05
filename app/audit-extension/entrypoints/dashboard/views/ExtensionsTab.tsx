@@ -1,10 +1,10 @@
 import { useState, useEffect, useMemo } from "preact/hooks";
-import { Badge, LoadingState, ListRow, PagedList, ExpandedPanel, DetailRow, TabRoot, TagFilterBar, useExpandable, DetailLink, DetailOverflow, usePagination } from "../../../components";
+import { Badge, Button, LoadingState, ListRow, PagedList, ExpandedPanel, DetailRow, TabRoot, TagFilterBar, useExpandable, DetailOverflow, usePagination } from "../../../components";
 import { useTabFilter } from "../hooks/useTabFilter";
 import { useTagFilter } from "../hooks/useTagFilter";
-import { useTheme, fontSize } from "../../../lib/theme";
+import { useTheme, fontSize, spacing, borderRadius } from "../../../lib/theme";
 import { createLogger } from "libztbs/extension-runtime";
-import { getPermissionRiskLevel, DANGEROUS_PERMISSIONS, type PermissionRiskLevel } from "libztbs/extension-analyzers";
+import { getPermissionRiskLevel, DANGEROUS_PERMISSIONS, type PermissionRiskLevel, type PermissionRisk } from "libztbs/extension-analyzers";
 
 const logger = createLogger("extensions-tab");
 
@@ -119,10 +119,17 @@ function ExtensionRow({
   );
 }
 
+function getPermissionDescription(perm: string): string | undefined {
+  const risk: PermissionRisk | undefined = DANGEROUS_PERMISSIONS.find((d) => d.permission === perm);
+  return risk?.description;
+}
+
 function ExpandedDetails({ ext }: { ext: ExtensionInfo }) {
+  const { colors } = useTheme();
   const allPerms = [...ext.permissions, ...ext.hostPermissions];
   const hasPerms = allPerms.length > 0;
   const hasHomepage = !!ext.homepageUrl;
+  const koidexUrl = `https://dex.koi.security/reports/chrome/${ext.id}/${ext.version}`;
 
   if (!hasPerms && !hasHomepage) return null;
 
@@ -131,13 +138,53 @@ function ExpandedDetails({ ext }: { ext: ExtensionInfo }) {
 
   return (
     <ExpandedPanel>
-      {hasHomepage && <DetailLink label="HP" href={ext.homepageUrl!} />}
+      <DetailRow>
+        {hasHomepage && (
+          <>
+            <span style={{ color: colors.textMuted }}>HP:</span>
+            <a
+              href={ext.homepageUrl!}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: colors.link, textDecoration: "none" }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {ext.homepageUrl!.length > 60 ? `${ext.homepageUrl!.slice(0, 60)}…` : ext.homepageUrl}
+            </a>
+          </>
+        )}
+        <a
+          href={koidexUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            marginLeft: "auto",
+            padding: `2px ${spacing.sm}`,
+            border: `1px solid ${colors.border}`,
+            borderRadius: borderRadius.sm,
+            background: colors.bgPrimary,
+            color: colors.link,
+            fontSize: fontSize.sm,
+            textDecoration: "none",
+            cursor: "pointer",
+          }}
+        >
+          Koidex で調査 →
+        </a>
+      </DetailRow>
       {shown.map((perm) => {
         const isAllUrls = perm === "<all_urls>" || perm === "*://*/*";
         const isDangerous = DANGEROUS_PERMISSIONS.some((d) => d.permission === perm && d.severity === "critical");
+        const description = getPermissionDescription(perm);
         return (
           <DetailRow key={perm} highlighted={isAllUrls || isDangerous}>
-            └ {perm}
+            {perm}
+            {description && (
+              <span style={{ color: colors.textMuted, fontSize: fontSize.xs }}>
+                — {description}
+              </span>
+            )}
           </DetailRow>
         );
       })}
@@ -150,7 +197,7 @@ export function ExtensionsTab() {
   const [extensions, setExtensions] = useState<ExtensionInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const { toggle: toggleExpand, isExpanded } = useExpandable();
-  const { searchQuery, setSearchQuery } = useTabFilter({});
+  const { searchQuery, setSearchQuery, resetAll } = useTabFilter({});
 
   useEffect(() => {
     (async () => {
@@ -183,7 +230,7 @@ export function ExtensionsTab() {
     })();
   }, []);
 
-  const { tagSummary, activeTagFilters, toggleTagFilter, filterByTags: tagFiltered } =
+  const { tagSummary, activeTagFilters, toggleTagFilter, resetTagFilters, filterByTags: tagFiltered } =
     useTagFilter(extensions, getExtensionTags);
 
   const filtered = useMemo(() => {
@@ -223,7 +270,15 @@ export function ExtensionsTab() {
         tagSummary={tagSummary}
         activeTagFilters={activeTagFilters}
         onToggleTag={toggleTagFilter}
-      />
+      >
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={() => chrome.tabs.create({ url: "chrome://extensions" })}
+        >
+          拡張機能を管理 ↗
+        </Button>
+      </TagFilterBar>
 
       <PagedList
         allCount={extensions.length}
@@ -232,6 +287,7 @@ export function ExtensionsTab() {
         emptyTitle="拡張機能が見つかりません"
         emptyDescription="インストールされた拡張機能が検出されると表示されます"
         noMatchTitle="一致する拡張機能がありません"
+        onResetFilter={() => { resetAll(); resetTagFilters(); }}
         currentPage={currentPage}
         totalPages={totalPages}
         pageSize={pageSize}
