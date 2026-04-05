@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Shield, Lock, ArrowRight, Eye, AlertTriangle, Zap, Globe, ExternalLink } from 'lucide-react';
+import { Shield, Lock, ArrowRight, Eye, AlertTriangle, Zap, Globe, ExternalLink, LayoutDashboard } from 'lucide-react';
 import Footer from '../components/Footer';
 import { Link } from 'react-router-dom';
 
@@ -170,7 +170,7 @@ const FeaturesSection = () => (
           主要機能
         </h2>
         <p className="mx-auto max-w-2xl text-[#666] dark:text-[#8f8f8f]">
-          あなたのブラウジングを守る機能を搭載
+          すべてローカルで動作。外部サーバーへの通信は一切行いません
         </p>
       </motion.div>
 
@@ -184,7 +184,7 @@ const FeaturesSection = () => (
           <FeatureCard
             icon={Eye}
             title="サービス利用可視化"
-            description="利用中のWebサービスを一覧表示"
+            description="アクセス中のWebサービスを自動分類し、SaaS利用状況をシャドーIT対策として把握"
           />
         </motion.div>
         <motion.div
@@ -196,7 +196,7 @@ const FeaturesSection = () => (
           <FeatureCard
             icon={Shield}
             title="セキュリティ監視"
-            description="CSP違反やセキュリティヘッダーの欠如を検出"
+            description="CSP違反・セキュリティヘッダー欠如をリアルタイム検出し、サイトごとの防御状態を可視化"
           />
         </motion.div>
         <motion.div
@@ -208,7 +208,7 @@ const FeaturesSection = () => (
           <FeatureCard
             icon={AlertTriangle}
             title="フィッシング検出"
-            description="NRD・Typosquatting検出で不審ドメインを特定"
+            description="ドメイン年齢推定と文字列類似度のヒューリスティック分析で、外部DBに頼らず不審ドメインを特定"
           />
         </motion.div>
         <motion.div
@@ -220,7 +220,7 @@ const FeaturesSection = () => (
           <FeatureCard
             icon={Zap}
             title="AIプロンプト監視"
-            description="ChatGPT等へのプロンプト送信を記録"
+            description="生成AIへのプロンプト送信をローカルで記録し、機密情報の意図しない流出リスクを可視化"
           />
         </motion.div>
         <motion.div
@@ -232,7 +232,7 @@ const FeaturesSection = () => (
           <FeatureCard
             icon={Lock}
             title="ログイン追跡"
-            description="OAuth/SAMLなどの認証イベントを記録"
+            description="OAuth/SAMLの認証フローを自動検出し、誰がどのサービスにいつログインしたかを記録"
           />
         </motion.div>
         <motion.div
@@ -242,9 +242,9 @@ const FeaturesSection = () => (
           transition={{ duration: 0.6, delay: 0.6 }}
         >
           <FeatureCard
-            icon={Eye}
+            icon={LayoutDashboard}
             title="ダッシュボード"
-            description="検出イベントの一覧とフィルタリング"
+            description="セキュリティイベントを重要度別にトリアージし、対処が必要なアラートを優先表示"
           />
         </motion.div>
       </div>
