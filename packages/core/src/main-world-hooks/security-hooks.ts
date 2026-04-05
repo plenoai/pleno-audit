@@ -247,9 +247,11 @@ export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecuri
     if (!storage) continue;
     let accessCount = 0;
     let accessResetTime = Date.now();
+    let emitted = false; // Only emit once per page load
     const accessedKeys: string[] = [];
     const originalGetItem = storage.getItem.bind(storage);
     storage.getItem = function (key: string) {
+      if (emitted) return originalGetItem(key);
       const now = Date.now();
       if (now - accessResetTime > 3000) {
         accessCount = 0;
@@ -258,6 +260,7 @@ export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecuri
       }
       if (accessedKeys.length < 10) accessedKeys.push(key);
       if (++accessCount === 50) {
+        emitted = true;
         // Extract caller origin from Error stack (lightweight — no regex in main world)
         let callerOrigin = "unknown";
         try {

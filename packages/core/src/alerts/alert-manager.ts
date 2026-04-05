@@ -349,7 +349,7 @@ export function createAlertManager(
 
   // Dedup: track (category, domain) → alertId for merging duplicate alerts
   const DEDUP_WINDOW_MS = 60_000; // 1 minute window
-  const dedupMap = new Map<string, { alertId: string; timestamp: number }>();
+  const dedupMap = new Map<string, { alertId: string; timestamp: number; count: number }>();
   const disabledCategories = new Set<string>();
 
   for (const rule of [...DEFAULT_RULES, ...config.rules]) {
@@ -397,21 +397,22 @@ export function createAlertManager(
 
     if (existing && now - existing.timestamp < DEDUP_WINDOW_MS) {
       // Increment count on existing alert instead of creating a new one
-      const existingAlerts = await alertStore.getAlerts();
-      const existingAlert = existingAlerts.find((a) => a.id === existing.alertId);
-      if (existingAlert) {
-        const newCount = (existingAlert.count ?? 1) + 1;
-        await alertStore.updateAlert(existing.alertId, {
-          count: newCount,
-          timestamp: now, // Update timestamp to latest occurrence
-        });
-        existing.timestamp = now; // Extend the dedup window
-        return existingAlert;
-      }
+      existing.timestamp = now; // Extend the dedup window synchronously to prevent races
+      const newCount = ++existing.count;
+      await alertStore.updateAlert(existing.alertId, {
+        count: newCount,
+        timestamp: now, // Update timestamp to latest occurrence
+      });
+      return null;
     }
 
+    const alertId = generateAlertId();
+    // Set dedup entry synchronously BEFORE any await to prevent race conditions
+    // when multiple events arrive concurrently
+    dedupMap.set(dedupKey, { alertId, timestamp: now, count: 1 });
+
     const alert: SecurityAlert = {
-      id: generateAlertId(),
+      id: alertId,
       category: params.category,
       severity: params.severity,
       status: "new",
@@ -426,7 +427,6 @@ export function createAlertManager(
     };
 
     await alertStore.addAlert(alert);
-    dedupMap.set(dedupKey, { alertId: alert.id, timestamp: now });
     notifyListeners(alert);
 
     return alert;

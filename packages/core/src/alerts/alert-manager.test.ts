@@ -830,8 +830,8 @@ describe("createAlertManager", () => {
         registrationDate: null,
         confidence: "high",
       });
-      // Returns existing alert (merged)
-      expect(alert2?.id).toBe(alert1?.id);
+      // Returns null for deduped alert (no new alert created)
+      expect(alert2).toBeNull();
 
       // Store should have 1 alert with count=2
       const alerts = await manager.getAlerts();
