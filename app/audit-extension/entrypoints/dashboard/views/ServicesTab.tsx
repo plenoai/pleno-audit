@@ -168,7 +168,7 @@ function ServiceRow({
   const hasDestinations = destinations && destinations.length > 0;
   const hasAlerts = alertSummary && alertSummary.total > 0;
   const hasLinks = service.privacyPolicyUrl || service.termsOfServiceUrl;
-  const showExpanded = isExpanded && (hasDestinations || hasAlerts || hasLinks);
+  const showExpanded = isExpanded;
 
   return (
     <div>
@@ -201,11 +201,10 @@ function ServiceRow({
         }
         meta={
           <>
-            {new Date(service.detectedAt).toLocaleDateString("ja-JP")}
-            {connCount > 0 && ` · ${connCount}通信先`}
+            {connCount > 0 && `${connCount}通信先`}
             {hasAlerts && (
               <>
-                {" · "}
+                {connCount > 0 && " · "}
                 <SeverityDots summary={alertSummary} />
               </>
             )}
@@ -217,6 +216,10 @@ function ServiceRow({
       {/* Expanded detail */}
       {showExpanded && (
         <ExpandedPanel>
+          <DetailRow>
+            <span style={{ color: colors.textSecondary }}>検出日時:</span>
+            {new Date(service.detectedAt).toLocaleString("ja-JP")}
+          </DetailRow>
           {hasAlerts && (
             <DetailRow>
               <span style={{ color: colors.textSecondary }}>アラート:</span>
@@ -263,7 +266,7 @@ function ServiceRow({
             return (
               <>
                 {shown.map((domain) => (
-                  <DetailRow key={domain}>└ {domain}</DetailRow>
+                  <DetailRow key={domain}>{domain}</DetailRow>
                 ))}
                 <DetailOverflow remaining={remaining} />
               </>
@@ -282,7 +285,7 @@ export function ServicesTab({
   onNavigateToAlerts,
   onServiceDeleted,
 }: ServicesTabProps) {
-  const { searchQuery, setSearchQuery } = useTabFilter({});
+  const { searchQuery, setSearchQuery, resetAll } = useTabFilter({});
   const { toggle: toggleExpand, isExpanded } = useExpandable();
   const [deletedDomains, setDeletedDomains] = useState<Set<string>>(new Set());
 
@@ -295,7 +298,7 @@ export function ServicesTab({
     [onServiceDeleted],
   );
 
-  const { tagSummary, activeTagFilters, toggleTagFilter, filterByTags: tagFiltered } =
+  const { tagSummary, activeTagFilters, toggleTagFilter, resetTagFilters, filterByTags: tagFiltered } =
     useTagFilter(services, getServiceTags);
 
   const filtered = useMemo(() => {
@@ -332,8 +335,9 @@ export function ServicesTab({
         filteredCount={filtered.length}
         countLabel="サービス"
         emptyTitle="検出されたサービスはありません"
-        emptyDescription="Webサービスが検出されると表示されます"
+        emptyDescription="ブラウジングを始めるとサービスが検出されます"
         noMatchTitle="条件に一致するサービスはありません"
+        onResetFilter={() => { resetAll(); resetTagFilters(); }}
         currentPage={currentPage}
         totalPages={totalPages}
         pageSize={pageSize}
