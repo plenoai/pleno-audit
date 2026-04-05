@@ -232,8 +232,7 @@ export function ExpandedPanel({ children }: ExpandedPanelProps) {
       style={{
         background: colors.bgSecondary,
         borderBottom: `1px solid ${colors.border}`,
-        padding: `${spacing.sm} ${spacing.lg} ${spacing.sm}`,
-        paddingLeft: "48px",
+        padding: `${spacing.sm} ${spacing.lg}`,
       }}
     >
       {children}
