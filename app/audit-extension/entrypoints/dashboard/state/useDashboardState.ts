@@ -11,8 +11,6 @@ interface TotalCounts {
   violations: number;
   networkRequests: number;
 }
-import { getStatusBadge } from "../utils";
-
 const logger = createLogger("dashboard-state");
 
 interface UseDashboardStateOptions {
@@ -160,11 +158,6 @@ export function useDashboardState({
   const typosquatServices = useMemo(() => filterTyposquatServices(services), [services]);
   const aiServices = useMemo(() => filterAIServices(services), [services]);
 
-  const status = useMemo(
-    () => getStatusBadge(nrdServices.length, violations.length, aiServices.length),
-    [aiServices.length, nrdServices.length, violations.length]
-  );
-
   return {
     reports,
     totalCounts,
@@ -186,6 +179,5 @@ export function useDashboardState({
     loginServices,
     typosquatServices,
     aiServices,
-    status,
   };
 }

@@ -1,11 +1,10 @@
 import { RefreshCw, Shield } from "lucide-preact";
-import { Badge, SettingsMenu } from "../../../components";
+import { SettingsMenu } from "../../../components";
 import { useTheme } from "../../../lib/theme";
 import type { DashboardStyles } from "../styles";
 
 interface DashboardHeaderProps {
   styles: DashboardStyles;
-  status: { variant: "danger" | "warning" | "info" | "success"; label: string; dot: boolean };
   lastUpdated: string;
   isRefreshing: boolean;
   onRefresh: () => void;
@@ -16,7 +15,6 @@ interface DashboardHeaderProps {
 
 export function DashboardHeader({
   styles,
-  status,
   lastUpdated,
   isRefreshing,
   onRefresh,
@@ -33,9 +31,6 @@ export function DashboardHeader({
           <h1 style={styles.title}>
             <Shield size={20} />
             Pleno Audit
-            <Badge variant={status.variant} size="md" dot={status.dot}>
-              {status.label}
-            </Badge>
           </h1>
           <p style={styles.subtitle}>
             更新: {new Date(lastUpdated).toLocaleString("ja-JP")}

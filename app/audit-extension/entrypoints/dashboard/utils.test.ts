@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getStatusBadge, resolveTabFromHash, truncate } from "./utils";
+import { resolveTabFromHash, truncate } from "./utils";
 
 describe("truncate", () => {
   it("truncates long strings with ellipsis", () => {
@@ -17,26 +17,6 @@ describe("truncate", () => {
   it("returns empty string for falsy input", () => {
     expect(truncate(undefined as unknown as string, 5)).toBe("");
     expect(truncate(null as unknown as string, 5)).toBe("");
-  });
-});
-
-describe("getStatusBadge", () => {
-  it('returns danger when nrd > 0', () => {
-    expect(getStatusBadge(1, 0, 0).variant).toBe("danger");
-  });
-
-  it('returns warning when violations > 50', () => {
-    expect(getStatusBadge(0, 51, 0).variant).toBe("warning");
-  });
-
-  it('returns info when ai > 0', () => {
-    expect(getStatusBadge(0, 0, 1).variant).toBe("info");
-  });
-
-  it('returns success when all zero', () => {
-    const result = getStatusBadge(0, 0, 0);
-    expect(result.variant).toBe("success");
-    expect(result.dot).toBe(true);
   });
 });
 
