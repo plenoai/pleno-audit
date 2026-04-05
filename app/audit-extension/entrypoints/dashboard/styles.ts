@@ -17,6 +17,7 @@ export function createDashboardStyles() {
       display: "flex",
       flex: 1,
       minHeight: 0,
+      overflow: "hidden",
     },
     container: {
       flex: 1,
