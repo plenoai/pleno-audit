@@ -15,3 +15,5 @@ docs/scan-data/
 reports/
 
 sample-casb-export-2026-04-04.json
+*.crx
+*.zip
