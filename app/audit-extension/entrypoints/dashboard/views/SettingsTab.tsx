@@ -24,113 +24,49 @@ const DETECTION_CONFIG_MAP: Record<string, keyof DetectionConfig> = {
 
 const logger = createLogger("dashboard-settings");
 
-function DLPModelCard({
+function DLPStatusLabel({
   modelStatus,
   modelDownloading,
-  onDownload,
-  onDelete,
   colors,
 }: {
   modelStatus: ModelStatus;
   modelDownloading: boolean;
-  onDownload: () => void;
-  onDelete: () => void;
   colors: ReturnType<typeof useTheme>["colors"];
 }) {
   const isLoading = modelDownloading || modelStatus.loading;
-  const statusStyle = modelStatus.ready
-    ? colors.status.success
-    : isLoading
-      ? colors.status.warning
-      : colors.status.default;
-  const dotColor = modelStatus.ready
-    ? colors.dot.success
-    : isLoading
-      ? colors.dot.warning
-      : modelStatus.downloaded
-        ? colors.dot.info
-        : colors.dot.default;
-  const statusText = modelStatus.ready
-    ? "動作中"
-    : isLoading
-      ? "読み込み中..."
-      : modelStatus.downloaded
-        ? "ダウンロード済み"
-        : "未ダウンロード";
+  if (!isLoading && modelStatus.ready) return null;
+  if (!isLoading && !modelStatus.downloaded) return null;
+
+  const statusText = isLoading
+    ? (modelStatus.downloaded ? "モデル読み込み中..." : "モデルダウンロード中...")
+    : "モデル読み込み待ち";
 
   return (
-    <div style={{ padding: `${spacing.sm} ${spacing.lg}` } as CSSProperties}>
+    <div style={{ padding: `2px ${spacing.lg}` } as CSSProperties}>
       <div style={{
-        padding: spacing.md,
-        background: statusStyle.bg,
-        border: `1px solid ${statusStyle.border}`,
-        borderRadius: borderRadius.md,
         display: "flex",
         alignItems: "center",
-        justifyContent: "space-between",
-        gap: spacing.sm,
+        gap: spacing.xs,
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: spacing.sm, flex: 1, minWidth: 0 }}>
+        {isLoading && (
           <span style={{
-            width: "8px", height: "8px", borderRadius: "50%", flexShrink: 0,
-            background: dotColor,
+            display: "inline-block",
+            width: "12px",
+            height: "12px",
+            border: `2px solid ${colors.border}`,
+            borderTopColor: colors.interactive,
+            borderRadius: "50%",
+            animation: "dlp-spin 0.8s linear infinite",
+            flexShrink: 0,
           }} />
-          <div style={{ display: "flex", flexDirection: "column", gap: "1px" } as CSSProperties}>
-            <span style={{ fontSize: fontSize.xs, fontWeight: 600, color: statusStyle.text }}>
-              {statusText}
-            </span>
-            <span style={{ fontSize: "10px", color: colors.textSecondary }}>
-              {modelStatus.ready
-                ? "PII検出が有効です"
-                : modelStatus.downloaded
-                  ? "読み込みが必要です"
-                  : "初回ダウンロード 約9MB"}
-            </span>
-          </div>
-        </div>
-        {modelStatus.ready ? (
-          <button
-            type="button"
-            onClick={onDelete}
-            style={{
-              padding: `${spacing.xs} ${spacing.sm}`,
-              background: colors.bgPrimary,
-              border: `1px solid ${colors.border}`,
-              borderRadius: borderRadius.sm,
-              color: colors.textPrimary,
-              fontSize: fontSize.xs,
-              fontWeight: 500,
-              cursor: "pointer",
-              whiteSpace: "nowrap",
-            }}
-          >
-            削除
-          </button>
-        ) : (
-          <button
-            type="button"
-            disabled={isLoading}
-            onClick={onDownload}
-            style={{
-              padding: `${spacing.xs} ${spacing.sm}`,
-              background: isLoading ? colors.status.warning.bg : colors.interactive,
-              border: isLoading ? `1px solid ${colors.status.warning.border}` : "none",
-              borderRadius: borderRadius.sm,
-              color: isLoading ? colors.status.warning.text : colors.textInverse,
-              fontSize: fontSize.xs,
-              fontWeight: 500,
-              cursor: isLoading ? "wait" : "pointer",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {isLoading
-              ? "読み込み中..."
-              : modelStatus.downloaded
-                ? "読み込み"
-                : "ダウンロード"}
-          </button>
         )}
+        <span style={{ fontSize: "10px", color: colors.textSecondary }}>
+          {statusText}
+        </span>
       </div>
+      {isLoading && (
+        <style>{`@keyframes dlp-spin { to { transform: rotate(360deg); } }`}</style>
+      )}
     </div>
   );
 }
@@ -231,7 +167,7 @@ export function SettingsTab({ animationEnabled, onAnimationToggle }: { animation
   const [disabledCategories, setDisabledCategories] = useState<Set<string>>(new Set());
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
-  const loadModelFromCache = useCallback(async () => {
+  const ensureModelReady = useCallback(async () => {
     setModelDownloading(true);
     try {
       logger.info("DLP model load: sending DOWNLOAD_DLP_MODEL");
@@ -269,7 +205,7 @@ export function SettingsTab({ animationEnabled, onAnimationToggle }: { animation
           setModelStatus(mStatus);
           // キャッシュ済みだがpipeline未初期化の場合、自動でロードを試みる
           if (dlp?.enabled && mStatus.downloaded && !mStatus.ready && !mStatus.loading) {
-            void loadModelFromCache();
+            void ensureModelReady();
           }
         }
         // DetectionConfigのフラグとdisabledAlertCategoriesを統合
@@ -282,7 +218,7 @@ export function SettingsTab({ animationEnabled, onAnimationToggle }: { animation
         logger.error("Failed to load settings", error);
       }
     })();
-  }, [loadModelFromCache]);
+  }, [ensureModelReady]);
 
   const saveDetection = useCallback(async (config: DetectionConfig) => {
     setDetectionConfig(config);
@@ -464,24 +400,18 @@ export function SettingsTab({ animationEnabled, onAnimationToggle }: { animation
           const enabling = !dlpConfig.enabled;
           const next = { ...dlpConfig, enabled: enabling };
           saveDlpConfig(next);
-          // 有効化時にキャッシュ済みモデルがあれば自動ロード
-          if (enabling && modelStatus.downloaded && !modelStatus.ready && !modelDownloading) {
-            void loadModelFromCache();
+          if (enabling && !modelStatus.ready && !modelDownloading) {
+            // 未ダウンロードでもダウンロード済みでも、自動でダウンロード→ロードを実行
+            void ensureModelReady();
           }
         }}
         colors={colors}
       />
 
       {dlpConfig.enabled && (
-        <DLPModelCard
+        <DLPStatusLabel
           modelStatus={modelStatus}
           modelDownloading={modelDownloading}
-          onDownload={() => void loadModelFromCache()}
-          onDelete={async () => {
-            await sendMessage({ type: "DELETE_DLP_MODEL" });
-            setModelStatus({ downloaded: false, loading: false, ready: false });
-            saveDlpConfig({ ...dlpConfig, modelReady: false });
-          }}
           colors={colors}
         />
       )}
