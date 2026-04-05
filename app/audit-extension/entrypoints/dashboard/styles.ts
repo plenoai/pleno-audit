@@ -8,7 +8,7 @@ export function createDashboardStyles() {
     wrapper: {
       display: "flex",
       flexDirection: "column" as const,
-      minHeight: "100vh",
+      height: "100vh",
       fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
       color: "var(--foreground)",
       background: "var(--secondary)",
