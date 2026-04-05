@@ -290,18 +290,6 @@ function AlertDetailSidebar({
           {alert.title}
         </span>
 
-        {/* Domain */}
-        <span
-          style={{
-            fontSize: fontSize.sm,
-            color: colors.textMuted,
-            display: "block",
-            marginBottom: spacing.md,
-          }}
-        >
-          {alert.domain}
-        </span>
-
         {/* Description */}
         {alert.description && (
           <p
@@ -314,6 +302,89 @@ function AlertDetailSidebar({
           >
             {alert.description}
           </p>
+        )}
+
+        {/* Meta */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "auto 1fr",
+            gap: "6px 12px",
+            fontSize: fontSize.sm,
+            fontFamily: "monospace",
+            padding: spacing.md,
+            background: colors.bgSecondary,
+            borderRadius: borderRadius.md,
+            border: `1px solid ${colors.border}`,
+            marginBottom: spacing.md,
+          }}
+        >
+          <span style={{ color: colors.textMuted }}>domain:</span>
+          <span style={{ color: colors.textPrimary, wordBreak: "break-all" }}>
+            {alert.domain}
+          </span>
+          {alert.url && (
+            <>
+              <span style={{ color: colors.textMuted }}>url:</span>
+              <span style={{ color: colors.textPrimary, wordBreak: "break-all" }}>
+                {alert.url}
+              </span>
+            </>
+          )}
+          <span style={{ color: colors.textMuted }}>timestamp:</span>
+          <span style={{ color: colors.textPrimary }}>
+            {new Date(alert.timestamp).toLocaleString("ja-JP")}
+          </span>
+        </div>
+
+        {/* Alert-specific details */}
+        {detailEntries.length > 0 && (
+          <div style={{ marginBottom: spacing.md }}>
+            <span
+              style={{
+                fontSize: fontSize.sm,
+                fontWeight: 600,
+                color: colors.textSecondary,
+                display: "block",
+                marginBottom: spacing.sm,
+              }}
+            >
+              検出パラメータ
+            </span>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "auto 1fr",
+                gap: "4px 12px",
+                fontSize: fontSize.sm,
+                fontFamily: "monospace",
+                padding: spacing.md,
+                background: colors.bgSecondary,
+                borderRadius: borderRadius.md,
+                border: `1px solid ${colors.border}`,
+              }}
+            >
+              {detailEntries.map(([key, value]) => (
+                <>
+                  <span key={`${key}-label`} style={{ color: colors.textMuted }}>
+                    {key}:
+                  </span>
+                  <span
+                    key={`${key}-value`}
+                    style={{
+                      color: colors.textPrimary,
+                      wordBreak: "break-all",
+                    }}
+                    title={String(value)}
+                  >
+                    {typeof value === "object"
+                      ? JSON.stringify(value)
+                      : String(value)}
+                  </span>
+                </>
+              ))}
+            </div>
+          </div>
         )}
 
         {/* Playbook: response steps */}
@@ -432,125 +503,10 @@ function AlertDetailSidebar({
             fontSize: fontSize.sm,
             color: colors.textMuted,
             textDecoration: "none",
-            display: "inline-block",
-            marginBottom: spacing.md,
           }}
         >
           対応方針の詳細を見る ↗
         </a>
-
-        {/* === Debug / detail section (collapsible, default closed) === */}
-        <details>
-          <summary
-            style={{
-              fontSize: fontSize.sm,
-              fontWeight: 600,
-              color: colors.textSecondary,
-              cursor: "pointer",
-              userSelect: "none",
-              marginBottom: spacing.sm,
-            }}
-          >
-            詳細データ
-          </summary>
-
-          {/* Technical title (code style) */}
-          <code
-            style={{
-              fontSize: fontSize.sm,
-              fontFamily: "monospace",
-              color: colors.textMuted,
-              display: "block",
-              wordBreak: "break-all",
-              marginBottom: spacing.sm,
-            }}
-          >
-            {alert.title}
-          </code>
-
-          {/* Meta */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "auto 1fr",
-              gap: "6px 12px",
-              fontSize: fontSize.sm,
-              fontFamily: "monospace",
-              padding: spacing.md,
-              background: colors.bgSecondary,
-              borderRadius: borderRadius.md,
-              border: `1px solid ${colors.border}`,
-              marginBottom: spacing.md,
-            }}
-          >
-            <span style={{ color: colors.textMuted }}>domain:</span>
-            <span style={{ color: colors.textPrimary, wordBreak: "break-all" }}>
-              {alert.domain}
-            </span>
-            {alert.url && (
-              <>
-                <span style={{ color: colors.textMuted }}>url:</span>
-                <span style={{ color: colors.textPrimary, wordBreak: "break-all" }}>
-                  {alert.url}
-                </span>
-              </>
-            )}
-            <span style={{ color: colors.textMuted }}>timestamp:</span>
-            <span style={{ color: colors.textPrimary }}>
-              {new Date(alert.timestamp).toLocaleString("ja-JP")}
-            </span>
-          </div>
-
-          {/* Alert-specific details */}
-          {detailEntries.length > 0 && (
-            <div style={{ marginBottom: spacing.md }}>
-              <span
-                style={{
-                  fontSize: fontSize.sm,
-                  fontWeight: 600,
-                  color: colors.textSecondary,
-                  display: "block",
-                  marginBottom: spacing.sm,
-                }}
-              >
-                検出パラメータ
-              </span>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "auto 1fr",
-                  gap: "4px 12px",
-                  fontSize: fontSize.sm,
-                  fontFamily: "monospace",
-                  padding: spacing.md,
-                  background: colors.bgSecondary,
-                  borderRadius: borderRadius.md,
-                  border: `1px solid ${colors.border}`,
-                }}
-              >
-                {detailEntries.map(([key, value]) => (
-                  <>
-                    <span key={`${key}-label`} style={{ color: colors.textMuted }}>
-                      {key}:
-                    </span>
-                    <span
-                      key={`${key}-value`}
-                      style={{
-                        color: colors.textPrimary,
-                        wordBreak: "break-all",
-                      }}
-                      title={String(value)}
-                    >
-                      {typeof value === "object"
-                        ? JSON.stringify(value)
-                        : String(value)}
-                    </span>
-                  </>
-                ))}
-              </div>
-            </div>
-          )}
-        </details>
       </div>
 
       {/* Fixed action footer */}
