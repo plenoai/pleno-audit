@@ -1,5 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "preact/hooks";
-import { Globe, BookOpen, Shield, Scale, HelpCircle, MessageSquare, ExternalLink } from "lucide-preact";
+import { useState, useEffect, useCallback } from "preact/hooks";
 import { sendMessage } from "../../../lib/messaging";
 import { useTheme, spacing, fontSize, borderRadius } from "../../../lib/theme";
 import {
@@ -108,51 +107,6 @@ function ToggleRow({
         style={{ width: "14px", height: "14px", cursor: "pointer", flexShrink: 0 }}
       />
     </label>
-  );
-}
-
-function AboutLink({
-  icon: Icon,
-  label,
-  desc,
-  href,
-  colors,
-  isLast,
-}: {
-  icon: typeof Globe;
-  label: string;
-  desc: string;
-  href: string;
-  colors: ReturnType<typeof useTheme>["colors"];
-  isLast: boolean;
-}) {
-  const ref = useRef<HTMLAnchorElement>(null);
-  return (
-    <a
-      ref={ref}
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      onMouseEnter={() => { if (ref.current) ref.current.style.background = colors.bgTertiary; }}
-      onMouseLeave={() => { if (ref.current) ref.current.style.background = "transparent"; }}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: spacing.md,
-        padding: `${spacing.sm} ${spacing.lg}`,
-        textDecoration: "none",
-        background: "transparent",
-        transition: "background-color 0.15s",
-        borderBottom: isLast ? "none" : `1px solid ${colors.border}`,
-      }}
-    >
-      <Icon size={16} style={{ color: colors.textSecondary, flexShrink: 0 }} />
-      <div style={{ display: "flex", flexDirection: "column", gap: "1px", flex: 1, minWidth: 0 } as CSSProperties}>
-        <span style={{ fontSize: fontSize.md, fontWeight: 500, color: colors.textPrimary }}>{label}</span>
-        <span style={{ fontSize: "10px", color: colors.textSecondary }}>{desc}</span>
-      </div>
-      <ExternalLink size={12} style={{ color: colors.textMuted, flexShrink: 0 }} />
-    </a>
   );
 }
 
@@ -332,17 +286,43 @@ export function SettingsTab({ animationEnabled, onAnimationToggle }: { animation
                   <span style={{ fontSize: "10px", color: colors.textSecondary }}>{enabledCount}/{group.alertIds.length} 有効</span>
                 </div>
               </div>
-              <input
-                type="checkbox"
-                checked={allEnabled}
-                ref={(el) => { if (el) el.indeterminate = enabledCount > 0 && !allEnabled; }}
-                onChange={(e) => { e.stopPropagation(); toggleGroup(group.alertIds); }}
-                onClick={(e) => e.stopPropagation()}
-                style={{ width: "14px", height: "14px", cursor: "pointer", flexShrink: 0 }}
-              />
             </div>
             {isExpanded && (
               <div style={{ padding: `0 ${spacing.lg} ${spacing.sm}`, display: "flex", flexDirection: "column", gap: "2px" } as CSSProperties}>
+                <div style={{ display: "flex", gap: spacing.xs, marginBottom: "4px" }}>
+                  <button
+                    type="button"
+                    onClick={() => { if (!allEnabled) toggleGroup(group.alertIds); }}
+                    disabled={allEnabled}
+                    style={{
+                      fontSize: "10px",
+                      padding: `2px ${spacing.sm}`,
+                      borderRadius: borderRadius.sm,
+                      border: `1px solid ${colors.border}`,
+                      background: allEnabled ? colors.bgTertiary : colors.bgPrimary,
+                      color: allEnabled ? colors.textMuted : colors.textPrimary,
+                      cursor: allEnabled ? "default" : "pointer",
+                    }}
+                  >
+                    すべて有効
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { if (enabledCount > 0) toggleGroup(group.alertIds); }}
+                    disabled={enabledCount === 0}
+                    style={{
+                      fontSize: "10px",
+                      padding: `2px ${spacing.sm}`,
+                      borderRadius: borderRadius.sm,
+                      border: `1px solid ${colors.border}`,
+                      background: enabledCount === 0 ? colors.bgTertiary : colors.bgPrimary,
+                      color: enabledCount === 0 ? colors.textMuted : colors.textPrimary,
+                      cursor: enabledCount === 0 ? "default" : "pointer",
+                    }}
+                  >
+                    すべて無効
+                  </button>
+                </div>
                 {group.alertIds.map((alertId) => {
                   const playbook = PLAYBOOK_MAP[alertId];
                   const enabled = !disabledCategories.has(alertId);
@@ -428,36 +408,45 @@ export function SettingsTab({ animationEnabled, onAnimationToggle }: { animation
 
       <ToggleRow title="アニメーション" desc="タブ切り替えなどのUIアニメーション" checked={animationEnabled} onChange={() => onAnimationToggle(!animationEnabled)} colors={colors} />
 
-      <span style={{ fontSize: fontSize.sm, fontWeight: 600, color: colors.textPrimary, marginTop: spacing.md, marginBottom: spacing.xs, display: "block" } as CSSProperties}>
-        このアプリについて
-      </span>
-
       <div style={{
-        background: colors.bgSecondary,
-        borderRadius: borderRadius.md,
-        overflow: "hidden",
-      }}>
-        {([
-          { icon: Globe, label: "Webサイト", desc: "plenoai.com", href: "https://plenoai.com/pleno-audit" },
-          { icon: BookOpen, label: "ドキュメント", desc: "使い方・機能紹介", href: "https://plenoai.com/pleno-audit/docs" },
-          { icon: Shield, label: "プライバシーポリシー", desc: "データの取り扱い", href: "https://plenoai.com/pleno-audit/privacy" },
-          { icon: Scale, label: "利用規約", desc: "AGPL-3.0 ライセンス", href: "https://plenoai.com/pleno-audit/terms" },
-          { icon: HelpCircle, label: "FAQ", desc: "よくある質問", href: "https://plenoai.com/pleno-audit/faq" },
-          { icon: MessageSquare, label: "フィードバック", desc: "GitHub Issues", href: "https://github.com/plenoai/pleno-audit/issues" },
-        ] as const).map(({ icon: Icon, label, desc, href }, i, arr) => (
-          <AboutLink key={href} icon={Icon} label={label} desc={desc} href={href} colors={colors} isLast={i === arr.length - 1} />
-        ))}
+        marginTop: spacing.xl,
+        borderTop: `1px solid ${colors.border}`,
+        paddingTop: spacing.md,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: spacing.xs,
+      } as CSSProperties}>
         <div style={{
-          padding: `${spacing.sm} ${spacing.lg}`,
-          borderTop: `1px solid ${colors.border}`,
           display: "flex",
-          alignItems: "center",
+          flexWrap: "wrap",
           justifyContent: "center",
-        }}>
-          <span style={{ fontSize: "10px", color: colors.textMuted }}>
-            Pleno Audit v{browser.runtime.getManifest().version}
-          </span>
+          gap: `${spacing.xs} ${spacing.md}`,
+        } as CSSProperties}>
+          {([
+            { label: "Webサイト", href: "https://plenoai.com/pleno-audit" },
+            { label: "ドキュメント", href: "https://plenoai.com/pleno-audit/docs" },
+            { label: "プライバシーポリシー", href: "https://plenoai.com/pleno-audit/privacy" },
+            { label: "利用規約", href: "https://plenoai.com/pleno-audit/terms" },
+            { label: "FAQ", href: "https://plenoai.com/pleno-audit/faq" },
+            { label: "フィードバック", href: "https://github.com/plenoai/pleno-audit/issues" },
+          ] as const).map(({ label, href }) => (
+            <a
+              key={href}
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ fontSize: "10px", color: colors.textSecondary, textDecoration: "none" }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = colors.interactive; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = colors.textSecondary; }}
+            >
+              {label}
+            </a>
+          ))}
         </div>
+        <span style={{ fontSize: "10px", color: colors.textMuted }}>
+          Pleno Audit v{browser.runtime.getManifest().version}
+        </span>
       </div>
     </div>
   );
