@@ -257,106 +257,48 @@ function AlertDetailSidebar({
           padding: spacing.lg,
         }}
       >
-        {/* Title */}
-        <code
+        {/* === Triage section === */}
+
+        {/* Severity + Category badges */}
+        <div style={{ display: "flex", gap: spacing.sm, flexWrap: "wrap", marginBottom: spacing.sm }}>
+          <Badge variant={severityVariant[alert.severity]} size="sm">
+            {alert.severity}
+          </Badge>
+          <Badge variant="info" size="sm">
+            {CATEGORY_LABELS[alert.category] ?? alert.category}
+          </Badge>
+          {(alert.count ?? 1) > 1 && (
+            <Badge variant="info" size="sm">
+              x{alert.count}
+            </Badge>
+          )}
+        </div>
+
+        {/* Title (human-readable) */}
+        <span
           style={{
             fontSize: fontSize.lg,
-            fontFamily: "monospace",
+            fontWeight: 600,
             color: colors.textPrimary,
             display: "block",
             wordBreak: "break-all",
-            marginBottom: spacing.sm,
+            marginBottom: spacing.xs,
           }}
         >
           {alert.title}
-        </code>
+        </span>
 
-        {/* Badges + actions row */}
-        <div
+        {/* Domain */}
+        <span
           style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
+            fontSize: fontSize.sm,
+            color: colors.textMuted,
+            display: "block",
             marginBottom: spacing.md,
           }}
         >
-          <div style={{ display: "flex", gap: spacing.sm, flexWrap: "wrap" }}>
-            <Badge variant={severityVariant[alert.severity]} size="sm">
-              {alert.severity}
-            </Badge>
-            <Badge variant="info" size="sm">
-              {CATEGORY_LABELS[alert.category] ?? alert.category}
-            </Badge>
-            {(alert.count ?? 1) > 1 && (
-              <Badge variant="info" size="sm">
-                x{alert.count}
-              </Badge>
-            )}
-          </div>
-          <div style={{ display: "flex", gap: spacing.xs, flexShrink: 0 }}>
-            <button
-              type="button"
-              onClick={onReportBug}
-              style={{
-                padding: `${spacing.xs} ${spacing.sm}`,
-                border: `1px solid ${colors.border}`,
-                borderRadius: borderRadius.sm,
-                background: colors.bgPrimary,
-                color: colors.textSecondary,
-                fontSize: fontSize.sm,
-                cursor: "pointer",
-              }}
-            >
-              バグを報告
-            </button>
-            <div ref={dismissPopoverRef} style={{ position: "relative" }}>
-              <button
-                type="button"
-                onClick={() => setShowDismissComposer((prev) => !prev)}
-                style={{
-                  padding: `${spacing.xs} ${spacing.sm}`,
-                  border: `1px solid ${colors.border}`,
-                  borderRadius: borderRadius.sm,
-                  background: colors.bgPrimary,
-                  color: colors.textMuted,
-                  fontSize: fontSize.sm,
-                  cursor: "pointer",
-                }}
-              >
-                Dismiss
-              </button>
-              {showDismissComposer && (
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "calc(100% + 8px)",
-                    right: 0,
-                    width: "340px",
-                    maxWidth: "calc(100vw - 64px)",
-                    zIndex: 10,
-                  }}
-                >
-                  <DismissComposer
-                    alerts={[
-                      {
-                        id: alert.id,
-                        title: alert.title,
-                        domain: alert.domain,
-                        severity: alert.severity,
-                      },
-                    ]}
-                    onConfirm={(reason, comment) => {
-                      onDismissConfirm(reason, comment);
-                      setShowDismissComposer(false);
-                      onClose();
-                    }}
-                    onCancel={() => setShowDismissComposer(false)}
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+          {alert.domain}
+        </span>
 
         {/* Description */}
         {alert.description && (
@@ -370,89 +312,6 @@ function AlertDetailSidebar({
           >
             {alert.description}
           </p>
-        )}
-
-        {/* Meta */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "auto 1fr",
-            gap: "6px 12px",
-            fontSize: fontSize.sm,
-            fontFamily: "monospace",
-            padding: spacing.md,
-            background: colors.bgSecondary,
-            borderRadius: borderRadius.md,
-            border: `1px solid ${colors.border}`,
-            marginBottom: spacing.md,
-          }}
-        >
-          <span style={{ color: colors.textMuted }}>domain:</span>
-          <span style={{ color: colors.textPrimary, wordBreak: "break-all" }}>
-            {alert.domain}
-          </span>
-          {alert.url && (
-            <>
-              <span style={{ color: colors.textMuted }}>url:</span>
-              <span style={{ color: colors.textPrimary, wordBreak: "break-all" }}>
-                {alert.url}
-              </span>
-            </>
-          )}
-          <span style={{ color: colors.textMuted }}>timestamp:</span>
-          <span style={{ color: colors.textPrimary }}>
-            {new Date(alert.timestamp).toLocaleString("ja-JP")}
-          </span>
-        </div>
-
-        {/* Alert-specific details */}
-        {detailEntries.length > 0 && (
-          <div style={{ marginBottom: spacing.md }}>
-            <span
-              style={{
-                fontSize: fontSize.sm,
-                fontWeight: 600,
-                color: colors.textSecondary,
-                display: "block",
-                marginBottom: spacing.sm,
-              }}
-            >
-              検出パラメータ
-            </span>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "auto 1fr",
-                gap: "4px 12px",
-                fontSize: fontSize.sm,
-                fontFamily: "monospace",
-                padding: spacing.md,
-                background: colors.bgSecondary,
-                borderRadius: borderRadius.md,
-                border: `1px solid ${colors.border}`,
-              }}
-            >
-              {detailEntries.map(([key, value]) => (
-                <>
-                  <span key={`${key}-label`} style={{ color: colors.textMuted }}>
-                    {key}:
-                  </span>
-                  <span
-                    key={`${key}-value`}
-                    style={{
-                      color: colors.textPrimary,
-                      wordBreak: "break-all",
-                    }}
-                    title={String(value)}
-                  >
-                    {typeof value === "object"
-                      ? JSON.stringify(value)
-                      : String(value)}
-                  </span>
-                </>
-              ))}
-            </div>
-          </div>
         )}
 
         {/* Playbook: response steps */}
@@ -571,10 +430,198 @@ function AlertDetailSidebar({
             fontSize: fontSize.sm,
             color: colors.textMuted,
             textDecoration: "none",
+            display: "inline-block",
+            marginBottom: spacing.md,
           }}
         >
           対応方針の詳細を見る ↗
         </a>
+
+        {/* Actions row */}
+        <div
+          style={{
+            display: "flex",
+            gap: spacing.xs,
+            marginBottom: spacing.lg,
+            paddingBottom: spacing.lg,
+            borderBottom: `1px solid ${colors.border}`,
+          }}
+        >
+          <button
+            type="button"
+            onClick={onReportBug}
+            style={{
+              padding: `${spacing.xs} ${spacing.sm}`,
+              border: `1px solid ${colors.border}`,
+              borderRadius: borderRadius.sm,
+              background: colors.bgPrimary,
+              color: colors.textSecondary,
+              fontSize: fontSize.sm,
+              cursor: "pointer",
+            }}
+          >
+            バグを報告
+          </button>
+          <div ref={dismissPopoverRef} style={{ position: "relative" }}>
+            <button
+              type="button"
+              onClick={() => setShowDismissComposer((prev) => !prev)}
+              style={{
+                padding: `${spacing.xs} ${spacing.sm}`,
+                border: `1px solid ${colors.border}`,
+                borderRadius: borderRadius.sm,
+                background: colors.bgPrimary,
+                color: colors.textMuted,
+                fontSize: fontSize.sm,
+                cursor: "pointer",
+              }}
+            >
+              Dismiss
+            </button>
+            {showDismissComposer && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "calc(100% + 8px)",
+                  right: 0,
+                  width: "340px",
+                  maxWidth: "calc(100vw - 64px)",
+                  zIndex: 10,
+                }}
+              >
+                <DismissComposer
+                  alerts={[
+                    {
+                      id: alert.id,
+                      title: alert.title,
+                      domain: alert.domain,
+                      severity: alert.severity,
+                    },
+                  ]}
+                  onConfirm={(reason, comment) => {
+                    onDismissConfirm(reason, comment);
+                    setShowDismissComposer(false);
+                    onClose();
+                  }}
+                  onCancel={() => setShowDismissComposer(false)}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* === Debug / detail section (collapsible, default closed) === */}
+        <details>
+          <summary
+            style={{
+              fontSize: fontSize.sm,
+              fontWeight: 600,
+              color: colors.textSecondary,
+              cursor: "pointer",
+              userSelect: "none",
+              marginBottom: spacing.sm,
+            }}
+          >
+            詳細データ
+          </summary>
+
+          {/* Technical title (code style) */}
+          <code
+            style={{
+              fontSize: fontSize.sm,
+              fontFamily: "monospace",
+              color: colors.textMuted,
+              display: "block",
+              wordBreak: "break-all",
+              marginBottom: spacing.sm,
+            }}
+          >
+            {alert.title}
+          </code>
+
+          {/* Meta */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "auto 1fr",
+              gap: "6px 12px",
+              fontSize: fontSize.sm,
+              fontFamily: "monospace",
+              padding: spacing.md,
+              background: colors.bgSecondary,
+              borderRadius: borderRadius.md,
+              border: `1px solid ${colors.border}`,
+              marginBottom: spacing.md,
+            }}
+          >
+            <span style={{ color: colors.textMuted }}>domain:</span>
+            <span style={{ color: colors.textPrimary, wordBreak: "break-all" }}>
+              {alert.domain}
+            </span>
+            {alert.url && (
+              <>
+                <span style={{ color: colors.textMuted }}>url:</span>
+                <span style={{ color: colors.textPrimary, wordBreak: "break-all" }}>
+                  {alert.url}
+                </span>
+              </>
+            )}
+            <span style={{ color: colors.textMuted }}>timestamp:</span>
+            <span style={{ color: colors.textPrimary }}>
+              {new Date(alert.timestamp).toLocaleString("ja-JP")}
+            </span>
+          </div>
+
+          {/* Alert-specific details */}
+          {detailEntries.length > 0 && (
+            <div style={{ marginBottom: spacing.md }}>
+              <span
+                style={{
+                  fontSize: fontSize.sm,
+                  fontWeight: 600,
+                  color: colors.textSecondary,
+                  display: "block",
+                  marginBottom: spacing.sm,
+                }}
+              >
+                検出パラメータ
+              </span>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "auto 1fr",
+                  gap: "4px 12px",
+                  fontSize: fontSize.sm,
+                  fontFamily: "monospace",
+                  padding: spacing.md,
+                  background: colors.bgSecondary,
+                  borderRadius: borderRadius.md,
+                  border: `1px solid ${colors.border}`,
+                }}
+              >
+                {detailEntries.map(([key, value]) => (
+                  <>
+                    <span key={`${key}-label`} style={{ color: colors.textMuted }}>
+                      {key}:
+                    </span>
+                    <span
+                      key={`${key}-value`}
+                      style={{
+                        color: colors.textPrimary,
+                        wordBreak: "break-all",
+                      }}
+                      title={String(value)}
+                    >
+                      {typeof value === "object"
+                        ? JSON.stringify(value)
+                        : String(value)}
+                    </span>
+                  </>
+                ))}
+              </div>
+            </div>
+          )}
+        </details>
       </div>
     </div>
   );
