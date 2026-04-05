@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "preact/hooks";
 import { Settings } from "lucide-preact";
-import { useTheme } from "../lib/theme";
+import { useTheme, spacing, fontSize, borderRadius } from "../lib/theme";
 import { ThemeToggle } from "./ThemeToggle";
 
 interface Props {
@@ -9,9 +9,18 @@ interface Props {
   onImport?: () => Promise<{ success: boolean; message: string }>;
 }
 
+const DATA_CATEGORIES = [
+  "検出されたサービス・認証情報",
+  "セキュリティアラート履歴",
+  "CSP違反レポート",
+  "拡張機能分析データ",
+  "サービス接続・拡張機能接続マップ",
+];
+
 export function SettingsMenu({ onClearData, onExport, onImport }: Props) {
   const { colors } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -110,7 +119,7 @@ export function SettingsMenu({ onClearData, onExport, onImport }: Props) {
           <div style={{ padding: "4px" }}>
             <button
               className="hover-bg"
-              onClick={() => { setIsOpen(false); onClearData(); }}
+              onClick={() => { setIsOpen(false); setShowClearConfirm(true); }}
               style={{ width: "100%", padding: "8px 12px", background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", color: colors.status.danger.text, borderRadius: "4px", textAlign: "left" }}
             >
               <span style={{ width: "16px", display: "flex", justifyContent: "center" }}>
@@ -121,6 +130,122 @@ export function SettingsMenu({ onClearData, onExport, onImport }: Props) {
               </span>
               データを削除
             </button>
+          </div>
+        </div>
+      )}
+
+      {showClearConfirm && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            backgroundColor: "rgba(0,0,0,0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 2000,
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowClearConfirm(false);
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: colors.bgPrimary,
+              border: `1px solid ${colors.border}`,
+              borderRadius: borderRadius.lg,
+              padding: spacing.lg,
+              boxShadow: "0 12px 32px rgba(0,0,0,0.16)",
+              maxWidth: "400px",
+              width: "90%",
+            }}
+          >
+            <div
+              style={{
+                marginBottom: spacing.sm,
+                color: colors.textPrimary,
+                fontSize: fontSize.lg,
+                fontWeight: 600,
+              }}
+            >
+              データを削除
+            </div>
+            <div
+              style={{
+                marginBottom: spacing.md,
+                color: colors.textSecondary,
+                fontSize: fontSize.md,
+              }}
+            >
+              以下のデータがすべて削除されます。この操作は元に戻せません。
+            </div>
+            <div
+              style={{
+                marginBottom: spacing.lg,
+                padding: spacing.md,
+                background: colors.bgSecondary,
+                border: `1px solid ${colors.border}`,
+                borderRadius: borderRadius.md,
+              }}
+            >
+              <ul
+                style={{
+                  margin: 0,
+                  paddingLeft: spacing.lg,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: spacing.xs,
+                }}
+              >
+                {DATA_CATEGORIES.map((item) => (
+                  <li
+                    key={item}
+                    style={{
+                      color: colors.textPrimary,
+                      fontSize: fontSize.sm,
+                    }}
+                  >
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: spacing.sm }}>
+              <button
+                type="button"
+                onClick={() => setShowClearConfirm(false)}
+                style={{
+                  padding: `${spacing.sm} ${spacing.lg}`,
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: borderRadius.md,
+                  background: "transparent",
+                  color: colors.textSecondary,
+                  fontSize: fontSize.md,
+                  cursor: "pointer",
+                }}
+              >
+                キャンセル
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowClearConfirm(false);
+                  onClearData();
+                }}
+                style={{
+                  padding: `${spacing.sm} ${spacing.lg}`,
+                  border: "none",
+                  borderRadius: borderRadius.md,
+                  background: colors.status.danger.text,
+                  color: "#fff",
+                  fontSize: fontSize.md,
+                  cursor: "pointer",
+                  fontWeight: 500,
+                }}
+              >
+                削除
+              </button>
+            </div>
           </div>
         </div>
       )}
