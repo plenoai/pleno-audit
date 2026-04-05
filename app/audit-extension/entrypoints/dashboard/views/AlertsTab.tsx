@@ -205,6 +205,7 @@ function AlertDetailSidebar({
       style={{
         width: "420px",
         minWidth: "420px",
+        height: "100%",
         marginLeft: "auto",
         background: colors.bgPrimary,
         borderLeft: `1px solid ${colors.border}`,
@@ -438,71 +439,6 @@ function AlertDetailSidebar({
           対応方針の詳細を見る ↗
         </a>
 
-        {/* Actions row */}
-        <div
-          style={{
-            display: "flex",
-            gap: spacing.xs,
-            marginBottom: spacing.lg,
-            paddingBottom: spacing.lg,
-            borderBottom: `1px solid ${colors.border}`,
-          }}
-        >
-          <button
-            type="button"
-            onClick={onReportBug}
-            style={{
-              padding: `${spacing.xs} ${spacing.sm}`,
-              border: `1px solid ${colors.border}`,
-              borderRadius: borderRadius.sm,
-              background: colors.bgPrimary,
-              color: colors.textSecondary,
-              fontSize: fontSize.sm,
-              cursor: "pointer",
-            }}
-          >
-            バグを報告
-          </button>
-          <div ref={dismissPopoverRef} style={{ position: "relative" }}>
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => setShowDismissComposer((prev) => !prev)}
-            >
-              解決
-            </Button>
-            {showDismissComposer && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: "calc(100% + 8px)",
-                  right: 0,
-                  width: "340px",
-                  maxWidth: "calc(100vw - 64px)",
-                  zIndex: 10,
-                }}
-              >
-                <DismissComposer
-                  alerts={[
-                    {
-                      id: alert.id,
-                      title: alert.title,
-                      domain: alert.domain,
-                      severity: alert.severity,
-                    },
-                  ]}
-                  onConfirm={(reason, comment) => {
-                    onDismissConfirm(reason, comment);
-                    setShowDismissComposer(false);
-                    onClose();
-                  }}
-                  onCancel={() => setShowDismissComposer(false)}
-                />
-              </div>
-            )}
-          </div>
-        </div>
-
         {/* === Debug / detail section (collapsible, default closed) === */}
         <details>
           <summary
@@ -615,6 +551,64 @@ function AlertDetailSidebar({
             </div>
           )}
         </details>
+      </div>
+
+      {/* Fixed action footer */}
+      <div
+        style={{
+          flexShrink: 0,
+          display: "flex",
+          gap: spacing.sm,
+          padding: `${spacing.md} ${spacing.lg}`,
+          borderTop: `1px solid ${colors.border}`,
+          background: colors.bgPrimary,
+        }}
+      >
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={onReportBug}
+        >
+          バグを報告
+        </Button>
+        <div ref={dismissPopoverRef} style={{ position: "relative", marginLeft: "auto" }}>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => setShowDismissComposer((prev) => !prev)}
+          >
+            解決
+          </Button>
+          {showDismissComposer && (
+            <div
+              style={{
+                position: "absolute",
+                bottom: "calc(100% + 8px)",
+                right: 0,
+                width: "340px",
+                maxWidth: "calc(100vw - 64px)",
+                zIndex: 10,
+              }}
+            >
+              <DismissComposer
+                alerts={[
+                  {
+                    id: alert.id,
+                    title: alert.title,
+                    domain: alert.domain,
+                    severity: alert.severity,
+                  },
+                ]}
+                onConfirm={(reason, comment) => {
+                  onDismissConfirm(reason, comment);
+                  setShowDismissComposer(false);
+                  onClose();
+                }}
+                onCancel={() => setShowDismissComposer(false)}
+              />
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
