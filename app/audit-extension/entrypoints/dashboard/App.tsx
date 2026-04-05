@@ -66,6 +66,18 @@ function DashboardContent({ animationEnabled, setAnimationEnabled }: { animation
       .catch(() => {});
   }, []);
 
+  const alertBadge = useMemo(() => {
+    let critical = 0;
+    let high = 0;
+    for (const e of alertEvents) {
+      if (e.severity === "critical") critical++;
+      else if (e.severity === "high") high++;
+    }
+    const count = critical + high;
+    if (count === 0) return null;
+    return { count, variant: critical > 0 ? "danger" as const : "warning" as const };
+  }, [alertEvents]);
+
   const alertsByDomain = useMemo(() => {
     const map: Record<string, DomainAlertSummary> = {};
     for (const e of alertEvents) {
@@ -107,6 +119,36 @@ function DashboardContent({ animationEnabled, setAnimationEnabled }: { animation
     loadData: dashboard.loadData,
   });
 
+  const handleExportWithNotification = useCallback(() => {
+    handleExportJSON();
+    addNotification({
+      severity: "info",
+      title: "エクスポート完了",
+      message: "データをJSONファイルとしてエクスポートしました",
+      autoDismiss: 3000,
+    });
+  }, [handleExportJSON, addNotification]);
+
+  const handleImportWithNotification = useCallback(async (): Promise<{ success: boolean; message: string }> => {
+    const result = await handleImportJSON();
+    if (result.success) {
+      addNotification({
+        severity: "info",
+        title: "インポート完了",
+        message: result.message,
+        autoDismiss: 3000,
+      });
+    } else {
+      addNotification({
+        severity: "warning",
+        title: "インポート失敗",
+        message: result.message,
+        autoDismiss: 5000,
+      });
+    }
+    return result;
+  }, [handleImportJSON, addNotification]);
+
   useDashboardNavigation({
     activeTab,
     setActiveTab,
@@ -136,16 +178,15 @@ function DashboardContent({ animationEnabled, setAnimationEnabled }: { animation
       <NotificationBanner notifications={notifications} onDismiss={dismissNotification} />
       <DashboardHeader
         styles={styles}
-        status={dashboard.status}
         lastUpdated={dashboard.lastUpdated}
         isRefreshing={dashboard.isRefreshing}
         onRefresh={dashboard.loadData}
         onClearData={handleClearData}
-        onExport={handleExportJSON}
-        onImport={handleImportJSON}
+        onExport={handleExportWithNotification}
+        onImport={handleImportWithNotification}
       />
       <div style={styles.body}>
-        <Sidebar tabs={tabs} activeTab={activeTab} onChange={(id) => setActiveTab(id as TabType)} />
+        <Sidebar tabs={tabs} activeTab={activeTab} onChange={(id) => setActiveTab(id as TabType)} alertBadge={alertBadge} />
         <div style={styles.container}>
           <Motion
             key={activeTab}

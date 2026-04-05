@@ -1,19 +1,27 @@
 import { useEffect, useRef, useState } from "preact/hooks";
 import { useTheme } from "../lib/theme";
 import { useAnimationEnabled } from "../lib/motion";
+import { Badge } from "./Badge";
 
 interface SidebarTab {
   id: string;
   label: string;
 }
 
+interface AlertBadge {
+  count: number;
+  variant: "danger" | "warning";
+}
+
 interface SidebarProps {
   tabs: SidebarTab[];
   activeTab: string;
   onChange: (id: string) => void;
+  /** Badge shown next to the "alerts" tab when count > 0 */
+  alertBadge?: AlertBadge | null;
 }
 
-export function Sidebar({ tabs, activeTab, onChange }: SidebarProps) {
+export function Sidebar({ tabs, activeTab, onChange, alertBadge }: SidebarProps) {
   const { colors } = useTheme();
   const animationEnabled = useAnimationEnabled();
   const navRef = useRef<HTMLElement>(null);
@@ -90,6 +98,13 @@ export function Sidebar({ tabs, activeTab, onChange }: SidebarProps) {
             }}
           >
             {tab.label}
+            {tab.id === "alerts" && alertBadge && alertBadge.count > 0 && (
+              <span style={{ marginLeft: "8px" }}>
+                <Badge variant={alertBadge.variant} size="sm">
+                  {alertBadge.count}
+                </Badge>
+              </span>
+            )}
           </button>
         );
       })}
