@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "preact/hooks";
 import { sendMessage } from "../../../lib/messaging";
+import { Button } from "../../../components";
 import { useTheme, spacing, fontSize, borderRadius } from "../../../lib/theme";
 import {
   createLogger,
@@ -290,38 +291,22 @@ export function SettingsTab({ animationEnabled, onAnimationToggle }: { animation
             {isExpanded && (
               <div style={{ padding: `0 ${spacing.lg} ${spacing.sm}`, display: "flex", flexDirection: "column", gap: "2px" } as CSSProperties}>
                 <div style={{ display: "flex", gap: spacing.xs, marginBottom: "4px" }}>
-                  <button
-                    type="button"
+                  <Button
+                    size="sm"
+                    variant="secondary"
                     onClick={() => { if (!allEnabled) toggleGroup(group.alertIds); }}
                     disabled={allEnabled}
-                    style={{
-                      fontSize: "10px",
-                      padding: `2px ${spacing.sm}`,
-                      borderRadius: borderRadius.sm,
-                      border: `1px solid ${colors.border}`,
-                      background: allEnabled ? colors.bgTertiary : colors.bgPrimary,
-                      color: allEnabled ? colors.textMuted : colors.textPrimary,
-                      cursor: allEnabled ? "default" : "pointer",
-                    }}
                   >
                     すべて有効
-                  </button>
-                  <button
-                    type="button"
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="secondary"
                     onClick={() => { if (enabledCount > 0) toggleGroup(group.alertIds); }}
                     disabled={enabledCount === 0}
-                    style={{
-                      fontSize: "10px",
-                      padding: `2px ${spacing.sm}`,
-                      borderRadius: borderRadius.sm,
-                      border: `1px solid ${colors.border}`,
-                      background: enabledCount === 0 ? colors.bgTertiary : colors.bgPrimary,
-                      color: enabledCount === 0 ? colors.textMuted : colors.textPrimary,
-                      cursor: enabledCount === 0 ? "default" : "pointer",
-                    }}
                   >
                     すべて無効
-                  </button>
+                  </Button>
                 </div>
                 {group.alertIds.map((alertId) => {
                   const playbook = PLAYBOOK_MAP[alertId];
