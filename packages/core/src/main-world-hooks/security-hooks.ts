@@ -227,11 +227,14 @@ export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecuri
   // ===== DOM Scraping (querySelectorAll threshold) =====
   let qsaCount = 0;
   let qsaResetTime = Date.now();
+  let qsaEmitted = false; // Only emit once per page load
   const originalQSA = document.querySelectorAll.bind(document);
   document.querySelectorAll = function (selector: string) {
+    if (qsaEmitted) return originalQSA(selector);
     const now = Date.now();
     if (now - qsaResetTime > 5000) { qsaCount = 0; qsaResetTime = now; }
     if (++qsaCount === 300) {
+      qsaEmitted = true;
       deferEmit(emitSecurityEvent, "__DOM_SCRAPING_DETECTED__", { selector, callCount: qsaCount, timestamp: now });
     }
     return originalQSA(selector);
