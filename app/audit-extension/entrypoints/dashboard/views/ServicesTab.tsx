@@ -266,7 +266,7 @@ function ServiceRow({
             return (
               <>
                 {shown.map((domain) => (
-                  <DetailRow key={domain}>└ {domain}</DetailRow>
+                  <DetailRow key={domain}>{domain}</DetailRow>
                 ))}
                 <DetailOverflow remaining={remaining} />
               </>
