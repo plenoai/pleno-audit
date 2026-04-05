@@ -49,5 +49,7 @@ export function useTagFilter<T>(
     });
   }, [items, activeTagFilters, getItemTags]);
 
-  return { tagSummary, activeTagFilters, toggleTagFilter, filterByTags };
+  const resetTagFilters = () => setActiveTagFilters(new Set());
+
+  return { tagSummary, activeTagFilters, toggleTagFilter, resetTagFilters, filterByTags };
 }

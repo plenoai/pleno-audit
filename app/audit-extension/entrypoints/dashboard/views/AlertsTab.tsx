@@ -66,6 +66,7 @@ const severityButtons: { key: AlertSeverity; label: string }[] = [
   { key: "critical", label: "Critical" },
   { key: "high", label: "High" },
   { key: "medium", label: "Medium" },
+  { key: "low", label: "Low" },
   { key: "info", label: "Info" },
 ];
 
@@ -683,7 +684,7 @@ export function AlertsTab({ onSidebarChange }: { onSidebarChange?: (state: Alert
     return "";
   }, []);
 
-  const { searchQuery, setSearchQuery, filters, setFilter } = useTabFilter<
+  const { searchQuery, setSearchQuery, filters, setFilter, resetAll } = useTabFilter<
     Record<AlertSeverity, boolean>
   >({
     critical: false,
@@ -1006,13 +1007,38 @@ export function AlertsTab({ onSidebarChange }: { onSidebarChange?: (state: Alert
             );
           })}
           {dismissRecords.filter((r) => r.reopenedAt == null).length > 0 && (
-            <Badge
-              variant="info"
-              active={showDismissed}
-              onClick={() => setShowDismissed((v) => !v)}
-            >
-              Dismissed ({dismissRecords.filter((r) => r.reopenedAt == null).length})
-            </Badge>
+            <>
+              <span
+                style={{
+                  display: "inline-block",
+                  width: "1px",
+                  height: "20px",
+                  background: colors.border,
+                  marginInline: spacing.xs,
+                  flexShrink: 0,
+                }}
+              />
+              <label
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: spacing.xs,
+                  fontSize: fontSize.sm,
+                  color: colors.textMuted,
+                  cursor: "pointer",
+                  userSelect: "none",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={showDismissed}
+                  onChange={() => setShowDismissed((v) => !v)}
+                  style={{ accentColor: colors.interactive, cursor: "pointer" }}
+                />
+                Dismissed ({dismissRecords.filter((r) => r.reopenedAt == null).length})
+              </label>
+            </>
           )}
         </FilterBar>
 
@@ -1109,7 +1135,8 @@ export function AlertsTab({ onSidebarChange }: { onSidebarChange?: (state: Alert
             filteredCount={filtered.length}
             countLabel="アラート"
             emptyTitle="検出されたアラートはありません"
-            emptyDescription="セキュリティアラートが検出されると表示されます"
+            emptyDescription="セキュリティ上の問題がなく、安全な状態です"
+            onResetFilter={resetAll}
             headerLeading={
               <input
                 type="checkbox"
