@@ -120,8 +120,12 @@ export const Sparkline = ({ data, width = 80, height = 22, color = "var(--accent
   data: number[]; width?: number; height?: number; color?: string; fill?: boolean;
 }) => {
   if (!data || data.length === 0) return null;
-  const max = Math.max(...data);
-  const min = Math.min(...data);
+  let max = data[0];
+  let min = data[0];
+  for (const v of data) {
+    if (v > max) max = v;
+    if (v < min) min = v;
+  }
   const range = max - min || 1;
   const step = width / (data.length - 1);
   const pts = data.map((d, i) => [i * step, height - ((d - min) / range) * (height - 2) - 1]);

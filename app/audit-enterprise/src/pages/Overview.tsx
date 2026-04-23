@@ -160,8 +160,13 @@ const RiskViz = ({ kind, value, data }: { kind: RiskViz; value: number; data: nu
 
 const TrendChart = ({ data }: { data: number[] }) => {
   const w = 320, h = 120, pad = 8;
-  const max = Math.max(...data);
-  const min = Math.min(...data) - 5;
+  let max = data[0];
+  let min = data[0];
+  for (const v of data) {
+    if (v > max) max = v;
+    if (v < min) min = v;
+  }
+  min -= 5;
   const step = (w - pad * 2) / (data.length - 1);
   const pts = data.map((d, i) => [pad + i * step, h - pad - ((d - min) / (max - min)) * (h - pad * 2)] as const);
   const line = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p[0]},${p[1]}`).join(" ");
