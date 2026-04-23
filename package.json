@@ -14,6 +14,8 @@
     "website:build": "pnpm -C app/website build",
     "battacker-web": "pnpm -C app/battacker-web dev",
     "battacker-web:build": "pnpm --filter @libztbs/battacker build && pnpm -C app/battacker-web build",
+    "enterprise": "pnpm -C app/audit-enterprise dev",
+    "enterprise:build": "pnpm -C app/audit-enterprise build",
     "typecheck": "tsc -p tsconfig.packages.json --noEmit",
     "lint": "oxlint .",
     "test": "vitest run",
