@@ -12,7 +12,6 @@ import {
   ListRow,
   LoadingState,
   PageHeader,
-  SearchInput,
   DetailSection,
   KeyValueGrid,
 } from "../../../components";
@@ -261,12 +260,17 @@ function ExtensionDetailContent({ ext }: { ext: ExtensionInfo }) {
   );
 }
 
-export function ExtensionsTab() {
+interface ExtensionsTabProps {
+  searchQuery: string;
+  setSearchQuery: (q: string) => void;
+}
+
+export function ExtensionsTab({ searchQuery, setSearchQuery }: ExtensionsTabProps) {
   const { colors } = useTheme();
   const [extensions, setExtensions] = useState<ExtensionInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const { searchQuery, setSearchQuery } = useTabFilter({});
+  useTabFilter({ searchQuery, setSearchQuery });
 
   useEffect(() => {
     (async () => {
@@ -346,23 +350,20 @@ export function ExtensionsTab() {
       />
       <HostPane>
         <HostListPane>
-          <HostListFilterBar>
-            <SearchInput
-              value={searchQuery}
-              onChange={setSearchQuery}
-              placeholder="拡張機能名、権限で検索... (/)"
-            />
-            {tagSummary.map((tag) => (
-              <Badge
-                key={tag.label}
-                variant={tag.variant}
-                active={activeTagFilters.has(tag.label)}
-                onClick={() => toggleTagFilter(tag.label)}
-              >
-                {tag.label} ({tag.count})
-              </Badge>
-            ))}
-          </HostListFilterBar>
+          {tagSummary.length > 0 && (
+            <HostListFilterBar>
+              {tagSummary.map((tag) => (
+                <Badge
+                  key={tag.label}
+                  variant={tag.variant}
+                  active={activeTagFilters.has(tag.label)}
+                  onClick={() => toggleTagFilter(tag.label)}
+                >
+                  {tag.label} ({tag.count})
+                </Badge>
+              ))}
+            </HostListFilterBar>
+          )}
 
           {filtered.length > 0 && (
             <div

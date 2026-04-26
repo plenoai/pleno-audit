@@ -14,7 +14,6 @@ import {
   ListRow,
   PageHeader,
   RiskBarScore,
-  SearchInput,
   DetailSection,
   KeyValueGrid,
 } from "../../../components";
@@ -38,6 +37,8 @@ interface ServicesTabProps {
   alertsByDomain?: Record<string, DomainAlertSummary>;
   onNavigateToAlerts?: (domain: string) => void;
   onServiceDeleted?: () => void;
+  searchQuery: string;
+  setSearchQuery: (q: string) => void;
 }
 
 function getServiceTags(s: DetectedService): { label: string; variant: "danger" | "warning" | "info" | "success" }[] {
@@ -372,9 +373,11 @@ export function ServicesTab({
   alertsByDomain,
   onNavigateToAlerts,
   onServiceDeleted,
+  searchQuery,
+  setSearchQuery,
 }: ServicesTabProps) {
   const { colors } = useTheme();
-  const { searchQuery, setSearchQuery } = useTabFilter({});
+  useTabFilter({ searchQuery, setSearchQuery });
   const [activeDomain, setActiveDomain] = useState<string | null>(null);
   const [deletedDomains, setDeletedDomains] = useState<Set<string>>(new Set());
 
@@ -418,23 +421,20 @@ export function ServicesTab({
       />
       <HostPane>
         <HostListPane>
-          <HostListFilterBar>
-            <SearchInput
-              value={searchQuery}
-              onChange={setSearchQuery}
-              placeholder="ドメインで検索... (/)"
-            />
-            {tagSummary.map((tag) => (
-              <Badge
-                key={tag.label}
-                variant={tag.variant}
-                active={activeTagFilters.has(tag.label)}
-                onClick={() => toggleTagFilter(tag.label)}
-              >
-                {tag.label} ({tag.count})
-              </Badge>
-            ))}
-          </HostListFilterBar>
+          {tagSummary.length > 0 && (
+            <HostListFilterBar>
+              {tagSummary.map((tag) => (
+                <Badge
+                  key={tag.label}
+                  variant={tag.variant}
+                  active={activeTagFilters.has(tag.label)}
+                  onClick={() => toggleTagFilter(tag.label)}
+                >
+                  {tag.label} ({tag.count})
+                </Badge>
+              ))}
+            </HostListFilterBar>
+          )}
 
           {filtered.length > 0 && (
             <div

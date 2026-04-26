@@ -1,10 +1,14 @@
-import { Sun, Moon, Monitor } from "lucide-preact";
+import { Sun, Moon, Monitor, Search } from "lucide-preact";
 import { SettingsMenu } from "../../../components";
 import { useTheme, type ThemeMode } from "../../../lib/theme";
 import type { DashboardStyles } from "../styles";
 
 interface DashboardHeaderProps {
   styles: DashboardStyles;
+  searchQuery: string;
+  onSearchChange: (query: string) => void;
+  searchPlaceholder?: string;
+  showSearch?: boolean;
   onClearData: () => void;
   onExport: () => void;
   onImport: () => Promise<{ success: boolean; message: string }>;
@@ -24,6 +28,10 @@ const MODE_LABEL: Record<ThemeMode, string> = {
 
 export function DashboardHeader({
   styles: _styles,
+  searchQuery,
+  onSearchChange,
+  searchPlaceholder = "検索...",
+  showSearch = true,
   onClearData,
   onExport,
   onImport,
@@ -85,6 +93,17 @@ export function DashboardHeader({
         </span>
       </div>
 
+      {/* Search */}
+      {showSearch ? (
+        <HeaderSearch
+          value={searchQuery}
+          onChange={onSearchChange}
+          placeholder={searchPlaceholder}
+        />
+      ) : (
+        <div style={{ flex: 1 }} />
+      )}
+
       {/* Right side */}
       <div style={{ display: "flex", alignItems: "center", gap: "10px", flexShrink: 0 }}>
         {/* Theme toggle */}
@@ -122,5 +141,87 @@ export function DashboardHeader({
         <SettingsMenu onClearData={onClearData} onExport={onExport} onImport={onImport} />
       </div>
     </header>
+  );
+}
+
+function HeaderSearch({
+  value,
+  onChange,
+  placeholder,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
+}) {
+  const { colors } = useTheme();
+
+  return (
+    <div
+      style={{
+        flex: "1 1 auto",
+        maxWidth: "420px",
+        margin: "0 24px",
+        display: "grid",
+        gridTemplateColumns: "16px 1fr auto",
+        gridTemplateRows: "30px",
+        alignItems: "center",
+        columnGap: "8px",
+        padding: "0 10px",
+        background: colors.bgSecondary,
+        border: `1px solid ${colors.border}`,
+        borderRadius: "6px",
+        boxSizing: "border-box",
+        transition: "border-color 0.15s, background 0.15s",
+      }}
+      onFocusCapture={(e) => {
+        const el = e.currentTarget as HTMLDivElement;
+        el.style.borderColor = colors.interactive;
+        el.style.background = colors.bgPrimary;
+      }}
+      onBlurCapture={(e) => {
+        const el = e.currentTarget as HTMLDivElement;
+        el.style.borderColor = colors.border;
+        el.style.background = colors.bgSecondary;
+      }}
+    >
+      <Search size={14} color={colors.textMuted} style={{ gridColumn: 1 }} />
+      <input
+        type="text"
+        data-dashboard-search="true"
+        value={value}
+        onInput={(e) => onChange((e.target as HTMLInputElement).value)}
+        placeholder={placeholder}
+        style={{
+          gridColumn: 2,
+          alignSelf: "center",
+          width: "100%",
+          height: "28px",
+          padding: 0,
+          background: "transparent",
+          border: 0,
+          fontFamily: "inherit",
+          fontSize: "12px",
+          color: colors.textPrimary,
+          outline: "none",
+          lineHeight: "28px",
+        }}
+      />
+      <span
+        style={{
+          gridColumn: 3,
+          alignSelf: "center",
+          fontFamily: "monospace",
+          fontSize: "10px",
+          color: colors.textMuted,
+          border: `1px solid ${colors.border}`,
+          padding: "1px 5px",
+          borderRadius: "3px",
+          background: colors.bgPrimary,
+          lineHeight: 1.4,
+        }}
+      >
+        /
+      </span>
+    </div>
   );
 }

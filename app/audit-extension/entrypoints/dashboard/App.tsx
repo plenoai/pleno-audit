@@ -33,18 +33,27 @@ interface DomainAlertSummary {
   categories: string[];
 }
 
+const SEARCH_PLACEHOLDERS: Record<TabType, string> = {
+  services: "ドメインで検索... (/)",
+  extensions: "拡張機能名、権限で検索... (/)",
+  alerts: "アラートを検索... (/)",
+  settings: "",
+};
+
 function DashboardContent({ animationEnabled, setAnimationEnabled }: { animationEnabled: boolean; setAnimationEnabled: (v: boolean) => void }) {
   const styles = createDashboardStyles();
 
   const [activeTab, setActiveTabRaw] = useState<TabType>(getInitialTab);
   const prevTabIndex = useRef(tabs.findIndex((t) => t.id === getInitialTab()));
   const slideDirection = useRef<1 | -1>(1);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const setActiveTab = useCallback((tab: TabType) => {
     const newIndex = tabs.findIndex((t) => t.id === tab);
     slideDirection.current = newIndex >= prevTabIndex.current ? 1 : -1;
     prevTabIndex.current = newIndex;
     setActiveTabRaw(tab);
+    setSearchQuery("");
   }, []);
 
   const { notifications, addNotification, dismissNotification } = useNotifications();
@@ -170,6 +179,10 @@ function DashboardContent({ animationEnabled, setAnimationEnabled }: { animation
       <NotificationBanner notifications={notifications} onDismiss={dismissNotification} />
       <DashboardHeader
         styles={styles}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        searchPlaceholder={SEARCH_PLACEHOLDERS[activeTab]}
+        showSearch={activeTab !== "settings"}
         onClearData={handleClearData}
         onExport={handleExportWithNotification}
         onImport={handleImportWithNotification}
@@ -190,12 +203,18 @@ function DashboardContent({ animationEnabled, setAnimationEnabled }: { animation
                 serviceConnections={dashboard.serviceConnections}
                 alertsByDomain={alertsByDomain}
                 onNavigateToAlerts={navigateToAlerts}
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
               />
             )}
 
-            {activeTab === "extensions" && <ExtensionsTab />}
+            {activeTab === "extensions" && (
+              <ExtensionsTab searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+            )}
 
-            {activeTab === "alerts" && <AlertsTab />}
+            {activeTab === "alerts" && (
+              <AlertsTab searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+            )}
 
             {activeTab === "settings" && (
               <SettingsTab animationEnabled={animationEnabled} onAnimationToggle={setAnimationEnabled} />

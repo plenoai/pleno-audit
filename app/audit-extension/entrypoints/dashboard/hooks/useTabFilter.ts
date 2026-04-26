@@ -2,13 +2,15 @@ import { useState, useCallback, useEffect } from "preact/hooks";
 
 /**
  * Per-tab filter state management hook.
- * Each tab owns its own searchQuery and additional typed filters,
- * eliminating cross-tab state pollution.
+ * searchQuery はグローバル管理 (Header 検索) のため外部から受け取り、
+ * tab 固有の typed filters のみ内部状態として保持する。
  */
-export function useTabFilter<F extends Record<string, unknown> = Record<string, never>>(
-  initialFilters?: F
-) {
-  const [searchQuery, setSearchQuery] = useState("");
+export function useTabFilter<F extends Record<string, unknown> = Record<string, never>>(opts: {
+  searchQuery: string;
+  setSearchQuery: (q: string) => void;
+  initialFilters?: F;
+}) {
+  const { searchQuery, setSearchQuery, initialFilters } = opts;
   const [filters, setFilters] = useState<F>((initialFilters ?? {}) as F);
 
   const setFilter = useCallback(<K extends keyof F>(key: K, value: F[K]) => {
@@ -18,9 +20,8 @@ export function useTabFilter<F extends Record<string, unknown> = Record<string, 
   const resetAll = useCallback(() => {
     setSearchQuery("");
     setFilters((initialFilters ?? {}) as F);
-  }, [initialFilters]);
+  }, [initialFilters, setSearchQuery]);
 
-  // Escape key resets filters for the active tab
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {

@@ -17,7 +17,6 @@ import {
   ListRow,
   LoadingState,
   PageHeader,
-  SearchInput,
 } from "../../../components";
 import { useTabFilter } from "../hooks/useTabFilter";
 import { truncate } from "../utils";
@@ -488,7 +487,12 @@ function DismissedView({
   );
 }
 
-export function AlertsTab() {
+interface AlertsTabProps {
+  searchQuery: string;
+  setSearchQuery: (q: string) => void;
+}
+
+export function AlertsTab({ searchQuery, setSearchQuery }: AlertsTabProps) {
   const { colors } = useTheme();
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
@@ -507,14 +511,16 @@ export function AlertsTab() {
     return "";
   }, []);
 
-  const { searchQuery, setSearchQuery, filters, setFilter } = useTabFilter<
-    Record<AlertSeverity, boolean>
-  >({
-    critical: false,
-    high: false,
-    medium: false,
-    low: false,
-    info: false,
+  const { filters, setFilter } = useTabFilter<Record<AlertSeverity, boolean>>({
+    searchQuery,
+    setSearchQuery,
+    initialFilters: {
+      critical: false,
+      high: false,
+      medium: false,
+      low: false,
+      info: false,
+    },
   });
 
   useEffect(() => {
@@ -785,11 +791,6 @@ export function AlertsTab() {
         <HostListPane>
           {/* chip filter (enterprise の chip 行に相当) */}
           <HostListFilterBar>
-            <SearchInput
-              value={searchQuery}
-              onChange={setSearchQuery}
-              placeholder="検索... (/)"
-            />
             {severityButtons.map((b) => {
               const count = counts[b.key] ?? 0;
               if (count === 0) return null;
