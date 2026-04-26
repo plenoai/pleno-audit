@@ -89,6 +89,19 @@ pnpm --filter @pleno-audit/debugger start status
 
 @docs/TESTING.md
 
+## 品質評価
+
+### Mutation Testing
+テストスイートの実効性を評価する手法として Stryker による mutation testing を導入している。
+コードに意図的な変異（mutant）を注入し、テストが検知できるかを測定することで、カバレッジでは見えないテストの「中身」の品質を評価する。
+
+```bash
+pnpm test:mutation
+```
+
+CI では実行コストが大きいため除外しており、品質改善時にローカルもしくは手動で実行する運用とする。
+設定は `stryker.config.json` / `vitest.stryker.config.ts` を参照。
+
 ## ADR
 
 @docs/adr/README.md
