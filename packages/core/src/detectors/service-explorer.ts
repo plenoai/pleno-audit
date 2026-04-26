@@ -6,6 +6,7 @@
  */
 
 import type { SortType, UnifiedService } from "../types/index.js";
+import { isPatternDismissed } from "./service-risk.js";
 
 export type FilterCategory = "nrd" | "typosquat" | "ai" | "login" | "extension";
 
@@ -53,14 +54,24 @@ function getConnectionCount(service: UnifiedService): number {
   return service.connections.reduce((sum, conn) => sum + conn.requestCount, 0);
 }
 
-function getTagSet(service: UnifiedService): Set<FilterCategory> {
+function getTagSet(
+  service: UnifiedService,
+  dismissedPatterns?: ReadonlySet<string>,
+): Set<FilterCategory> {
   const tagSet = new Set<FilterCategory>();
   if (service.source.type === "extension") {
     tagSet.add("extension");
   } else {
     const s = service.source.service;
-    if (s.nrdResult?.isNRD) tagSet.add("nrd");
-    if (s.typosquatResult?.isTyposquat) tagSet.add("typosquat");
+    if (s.nrdResult?.isNRD && !isPatternDismissed(dismissedPatterns, "nrd", s.domain)) {
+      tagSet.add("nrd");
+    }
+    if (
+      s.typosquatResult?.isTyposquat &&
+      !isPatternDismissed(dismissedPatterns, "typosquat", s.domain)
+    ) {
+      tagSet.add("typosquat");
+    }
     if (s.aiDetected?.hasAIActivity) tagSet.add("ai");
     if (s.hasLoginPage) tagSet.add("login");
   }
@@ -87,7 +98,10 @@ function sortEntries(entries: ServiceIndexEntry[], sortType: SortType): ServiceI
   return result;
 }
 
-export function buildServiceIndex(services: UnifiedService[]): ServiceIndex {
+export function buildServiceIndex(
+  services: UnifiedService[],
+  dismissedPatterns?: ReadonlySet<string>,
+): ServiceIndex {
   const entries = services.map((service) => {
     const name = getServiceName(service);
     return {
@@ -95,7 +109,7 @@ export function buildServiceIndex(services: UnifiedService[]): ServiceIndex {
       name,
       normalizedName: name.toLowerCase(),
       connectionCount: getConnectionCount(service),
-      tagSet: getTagSet(service),
+      tagSet: getTagSet(service, dismissedPatterns),
     };
   });
 

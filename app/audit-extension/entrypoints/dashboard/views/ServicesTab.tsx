@@ -3,6 +3,14 @@ import { Globe } from "lucide-preact";
 import type { AlertSeverity } from "libztbs/alerts";
 import type { DetectedService } from "libztbs/types";
 import {
+  computeServiceRiskScore,
+  getRiskLevel,
+  getServiceRiskFlags,
+  isPatternDismissed,
+  type RiskLevel,
+  type ServiceRiskFlag,
+} from "libztbs/detectors";
+import {
   Badge,
   Button,
   EmptyState,
@@ -35,65 +43,53 @@ interface ServicesTabProps {
   services: DetectedService[];
   serviceConnections: Record<string, string[]>;
   alertsByDomain?: Record<string, DomainAlertSummary>;
+  dismissedPatterns?: Set<string>;
   onNavigateToAlerts?: (domain: string) => void;
   onServiceDeleted?: () => void;
   searchQuery: string;
   setSearchQuery: (q: string) => void;
 }
 
-function getServiceTags(s: DetectedService): { label: string; variant: "danger" | "warning" | "info" | "success" }[] {
-  const tags: { label: string; variant: "danger" | "warning" | "info" | "success" }[] = [];
-  if (s.nrdResult?.isNRD) tags.push({ label: "NRD", variant: "danger" });
-  if (s.typosquatResult?.isTyposquat) tags.push({ label: "Typosquat", variant: "danger" });
-  if (s.hasLoginPage) tags.push({ label: "ログイン", variant: "warning" });
-  if (s.aiDetected?.hasAIActivity) tags.push({ label: "AI", variant: "info" });
-  for (const dataType of s.sensitiveDataDetected ?? []) {
-    tags.push({ label: dataType, variant: "warning" });
-  }
-  return tags;
-}
-
-const SEVERITY_WEIGHT: Record<string, number> = {
-  critical: 20,
-  high: 10,
-  medium: 5,
-  low: 2,
-  info: 0,
-};
-
 const SEVERITY_ORDER: AlertSeverity[] = ["critical", "high", "medium", "low", "info"];
 
-function getServiceRiskScore(
-  s: DetectedService,
-  connectionCount: number,
-  alertSummary?: DomainAlertSummary,
-): number {
-  let score = 0;
-  if (s.nrdResult?.isNRD) {
-    score += 40;
-    if (s.nrdResult.confidence === "high") score += 10;
-    else if (s.nrdResult.confidence === "medium") score += 5;
-    if (s.nrdResult.domainAge !== null && s.nrdResult.domainAge < 30) score += 5;
-  }
-  if (s.typosquatResult?.isTyposquat) {
-    score += 25 + Math.min(10, s.typosquatResult.totalScore);
-  }
-  if (s.aiDetected?.hasAIActivity) score += 5;
-  if (s.hasLoginPage) score += 5;
-  if (!s.privacyPolicyUrl) score += 3;
-  if (!s.termsOfServiceUrl) score += 3;
-  if (connectionCount > 20) score += 3;
-  if (alertSummary && alertSummary.total > 0) {
-    score += SEVERITY_WEIGHT[alertSummary.maxSeverity] ?? 0;
-  }
-  return Math.min(100, score);
+type TagVariant = "danger" | "warning" | "info" | "success";
+
+interface UITag {
+  label: string;
+  variant: TagVariant;
 }
 
-function getRiskLabel(score: number): { text: string; variant: "danger" | "warning" | "info" | "default" } {
-  if (score >= 40) return { text: "High", variant: "danger" };
-  if (score >= 15) return { text: "Medium", variant: "warning" };
-  if (score >= 8) return { text: "Low", variant: "info" };
-  return { text: "None", variant: "default" };
+function flagToTag(flag: ServiceRiskFlag): UITag {
+  switch (flag.kind) {
+    case "nrd":
+      return { label: "NRD", variant: "danger" };
+    case "typosquat":
+      return { label: "Typosquat", variant: "danger" };
+    case "login":
+      return { label: "ログイン", variant: "warning" };
+    case "ai":
+      return { label: "AI", variant: "info" };
+    case "sensitive-data":
+      return { label: flag.dataType, variant: "warning" };
+  }
+}
+
+function getServiceTags(
+  s: DetectedService,
+  dismissedPatterns?: ReadonlySet<string>,
+): UITag[] {
+  return getServiceRiskFlags(s, dismissedPatterns).map(flagToTag);
+}
+
+const RISK_LABEL: Record<RiskLevel, { text: string; variant: "danger" | "warning" | "info" | "default" }> = {
+  high: { text: "High", variant: "danger" },
+  medium: { text: "Medium", variant: "warning" },
+  low: { text: "Low", variant: "info" },
+  none: { text: "None", variant: "default" },
+};
+
+function getRiskLabel(score: number) {
+  return RISK_LABEL[getRiskLevel(score)];
 }
 
 function SeverityDots({ summary }: { summary: DomainAlertSummary }) {
@@ -141,6 +137,7 @@ function ServiceRow({
   service,
   serviceConnections,
   alertsByDomain,
+  dismissedPatterns,
   isActive,
   onSelect,
   onDelete,
@@ -148,6 +145,7 @@ function ServiceRow({
   service: DetectedService;
   serviceConnections: Record<string, string[]>;
   alertsByDomain?: Record<string, DomainAlertSummary>;
+  dismissedPatterns?: Set<string>;
   isActive: boolean;
   onSelect: () => void;
   onDelete: () => void;
@@ -155,9 +153,14 @@ function ServiceRow({
   const { colors } = useTheme();
   const connCount = serviceConnections[service.domain]?.length ?? 0;
   const alertSummary = alertsByDomain?.[service.domain];
-  const score = getServiceRiskScore(service, connCount, alertSummary);
+  const score = computeServiceRiskScore({
+    service,
+    connectionCount: connCount,
+    alertSummary,
+    dismissedPatterns,
+  });
   const risk = getRiskLabel(score);
-  const tags = getServiceTags(service);
+  const tags = getServiceTags(service, dismissedPatterns);
   const hasAlerts = alertSummary && alertSummary.total > 0;
 
   return (
@@ -209,20 +212,32 @@ function ServiceDetailContent({
   service,
   destinations,
   alertSummary,
+  dismissedPatterns,
   onDelete,
   onNavigateToAlerts,
 }: {
   service: DetectedService;
   destinations: string[];
   alertSummary?: DomainAlertSummary;
+  dismissedPatterns?: Set<string>;
   onDelete: () => void;
   onNavigateToAlerts?: (domain: string) => void;
 }) {
   const { colors } = useTheme();
   const connCount = destinations.length;
-  const score = getServiceRiskScore(service, connCount, alertSummary);
+  const score = computeServiceRiskScore({
+    service,
+    connectionCount: connCount,
+    alertSummary,
+    dismissedPatterns,
+  });
   const risk = getRiskLabel(score);
-  const tags = getServiceTags(service);
+  const tags = getServiceTags(service, dismissedPatterns);
+  const nrdActive =
+    service.nrdResult?.isNRD && !isPatternDismissed(dismissedPatterns, "nrd", service.domain);
+  const typosquatActive =
+    service.typosquatResult?.isTyposquat &&
+    !isPatternDismissed(dismissedPatterns, "typosquat", service.domain);
 
   const meta: [string, import("preact").ComponentChildren][] = [
     ["domain", service.domain],
@@ -291,10 +306,10 @@ function ServiceDetailContent({
         <DetailSection title="リスクスコア" meta={`${score} / 100`}>
           <RiskBarScore value={score} />
           <div style={{ marginTop: spacing.sm, display: "flex", flexDirection: "column", gap: spacing.xs, fontSize: fontSize.sm, color: colors.textSecondary }}>
-            {service.nrdResult?.isNRD && (
+            {nrdActive && service.nrdResult && (
               <div>NRD — 信頼度: {service.nrdResult.confidence}</div>
             )}
-            {service.typosquatResult?.isTyposquat && (
+            {typosquatActive && service.typosquatResult && (
               <div>タイポスクワット候補 — スコア: {service.typosquatResult.totalScore}</div>
             )}
             {service.hasLoginPage && <div>ログインページ検出</div>}
@@ -371,6 +386,7 @@ export function ServicesTab({
   services,
   serviceConnections,
   alertsByDomain,
+  dismissedPatterns,
   onNavigateToAlerts,
   onServiceDeleted,
   searchQuery,
@@ -391,8 +407,13 @@ export function ServicesTab({
     [onServiceDeleted],
   );
 
+  const getTagsForService = useCallback(
+    (s: DetectedService) => getServiceTags(s, dismissedPatterns),
+    [dismissedPatterns],
+  );
+
   const { tagSummary, activeTagFilters, toggleTagFilter, filterByTags: tagFiltered } =
-    useTagFilter(services, getServiceTags);
+    useTagFilter(services, getTagsForService);
 
   const filtered = useMemo(() => {
     let result = tagFiltered.filter((s) => !deletedDomains.has(s.domain));
@@ -401,12 +422,22 @@ export function ServicesTab({
       result = result.filter((s) => s.domain.toLowerCase().includes(q));
     }
     result = [...result].sort((a, b) => {
-      const scoreA = getServiceRiskScore(a, serviceConnections[a.domain]?.length ?? 0, alertsByDomain?.[a.domain]);
-      const scoreB = getServiceRiskScore(b, serviceConnections[b.domain]?.length ?? 0, alertsByDomain?.[b.domain]);
+      const scoreA = computeServiceRiskScore({
+        service: a,
+        connectionCount: serviceConnections[a.domain]?.length ?? 0,
+        alertSummary: alertsByDomain?.[a.domain],
+        dismissedPatterns,
+      });
+      const scoreB = computeServiceRiskScore({
+        service: b,
+        connectionCount: serviceConnections[b.domain]?.length ?? 0,
+        alertSummary: alertsByDomain?.[b.domain],
+        dismissedPatterns,
+      });
       return scoreB - scoreA;
     });
     return result;
-  }, [tagFiltered, searchQuery, deletedDomains, serviceConnections, alertsByDomain]);
+  }, [tagFiltered, searchQuery, deletedDomains, serviceConnections, alertsByDomain, dismissedPatterns]);
 
   const activeService = activeDomain
     ? services.find((s) => s.domain === activeDomain && !deletedDomains.has(s.domain)) ?? null
@@ -465,6 +496,7 @@ export function ServicesTab({
                   service={service}
                   serviceConnections={serviceConnections}
                   alertsByDomain={alertsByDomain}
+                  dismissedPatterns={dismissedPatterns}
                   isActive={activeDomain === service.domain}
                   onSelect={() =>
                     setActiveDomain((prev) => (prev === service.domain ? null : service.domain))
@@ -482,6 +514,7 @@ export function ServicesTab({
               service={activeService}
               destinations={serviceConnections[activeService.domain] ?? []}
               alertSummary={alertsByDomain?.[activeService.domain]}
+              dismissedPatterns={dismissedPatterns}
               onDelete={() => handleDeleteService(activeService.domain)}
               onNavigateToAlerts={onNavigateToAlerts}
             />

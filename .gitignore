@@ -8,6 +8,7 @@ vite.config.js
 .wxt/
 
 *.local.md
+.claude/settings.local.json
 app/audit-extension/public/sql-wasm.wasm
 
 # Scan data (raw results from security scanners)

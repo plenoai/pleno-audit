@@ -8,6 +8,7 @@ import { loadingTabs, tabs } from "./constants";
 import { useDashboardActions } from "./state/useDashboardActions";
 import { useDashboardNavigation } from "./state/useDashboardNavigation";
 import { useDashboardState } from "./state/useDashboardState";
+import { useDismissedPatterns } from "./hooks/useDismissedPatterns";
 import { createDashboardStyles } from "./styles";
 import type { TabType } from "./types";
 import { getInitialTab } from "./utils";
@@ -64,14 +65,32 @@ function DashboardContent({ animationEnabled, setAnimationEnabled }: { animation
   });
 
   const [alertEvents, setAlertEvents] = useState<{ domain: string; severity: AlertSeverity; category: string }[]>([]);
+  const { dismissedPatterns } = useDismissedPatterns();
 
-  useEffect(() => {
+  const refreshAlertEvents = useCallback(() => {
     sendMessage<{ events: { domain: string; severity: AlertSeverity; category: string }[] }>({
       type: "GET_POPUP_EVENTS",
     })
       .then((res) => setAlertEvents(res.events))
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    refreshAlertEvents();
+  }, [refreshAlertEvents]);
+
+  useEffect(() => {
+    function handleStorageChanged(
+      changes: Record<string, chrome.storage.StorageChange>,
+      areaName: string,
+    ) {
+      if (areaName !== "local") return;
+      if (!("pleno_dismiss_records" in changes)) return;
+      refreshAlertEvents();
+    }
+    chrome.storage.onChanged.addListener(handleStorageChanged);
+    return () => chrome.storage.onChanged.removeListener(handleStorageChanged);
+  }, [refreshAlertEvents]);
 
   const alertBadge = useMemo(() => {
     let critical = 0;
@@ -202,6 +221,7 @@ function DashboardContent({ animationEnabled, setAnimationEnabled }: { animation
                 services={dashboard.services}
                 serviceConnections={dashboard.serviceConnections}
                 alertsByDomain={alertsByDomain}
+                dismissedPatterns={dismissedPatterns}
                 onNavigateToAlerts={navigateToAlerts}
                 searchQuery={searchQuery}
                 setSearchQuery={setSearchQuery}

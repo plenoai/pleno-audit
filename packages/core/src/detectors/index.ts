@@ -98,3 +98,16 @@ export {
   type ServiceQuery,
   type ServiceQueryResult,
 } from "./service-explorer.js";
+
+// Service Risk Scoring
+export {
+  buildDismissPattern,
+  isPatternDismissed,
+  getServiceRiskFlags,
+  computeServiceRiskScore,
+  getRiskLevel,
+  type ServiceRiskFlag,
+  type ServiceRiskInputs,
+  type RiskLevel,
+  type DomainAlertSummary,
+} from "./service-risk.js";
