@@ -6,6 +6,8 @@
 import { describe, it, expect } from "vitest";
 import {
   KNOWN_CDNS,
+  KNOWN_PREFETCH_TARGETS,
+  isKnownPrefetchTarget,
   SENSITIVE_TYPES,
   SENSITIVE_NAMES,
   CRYPTO_PATTERNS,
@@ -43,6 +45,50 @@ describe("KNOWN_CDNS", () => {
 
   it("does not match non-CDN domains", () => {
     expect(KNOWN_CDNS.some(cdn => "evil-cdn.example.com".includes(cdn))).toBe(false);
+  });
+});
+
+describe("KNOWN_PREFETCH_TARGETS / isKnownPrefetchTarget", () => {
+  it("includes Google Fonts hosts (issue #414 regression)", () => {
+    expect(KNOWN_PREFETCH_TARGETS).toContain("fonts.googleapis.com");
+    expect(KNOWN_PREFETCH_TARGETS).toContain("fonts.gstatic.com");
+  });
+
+  it("inherits all entries from KNOWN_CDNS", () => {
+    for (const cdn of KNOWN_CDNS) {
+      expect(KNOWN_PREFETCH_TARGETS).toContain(cdn);
+    }
+  });
+
+  it("returns true for exact-match allowlisted hosts", () => {
+    expect(isKnownPrefetchTarget("fonts.googleapis.com")).toBe(true);
+    expect(isKnownPrefetchTarget("fonts.gstatic.com")).toBe(true);
+    expect(isKnownPrefetchTarget("cdn.jsdelivr.net")).toBe(true);
+  });
+
+  it("returns true for legitimate subdomain (suffix match)", () => {
+    // Hypothetical regional subdomain — still matches via `.<entry>` suffix
+    expect(isKnownPrefetchTarget("eu.fonts.googleapis.com")).toBe(true);
+  });
+
+  it("is case-insensitive on the input hostname", () => {
+    expect(isKnownPrefetchTarget("FONTS.GOOGLEAPIS.COM")).toBe(true);
+  });
+
+  it("rejects substring-bypass attempts (suffix boundary required)", () => {
+    // Attacker domain that contains the allowlisted name as a substring
+    // but does not end on a label boundary — must NOT pass.
+    expect(isKnownPrefetchTarget("evil-fonts.googleapis.com.attacker.tld")).toBe(false);
+    expect(isKnownPrefetchTarget("fonts.googleapis.com.attacker.tld")).toBe(false);
+    expect(isKnownPrefetchTarget("xfonts.googleapis.com")).toBe(false);
+  });
+
+  it("rejects unknown external hosts", () => {
+    expect(isKnownPrefetchTarget("attacker.example.com")).toBe(false);
+    expect(isKnownPrefetchTarget("leak.test")).toBe(false);
+    // The covert.ts attack synthesizes a subdomain under leak.test —
+    // it must NOT match the allowlist.
+    expect(isKnownPrefetchTarget("6c65616b65645f73657373696f6e.leak.test")).toBe(false);
   });
 });
 

@@ -257,7 +257,7 @@ export const dataExfiltrationPlaybooks: PlaybookData[] = [
     mitreAttack: ['T1048.003', 'T1071.004'],
     detection: {
       mechanism:
-        'MutationObserverでDOMへの<link>要素の動的追加を監視します。rel属性がdns-prefetch、preconnect、prefetch、preload、prerenderのいずれかで、hrefが外部ドメイン（ルートドメインが異なる）を指す場合にアラートを発火します。同一ルートドメインのサブドメインは除外されます。',
+        'MutationObserverでDOMへの<link>要素の動的追加を監視します。rel属性がdns-prefetch、preconnect、prefetch、preload、prerenderのいずれかで、hrefが外部ドメイン（ルートドメインが異なる）を指す場合にアラートを発火します。同一ルートドメインのサブドメインは除外されます。Google Fontsや主要CDN等、悪用される可能性が低い既知の正規ターゲット（KNOWN_PREFETCH_TARGETS）はアロウリストで除外されます。',
       monitoredAPIs: [
         'MutationObserver（document.head, document.body）',
         'HTMLLinkElement',
@@ -300,7 +300,7 @@ export const dataExfiltrationPlaybooks: PlaybookData[] = [
       'Trusted Typesを導入し、動的なDOM操作を制御する',
     ],
     falsePositives:
-      'パフォーマンス最適化のためにdns-prefetchやpreconnectを動的に追加するWebアプリケーション（SPAのルーティング時等）では正常な動作として検知されます。href先が既知のCDNやAPIサーバーであれば誤検知です。',
+      '既知の正規 preconnect/dns-prefetch ターゲット（Google Fonts、主要CDN等）は KNOWN_PREFETCH_TARGETS アロウリストでスキップされます。アロウリスト外のホストでも、SPAのルーティング時のパフォーマンス最適化として動的に追加されることがあり、href先が既知のAPIサーバーや業務上正規のサードパーティであれば誤検知の可能性があります。',
     relatedAlerts: ['data_exfiltration', 'fetch_exfiltration', 'tracking_beacon'],
   },
 

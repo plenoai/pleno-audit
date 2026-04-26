@@ -537,20 +537,33 @@
     }
 
     // ============================================================
-    // Pattern 16: Dynamic DNS prefetch (same-site CDN)
-    // DNS prefetch hook skips same-site preconnects
+    // Pattern 16: Dynamic DNS prefetch (same-site CDN + known fonts host)
+    // DNS prefetch hook skips same-site preconnects and KNOWN_PREFETCH_TARGETS
     // ============================================================
     function dynamicDNSPrefetch() {
-      // Same-site preconnect (should be filtered by eTLD+1 check)
-      // On 127.0.0.1, any external domain will trigger, so test with localhost variants
-      var link = document.createElement("link");
-      link.rel = "preconnect";
-      // Note: On localhost, there's no meaningful "same-site" domain to test
-      // This tests the dynamic injection path works without crashing
-      link.href = "http://127.0.0.1:3000"; // same host
-      document.head.appendChild(link);
-      setTimeout(function () { link.remove(); }, 500);
-      record("Dynamic DNS Prefetch", true, "Same-host preconnect injected dynamically");
+      // (a) Same-site preconnect (filtered by eTLD+1 check)
+      // On 127.0.0.1, any external domain will trigger, so test with localhost variants.
+      var link1 = document.createElement("link");
+      link1.rel = "preconnect";
+      link1.href = "http://127.0.0.1:3000"; // same host
+      document.head.appendChild(link1);
+
+      // (b) Google Fonts preconnect (issue #414 regression):
+      // Gmail and other SaaS dynamically insert this for font optimization.
+      // Must be filtered by KNOWN_PREFETCH_TARGETS allowlist, not raised as a leak.
+      var link2 = document.createElement("link");
+      link2.rel = "preconnect";
+      link2.href = "https://fonts.googleapis.com/";
+      document.head.appendChild(link2);
+
+      var link3 = document.createElement("link");
+      link3.rel = "preconnect";
+      link3.href = "https://fonts.gstatic.com/";
+      link3.crossOrigin = "anonymous";
+      document.head.appendChild(link3);
+
+      setTimeout(function () { link1.remove(); link2.remove(); link3.remove(); }, 500);
+      record("Dynamic DNS Prefetch", true, "Same-host + Google Fonts preconnect injected dynamically");
     }
 
     // ============================================================

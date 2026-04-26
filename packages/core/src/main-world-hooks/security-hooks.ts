@@ -21,6 +21,38 @@ export const KNOWN_CDNS = [
   "cdn.bootcdn.net", "lib.baomitu.com", "cdn.staticfile.org",
 ];
 
+/**
+ * 既知の正規 preconnect / dns-prefetch ターゲット。
+ * 大手SPA（Gmail、SaaS等）がフォント・CDN最適化のために動的に <link rel="preconnect">
+ * を挿入するケースを誤検知しないためのアロウリスト。
+ *
+ * 比較は完全一致または `.<entry>` サフィックス一致のみ許可する（部分一致は使わない）：
+ * `evil-fonts.googleapis.com.attacker.tld` のような bypass を防ぐため。
+ *
+ * 追加候補は「DNS漏洩経路として悪用される可能性が低く、かつ複数の正規Webアプリが
+ * パフォーマンス最適化として preconnect する」ホストに限定する。
+ */
+export const KNOWN_PREFETCH_TARGETS = [
+  // Google Fonts（Gmail、Google Workspace、多数のSaaS が動的 preconnect する）
+  "fonts.googleapis.com",
+  "fonts.gstatic.com",
+  // jsDelivr / unpkg / cdnjs etc. は KNOWN_CDNS と重複するが、
+  // preconnect の合法ターゲットとしても扱うため明示的に列挙する。
+  ...KNOWN_CDNS,
+];
+
+/**
+ * hostname がアロウリストにマッチするか判定する。
+ * 完全一致、または `.<entry>` サフィックス一致のみ true（部分一致は false）。
+ */
+export function isKnownPrefetchTarget(hostname: string): boolean {
+  const h = hostname.toLowerCase();
+  for (const entry of KNOWN_PREFETCH_TARGETS) {
+    if (h === entry || h.endsWith("." + entry)) return true;
+  }
+  return false;
+}
+
 export const SENSITIVE_TYPES = ["password", "email", "tel", "credit-card"];
 export const SENSITIVE_NAMES = [
   "password", "passwd", "pwd", "pass", "secret", "token", "api_key", "apikey",
@@ -329,6 +361,9 @@ export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecuri
             const linkBase = linkHost.split(".").slice(-2).join(".");
             const pageBase = pageHost.split(".").slice(-2).join(".");
             if (linkBase === pageBase) continue;
+            // 既知の正規 preconnect/dns-prefetch ターゲット（フォント・CDN等）はスキップ。
+            // SPA がパフォーマンス最適化のために動的挿入する典型パターンのFPを防ぐ。
+            if (isKnownPrefetchTarget(linkHost)) continue;
           } catch { /* ignore */ }
           deferEmit(emitSecurityEvent, "__DNS_PREFETCH_LEAK_DETECTED__", {
             rel, href, timestamp: Date.now(), pageUrl: window.location.href,
