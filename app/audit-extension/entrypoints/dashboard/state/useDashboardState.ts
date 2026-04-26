@@ -27,16 +27,13 @@ export function useDashboardState({
     violations: 0,
     networkRequests: 0,
   });
-  const [lastUpdated, setLastUpdated] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [services, setServices] = useState<DetectedService[]>([]);
   const [serviceConnections, setServiceConnections] = useState<Record<string, string[]>>({});
   const [extensionConnections, setExtensionConnections] = useState<Record<string, string[]>>({});
   const [knownExtensions, setKnownExtensions] = useState<Record<string, { name: string }>>({});
-  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const loadData = useCallback(async () => {
-    setIsRefreshing(true);
     try {
       const safeMessage = async <T,>(msg: object, fallback: T): Promise<T> => {
         try {
@@ -107,33 +104,15 @@ export function useDashboardState({
       } catch (error) {
         logger.warn("[dashboard] Failed to load extensions from management API.", error);
       }
-      setLastUpdated(new Date().toISOString());
     } catch (error) {
       logger.warn("[dashboard] Failed to load dashboard data.", error);
     } finally {
       setLoading(false);
-      setIsRefreshing(false);
     }
   }, []);
 
   useEffect(() => {
     loadData();
-    let interval = setInterval(loadData, 30000);
-
-    function handleVisibilityChange() {
-      if (document.hidden) {
-        clearInterval(interval);
-      } else {
-        loadData();
-        interval = setInterval(loadData, 30000);
-      }
-    }
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () => {
-      clearInterval(interval);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
   }, [loadData]);
 
   const violations = useMemo(
@@ -161,13 +140,11 @@ export function useDashboardState({
   return {
     reports,
     totalCounts,
-    lastUpdated,
     loading,
     services,
     serviceConnections,
     extensionConnections,
     knownExtensions,
-    isRefreshing,
     loadData,
     violations,
     networkRequests,

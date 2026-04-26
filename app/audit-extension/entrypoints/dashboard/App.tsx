@@ -12,7 +12,7 @@ import { createDashboardStyles } from "./styles";
 import type { TabType } from "./types";
 import { getInitialTab } from "./utils";
 import { ExtensionsTab } from "./views/ExtensionsTab";
-import { AlertsTab, AlertDetailSidebar, type AlertSidebarState } from "./views/AlertsTab";
+import { AlertsTab } from "./views/AlertsTab";
 import { SettingsTab } from "./views/SettingsTab";
 import { ServicesTab } from "./views";
 import { sendMessage } from "../../lib/messaging";
@@ -53,8 +53,6 @@ function DashboardContent({ animationEnabled, setAnimationEnabled }: { animation
     addNotification,
     setActiveTab,
   });
-
-  const [alertSidebar, setAlertSidebar] = useState<AlertSidebarState | null>(null);
 
   const [alertEvents, setAlertEvents] = useState<{ domain: string; severity: AlertSeverity; category: string }[]>([]);
 
@@ -106,7 +104,6 @@ function DashboardContent({ animationEnabled, setAnimationEnabled }: { animation
   const navigateToAlerts = useCallback((domain: string) => {
     setActiveTab("alerts");
     window.location.hash = "alerts";
-    // Store domain filter for AlertsTab to pick up
     sessionStorage.setItem("alertDomainFilter", domain);
     window.dispatchEvent(new Event("alertDomainFilter"));
   }, [setActiveTab]);
@@ -155,11 +152,6 @@ function DashboardContent({ animationEnabled, setAnimationEnabled }: { animation
     loadData: dashboard.loadData,
   });
 
-  // Clear sidebar when navigating away from alerts tab
-  useEffect(() => {
-    if (activeTab !== "alerts") setAlertSidebar(null);
-  }, [activeTab]);
-
   if (dashboard.loading) {
     return (
       <div style={styles.wrapper}>
@@ -178,9 +170,6 @@ function DashboardContent({ animationEnabled, setAnimationEnabled }: { animation
       <NotificationBanner notifications={notifications} onDismiss={dismissNotification} />
       <DashboardHeader
         styles={styles}
-        lastUpdated={dashboard.lastUpdated}
-        isRefreshing={dashboard.isRefreshing}
-        onRefresh={dashboard.loadData}
         onClearData={handleClearData}
         onExport={handleExportWithNotification}
         onImport={handleImportWithNotification}
@@ -204,27 +193,15 @@ function DashboardContent({ animationEnabled, setAnimationEnabled }: { animation
               />
             )}
 
-            {activeTab === "extensions" && (
-              <ExtensionsTab />
-            )}
+            {activeTab === "extensions" && <ExtensionsTab />}
 
-            {activeTab === "alerts" && (
-              <AlertsTab onSidebarChange={setAlertSidebar} />
-            )}
+            {activeTab === "alerts" && <AlertsTab />}
 
             {activeTab === "settings" && (
               <SettingsTab animationEnabled={animationEnabled} onAnimationToggle={setAnimationEnabled} />
             )}
           </Motion>
         </div>
-        {activeTab === "alerts" && alertSidebar && (
-          <AlertDetailSidebar
-            alert={alertSidebar.alert}
-            onClose={alertSidebar.onClose}
-            onReportBug={alertSidebar.onReportBug}
-            onDismissConfirm={alertSidebar.onDismissConfirm}
-          />
-        )}
       </div>
     </div>
   );
