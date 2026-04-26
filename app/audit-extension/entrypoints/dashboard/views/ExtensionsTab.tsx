@@ -336,8 +336,8 @@ export function ExtensionsTab({ searchQuery, setSearchQuery }: ExtensionsTabProp
     <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
       <PageHeader
         title="拡張機能"
-        kicker="EXTENSION POSTURE"
-        sub="インストール済み拡張機能の権限リスクを評価。<all_urls>・外部更新 URL・管理者強制を検出。"
+        kicker="POSTURE"
+        sub="インストール済み拡張機能をリスク順に一覧。クリックで右側に権限・更新元・管理状態を表示。"
         actions={
           <Button
             size="sm"

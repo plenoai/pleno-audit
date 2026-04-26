@@ -415,9 +415,9 @@ export function ServicesTab({
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
       <PageHeader
-        title="検出サービス"
-        kicker="SaaS DISCOVERY"
-        sub="ブラウジング中に検出した SaaS / Web サービスとリスクを一覧表示。NRD・タイポスクワット・AI 利用の指標を集約。"
+        title="サービス"
+        kicker="DISCOVERY"
+        sub="検出されたサービスをリスク順に一覧。クリックで右側にドメインの詳細と該当アラートを表示。"
       />
       <HostPane>
         <HostListPane>

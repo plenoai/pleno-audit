@@ -247,7 +247,7 @@ export function SettingsTab({ animationEnabled, onAnimationToggle }: { animation
       <PageHeader
         title="設定"
         kicker="POLICY"
-        sub="検出ルール、DLP、通知、表示の各種設定。ローカルファースト・外部送信なしのポリシーで動作。"
+        sub="検出ルール・DLP・通知・表示の各設定を切り替え。すべての設定はローカルに保存され、外部には送信されません。"
       />
       <div style={{ flex: 1, overflow: "auto", padding: "20px 24px" }}>
       <div
