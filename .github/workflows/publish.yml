@@ -27,9 +27,6 @@ jobs:
           cache: pnpm
           registry-url: "https://registry.npmjs.org"
 
-      - name: Upgrade npm for OIDC trusted publishing
-        run: npm install -g npm@11
-
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
@@ -38,6 +35,6 @@ jobs:
 
       - name: Publish packages to npm
         working-directory: packages/core
-        run: npm publish --access public --provenance
+        run: npx -y npm@11 publish --access public --provenance
         env:
           NPM_CONFIG_PROVENANCE: "true"
