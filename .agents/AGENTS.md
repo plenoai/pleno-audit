@@ -85,16 +85,6 @@ pnpm --filter @pleno-audit/debugger start status
 - 未知のサービスへの柔軟性を高める意味があります。
 - 新しいサービスが生まれた場合の継続的なアップデート負荷軽減を考えた上での軽量DB導入はユーザーの同意を得た上でバンドル可能です。
 
-## ブランチ運用
-
-- `main` - 開発ブランチ（pushごとにrelease作成）
-
-### 開発フロー
-
-1. mainからfeatureブランチを作成
-2. featureブランチで開発・テスト
-3. mainにPR作成 → マージ → release自動作成
-
 ## テスト
 
 @docs/TESTING.md
