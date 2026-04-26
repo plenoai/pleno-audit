@@ -10,6 +10,11 @@ interface ButtonProps {
   variant?: ButtonVariant;
   size?: ButtonSize;
   disabled?: boolean;
+  /** 指定すると <a> として描画 (Button と同サイズ) */
+  href?: string;
+  /** href 用 */
+  target?: string;
+  rel?: string;
 }
 
 const baseStyle: CSSProperties = {
@@ -17,10 +22,15 @@ const baseStyle: CSSProperties = {
   alignItems: "center",
   justifyContent: "center",
   gap: "6px",
-  border: "none",
+  borderStyle: "solid",
+  borderWidth: "1px",
   borderRadius: "6px",
   cursor: "pointer",
   fontWeight: 500,
+  fontFamily: "inherit",
+  lineHeight: 1,
+  whiteSpace: "nowrap",
+  boxSizing: "border-box",
   transition: "all 0.15s",
 };
 
@@ -29,26 +39,30 @@ function getVariantStyles(colors: ThemeColors): Record<ButtonVariant, CSSPropert
     primary: {
       background: colors.interactive,
       color: colors.textInverse,
+      borderColor: colors.interactive,
     },
     secondary: {
       background: colors.bgPrimary,
       color: colors.textPrimary,
-      border: `1px solid ${colors.border}`,
+      borderColor: colors.border,
     },
     ghost: {
       background: "transparent",
       color: colors.textSecondary,
+      borderColor: "transparent",
     },
   };
 }
 
 const sizeStyles: Record<ButtonSize, CSSProperties> = {
   sm: {
-    padding: "6px 12px",
+    height: "28px",
+    padding: "0 12px",
     fontSize: "12px",
   },
   md: {
-    padding: "8px 16px",
+    height: "32px",
+    padding: "0 16px",
     fontSize: "13px",
   },
 };
@@ -59,19 +73,34 @@ export function Button({
   variant = "secondary",
   size = "md",
   disabled = false,
+  href,
+  target,
+  rel,
 }: ButtonProps) {
   const { colors } = useTheme();
   const variantStyles = getVariantStyles(colors);
 
+  const style: CSSProperties = {
+    ...baseStyle,
+    ...variantStyles[variant],
+    ...sizeStyles[size],
+    opacity: disabled ? 0.5 : 1,
+    cursor: disabled ? "not-allowed" : "pointer",
+    textDecoration: "none",
+  };
+
+  if (href) {
+    return (
+      <a href={href} target={target} rel={rel} style={style}>
+        {children}
+      </a>
+    );
+  }
+
   return (
     <button
-      style={{
-        ...baseStyle,
-        ...variantStyles[variant],
-        ...sizeStyles[size],
-        opacity: disabled ? 0.5 : 1,
-        cursor: disabled ? "not-allowed" : "pointer",
-      }}
+      type="button"
+      style={style}
       onClick={disabled ? undefined : onClick}
       disabled={disabled}
     >

@@ -2,7 +2,22 @@ import { useCallback, useMemo, useState } from "preact/hooks";
 import { Globe } from "lucide-preact";
 import type { AlertSeverity } from "libztbs/alerts";
 import type { DetectedService } from "libztbs/types";
-import { Badge, ListRow, PagedList, ExpandedPanel, DetailRow, DetailLink, DetailOverflow, TabRoot, TagFilterBar, useExpandable, usePagination } from "../../../components";
+import {
+  Badge,
+  Button,
+  EmptyState,
+  HostPane,
+  HostListPane,
+  HostDetailPane,
+  HostListFilterBar,
+  HostListBody,
+  ListRow,
+  PageHeader,
+  RiskBarScore,
+  SearchInput,
+  DetailSection,
+  KeyValueGrid,
+} from "../../../components";
 import { ServiceRowMenu } from "../../../components/ServiceRowMenu";
 import { sendMessage } from "../../../lib/messaging";
 import { useTabFilter } from "../hooks/useTabFilter";
@@ -47,48 +62,30 @@ const SEVERITY_WEIGHT: Record<string, number> = {
 
 const SEVERITY_ORDER: AlertSeverity[] = ["critical", "high", "medium", "low", "info"];
 
-
 function getServiceRiskScore(
   s: DetectedService,
   connectionCount: number,
   alertSummary?: DomainAlertSummary,
 ): number {
   let score = 0;
-
   if (s.nrdResult?.isNRD) {
     score += 40;
     if (s.nrdResult.confidence === "high") score += 10;
     else if (s.nrdResult.confidence === "medium") score += 5;
     if (s.nrdResult.domainAge !== null && s.nrdResult.domainAge < 30) score += 5;
   }
-
   if (s.typosquatResult?.isTyposquat) {
     score += 25 + Math.min(10, s.typosquatResult.totalScore);
   }
-
   if (s.aiDetected?.hasAIActivity) score += 5;
   if (s.hasLoginPage) score += 5;
   if (!s.privacyPolicyUrl) score += 3;
   if (!s.termsOfServiceUrl) score += 3;
   if (connectionCount > 20) score += 3;
-
   if (alertSummary && alertSummary.total > 0) {
     score += SEVERITY_WEIGHT[alertSummary.maxSeverity] ?? 0;
   }
-
   return Math.min(100, score);
-}
-
-function _getServiceRiskLevel(
-  s: DetectedService,
-  connectionCount: number,
-  alertSummary?: DomainAlertSummary,
-): false | "danger" | "warning" | "info" {
-  const score = getServiceRiskScore(s, connectionCount, alertSummary);
-  if (score >= 40) return "danger";
-  if (score >= 15) return "warning";
-  if (score >= 8) return "info";
-  return false;
 }
 
 function getRiskLabel(score: number): { text: string; variant: "danger" | "warning" | "info" | "default" } {
@@ -98,7 +95,6 @@ function getRiskLabel(score: number): { text: string; variant: "danger" | "warni
   return { text: "None", variant: "default" };
 }
 
-/** Severity dots: compact display of per-severity counts */
 function SeverityDots({ summary }: { summary: DomainAlertSummary }) {
   const { colors } = useTheme();
   const colorMap: Record<AlertSeverity, string> = {
@@ -144,18 +140,16 @@ function ServiceRow({
   service,
   serviceConnections,
   alertsByDomain,
-  isExpanded,
-  onToggleExpand,
+  isActive,
+  onSelect,
   onDelete,
-  onNavigateToAlerts,
 }: {
   service: DetectedService;
   serviceConnections: Record<string, string[]>;
   alertsByDomain?: Record<string, DomainAlertSummary>;
-  isExpanded: boolean;
-  onToggleExpand: () => void;
+  isActive: boolean;
+  onSelect: () => void;
   onDelete: () => void;
-  onNavigateToAlerts?: (domain: string) => void;
 }) {
   const { colors } = useTheme();
   const connCount = serviceConnections[service.domain]?.length ?? 0;
@@ -163,116 +157,210 @@ function ServiceRow({
   const score = getServiceRiskScore(service, connCount, alertSummary);
   const risk = getRiskLabel(score);
   const tags = getServiceTags(service);
-
-  const destinations = serviceConnections[service.domain];
-  const hasDestinations = destinations && destinations.length > 0;
   const hasAlerts = alertSummary && alertSummary.total > 0;
-  const hasLinks = service.privacyPolicyUrl || service.termsOfServiceUrl;
-  const showExpanded = isExpanded;
 
   return (
-    <div>
-      <ListRow
-        isHighlighted={isExpanded}
-        onClick={onToggleExpand}
-        badges={
-          <>
+    <ListRow
+      isHighlighted={isActive}
+      activeIndicator={isActive}
+      onClick={onSelect}
+      badges={
+        <>
+          <Badge variant={risk.variant} size="sm">{risk.text}</Badge>
+          {tags.map((tag) => (
+            <Badge key={tag.label} variant={tag.variant} size="sm">
+              {tag.label}
+            </Badge>
+          ))}
+        </>
+      }
+      title={
+        <>
+          {service.faviconUrl ? (
+            <img
+              src={service.faviconUrl}
+              alt=""
+              style={{ width: "14px", height: "14px", flexShrink: 0 }}
+            />
+          ) : (
+            <Globe size={14} style={{ flexShrink: 0, color: colors.textMuted }} />
+          )}
+          <span>{service.domain}</span>
+        </>
+      }
+      meta={
+        <>
+          {connCount > 0 && `${connCount}通信先`}
+          {hasAlerts && (
+            <>
+              {connCount > 0 && " · "}
+              <SeverityDots summary={alertSummary} />
+            </>
+          )}
+        </>
+      }
+      actions={<ServiceRowMenu onDelete={onDelete} />}
+    />
+  );
+}
+
+function ServiceDetailContent({
+  service,
+  destinations,
+  alertSummary,
+  onDelete,
+  onNavigateToAlerts,
+}: {
+  service: DetectedService;
+  destinations: string[];
+  alertSummary?: DomainAlertSummary;
+  onDelete: () => void;
+  onNavigateToAlerts?: (domain: string) => void;
+}) {
+  const { colors } = useTheme();
+  const connCount = destinations.length;
+  const score = getServiceRiskScore(service, connCount, alertSummary);
+  const risk = getRiskLabel(score);
+  const tags = getServiceTags(service);
+
+  const meta: [string, import("preact").ComponentChildren][] = [
+    ["domain", service.domain],
+    ["検出日時", new Date(service.detectedAt).toLocaleString("ja-JP")],
+    ["通信先数", `${connCount}`],
+  ];
+  if (service.nrdResult?.domainAge !== null && service.nrdResult?.domainAge !== undefined) {
+    meta.push(["ドメイン年齢", `${service.nrdResult.domainAge}日`]);
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: spacing.md }}>
+      {/* ヘッダ */}
+      <div style={{ display: "flex", gap: spacing.sm, alignItems: "flex-start" }}>
+        <div
+          style={{
+            width: "36px",
+            height: "36px",
+            borderRadius: borderRadius.md,
+            background: colors.bgPrimary,
+            border: `1px solid ${colors.border}`,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+          }}
+        >
+          {service.faviconUrl ? (
+            <img src={service.faviconUrl} alt="" style={{ width: "20px", height: "20px" }} />
+          ) : (
+            <Globe size={18} color={colors.textMuted} />
+          )}
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: "flex", gap: spacing.xs, flexWrap: "wrap", marginBottom: "4px" }}>
             <Badge variant={risk.variant} size="sm">{risk.text}</Badge>
             {tags.map((tag) => (
-              <Badge key={tag.label} variant={tag.variant} size="sm">
-                {tag.label}
+              <Badge key={tag.label} variant={tag.variant} size="sm">{tag.label}</Badge>
+            ))}
+          </div>
+          <h2 style={{ fontSize: "18px", fontWeight: 500, letterSpacing: "-0.01em", color: colors.textPrimary, margin: 0, wordBreak: "break-all" }}>
+            {service.domain}
+          </h2>
+          <div style={{ fontSize: fontSize.xs, color: colors.textMuted, marginTop: "3px", fontFamily: "monospace" }}>
+            {connCount}通信先 · 検出 {new Date(service.detectedAt).toLocaleDateString("ja-JP")}
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: spacing.xs, flexShrink: 0, alignItems: "center" }}>
+          <Button variant="secondary" size="sm" onClick={onDelete}>
+            削除
+          </Button>
+          {alertSummary && onNavigateToAlerts && (
+            <Button variant="primary" size="sm" onClick={() => onNavigateToAlerts(service.domain)}>
+              トリアージ →
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* 2col: メタ + リスク */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: spacing.md, alignItems: "start" }}>
+        <DetailSection title="基本情報">
+          <KeyValueGrid entries={meta} />
+        </DetailSection>
+
+        <DetailSection title="リスクスコア" meta={`${score} / 100`}>
+          <RiskBarScore value={score} />
+          <div style={{ marginTop: spacing.sm, display: "flex", flexDirection: "column", gap: spacing.xs, fontSize: fontSize.sm, color: colors.textSecondary }}>
+            {service.nrdResult?.isNRD && (
+              <div>NRD — 信頼度: {service.nrdResult.confidence}</div>
+            )}
+            {service.typosquatResult?.isTyposquat && (
+              <div>タイポスクワット候補 — スコア: {service.typosquatResult.totalScore}</div>
+            )}
+            {service.hasLoginPage && <div>ログインページ検出</div>}
+            {service.aiDetected?.hasAIActivity && <div>AI 利用検出</div>}
+            {!service.privacyPolicyUrl && <div>プライバシーポリシー未掲載</div>}
+            {!service.termsOfServiceUrl && <div>利用規約未掲載</div>}
+          </div>
+        </DetailSection>
+      </div>
+
+      {alertSummary && alertSummary.total > 0 && (
+        <DetailSection title="関連アラート" meta={`${alertSummary.total}件`}>
+          <div style={{ marginBottom: spacing.sm }}>
+            <SeverityDots summary={alertSummary} />
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: spacing.xs }}>
+            {alertSummary.categories.map((cat) => (
+              <Badge key={cat} variant="info" size="sm">
+                {CATEGORY_LABELS[cat] ?? cat}
               </Badge>
             ))}
-          </>
-        }
-        title={
-          <>
-            {service.faviconUrl ? (
-              <img
-                src={service.faviconUrl}
-                alt=""
-                style={{ width: "14px", height: "14px", flexShrink: 0 }}
-              />
-            ) : (
-              <Globe size={14} style={{ flexShrink: 0, color: colors.textMuted }} />
-            )}
-            <span>{service.domain}</span>
-          </>
-        }
-        meta={
-          <>
-            {connCount > 0 && `${connCount}通信先`}
-            {hasAlerts && (
-              <>
-                {connCount > 0 && " · "}
-                <SeverityDots summary={alertSummary} />
-              </>
-            )}
-          </>
-        }
-        actions={<ServiceRowMenu onDelete={onDelete} />}
-      />
+          </div>
+        </DetailSection>
+      )}
 
-      {/* Expanded detail */}
-      {showExpanded && (
-        <ExpandedPanel>
-          <DetailRow>
-            <span style={{ color: colors.textSecondary }}>検出日時:</span>
-            {new Date(service.detectedAt).toLocaleString("ja-JP")}
-          </DetailRow>
-          {hasAlerts && (
-            <DetailRow>
-              <span style={{ color: colors.textSecondary }}>アラート:</span>
-              <SeverityDots summary={alertSummary} />
-              {alertSummary.categories.slice(0, 4).map((cat) => (
-                <Badge key={cat} variant="info" size="sm">
-                  {CATEGORY_LABELS[cat] ?? cat}
-                </Badge>
-              ))}
-              {alertSummary.categories.length > 4 && (
-                <span style={{ fontSize: fontSize.xs, color: colors.textMuted }}>
-                  +{alertSummary.categories.length - 4}
-                </span>
-              )}
-              {onNavigateToAlerts && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onNavigateToAlerts(service.domain);
-                  }}
-                  style={{
-                    marginLeft: "auto",
-                    padding: `2px ${spacing.sm}`,
-                    border: `1px solid ${colors.border}`,
-                    borderRadius: borderRadius.sm,
-                    background: colors.bgPrimary,
-                    color: colors.link,
-                    fontSize: fontSize.sm,
-                    cursor: "pointer",
-                  }}
-                >
-                  トリアージ →
-                </button>
-              )}
-            </DetailRow>
+      {(service.privacyPolicyUrl || service.termsOfServiceUrl) && (
+        <DetailSection title="ポリシー">
+          {service.privacyPolicyUrl && (
+            <div style={{ marginBottom: spacing.xs }}>
+              <a
+                href={service.privacyPolicyUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: colors.link, textDecoration: "none", fontSize: fontSize.sm, wordBreak: "break-all" }}
+              >
+                プライバシーポリシー ↗
+              </a>
+            </div>
           )}
-          {service.privacyPolicyUrl && <DetailLink label="PP" href={service.privacyPolicyUrl} />}
-          {service.termsOfServiceUrl && <DetailLink label="ToS" href={service.termsOfServiceUrl} />}
-          {hasDestinations && (() => {
-            const sorted = [...destinations].sort();
-            const shown = sorted.slice(0, 10);
-            const remaining = sorted.length - shown.length;
-            return (
-              <>
-                {shown.map((domain) => (
-                  <DetailRow key={domain}>{domain}</DetailRow>
-                ))}
-                <DetailOverflow remaining={remaining} />
-              </>
-            );
-          })()}
-        </ExpandedPanel>
+          {service.termsOfServiceUrl && (
+            <div>
+              <a
+                href={service.termsOfServiceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: colors.link, textDecoration: "none", fontSize: fontSize.sm, wordBreak: "break-all" }}
+              >
+                利用規約 ↗
+              </a>
+            </div>
+          )}
+        </DetailSection>
+      )}
+
+      {destinations.length > 0 && (
+        <DetailSection title="通信先" meta={`${destinations.length}件`}>
+          <div style={{ display: "flex", flexDirection: "column", gap: spacing.xs, fontSize: fontSize.sm, fontFamily: "monospace" }}>
+            {[...destinations].sort().slice(0, 30).map((d) => (
+              <div key={d} style={{ color: colors.textPrimary, wordBreak: "break-all" }}>
+                {d}
+              </div>
+            ))}
+            {destinations.length > 30 && (
+              <div style={{ color: colors.textMuted }}>他 {destinations.length - 30} 件</div>
+            )}
+          </div>
+        </DetailSection>
       )}
     </div>
   );
@@ -285,20 +373,22 @@ export function ServicesTab({
   onNavigateToAlerts,
   onServiceDeleted,
 }: ServicesTabProps) {
-  const { searchQuery, setSearchQuery, resetAll } = useTabFilter({});
-  const { toggle: toggleExpand, isExpanded } = useExpandable();
+  const { colors } = useTheme();
+  const { searchQuery, setSearchQuery } = useTabFilter({});
+  const [activeDomain, setActiveDomain] = useState<string | null>(null);
   const [deletedDomains, setDeletedDomains] = useState<Set<string>>(new Set());
 
   const handleDeleteService = useCallback(
     (domain: string) => {
       sendMessage({ type: "DELETE_SERVICE", data: { domain } }).catch(() => {});
       setDeletedDomains((prev) => new Set(prev).add(domain));
+      setActiveDomain((prev) => (prev === domain ? null : prev));
       onServiceDeleted?.();
     },
     [onServiceDeleted],
   );
 
-  const { tagSummary, activeTagFilters, toggleTagFilter, resetTagFilters, filterByTags: tagFiltered } =
+  const { tagSummary, activeTagFilters, toggleTagFilter, filterByTags: tagFiltered } =
     useTagFilter(services, getServiceTags);
 
   const filtered = useMemo(() => {
@@ -307,7 +397,6 @@ export function ServicesTab({
       const q = searchQuery.toLowerCase();
       result = result.filter((s) => s.domain.toLowerCase().includes(q));
     }
-    // Sort by risk score descending
     result = [...result].sort((a, b) => {
       const scoreA = getServiceRiskScore(a, serviceConnections[a.domain]?.length ?? 0, alertsByDomain?.[a.domain]);
       const scoreB = getServiceRiskScore(b, serviceConnections[b.domain]?.length ?? 0, alertsByDomain?.[b.domain]);
@@ -316,46 +405,102 @@ export function ServicesTab({
     return result;
   }, [tagFiltered, searchQuery, deletedDomains, serviceConnections, alertsByDomain]);
 
-  const { currentPage, setCurrentPage, totalPages, paged, pageSize } =
-    usePagination(filtered, [searchQuery, activeTagFilters, deletedDomains]);
+  const activeService = activeDomain
+    ? services.find((s) => s.domain === activeDomain && !deletedDomains.has(s.domain)) ?? null
+    : null;
 
   return (
-    <TabRoot>
-      <TagFilterBar
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        placeholder="ドメインで検索... (/)"
-        tagSummary={tagSummary}
-        activeTagFilters={activeTagFilters}
-        onToggleTag={toggleTagFilter}
+    <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
+      <PageHeader
+        title="検出サービス"
+        kicker="SaaS DISCOVERY"
+        sub="ブラウジング中に検出した SaaS / Web サービスとリスクを一覧表示。NRD・タイポスクワット・AI 利用の指標を集約。"
       />
+      <HostPane>
+        <HostListPane>
+          <HostListFilterBar>
+            <SearchInput
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder="ドメインで検索... (/)"
+            />
+            {tagSummary.map((tag) => (
+              <Badge
+                key={tag.label}
+                variant={tag.variant}
+                active={activeTagFilters.has(tag.label)}
+                onClick={() => toggleTagFilter(tag.label)}
+              >
+                {tag.label} ({tag.count})
+              </Badge>
+            ))}
+          </HostListFilterBar>
 
-      <PagedList
-        allCount={services.length}
-        filteredCount={filtered.length}
-        countLabel="サービス"
-        emptyTitle="検出されたサービスはありません"
-        emptyDescription="ブラウジングを始めるとサービスが検出されます"
-        noMatchTitle="条件に一致するサービスはありません"
-        onResetFilter={() => { resetAll(); resetTagFilters(); }}
-        currentPage={currentPage}
-        totalPages={totalPages}
-        pageSize={pageSize}
-        onPageChange={setCurrentPage}
-      >
-        {paged.map((service) => (
-          <ServiceRow
-            key={service.domain}
-            service={service}
-            serviceConnections={serviceConnections}
-            alertsByDomain={alertsByDomain}
-            isExpanded={isExpanded(service.domain)}
-            onToggleExpand={() => toggleExpand(service.domain)}
-            onDelete={() => handleDeleteService(service.domain)}
-            onNavigateToAlerts={onNavigateToAlerts}
-          />
-        ))}
-      </PagedList>
-    </TabRoot>
+          {filtered.length > 0 && (
+            <div
+              style={{
+                padding: `${spacing.xs} ${spacing.lg}`,
+                borderBottom: `1px solid ${colors.border}`,
+                fontSize: fontSize.xs,
+                color: colors.textMuted,
+                background: colors.bgSecondary,
+                flexShrink: 0,
+                textTransform: "uppercase",
+                letterSpacing: "0.06em",
+              }}
+            >
+              {filtered.length}件のサービス
+            </div>
+          )}
+
+          <HostListBody>
+            {services.length === 0 ? (
+              <EmptyState title="検出されたサービスはありません" description="ブラウジングを始めるとサービスが検出されます" />
+            ) : filtered.length === 0 ? (
+              <EmptyState title="条件に一致するサービスはありません" description="検索条件やフィルタを変更してください" />
+            ) : (
+              filtered.map((service) => (
+                <ServiceRow
+                  key={service.domain}
+                  service={service}
+                  serviceConnections={serviceConnections}
+                  alertsByDomain={alertsByDomain}
+                  isActive={activeDomain === service.domain}
+                  onSelect={() =>
+                    setActiveDomain((prev) => (prev === service.domain ? null : service.domain))
+                  }
+                  onDelete={() => handleDeleteService(service.domain)}
+                />
+              ))
+            )}
+          </HostListBody>
+        </HostListPane>
+
+        <HostDetailPane>
+          {activeService ? (
+            <ServiceDetailContent
+              service={activeService}
+              destinations={serviceConnections[activeService.domain] ?? []}
+              alertSummary={alertsByDomain?.[activeService.domain]}
+              onDelete={() => handleDeleteService(activeService.domain)}
+              onNavigateToAlerts={onNavigateToAlerts}
+            />
+          ) : (
+            <div
+              style={{
+                height: "100%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: colors.textMuted,
+                fontSize: fontSize.sm,
+              }}
+            >
+              リストからサービスを選択して詳細を表示
+            </div>
+          )}
+        </HostDetailPane>
+      </HostPane>
+    </div>
   );
 }

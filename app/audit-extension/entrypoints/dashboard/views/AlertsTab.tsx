@@ -1,28 +1,28 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { ALL_PLAYBOOKS, type AlertSeverity, type AlertCategory, type DismissReason, type DismissRecord, type PlaybookData } from "libztbs/alerts";
+import { Siren } from "lucide-preact";
 import {
   AlertRowMenu,
   Badge,
   Button,
-  DismissComposer,
-  SearchInput,
+  DetailSection,
   EmptyState,
-  LoadingState,
-  FilterBar,
-  ListContainer,
-  ListHeader,
+  HostPane,
+  HostListPane,
+  HostDetailPane,
+  HostListFilterBar,
+  HostListBody,
+  KeyValueGrid,
+  DismissComposer,
   ListRow,
-  PagedList,
-  ScrollArea,
-  TabRoot,
-  usePagination,
+  LoadingState,
+  PageHeader,
+  SearchInput,
 } from "../../../components";
 import { useTabFilter } from "../hooks/useTabFilter";
 import { truncate } from "../utils";
 import { useTheme, spacing, fontSize, borderRadius } from "../../../lib/theme";
 import { sendMessage } from "../../../lib/messaging";
-import { useAnimationEnabled } from "../../../lib/motion";
-import { DISMISS_REASON_LABELS } from "../../../lib/dismiss-reasons";
 import { CATEGORY_LABELS } from "../constants";
 
 interface AlertItem {
@@ -46,10 +46,7 @@ const SEVERITY_RANK: Record<AlertSeverity, number> = {
   info: 4,
 };
 
-const severityVariant: Record<
-  AlertSeverity,
-  "danger" | "warning" | "info"
-> = {
+const severityVariant: Record<AlertSeverity, "danger" | "warning" | "info"> = {
   critical: "danger",
   high: "danger",
   medium: "warning",
@@ -57,11 +54,9 @@ const severityVariant: Record<
   info: "info",
 };
 
-
 const PLAYBOOK_DATA: Record<string, PlaybookData> = Object.fromEntries(
   ALL_PLAYBOOKS.map((p) => [p.id, p]),
 );
-
 
 const severityButtons: { key: AlertSeverity; label: string }[] = [
   { key: "critical", label: "Critical" },
@@ -149,37 +144,28 @@ function AlertRow({
   );
 }
 
-function AlertDetailSidebar({
+/* ============================================================
+ * AlertDetailContent — host-pane の DetailPane に直接描画する内容
+ * (DetailSidebar の chrome なし版)
+ * ============================================================ */
+
+function AlertDetailContent({
   alert,
-  onClose,
   onReportBug,
   onDismissConfirm,
 }: {
   alert: AlertItem;
-  onClose: () => void;
   onReportBug: () => void;
   onDismissConfirm: (reason: DismissReason, comment: string) => void;
 }) {
   const { colors } = useTheme();
-  const animationEnabled = useAnimationEnabled();
-  const sidebarRef = useRef<HTMLDivElement>(null);
   const dismissPopoverRef = useRef<HTMLDivElement>(null);
   const [showDismissComposer, setShowDismissComposer] = useState(false);
   const detailEntries = Object.entries(alert.details ?? {}).filter(
     ([k]) => k !== "type",
   );
-
-  useEffect(() => {
-    const el = sidebarRef.current;
-    if (!el || !animationEnabled) return;
-    el.style.transform = "translateX(100%)";
-    el.style.opacity = "0";
-    requestAnimationFrame(() => {
-      el.style.transition = "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1)";
-      el.style.transform = "translateX(0)";
-      el.style.opacity = "1";
-    });
-  }, [alert, animationEnabled]);
+  const sevVariant = severityVariant[alert.severity];
+  const sevTone = colors.status[sevVariant];
 
   useEffect(() => {
     setShowDismissComposer(false);
@@ -199,215 +185,156 @@ function AlertDetailSidebar({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [showDismissComposer]);
 
+  const metaEntries: [string, import("preact").ComponentChildren][] = [
+    ["domain", alert.domain],
+  ];
+  if (alert.url) metaEntries.push(["url", alert.url]);
+  metaEntries.push(["timestamp", new Date(alert.timestamp).toLocaleString("ja-JP")]);
+
   return (
-    <div
-      ref={sidebarRef}
-      style={{
-        width: "420px",
-        minWidth: "420px",
-        height: "100%",
-        marginLeft: "auto",
-        background: colors.bgPrimary,
-        borderLeft: `1px solid ${colors.border}`,
-        display: "flex",
-        flexDirection: "column",
-        overflow: "hidden",
-      }}
-    >
-      {/* Header */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: `${spacing.md} ${spacing.lg}`,
-          borderBottom: `1px solid ${colors.border}`,
-          flexShrink: 0,
-        }}
-      >
-        <span
+    <div style={{ display: "flex", flexDirection: "column", gap: spacing.md }}>
+      {/* enterprise風 ヘッダ: アイコン + 見出し + アクション */}
+      <div style={{ display: "flex", gap: spacing.sm, alignItems: "flex-start" }}>
+        <div
           style={{
-            fontSize: fontSize.lg,
-            fontWeight: 600,
-            color: colors.textPrimary,
+            width: "36px",
+            height: "36px",
+            borderRadius: borderRadius.md,
+            background: sevTone.bg,
+            border: `1px solid ${sevTone.border}`,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: sevTone.text,
+            flexShrink: 0,
           }}
         >
-          アラート詳細
-        </span>
-        <button
-          type="button"
-          onClick={onClose}
-          style={{
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            fontSize: "20px",
-            color: colors.textMuted,
-            padding: spacing.xs,
-            lineHeight: 1,
-          }}
-        >
-          ✕
-        </button>
-      </div>
-
-      {/* Content */}
-      <div
-        style={{
-          flex: 1,
-          overflowY: "auto",
-          padding: spacing.lg,
-        }}
-      >
-        {/* === Triage section === */}
-
-        {/* Severity + Category badges */}
-        <div style={{ display: "flex", gap: spacing.sm, flexWrap: "wrap", marginBottom: spacing.sm }}>
-          <Badge variant={severityVariant[alert.severity]} size="sm">
-            {alert.severity}
-          </Badge>
-          <Badge variant="info" size="sm">
-            {CATEGORY_LABELS[alert.category] ?? alert.category}
-          </Badge>
-          {(alert.count ?? 1) > 1 && (
-            <Badge variant="info" size="sm">
-              x{alert.count}
-            </Badge>
-          )}
+          <Siren size={18} strokeWidth={1.75} />
         </div>
-
-        {/* Title (human-readable) */}
-        <span
-          style={{
-            fontSize: fontSize.lg,
-            fontWeight: 600,
-            color: colors.textPrimary,
-            display: "block",
-            wordBreak: "break-all",
-            marginBottom: spacing.xs,
-          }}
-        >
-          {alert.title}
-        </span>
-
-        {/* Description */}
-        {alert.description && (
-          <p
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: "flex", gap: spacing.xs, flexWrap: "wrap", marginBottom: "4px" }}>
+            <Badge variant={sevVariant} size="sm">{alert.severity}</Badge>
+            <Badge variant="info" size="sm">
+              {CATEGORY_LABELS[alert.category] ?? alert.category}
+            </Badge>
+            {(alert.count ?? 1) > 1 && (
+              <Badge variant="info" size="sm">x{alert.count}</Badge>
+            )}
+          </div>
+          <h2
             style={{
-              fontSize: fontSize.md,
-              color: colors.textSecondary,
-              marginBottom: spacing.md,
-              lineHeight: 1.5,
+              fontSize: "18px",
+              fontWeight: 500,
+              letterSpacing: "-0.01em",
+              color: colors.textPrimary,
+              margin: 0,
+              wordBreak: "break-all",
             }}
           >
+            {alert.title}
+          </h2>
+          <div
+            style={{
+              fontSize: fontSize.xs,
+              color: colors.textMuted,
+              marginTop: "3px",
+              fontFamily: "monospace",
+              wordBreak: "break-all",
+            }}
+          >
+            {alert.domain} · {new Date(alert.timestamp).toLocaleTimeString("ja-JP")}
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: spacing.xs, flexShrink: 0 }}>
+          <Button variant="secondary" size="sm" onClick={onReportBug}>
+            バグを報告
+          </Button>
+          <div ref={dismissPopoverRef} style={{ position: "relative" }}>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setShowDismissComposer((prev) => !prev)}
+            >
+              解決
+            </Button>
+            {showDismissComposer && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "calc(100% + 8px)",
+                  right: 0,
+                  width: "340px",
+                  maxWidth: "calc(100vw - 64px)",
+                  zIndex: 10,
+                }}
+              >
+                <DismissComposer
+                  alerts={[
+                    {
+                      id: alert.id,
+                      title: alert.title,
+                      domain: alert.domain,
+                      severity: alert.severity,
+                    },
+                  ]}
+                  onConfirm={(reason, comment) => {
+                    onDismissConfirm(reason, comment);
+                    setShowDismissComposer(false);
+                  }}
+                  onCancel={() => setShowDismissComposer(false)}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Description */}
+      {alert.description && (
+        <DetailSection title="説明">
+          <p style={{ fontSize: fontSize.sm, color: colors.textSecondary, margin: 0, lineHeight: 1.5 }}>
             {alert.description}
           </p>
-        )}
+        </DetailSection>
+      )}
 
-        {/* Meta */}
+      {/* Evidence + Detection params: 2col grid (enterprise風) */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: detailEntries.length > 0 ? "1fr 1fr" : "1fr",
+          gap: spacing.md,
+          alignItems: "start",
+        }}
+      >
+        <DetailSection title="メタ情報" meta="RAW">
+          <KeyValueGrid entries={metaEntries} />
+        </DetailSection>
+
+        {detailEntries.length > 0 && (
+          <DetailSection title="検出パラメータ" meta={`${detailEntries.length}件`}>
+            <KeyValueGrid
+              entries={detailEntries.map(([k, v]) => [
+                k,
+                typeof v === "object" ? JSON.stringify(v) : String(v),
+              ])}
+            />
+          </DetailSection>
+        )}
+      </div>
+
+      {/* Playbook 2col grid: response + prevention */}
+      {PLAYBOOK_DATA[alert.category] && (
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "auto 1fr",
-            gap: "6px 12px",
-            fontSize: fontSize.sm,
-            fontFamily: "monospace",
-            padding: spacing.md,
-            background: colors.bgSecondary,
-            borderRadius: borderRadius.md,
-            border: `1px solid ${colors.border}`,
-            marginBottom: spacing.md,
+            gridTemplateColumns: "1fr 1fr",
+            gap: spacing.md,
+            alignItems: "start",
           }}
         >
-          <span style={{ color: colors.textMuted }}>domain:</span>
-          <span style={{ color: colors.textPrimary, wordBreak: "break-all" }}>
-            {alert.domain}
-          </span>
-          {alert.url && (
-            <>
-              <span style={{ color: colors.textMuted }}>url:</span>
-              <span style={{ color: colors.textPrimary, wordBreak: "break-all" }}>
-                {alert.url}
-              </span>
-            </>
-          )}
-          <span style={{ color: colors.textMuted }}>timestamp:</span>
-          <span style={{ color: colors.textPrimary }}>
-            {new Date(alert.timestamp).toLocaleString("ja-JP")}
-          </span>
-        </div>
-
-        {/* Alert-specific details */}
-        {detailEntries.length > 0 && (
-          <div style={{ marginBottom: spacing.md }}>
-            <span
-              style={{
-                fontSize: fontSize.sm,
-                fontWeight: 600,
-                color: colors.textSecondary,
-                display: "block",
-                marginBottom: spacing.sm,
-              }}
-            >
-              検出パラメータ
-            </span>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "auto 1fr",
-                gap: "4px 12px",
-                fontSize: fontSize.sm,
-                fontFamily: "monospace",
-                padding: spacing.md,
-                background: colors.bgSecondary,
-                borderRadius: borderRadius.md,
-                border: `1px solid ${colors.border}`,
-              }}
-            >
-              {detailEntries.map(([key, value]) => (
-                <>
-                  <span key={`${key}-label`} style={{ color: colors.textMuted }}>
-                    {key}:
-                  </span>
-                  <span
-                    key={`${key}-value`}
-                    style={{
-                      color: colors.textPrimary,
-                      wordBreak: "break-all",
-                    }}
-                    title={String(value)}
-                  >
-                    {typeof value === "object"
-                      ? JSON.stringify(value)
-                      : String(value)}
-                  </span>
-                </>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Playbook: response steps */}
-        {PLAYBOOK_DATA[alert.category] && (
-          <div style={{ marginBottom: spacing.md }}>
-            <span
-              style={{
-                fontSize: fontSize.sm,
-                fontWeight: 600,
-                color: colors.textSecondary,
-                display: "block",
-                marginBottom: spacing.sm,
-              }}
-            >
-              対応方針
-            </span>
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: spacing.sm,
-              }}
-            >
+          <DetailSection title="対応方針" meta="PLAYBOOK">
+            <div style={{ display: "flex", flexDirection: "column", gap: spacing.sm }}>
               {PLAYBOOK_DATA[alert.category].response.map((step, i) => (
                 <div
                   key={i}
@@ -461,23 +388,9 @@ function AlertDetailSidebar({
                 </div>
               ))}
             </div>
-          </div>
-        )}
+          </DetailSection>
 
-        {/* Playbook: prevention */}
-        {PLAYBOOK_DATA[alert.category] && (
-          <div style={{ marginBottom: spacing.md }}>
-            <span
-              style={{
-                fontSize: fontSize.sm,
-                fontWeight: 600,
-                color: colors.textSecondary,
-                display: "block",
-                marginBottom: spacing.sm,
-              }}
-            >
-              予防策
-            </span>
+          <DetailSection title="予防策">
             <ul
               style={{
                 margin: 0,
@@ -491,86 +404,25 @@ function AlertDetailSidebar({
                 <li key={i}>{item}</li>
               ))}
             </ul>
-          </div>
-        )}
+          </DetailSection>
+        </div>
+      )}
 
-        {/* External link */}
-        <a
-          href={`https://plenoai.github.io/pleno-audit/alerts/${alert.category}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            fontSize: fontSize.sm,
-            color: colors.textMuted,
-            textDecoration: "none",
-          }}
-        >
-          対応方針の詳細を見る ↗
-        </a>
-      </div>
-
-      {/* Fixed action footer */}
-      <div
+      <a
+        href={`https://plenoai.github.io/pleno-audit/alerts/${alert.category}`}
+        target="_blank"
+        rel="noopener noreferrer"
         style={{
-          flexShrink: 0,
-          display: "flex",
-          gap: spacing.sm,
-          padding: `${spacing.md} ${spacing.lg}`,
-          borderTop: `1px solid ${colors.border}`,
-          background: colors.bgPrimary,
+          fontSize: fontSize.sm,
+          color: colors.textMuted,
+          textDecoration: "none",
         }}
       >
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={onReportBug}
-        >
-          バグを報告
-        </Button>
-        <div ref={dismissPopoverRef} style={{ position: "relative", marginLeft: "auto" }}>
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => setShowDismissComposer((prev) => !prev)}
-          >
-            解決
-          </Button>
-          {showDismissComposer && (
-            <div
-              style={{
-                position: "absolute",
-                bottom: "calc(100% + 8px)",
-                right: 0,
-                width: "340px",
-                maxWidth: "calc(100vw - 64px)",
-                zIndex: 10,
-              }}
-            >
-              <DismissComposer
-                alerts={[
-                  {
-                    id: alert.id,
-                    title: alert.title,
-                    domain: alert.domain,
-                    severity: alert.severity,
-                  },
-                ]}
-                onConfirm={(reason, comment) => {
-                  onDismissConfirm(reason, comment);
-                  setShowDismissComposer(false);
-                  onClose();
-                }}
-                onCancel={() => setShowDismissComposer(false)}
-              />
-            </div>
-          )}
-        </div>
-      </div>
+        対応方針の詳細を見る ↗
+      </a>
     </div>
   );
 }
-
-export { AlertDetailSidebar };
 
 function DismissedView({
   records,
@@ -591,70 +443,52 @@ function DismissedView({
   }
 
   return (
-    <ListContainer>
-      <ListHeader>
-        {records.length}件の解決済みアラート
-      </ListHeader>
-      <ScrollArea>
-        {records.map((record) => {
-          const reasonInfo = DISMISS_REASON_LABELS[record.reason] ?? { label: record.reason, description: "" };
-          return (
-            <ListRow
-              key={record.pattern}
-              badges={
-                <>
-                  <Badge variant={severityVariant[record.alertSnapshot.severity as AlertSeverity] ?? "info"} size="sm">
-                    {record.alertSnapshot.severity}
-                  </Badge>
-                  <Badge variant="info" size="sm">
-                    {CATEGORY_LABELS[record.alertSnapshot.category] ?? record.alertSnapshot.category}
-                  </Badge>
-                  <Badge variant="info" size="sm">
-                    {reasonInfo.label}
-                  </Badge>
-                </>
-              }
-              title={record.alertSnapshot.title}
-              meta={
-                <>
-                  {record.alertSnapshot.domain} · {new Date(record.dismissedAt).toLocaleDateString()}
-                  {record.comment && ` · ${record.comment}`}
-                </>
-              }
-              actions={
-                <button
-                  type="button"
-                  onClick={() => onReopen(record.pattern)}
-                  style={{
-                    padding: `${spacing.xs} ${spacing.sm}`,
-                    border: `1px solid ${colors.border}`,
-                    borderRadius: borderRadius.sm,
-                    background: colors.bgPrimary,
-                    color: colors.textPrimary,
-                    fontSize: fontSize.sm,
-                    cursor: "pointer",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  Reopen
-                </button>
-              }
-            />
-          );
-        })}
-      </ScrollArea>
-    </ListContainer>
+    <>
+      {records.map((record) => (
+        <ListRow
+          key={record.pattern}
+          badges={
+            <>
+              <Badge variant={severityVariant[record.alertSnapshot.severity as AlertSeverity] ?? "info"} size="sm">
+                {record.alertSnapshot.severity}
+              </Badge>
+              <Badge variant="info" size="sm">
+                {CATEGORY_LABELS[record.alertSnapshot.category] ?? record.alertSnapshot.category}
+              </Badge>
+            </>
+          }
+          title={record.alertSnapshot.title}
+          meta={
+            <>
+              {record.alertSnapshot.domain} · {new Date(record.dismissedAt).toLocaleDateString()}
+              {record.comment && ` · ${record.comment}`}
+            </>
+          }
+          actions={
+            <button
+              type="button"
+              onClick={() => onReopen(record.pattern)}
+              style={{
+                padding: `${spacing.xs} ${spacing.sm}`,
+                border: `1px solid ${colors.border}`,
+                borderRadius: borderRadius.sm,
+                background: colors.bgPrimary,
+                color: colors.textPrimary,
+                fontSize: fontSize.sm,
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+              }}
+            >
+              Reopen
+            </button>
+          }
+        />
+      ))}
+    </>
   );
 }
 
-export interface AlertSidebarState {
-  alert: AlertItem;
-  onClose: () => void;
-  onReportBug: () => void;
-  onDismissConfirm: (reason: DismissReason, comment: string) => void;
-}
-
-export function AlertsTab({ onSidebarChange }: { onSidebarChange?: (state: AlertSidebarState | null) => void }) {
+export function AlertsTab() {
   const { colors } = useTheme();
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
@@ -664,7 +498,6 @@ export function AlertsTab({ onSidebarChange }: { onSidebarChange?: (state: Alert
   const [showBulkDismissComposer, setShowBulkDismissComposer] = useState(false);
   const bulkDismissRef = useRef<HTMLDivElement>(null);
 
-  // Initial search query from Services tab navigation
   const initialQuery = useMemo(() => {
     const stored = sessionStorage.getItem("alertDomainFilter");
     if (stored) {
@@ -674,7 +507,7 @@ export function AlertsTab({ onSidebarChange }: { onSidebarChange?: (state: Alert
     return "";
   }, []);
 
-  const { searchQuery, setSearchQuery, filters, setFilter, resetAll } = useTabFilter<
+  const { searchQuery, setSearchQuery, filters, setFilter } = useTabFilter<
     Record<AlertSeverity, boolean>
   >({
     critical: false,
@@ -684,14 +517,12 @@ export function AlertsTab({ onSidebarChange }: { onSidebarChange?: (state: Alert
     info: false,
   });
 
-  // Apply initial domain filter
   useEffect(() => {
     if (initialQuery) {
       setSearchQuery(initialQuery);
     }
   }, [initialQuery, setSearchQuery]);
 
-  // Listen for domain filter events from Services tab
   useEffect(() => {
     function handleFilterEvent() {
       const domain = sessionStorage.getItem("alertDomainFilter");
@@ -831,7 +662,6 @@ export function AlertsTab({ onSidebarChange }: { onSidebarChange?: (state: Alert
         setSelectedIds(new Set());
       }
 
-      // Refresh dismiss records
       sendMessage<DismissRecord[]>({ type: "GET_DISMISS_RECORDS" })
         .then(setDismissRecords)
         .catch(() => {});
@@ -874,15 +704,7 @@ export function AlertsTab({ onSidebarChange }: { onSidebarChange?: (state: Alert
       next.delete(pattern);
       return next;
     });
-    // Refresh dismiss records
-    sendMessage<Array<{
-      pattern: string;
-      reason: DismissReason;
-      comment?: string;
-      dismissedAt: number;
-      reopenedAt?: number;
-      alertSnapshot: { category: string; domain: string; severity: string; title: string };
-    }>>({ type: "GET_DISMISS_RECORDS" })
+    sendMessage<DismissRecord[]>({ type: "GET_DISMISS_RECORDS" })
       .then(setDismissRecords)
       .catch(() => {});
   }, []);
@@ -924,7 +746,6 @@ export function AlertsTab({ onSidebarChange }: { onSidebarChange?: (state: Alert
       );
     }
 
-    // Sort by severity (most critical first), then by timestamp (newest first)
     result = [...result].sort(
       (a, b) =>
         SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity] ||
@@ -934,80 +755,56 @@ export function AlertsTab({ onSidebarChange }: { onSidebarChange?: (state: Alert
     return result;
   }, [alerts, activeSeverities, searchQuery, dismissedPatterns]);
 
-  const { currentPage, setCurrentPage, totalPages, paged, pageSize } =
-    usePagination(filtered, [activeSeverities, searchQuery, dismissedPatterns]);
-
   const allSelected =
-    paged.length > 0 && paged.every((a) => selectedIds.has(a.id));
+    filtered.length > 0 && filtered.every((a) => selectedIds.has(a.id));
 
   const handleSelectAll = useCallback(() => {
     if (allSelected) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(paged.map((a) => a.id)));
+      setSelectedIds(new Set(filtered.map((a) => a.id)));
     }
-  }, [allSelected, paged]);
+  }, [allSelected, filtered]);
 
   const activeAlert = activeAlertId
     ? alerts.find((a) => a.id === activeAlertId) ?? null
     : null;
-
-  useEffect(() => {
-    if (!onSidebarChange) return;
-    if (activeAlert) {
-      onSidebarChange({
-        alert: activeAlert,
-        onClose: () => setActiveAlertId(null),
-        onReportBug: () => handleReportBug(activeAlert),
-        onDismissConfirm: (reason, comment) => {
-          applyDismiss([activeAlert], reason, comment);
-          setActiveAlertId(null);
-        },
-      });
-    } else {
-      onSidebarChange(null);
-    }
-  }, [activeAlert, onSidebarChange, handleReportBug, applyDismiss]);
 
   if (loading) {
     return <LoadingState />;
   }
 
   return (
-    <TabRoot>
-        {/* Filter bar */}
-        <FilterBar>
-          <SearchInput
-            value={searchQuery}
-            onChange={setSearchQuery}
-            placeholder="タイトル・ドメインで検索... (/)"
-          />
-          {severityButtons.map((b) => {
-            const count = counts[b.key] ?? 0;
-            if (count === 0) return null;
-            return (
-              <Badge
-                key={b.key}
-                variant={severityVariant[b.key]}
-                active={filters[b.key]}
-                onClick={() => setFilter(b.key, !filters[b.key])}
-              >
-                {b.label} ({count})
-              </Badge>
-            );
-          })}
-          {dismissRecords.filter((r) => r.reopenedAt == null).length > 0 && (
-            <>
-              <span
-                style={{
-                  display: "inline-block",
-                  width: "1px",
-                  height: "20px",
-                  background: colors.border,
-                  marginInline: spacing.xs,
-                  flexShrink: 0,
-                }}
-              />
+    <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
+      <PageHeader
+        title="アラート"
+        kicker="DETECTION"
+        sub="検出されたセキュリティイベントを重要度順に一覧。クリックで右側に詳細とプレイブックを表示。"
+      />
+      <HostPane>
+        <HostListPane>
+          {/* chip filter (enterprise の chip 行に相当) */}
+          <HostListFilterBar>
+            <SearchInput
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder="検索... (/)"
+            />
+            {severityButtons.map((b) => {
+              const count = counts[b.key] ?? 0;
+              if (count === 0) return null;
+              return (
+                <Badge
+                  key={b.key}
+                  variant={severityVariant[b.key]}
+                  active={filters[b.key]}
+                  onClick={() => setFilter(b.key, !filters[b.key])}
+                >
+                  {b.label} ({count})
+                </Badge>
+              );
+            })}
+            {dismissRecords.filter((r) => r.reopenedAt == null).length > 0 && (
               <label
                 style={{
                   display: "inline-flex",
@@ -1017,7 +814,6 @@ export function AlertsTab({ onSidebarChange }: { onSidebarChange?: (state: Alert
                   color: colors.textMuted,
                   cursor: "pointer",
                   userSelect: "none",
-                  whiteSpace: "nowrap",
                 }}
               >
                 <input
@@ -1028,138 +824,179 @@ export function AlertsTab({ onSidebarChange }: { onSidebarChange?: (state: Alert
                 />
                 解決済み ({dismissRecords.filter((r) => r.reopenedAt == null).length})
               </label>
-            </>
-          )}
-        </FilterBar>
+            )}
+          </HostListFilterBar>
 
-        {/* Bulk action bar */}
-        {selectedIds.size > 0 && (
-          <div
-            style={{
-              display: "flex",
-              gap: spacing.sm,
-              alignItems: "center",
-              padding: `${spacing.sm} ${spacing.lg}`,
-              marginBottom: spacing.sm,
-              background: colors.bgSecondary,
-              border: `1px solid ${colors.border}`,
-              borderRadius: borderRadius.md,
-              fontSize: fontSize.md,
-              color: colors.textSecondary,
-            }}
-          >
-            <span style={{ fontWeight: 500 }}>
-              {selectedIds.size}件選択中
-            </span>
-            <div ref={bulkDismissRef} style={{ position: "relative" }}>
-              <button
-                type="button"
-                onClick={() =>
-                  setShowBulkDismissComposer((prev) => !prev)
-                }
-                style={{
-                  padding: `${spacing.xs} ${spacing.sm}`,
-                  border: `1px solid ${colors.border}`,
-                  borderRadius: borderRadius.sm,
-                  background: colors.bgPrimary,
-                  color: colors.textPrimary,
-                  fontSize: fontSize.md,
-                  cursor: "pointer",
-                }}
-              >
-                一括解決
-              </button>
-              {showBulkDismissComposer && bulkDismissAlerts.length > 0 && (
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "calc(100% + 8px)",
-                    left: 0,
-                    width: "340px",
-                    maxWidth: "calc(100vw - 32px)",
-                    zIndex: 10,
-                  }}
-                >
-                  <DismissComposer
-                    alerts={bulkDismissAlerts.map((alert) => ({
-                      id: alert.id,
-                      title: alert.title,
-                      domain: alert.domain,
-                      severity: alert.severity,
-                    }))}
-                    onConfirm={(reason, comment) => {
-                      applyDismiss(bulkDismissAlerts, reason, comment);
-                      setShowBulkDismissComposer(false);
-                    }}
-                    onCancel={() => setShowBulkDismissComposer(false)}
-                  />
-                </div>
-              )}
-            </div>
-            <button
-              type="button"
-              onClick={() => setSelectedIds(new Set())}
+          {/* Bulk action bar */}
+          {selectedIds.size > 0 && (
+            <div
               style={{
-                padding: `${spacing.xs} ${spacing.sm}`,
-                border: "none",
-                background: "transparent",
-                color: colors.textMuted,
-                fontSize: fontSize.md,
-                cursor: "pointer",
+                display: "flex",
+                gap: spacing.sm,
+                alignItems: "center",
+                padding: `${spacing.sm} ${spacing.lg}`,
+                background: colors.bgSecondary,
+                borderBottom: `1px solid ${colors.border}`,
+                fontSize: fontSize.sm,
+                color: colors.textSecondary,
+                flexShrink: 0,
               }}
             >
-              選択解除
-            </button>
-          </div>
-        )}
+              <span style={{ fontWeight: 500 }}>{selectedIds.size}件選択中</span>
+              <div ref={bulkDismissRef} style={{ position: "relative" }}>
+                <button
+                  type="button"
+                  onClick={() => setShowBulkDismissComposer((prev) => !prev)}
+                  style={{
+                    padding: `${spacing.xs} ${spacing.sm}`,
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: borderRadius.sm,
+                    background: colors.bgPrimary,
+                    color: colors.textPrimary,
+                    fontSize: fontSize.sm,
+                    cursor: "pointer",
+                  }}
+                >
+                  一括解決
+                </button>
+                {showBulkDismissComposer && bulkDismissAlerts.length > 0 && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "calc(100% + 8px)",
+                      left: 0,
+                      width: "340px",
+                      maxWidth: "calc(100vw - 32px)",
+                      zIndex: 10,
+                    }}
+                  >
+                    <DismissComposer
+                      alerts={bulkDismissAlerts.map((alert) => ({
+                        id: alert.id,
+                        title: alert.title,
+                        domain: alert.domain,
+                        severity: alert.severity,
+                      }))}
+                      onConfirm={(reason, comment) => {
+                        applyDismiss(bulkDismissAlerts, reason, comment);
+                        setShowBulkDismissComposer(false);
+                      }}
+                      onCancel={() => setShowBulkDismissComposer(false)}
+                    />
+                  </div>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedIds(new Set())}
+                style={{
+                  padding: `${spacing.xs} ${spacing.sm}`,
+                  border: "none",
+                  background: "transparent",
+                  color: colors.textMuted,
+                  fontSize: fontSize.sm,
+                  cursor: "pointer",
+                  marginLeft: "auto",
+                }}
+              >
+                選択解除
+              </button>
+            </div>
+          )}
 
-        {/* Alert list */}
-        {showDismissed ? (
-          <DismissedView
-            records={dismissRecords.filter((r) => r.reopenedAt == null)}
-            onReopen={handleReopen}
-          />
-        ) : (
-          <PagedList
-            allCount={alerts.length}
-            filteredCount={filtered.length}
-            countLabel="アラート"
-            emptyTitle="検出されたアラートはありません"
-            emptyDescription="セキュリティ上の問題がなく、安全な状態です"
-            onResetFilter={resetAll}
-            headerLeading={
+          {/* Select all */}
+          {!showDismissed && filtered.length > 0 && (
+            <div
+              style={{
+                padding: `${spacing.xs} ${spacing.lg}`,
+                borderBottom: `1px solid ${colors.border}`,
+                display: "flex",
+                alignItems: "center",
+                gap: spacing.sm,
+                fontSize: fontSize.xs,
+                color: colors.textMuted,
+                background: colors.bgSecondary,
+                flexShrink: 0,
+                textTransform: "uppercase",
+                letterSpacing: "0.06em",
+              }}
+            >
               <input
                 type="checkbox"
                 checked={allSelected}
                 onChange={handleSelectAll}
                 style={{ cursor: "pointer", accentColor: colors.interactive }}
               />
-            }
-            currentPage={currentPage}
-            totalPages={totalPages}
-            pageSize={pageSize}
-            onPageChange={setCurrentPage}
-          >
-            {paged.map((alert) => (
-              <AlertRow
-                key={alert.id}
-                alert={alert}
-                isSelected={selectedIds.has(alert.id)}
-                isActive={activeAlertId === alert.id}
-                onSelect={handleSelect}
-                onOpen={() =>
-                  setActiveAlertId((prev) =>
-                    prev === alert.id ? null : alert.id,
-                  )
-                }
-                onReportBug={() => handleReportBug(alert)}
-                onDismissConfirm={(reason, comment) =>
-                  applyDismiss([alert], reason, comment)
-                }
+              <span>{filtered.length}件のアラート</span>
+            </div>
+          )}
+
+          {/* List body (no card wrapper) */}
+          <HostListBody>
+            {showDismissed ? (
+              <DismissedView
+                records={dismissRecords.filter((r) => r.reopenedAt == null)}
+                onReopen={handleReopen}
               />
-            ))}
-          </PagedList>
-        )}
-    </TabRoot>
+            ) : alerts.length === 0 ? (
+              <EmptyState
+                title="検出されたアラートはありません"
+                description="セキュリティ上の問題がなく、安全な状態です"
+              />
+            ) : filtered.length === 0 ? (
+              <EmptyState
+                title="一致するアラートがありません"
+                description="検索条件やフィルタを変更してください"
+              />
+            ) : (
+              filtered.map((alert) => (
+                <AlertRow
+                  key={alert.id}
+                  alert={alert}
+                  isSelected={selectedIds.has(alert.id)}
+                  isActive={activeAlertId === alert.id}
+                  onSelect={handleSelect}
+                  onOpen={() =>
+                    setActiveAlertId((prev) =>
+                      prev === alert.id ? null : alert.id,
+                    )
+                  }
+                  onReportBug={() => handleReportBug(alert)}
+                  onDismissConfirm={(reason, comment) =>
+                    applyDismiss([alert], reason, comment)
+                  }
+                />
+              ))
+            )}
+          </HostListBody>
+        </HostListPane>
+
+        <HostDetailPane>
+          {activeAlert ? (
+            <AlertDetailContent
+              alert={activeAlert}
+              onReportBug={() => handleReportBug(activeAlert)}
+              onDismissConfirm={(reason, comment) => {
+                applyDismiss([activeAlert], reason, comment);
+                setActiveAlertId(null);
+              }}
+            />
+          ) : (
+            <div
+              style={{
+                height: "100%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: colors.textMuted,
+                fontSize: fontSize.sm,
+              }}
+            >
+              リストからアラートを選択して詳細を表示
+            </div>
+          )}
+        </HostDetailPane>
+      </HostPane>
+    </div>
   );
 }

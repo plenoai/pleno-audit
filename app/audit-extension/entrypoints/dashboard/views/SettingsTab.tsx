@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "preact/hooks";
 import { sendMessage } from "../../../lib/messaging";
-import { Button } from "../../../components";
+import { Button, PageHeader } from "../../../components";
 import { useTheme, spacing, fontSize, borderRadius } from "../../../lib/theme";
 import {
   createLogger,
@@ -243,20 +243,27 @@ export function SettingsTab({ animationEnabled, onAnimationToggle }: { animation
   }, [disabledCategories, detectionConfig, saveDetection]);
 
   return (
-    <div
-      style={{
-        background: colors.bgPrimary,
-        border: `1px solid ${colors.border}`,
-        borderRadius: borderRadius.lg,
-        padding: spacing.xl,
-        display: "flex",
-        flexDirection: "column",
-        gap: spacing.xs,
-      }}
-    >
-      <span style={{ fontSize: fontSize.sm, fontWeight: 600, color: colors.textPrimary, marginBottom: spacing.xs, display: "block" } as CSSProperties}>
-        アラートルール
-      </span>
+    <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
+      <PageHeader
+        title="設定"
+        kicker="POLICY"
+        sub="検出ルール、DLP、通知、表示の各種設定。ローカルファースト・外部送信なしのポリシーで動作。"
+      />
+      <div style={{ flex: 1, overflow: "auto", padding: "20px 24px" }}>
+      <div
+        style={{
+          background: colors.bgPrimary,
+          border: `1px solid ${colors.border}`,
+          borderRadius: borderRadius.lg,
+          padding: spacing.xl,
+          display: "flex",
+          flexDirection: "column",
+          gap: spacing.xs,
+        }}
+      >
+        <span style={{ fontSize: fontSize.sm, fontWeight: 600, color: colors.textPrimary, marginBottom: spacing.xs, display: "block" } as CSSProperties}>
+          アラートルール
+        </span>
 
       {ALERT_GROUPS.map((group) => {
         const enabledCount = group.alertIds.filter((id) => !disabledCategories.has(id)).length;
@@ -432,6 +439,8 @@ export function SettingsTab({ animationEnabled, onAnimationToggle }: { animation
         <span style={{ fontSize: "10px", color: colors.textMuted }}>
           Pleno Audit v{browser.runtime.getManifest().version}
         </span>
+      </div>
+      </div>
       </div>
     </div>
   );

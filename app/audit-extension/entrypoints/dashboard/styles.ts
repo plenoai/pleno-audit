@@ -21,11 +21,11 @@ export function createDashboardStyles() {
     },
     container: {
       flex: 1,
-      maxWidth: "1200px",
-      padding: "24px",
-      overflowY: "auto" as const,
+      minWidth: 0,
       display: "flex",
       flexDirection: "column" as const,
+      overflow: "hidden",
+      background: "var(--secondary)",
     },
     header: {
       position: "sticky" as const,

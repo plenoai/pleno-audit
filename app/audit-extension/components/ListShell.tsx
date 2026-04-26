@@ -150,15 +150,17 @@ export function FilterBar({ children }: FilterBarProps) {
 
 interface ListContainerProps {
   children: ComponentChildren;
+  /** true の場合、角丸枠を消し border-light のみで区切る (host-pane用) */
+  bare?: boolean;
 }
 
-export function ListContainer({ children }: ListContainerProps) {
+export function ListContainer({ children, bare = false }: ListContainerProps) {
   const { colors } = useTheme();
   return (
     <div
       style={{
-        border: `1px solid ${colors.border}`,
-        borderRadius: borderRadius.lg,
+        border: bare ? "none" : `1px solid ${colors.border}`,
+        borderRadius: bare ? 0 : borderRadius.lg,
         overflow: "hidden",
         display: "flex",
         flexDirection: "column",
@@ -299,10 +301,10 @@ export function ListRow({
   return (
     <div
       style={{
-        borderBottom: `1px solid ${colors.border}`,
+        borderBottom: `1px solid ${colors.borderLight}`,
         background: isHighlighted ? colors.bgSecondary : colors.bgPrimary,
         ...(activeIndicator != null
-          ? { borderLeft: activeIndicator ? `3px solid ${colors.interactive}` : "3px solid transparent" }
+          ? { borderLeft: activeIndicator ? `2px solid ${colors.interactive}` : "2px solid transparent" }
           : {}),
       }}
     >
@@ -409,6 +411,8 @@ interface PagedListProps {
   totalPages: number;
   pageSize: number;
   onPageChange: (page: number) => void;
+  /** Bare mode: 枠なし (host-pane内で使う場合) */
+  bare?: boolean;
   /** The rendered list items (already paged) */
   children: ComponentChildren;
 }
@@ -427,6 +431,7 @@ export function PagedList({
   totalPages,
   pageSize,
   onPageChange,
+  bare = false,
   children,
 }: PagedListProps) {
   if (allCount === 0) {
@@ -442,7 +447,7 @@ export function PagedList({
     );
   }
   return (
-    <ListContainer>
+    <ListContainer bare={bare}>
       <ListHeader>
         {headerLeading}
         <span style={{ flex: 1 }}>

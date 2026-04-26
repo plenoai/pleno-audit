@@ -1,14 +1,25 @@
+import { Layers, Puzzle, Siren, Settings } from "lucide-preact";
+import type { ComponentType } from "preact";
+import type { LucideProps } from "lucide-preact";
 import type { TabType } from "./types";
 
-export const tabs: { id: TabType; label: string }[] = [
-  { id: "services", label: "サービス" },
-  { id: "extensions", label: "拡張機能" },
-  { id: "alerts", label: "アラート" },
-  { id: "settings", label: "設定" },
+export interface SidebarTabDef {
+  id: TabType;
+  label: string;
+  icon: ComponentType<LucideProps>;
+  /** セクション見出し (Posture, Detection など) */
+  section?: string;
+}
+
+export const tabs: SidebarTabDef[] = [
+  { id: "services", label: "サービス", icon: Layers, section: "Posture" },
+  { id: "extensions", label: "拡張機能", icon: Puzzle },
+  { id: "alerts", label: "アラート", icon: Siren, section: "Detection" },
+  { id: "settings", label: "設定", icon: Settings, section: "Workspace" },
 ];
 
-export const loadingTabs: { id: TabType; label: string }[] = [
-  { id: "services", label: "サービス" },
+export const loadingTabs: SidebarTabDef[] = [
+  { id: "services", label: "サービス", icon: Layers },
 ];
 
 export const validTabs: TabType[] = tabs.map((tab) => tab.id);
