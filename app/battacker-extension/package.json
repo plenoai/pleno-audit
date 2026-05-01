@@ -13,10 +13,10 @@
   "dependencies": {
     "libztbs": "workspace:*",
     "motion": "^12.38.0",
-    "preact": "^10.29.0"
+    "preact": "^10.29.1"
   },
   "devDependencies": {
     "@preact/preset-vite": "^2.10.5",
-    "wxt": "^0.20.20"
+    "wxt": "^0.20.25"
   }
 }
