@@ -19,7 +19,7 @@
   },
   "devDependencies": {
     "@preact/preset-vite": "^2.10.6",
-    "typescript": "^6.0.3",
+    "typescript": "^7.0.2",
     "wxt": "^0.21.2"
   }
 }
