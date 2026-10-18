@@ -95,7 +95,8 @@
       "rules": {
         "no-console": "off",
         "no-restricted-globals": "off",
-        "no-unused-expressions": "off"
+        "no-unused-expressions": "off",
+        "no-dupe-else-if": "off"
       }
     },
     // DLP Client - communicates with local pleno-anonymize server (default: OFF, user opt-in)
