@@ -95,6 +95,7 @@
       "rules": {
         "no-console": "off",
         "no-restricted-globals": "off",
+        "no-unused-vars": "off",
         "no-unused-expressions": "off",
         "no-cond-assign": "off",
         "no-dupe-else-if": "off"
