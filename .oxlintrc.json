@@ -92,7 +92,11 @@
     // ONNX Runtime JSEP bundles - vendored generated runtime assets
     {
       "files": ["app/audit-extension/public/ort-wasm-*.jsep.mjs"],
-      "rules": { "no-console": "off", "no-restricted-globals": "off" }
+      "rules": {
+        "no-console": "off",
+        "no-restricted-globals": "off",
+        "no-unused-expressions": "off"
+      }
     },
     // DLP Client - communicates with local pleno-anonymize server (default: OFF, user opt-in)
     {
