@@ -13,7 +13,7 @@ permissions: read-all
 jobs:
   analysis:
     name: Scorecard analysis
-    runs-on: [self-hosted, linux, arm64, hikae-flash]
+    runs-on: [self-hosted, linux, arm64, hikae-long]
     permissions:
       security-events: write
       id-token: write
