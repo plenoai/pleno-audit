@@ -16,7 +16,7 @@ permissions: {}
 
 jobs:
   build-and-release:
-    runs-on: [self-hosted, linux, arm64, hikae-flash]
+    runs-on: [linux, arm64, hikae-flash]
     permissions:
       contents: write
       id-token: write
@@ -30,10 +30,12 @@ jobs:
         with:
           version: 9
 
+      # Keep dependency caching disabled here. This workflow runs on both
+      # workflow_dispatch and push to main, so a cache saved by a manually
+      # triggered run would be readable by every PR on the default branch.
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 22
-          cache: pnpm
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
