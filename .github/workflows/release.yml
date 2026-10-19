@@ -16,7 +16,7 @@ permissions: {}
 
 jobs:
   build-and-release:
-    runs-on: [linux, arm64, hikae-flash]
+    runs-on: ubuntu-latest
     permissions:
       contents: write
       id-token: write
