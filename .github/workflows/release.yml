@@ -115,7 +115,9 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v2
         with:
-          tag_name: canary
+          tag_name: canary-${{ github.sha }}
+          target_commitish: ${{ github.sha }}
+          draft: true
           name: "Canary (${{ steps.version.outputs.version }})"
           prerelease: true
           make_latest: false
@@ -131,3 +133,9 @@ jobs:
             checksums.txt
             checksums.txt.sigstore.json
           generate_release_notes: true
+
+      - name: Publish immutable release after all assets are uploaded
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: canary-${{ github.sha }}
+        run: gh release edit "$RELEASE_TAG" --draft=false
