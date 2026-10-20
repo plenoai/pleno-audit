@@ -23,6 +23,19 @@ function readWorkflow(name: string): string {
   return readFileSync(join(workflowsDirectory, name), "utf8");
 }
 
+// Triggers that let a run start outside a trusted push to the default branch.
+const externalTrigger =
+  /^\s*(workflow_dispatch|schedule|repository_dispatch|pull_request_target|workflow_run):/m;
+
+// Any dependency cache written by an externally triggered run can later be
+// restored by pull requests, so reject every cache mechanism, not just one.
+const cachePatterns = [
+  /uses:\s*actions\/cache(?:\/[^@\s]+)?@/,
+  /^\s*cache:\s*\S+/m,
+  /^\s*cache-dependency-path:\s*\S+/m,
+  /^\s*enable-cache:\s*(?!false\b)\S+/m,
+];
+
 describe("GitHub Actions workflow security", () => {
   it.each(workflowNames)("%s only uses GitHub-hosted runners", (name) => {
     const source = readWorkflow(name);
@@ -42,16 +55,14 @@ describe("GitHub Actions workflow security", () => {
     "%s does not enable dependency caching on externally triggered workflows",
     (name) => {
       const source = readWorkflow(name);
-      const externallyTriggered =
-        /^\s*workflow_dispatch:/m.test(source) ||
-        /^\s*schedule:/m.test(source);
 
-      if (!externallyTriggered) {
+      if (!externalTrigger.test(source)) {
         return;
       }
 
-      expect(source).not.toMatch(/uses:\s*actions\/cache@/);
-      expect(source).not.toMatch(/^\s*cache:\s*\S+/m);
+      for (const pattern of cachePatterns) {
+        expect(source).not.toMatch(pattern);
+      }
     },
   );
 });
