@@ -34,7 +34,7 @@
       "uuid": ">=11.1.1",
       "tmp": ">=0.2.6",
       "protobufjs": ">=7.5.8",
-      "brace-expansion": ">=5.0.6"
+      "brace-expansion": ">=5.0.12"
     }
   },
   "devDependencies": {
