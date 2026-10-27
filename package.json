@@ -26,7 +26,9 @@
     "test:mutation": "stryker run",
     "changeset": "changeset",
     "version-packages": "changeset version",
-    "publish-packages": "changeset publish"
+    "publish-packages": "changeset publish",
+    "deps:lockfile": "pnpm install --lockfile-only --ignore-scripts --no-frozen-lockfile",
+    "test:lockfile": "node --test .github/scripts/lockfile.test.mjs"
   },
   "pnpm": {
     "overrides": {
@@ -55,5 +57,6 @@
     "typescript": "^6.0.3",
     "vitest": "^4.1.10",
     "ws": "^8.21.1"
-  }
+  },
+  "packageManager": "pnpm@9.15.9"
 }
