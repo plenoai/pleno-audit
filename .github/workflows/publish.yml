@@ -1,10 +1,11 @@
 name: Publish
 
-# Trusted publishing only runs for commits that have landed on main so
-# branch protections and required CI checks cannot be bypassed with a tag.
+# Publishing is initiated by a pushed release tag. The tagged commit must be
+# reachable from protected main so branch protections and required CI checks
+# cannot be bypassed with a tag on an unreviewed commit.
 on:
   push:
-    branches: [main]
+    tags: ["libztbs-v*"]
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
@@ -20,6 +21,22 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          fetch-depth: 0
+
+      - name: Verify tag matches package version and is on main
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          PKG_VERSION=$(node -p "require('./packages/core/package.json').version")
+          if [ "${TAG}" != "libztbs-v${PKG_VERSION}" ]; then
+            echo "::error::Tag ${TAG} does not match packages/core version ${PKG_VERSION}"
+            exit 1
+          fi
+          git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
+          if ! git merge-base --is-ancestor "${GITHUB_SHA}" origin/main; then
+            echo "::error::Tagged commit ${GITHUB_SHA} is not reachable from main"
+            exit 1
+          fi
 
       - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
         with:
