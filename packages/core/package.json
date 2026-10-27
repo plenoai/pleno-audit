@@ -144,9 +144,9 @@
     "access": "public"
   },
   "dependencies": {
-    "@huggingface/transformers": "^4.2.0"
+    "@huggingface/transformers": "^4.3.0"
   },
   "devDependencies": {
-    "esbuild": "^0.28.1"
+    "esbuild": "^0.28.2"
   }
 }
