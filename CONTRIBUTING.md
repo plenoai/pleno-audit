@@ -4,6 +4,10 @@ Thank you for your interest in contributing to Pleno Audit!
 
 ## Getting Started
 
+Use Node.js 22.13 or newer on the 22.x, 24.x, or 26+ release lines and
+pnpm 10.34.5 (pinned in `package.json`). Enable Corepack with `corepack enable`
+to use the pinned pnpm version. Changesets 3 requires pnpm 10 or newer.
+
 1. Fork the repository
 2. Clone your fork
 3. Install dependencies: `pnpm install`
