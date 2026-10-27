@@ -17,6 +17,6 @@
   },
   "devDependencies": {
     "@preact/preset-vite": "^2.10.6",
-    "wxt": "^0.21.2"
+    "wxt": "^0.21.4"
   }
 }
