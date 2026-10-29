@@ -38,6 +38,7 @@ export default defineConfig({
     "debug-bridge/index": "src/debug-bridge/index.ts",
   },
   format: ["esm"],
-  dts: true,
+  // TS 7 no longer exposes the compiler API read by tsup's bundled dts plugin.
+  dts: false,
   clean: true,
 });
