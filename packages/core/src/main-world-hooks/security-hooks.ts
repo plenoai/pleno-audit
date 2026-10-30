@@ -413,7 +413,7 @@ export function initSecurityHooks(emitSecurityEvent: SharedHookUtils["emitSecuri
           } catch {
             /* ignore */
           }
-          return originalFormActionSet.call(this, value);
+          originalFormActionSet.call(this, value);
         },
         configurable: true,
       });

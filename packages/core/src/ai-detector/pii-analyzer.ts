@@ -119,7 +119,7 @@ export function analyzePromptPII(
 
   // ユニークな分類を抽出
   const classifications = Object.entries(summary)
-    .filter(([_, count]) => count > 0)
+    .filter(([, count]) => count > 0)
     .map(([classification]) => classification as DataClassification);
 
   return {
