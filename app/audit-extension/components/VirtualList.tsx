@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect, useCallback } from "preact/hooks";
 import type { JSX } from "preact";
+import { withPxUnits } from "../lib/css";
 
 interface VirtualListProps<T> {
   items: T[];
@@ -56,15 +57,15 @@ export function VirtualList<T>({
       ref={containerRef}
       className={className}
       style={{
-        height,
+        height: `${height}px`,
         overflow: "auto",
         position: "relative",
-        ...style,
+        ...withPxUnits(style),
       }}
     >
       <div
         style={{
-          height: totalHeight,
+          height: `${totalHeight}px`,
           position: "relative",
         }}
       >
@@ -81,7 +82,7 @@ export function VirtualList<T>({
             <div
               key={startIndex + i}
               style={{
-                height: itemHeight,
+                height: `${itemHeight}px`,
                 boxSizing: "border-box",
               }}
             >
@@ -153,12 +154,12 @@ export function VirtualTable<T>({
     return (
       <div
         style={{
-          height,
+          height: `${height}px`,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           color: "var(--muted-foreground)",
-          fontSize: 14,
+          fontSize: "14px",
         }}
       >
         {emptyMessage}
@@ -169,9 +170,9 @@ export function VirtualTable<T>({
   return (
     <div
       style={{
-        height,
+        height: `${height}px`,
         border: "1px solid #e5e7eb",
-        borderRadius: 8,
+        borderRadius: "8px",
         overflow: "hidden",
       }}
     >
@@ -179,7 +180,7 @@ export function VirtualTable<T>({
       <div
         style={{
           display: "flex",
-          height: headerHeight,
+          height: `${headerHeight}px`,
           borderBottom: "1px solid #e5e7eb",
           background: "#f9fafb",
         }}
@@ -192,7 +193,7 @@ export function VirtualTable<T>({
               padding: "0 16px",
               display: "flex",
               alignItems: "center",
-              fontSize: 12,
+              fontSize: "12px",
               fontWeight: 500,
               color: "var(--muted-foreground)",
             }}
@@ -206,13 +207,13 @@ export function VirtualTable<T>({
       <div
         ref={containerRef}
         style={{
-          height: bodyHeight,
+          height: `${bodyHeight}px`,
           overflow: "auto",
         }}
       >
         <div
           style={{
-            height: totalHeight,
+            height: `${totalHeight}px`,
             position: "relative",
           }}
         >
@@ -230,7 +231,7 @@ export function VirtualTable<T>({
                 key={startIndex + i}
                 style={{
                   display: "flex",
-                  height: rowHeight,
+                  height: `${rowHeight}px`,
                   borderBottom: "1px solid #f3f4f6",
                 }}
               >
@@ -242,7 +243,7 @@ export function VirtualTable<T>({
                       padding: "0 16px",
                       display: "flex",
                       alignItems: "center",
-                      fontSize: 13,
+                      fontSize: "13px",
                       overflow: "hidden",
                       textOverflow: "ellipsis",
                       whiteSpace: "nowrap",
@@ -263,7 +264,7 @@ export function VirtualTable<T>({
           padding: "8px 16px",
           borderTop: "1px solid #e5e7eb",
           background: "#f9fafb",
-          fontSize: 12,
+          fontSize: "12px",
           color: "var(--muted-foreground)",
         }}
       >

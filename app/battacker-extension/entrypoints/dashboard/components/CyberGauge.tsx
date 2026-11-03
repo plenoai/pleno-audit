@@ -220,20 +220,20 @@ export function CyberGauge({
             }}
           >
             <motion.div
-              style={{ fontSize: 36, fontWeight: 800, fontFamily: "'SF Mono', monospace", color: "#fff", letterSpacing: 1, lineHeight: 1 }}
+              style={{ fontSize: "36px", fontWeight: 800, fontFamily: "'SF Mono', monospace", color: "#fff", letterSpacing: "1px", lineHeight: 1 }}
               animate={{ opacity: [1, 0.7, 1] }}
               transition={{ duration: 0.8, repeat: Infinity }}
             >
               {scanState.completed}
             </motion.div>
-            <div style={{ fontSize: 16, color: "#666", fontFamily: "'SF Mono', monospace", marginTop: 4 }}>
+            <div style={{ fontSize: "16px", color: "#666", fontFamily: "'SF Mono', monospace", marginTop: "4px" }}>
               /{scanState.total || "?"}
             </div>
             {scanState.currentTest && (
               <>
                 <motion.div
                   key={scanState.currentTest.category}
-                  style={{ fontSize: 10, fontWeight: 600, letterSpacing: 2, color: "#888", marginTop: 8, textTransform: "uppercase" }}
+                  style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "2px", color: "#888", marginTop: "8px", textTransform: "uppercase" }}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.15 }}
@@ -242,7 +242,7 @@ export function CyberGauge({
                 </motion.div>
                 <motion.div
                   key={scanState.currentTest.name}
-                  style={{ fontSize: 9, color: "#555", marginTop: 2, maxWidth: 120, textAlign: "center", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                  style={{ fontSize: "9px", color: "#555", marginTop: "2px", maxWidth: "120px", textAlign: "center", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
                   initial={{ opacity: 0, y: 3 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.1 }}
@@ -262,7 +262,7 @@ export function CyberGauge({
           >
             <motion.div
               class="score-value"
-              style={{ color: "#fff", fontSize: 28 }}
+              style={{ color: "#fff", fontSize: "28px" }}
               animate={{ opacity: [1, 0.5, 1] }}
               transition={{ duration: 1.2, repeat: Infinity }}
             >
@@ -288,7 +288,7 @@ export function CyberGauge({
           <>
             <motion.div
               class="score-value"
-              style={{ fontSize: 32 }}
+              style={{ fontSize: "32px" }}
               animate={isInteractive ? { opacity: [0.8, 1, 0.8] } : undefined}
               transition={{ duration: 2, repeat: Infinity }}
             >

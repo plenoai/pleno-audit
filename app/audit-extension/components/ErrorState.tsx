@@ -72,22 +72,22 @@ export function ErrorState({
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        padding: 48,
+        padding: "48px",
         textAlign: "center",
-        maxWidth: 400,
+        maxWidth: "400px",
         margin: "0 auto",
       }}
     >
       <div
         style={{
-          width: 64,
-          height: 64,
+          width: "64px",
+          height: "64px",
           borderRadius: "50%",
           background: "#fef2f2",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          marginBottom: 24,
+          marginBottom: "24px",
         }}
       >
         <Icon size={32} color="#ef4444" />
@@ -99,7 +99,7 @@ export function ErrorState({
           fontWeight: 600,
           color: colors.textPrimary,
           margin: 0,
-          marginBottom: 8,
+          marginBottom: "8px",
         }}
       >
         {title || config.title}
@@ -110,28 +110,28 @@ export function ErrorState({
           fontSize: fontSize.base,
           color: colors.textSecondary,
           margin: 0,
-          marginBottom: 24,
+          marginBottom: "24px",
           lineHeight: 1.6,
         }}
       >
         {message || config.message}
       </p>
 
-      <div style={{ display: "flex", gap: 12 }}>
+      <div style={{ display: "flex", gap: "12px" }}>
         {onRetry && (
           <button
             onClick={onRetry}
             style={{
               display: "inline-flex",
               alignItems: "center",
-              gap: 8,
+              gap: "8px",
               padding: "10px 20px",
               fontSize: fontSize.base,
               fontWeight: 500,
               color: "#fff",
               background: colors.interactive,
               border: "none",
-              borderRadius: 8,
+              borderRadius: "8px",
               cursor: "pointer",
             }}
           >
@@ -145,14 +145,14 @@ export function ErrorState({
             style={{
               display: "inline-flex",
               alignItems: "center",
-              gap: 8,
+              gap: "8px",
               padding: "10px 20px",
               fontSize: fontSize.base,
               fontWeight: 500,
               color: colors.textPrimary,
               background: "transparent",
               border: `1px solid ${colors.border}`,
-              borderRadius: 8,
+              borderRadius: "8px",
               cursor: "pointer",
             }}
           >
@@ -165,7 +165,7 @@ export function ErrorState({
       {technicalDetails && (
         <details
           style={{
-            marginTop: 24,
+            marginTop: "24px",
             width: "100%",
             textAlign: "left",
           }}
@@ -175,7 +175,7 @@ export function ErrorState({
               fontSize: fontSize.sm,
               color: colors.textSecondary,
               cursor: "pointer",
-              marginBottom: 8,
+              marginBottom: "8px",
             }}
           >
             技術的な詳細
@@ -185,8 +185,8 @@ export function ErrorState({
               fontSize: fontSize.xs,
               color: colors.textSecondary,
               background: colors.bgTertiary,
-              padding: 12,
-              borderRadius: 6,
+              padding: "12px",
+              borderRadius: "6px",
               overflow: "auto",
               whiteSpace: "pre-wrap",
               wordBreak: "break-all",

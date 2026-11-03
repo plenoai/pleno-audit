@@ -106,9 +106,9 @@ export function KeyboardHelpDialog({
       <div
         style={{
           background: "#fff",
-          borderRadius: 12,
-          padding: 24,
-          maxWidth: 480,
+          borderRadius: "12px",
+          padding: "24px",
+          maxWidth: "480px",
           width: "90%",
           maxHeight: "80vh",
           overflow: "auto",
@@ -120,10 +120,10 @@ export function KeyboardHelpDialog({
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            marginBottom: 20,
+            marginBottom: "20px",
           }}
         >
-          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>
+          <h2 style={{ margin: 0, fontSize: "18px", fontWeight: 600 }}>
             キーボードショートカット
           </h2>
           <button
@@ -131,7 +131,7 @@ export function KeyboardHelpDialog({
             style={{
               background: "none",
               border: "none",
-              fontSize: 24,
+              fontSize: "24px",
               cursor: "pointer",
               color: "var(--muted-foreground)",
             }}
@@ -140,7 +140,7 @@ export function KeyboardHelpDialog({
           </button>
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
           {shortcuts.map((shortcut, i) => (
             <div
               key={i}
@@ -152,16 +152,16 @@ export function KeyboardHelpDialog({
                 borderBottom: "1px solid #f3f4f6",
               }}
             >
-              <span style={{ color: "#374151", fontSize: 14 }}>
+              <span style={{ color: "#374151", fontSize: "14px" }}>
                 {shortcut.description}
               </span>
               <kbd
                 style={{
                   background: "#f3f4f6",
                   border: "1px solid #e5e7eb",
-                  borderRadius: 4,
+                  borderRadius: "4px",
                   padding: "4px 8px",
-                  fontSize: 12,
+                  fontSize: "12px",
                   fontFamily: "monospace",
                   color: "#374151",
                 }}
@@ -179,16 +179,16 @@ export function KeyboardHelpDialog({
               padding: "8px 0",
             }}
           >
-            <span style={{ color: "#374151", fontSize: 14 }}>
+            <span style={{ color: "#374151", fontSize: "14px" }}>
               このヘルプを表示
             </span>
             <kbd
               style={{
                 background: "#f3f4f6",
                 border: "1px solid #e5e7eb",
-                borderRadius: 4,
+                borderRadius: "4px",
                 padding: "4px 8px",
-                fontSize: 12,
+                fontSize: "12px",
                 fontFamily: "monospace",
                 color: "#374151",
               }}
