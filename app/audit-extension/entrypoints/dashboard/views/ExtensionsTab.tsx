@@ -246,7 +246,7 @@ function ExtensionDetailContent({ ext }: { ext: ExtensionInfo }) {
                 >
                   {perm}
                   {description && (
-                    <div style={{ color: colors.textMuted, fontFamily: "inherit", fontSize: fontSize.xs, marginTop: 2 }}>
+                    <div style={{ color: colors.textMuted, fontFamily: "inherit", fontSize: fontSize.xs, marginTop: "2px" }}>
                       — {description}
                     </div>
                   )}

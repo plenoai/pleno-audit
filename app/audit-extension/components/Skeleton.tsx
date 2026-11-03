@@ -1,3 +1,4 @@
+import { toCssLength, withPxUnits } from "../lib/css";
 import { useTheme } from "../lib/theme";
 
 interface SkeletonProps {
@@ -18,13 +19,13 @@ export function Skeleton({
   return (
     <div
       style={{
-        width,
-        height,
-        borderRadius,
+        width: toCssLength(width),
+        height: toCssLength(height),
+        borderRadius: toCssLength(borderRadius),
         background: `linear-gradient(90deg, ${colors.border} 25%, ${colors.bgTertiary} 50%, ${colors.border} 75%)`,
         backgroundSize: "200% 100%",
         animation: "skeleton-shimmer 1.5s ease-in-out infinite",
-        ...style,
+        ...withPxUnits(style),
       }}
     />
   );
@@ -42,7 +43,7 @@ export function SkeletonText({
   spacing = 8,
 }: SkeletonTextProps) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: spacing }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: `${spacing}px` }}>
       {Array.from({ length: lines }).map((_, i) => (
         <Skeleton
           key={i}
@@ -60,14 +61,14 @@ export function SkeletonCard() {
   return (
     <div
       style={{
-        padding: 16,
-        borderRadius: 8,
+        padding: "16px",
+        borderRadius: "8px",
         border: `1px solid ${colors.border}`,
         background: colors.bgPrimary,
       }}
     >
-      <Skeleton height={20} width="40%" style={{ marginBottom: 12 }} />
-      <Skeleton height={32} width="60%" style={{ marginBottom: 8 }} />
+      <Skeleton height={20} width="40%" style={{ marginBottom: "12px" }} />
+      <Skeleton height={32} width="60%" style={{ marginBottom: "8px" }} />
       <Skeleton height={14} width="80%" />
     </div>
   );
@@ -79,7 +80,7 @@ export function SkeletonTable({ rows = 5 }: { rows?: number }) {
   return (
     <div
       style={{
-        borderRadius: 8,
+        borderRadius: "8px",
         border: `1px solid ${colors.border}`,
         overflow: "hidden",
       }}
@@ -88,8 +89,8 @@ export function SkeletonTable({ rows = 5 }: { rows?: number }) {
         style={{
           display: "grid",
           gridTemplateColumns: "1fr 2fr 1fr 1fr",
-          gap: 16,
-          padding: 12,
+          gap: "16px",
+          padding: "12px",
           borderBottom: `1px solid ${colors.border}`,
           background: colors.bgTertiary,
         }}
@@ -105,8 +106,8 @@ export function SkeletonTable({ rows = 5 }: { rows?: number }) {
           style={{
             display: "grid",
             gridTemplateColumns: "1fr 2fr 1fr 1fr",
-            gap: 16,
-            padding: 12,
+            gap: "16px",
+            padding: "12px",
             borderBottom:
               i < rows - 1 ? `1px solid ${colors.border}` : undefined,
           }}
@@ -127,15 +128,15 @@ export function SkeletonChart({ height = 200 }: { height?: number }) {
   return (
     <div
       style={{
-        height,
-        borderRadius: 8,
+        height: `${height}px`,
+        borderRadius: "8px",
         border: `1px solid ${colors.border}`,
         background: colors.bgPrimary,
         display: "flex",
         alignItems: "flex-end",
         justifyContent: "space-around",
-        padding: 16,
-        gap: 8,
+        padding: "16px",
+        gap: "8px",
       }}
     >
       {[40, 70, 55, 85, 60, 75, 45, 90, 65, 50].map((h, i) => (
@@ -156,7 +157,7 @@ export function SkeletonStatsGrid() {
       style={{
         display: "grid",
         gridTemplateColumns: "repeat(4, 1fr)",
-        gap: 16,
+        gap: "16px",
       }}
     >
       <SkeletonCard />
@@ -169,7 +170,7 @@ export function SkeletonStatsGrid() {
 
 export function SkeletonDashboard() {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
       <SkeletonChart height={250} />
       <SkeletonTable rows={5} />
     </div>

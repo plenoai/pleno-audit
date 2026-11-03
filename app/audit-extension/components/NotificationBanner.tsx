@@ -93,32 +93,32 @@ function NotificationItem({
       style={{
         display: "flex",
         alignItems: "flex-start",
-        gap: 12,
+        gap: "12px",
         padding: "12px 16px",
-        borderRadius: 8,
+        borderRadius: "8px",
         border: `1px solid ${config.borderColor}`,
         background: bgColor,
         color: textColor,
         transform: isVisible && !isExiting ? "translateX(0)" : "translateX(100%)",
         opacity: isVisible && !isExiting ? 1 : 0,
         transition: "all 0.3s ease-out",
-        marginBottom: 8,
+        marginBottom: "8px",
       }}
     >
-      <Icon size={20} style={{ flexShrink: 0, marginTop: 2 }} />
+      <Icon size={20} style={{ flexShrink: 0, marginTop: "2px" }} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div
           style={{
             fontWeight: 600,
-            fontSize: 14,
-            marginBottom: 4,
+            fontSize: "14px",
+            marginBottom: "4px",
           }}
         >
           {notification.title}
         </div>
         <div
           style={{
-            fontSize: 13,
+            fontSize: "13px",
             opacity: 0.9,
             lineHeight: 1.4,
           }}
@@ -131,15 +131,15 @@ function NotificationItem({
             style={{
               display: "inline-flex",
               alignItems: "center",
-              gap: 4,
-              marginTop: 8,
+              gap: "4px",
+              marginTop: "8px",
               padding: "4px 8px",
-              fontSize: 12,
+              fontSize: "12px",
               fontWeight: 500,
               color: textColor,
               background: "transparent",
               border: `1px solid ${config.borderColor}`,
-              borderRadius: 4,
+              borderRadius: "4px",
               cursor: "pointer",
             }}
           >
@@ -151,7 +151,7 @@ function NotificationItem({
       <button
         onClick={handleDismiss}
         style={{
-          padding: 4,
+          padding: "4px",
           background: "transparent",
           border: "none",
           cursor: "pointer",
@@ -168,7 +168,7 @@ function NotificationItem({
           bottom: 0,
           left: 0,
           right: 0,
-          height: 3,
+          height: "3px",
           background: config.borderColor,
           borderRadius: "0 0 8px 8px",
           transform: notification.autoDismiss ? "scaleX(1)" : "scaleX(0)",
@@ -196,9 +196,9 @@ export function NotificationBanner({
     <div
       style={{
         position: "fixed",
-        top: 16,
-        right: 16,
-        width: 360,
+        top: "16px",
+        right: "16px",
+        width: "360px",
         maxWidth: "calc(100vw - 32px)",
         zIndex: 1000,
       }}
@@ -223,9 +223,9 @@ export function NotificationBanner({
         <div
           style={{
             textAlign: "center",
-            fontSize: 12,
+            fontSize: "12px",
             color: "var(--muted-foreground)",
-            padding: 8,
+            padding: "8px",
           }}
         >
           他 {hiddenCount} 件の通知

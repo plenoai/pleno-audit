@@ -149,8 +149,8 @@ function UnifiedGauge({
         style={{
           position: "relative",
           cursor: isInteractive ? "pointer" : "default",
-          width: size,
-          height: size,
+          width: `${size}px`,
+          height: `${size}px`,
         }}
         whileHover={isInteractive ? { scale: 1.03 } : undefined}
         whileTap={isInteractive ? { scale: 0.98 } : undefined}
@@ -351,7 +351,7 @@ function UnifiedGauge({
         <div class="gauge-center">
           {isLoading ? (
             <motion.div
-              style={{ fontSize: 10, letterSpacing: 3, color: "#666", textTransform: "uppercase" }}
+              style={{ fontSize: "10px", letterSpacing: "3px", color: "#666", textTransform: "uppercase" }}
               animate={{ opacity: [0.5, 1, 0.5] }}
               transition={{ duration: 1.2, repeat: Infinity }}
             >
@@ -360,20 +360,20 @@ function UnifiedGauge({
           ) : isScanning && scanState ? (
             <motion.div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
               <motion.div
-                style={{ fontSize: 32, fontWeight: 800, fontFamily: "'SF Mono', monospace", color: "#fff", letterSpacing: 1, lineHeight: 1 }}
+                style={{ fontSize: "32px", fontWeight: 800, fontFamily: "'SF Mono', monospace", color: "#fff", letterSpacing: "1px", lineHeight: 1 }}
                 animate={{ opacity: [1, 0.7, 1] }}
                 transition={{ duration: 0.8, repeat: Infinity }}
               >
                 {scanState.completed}
               </motion.div>
-              <div style={{ fontSize: 14, color: "#666", fontFamily: "'SF Mono', monospace", marginTop: 2 }}>
+              <div style={{ fontSize: "14px", color: "#666", fontFamily: "'SF Mono', monospace", marginTop: "2px" }}>
                 /{scanState.total || "?"}
               </div>
               {scanState.currentTest && (
                 <>
                   <motion.div
                     key={scanState.currentTest.category}
-                    style={{ fontSize: 9, fontWeight: 600, letterSpacing: 2, color: "#888", marginTop: 6, textTransform: "uppercase" }}
+                    style={{ fontSize: "9px", fontWeight: 600, letterSpacing: "2px", color: "#888", marginTop: "6px", textTransform: "uppercase" }}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.15 }}
@@ -382,7 +382,7 @@ function UnifiedGauge({
                   </motion.div>
                   <motion.div
                     key={scanState.currentTest.name}
-                    style={{ fontSize: 8, color: "#555", marginTop: 2, maxWidth: 100, textAlign: "center", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                    style={{ fontSize: "8px", color: "#555", marginTop: "2px", maxWidth: "100px", textAlign: "center", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
                     initial={{ opacity: 0, y: 3 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.1 }}
@@ -404,10 +404,10 @@ function UnifiedGauge({
               animate={{ opacity: [0.7, 1, 0.7] }}
               transition={{ duration: 2, repeat: Infinity }}
             >
-              <div style={{ fontSize: 14, fontWeight: 700, letterSpacing: 3, color: "#fff", textTransform: "uppercase" }}>
+              <div style={{ fontSize: "14px", fontWeight: 700, letterSpacing: "3px", color: "#fff", textTransform: "uppercase" }}>
                 Execute
               </div>
-              <div style={{ fontSize: 9, letterSpacing: 2, color: "#555", marginTop: 6 }}>
+              <div style={{ fontSize: "9px", letterSpacing: "2px", color: "#555", marginTop: "6px" }}>
                 TAP TO SCAN
               </div>
             </motion.div>
