@@ -1,0 +1,9 @@
+# sisakulint configuration
+# hikae-flash / hikae-long are ephemeral self-hosted runners (AWS Lambda MicroVM,
+# one job per VM, destroyed after use; see #537). Declaring them here allows the
+# labels and suppresses the self-hosted-runner warning for them. All other
+# sisakulint rules continue to run.
+self-hosted-runner:
+  labels:
+    - hikae-flash
+    - hikae-long
