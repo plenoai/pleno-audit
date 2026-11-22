@@ -37,7 +37,7 @@ const cachePatterns = [
 ];
 
 describe("GitHub Actions workflow security", () => {
-  it.each(workflowNames)("%s only uses GitHub-hosted runners", (name) => {
+  it.each(workflowNames)("%s only uses GitHub-hosted or Blacksmith-managed runners", (name) => {
     const source = readWorkflow(name);
 
     expect(source).not.toMatch(/self-hosted/i);
@@ -47,7 +47,7 @@ describe("GitHub Actions workflow security", () => {
     );
     expect(runnerLabels.length).toBeGreaterThan(0);
     for (const label of runnerLabels) {
-      expect(label).toMatch(/^ubuntu-/);
+      expect(label).toMatch(/^(?:ubuntu-|blacksmith-\d+vcpu-ubuntu-)/);
     }
   });
 
